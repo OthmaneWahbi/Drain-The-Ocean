@@ -29,6 +29,7 @@ func _ready() -> void:
 	GameState.bucket_changed.connect(_refresh_items)
 	_build_toolbar()
 	GameState.tool_changed.connect(refresh_toolbar)
+	GameState.carried_changed.connect(refresh_toolbar)  # les quantités portées dans les cases
 	refresh_toolbar()
 	_refresh_ocean()
 	_refresh_items()
@@ -88,20 +89,29 @@ func _build_toolbar() -> void:
 		_toolbar_labels.append(label)
 
 
-## Case choisie encadrée en jaune, cases vides ou pas encore achetées en grisé.
+## Texte d'une case : l'outil, le matériau porté et sa quantité, ou « Mains » pour une case vide.
+static func slot_text(entry: String) -> String:
+	if entry == "":
+		return TranslationServer.translate("TOOL_EMPTY")
+	if Economy.RESOURCES.has(entry):
+		return "%s ×%d" % [TranslationServer.translate("RES_" + entry.to_upper()).capitalize(), int(GameState.carried.get(entry, 0))]
+	return TranslationServer.translate("TOOL_" + entry.to_upper())
+
+
+## Case choisie encadrée en jaune ; une case vide (les mains) en plus pâle.
 func refresh_toolbar() -> void:
 	var tb := GameState.toolbar
 	for i in toolbar_slots.size():
 		var tool: String = tb.slots[i] if i < tb.slots.size() else ""
 		var available := tb.is_available(i, GameState.owns_tool) if i < tb.slots.size() else false
-		_toolbar_labels[i].text = "%d\n%s" % [i + 1, tr("TOOL_" + tool.to_upper()) if tool != "" else ""]
+		_toolbar_labels[i].text = "%d\n%s" % [i + 1, slot_text(tool)]
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0, 0, 0, 0.45)
 		style.set_corner_radius_all(6)
 		style.set_border_width_all(3 if i == tb.selected else 1)
 		style.border_color = Color(1.0, 0.85, 0.3) if i == tb.selected else Color(1, 1, 1, 0.25)
 		toolbar_slots[i].add_theme_stylebox_override("panel", style)
-		toolbar_slots[i].modulate = Color.WHITE if available else Color(1, 1, 1, 0.35)
+		toolbar_slots[i].modulate = Color.WHITE if available and tool != "" else Color(1, 1, 1, 0.55)
 
 
 func _build_stamina_bar() -> void:

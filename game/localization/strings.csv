@@ -46,7 +46,7 @@ ITEM_YOKE,Palanche,Yoke
 ITEM_YOKE_DESC,Deux seaux à la fois.,Two buckets at once.
 HUD_STAMINA,Endurance,Stamina
 GAUGE_TITLE,Niveau de l'océan,Ocean level
-PROMPT_PILE,[E] Ramasser le tas (%d),[E] Pick up the pile (%d)
+PROMPT_PILE,[E] Ramasser : %s (%d),[E] Pick up: %s (%d)
 PROMPT_COCONUT,[E] Manger la noix de coco,[E] Eat the coconut
 PROMPT_SHELL,[E] Ramasser le coquillage,[E] Pick up the shell
 PROMPT_HANDS_FULL,Les bras sont pleins,Your arms are full
@@ -84,7 +84,7 @@ DEMO_END_TITLE,Fin de la démo,End of the demo
 DEMO_END_TEXT,"Ton île pompe toute seule. L'océan, lui, n'a presque pas bougé.\nTemps de jeu : %s · Eau retirée : %s L · Baisse : %s","Your island pumps on its own. The ocean has barely moved.\nPlay time: %s · Water removed: %s L · Drop: %s"
 DEMO_END_TEASER,"Bientôt (T3) : pompe motorisée, éolienne, panneaux solaires, collecteur de sel automatique, tapis roulant…","Coming soon (T3): motor pump, wind turbine, solar panels, automatic salt collector, conveyor belt…"
 DEMO_END_CONTINUE,Continuer à jouer,Keep playing
-PROMPT_RAKE,[Clic] Tout ratisser (%d),[Click] Rake it all (%d)
+PROMPT_RAKE,[Clic] Tout ratisser : %s (%d),[Click] Rake it all: %s (%d)
 TOOL_SEAU,Seau,Bucket
 TOOL_MAINS,Mains,Hands
 TOOL_RATEAU,Râteau,Rake
@@ -97,3 +97,7 @@ TOOL_TUYAUX,Tuyaux,Pipes
 PUMP_RATE,%s : %d L/s,%s: %d L/s
 PUMP_NAME_POMPE_BRAS,Pompe à bras,Hand pump
 PUMP_NAME_MOULIN_POMPE,Moulin-pompe,Windmill pump
+PROMPT_NO_SLOT,Plus de case libre pour : %s · [Tab] Ranger la barre,No free slot for: %s · [Tab] Arrange the bar
+TOOL_EMPTY,Mains,Hands
+TOOLBAR_MENU_TITLE,Ranger la barre,Arrange the bar
+TOOLBAR_MENU_HINT,Clique une case puis une autre pour les échanger. [Tab] ou [Échap] pour fermer.,Click a slot then another to swap them. [Tab] or [Esc] to close.

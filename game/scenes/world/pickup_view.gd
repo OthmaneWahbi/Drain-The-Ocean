@@ -32,6 +32,8 @@ func get_prompt(_player: Node) -> String:
 		"coconut":
 			return tr("PROMPT_COCONUT")
 		"shell":
+			if not GameState.has_slot_for("coquillages"):
+				return tr("PROMPT_NO_SLOT") % tr("RES_COQUILLAGES")
 			return tr("PROMPT_SHELL") if GameState.carry_space() > 0 else tr("PROMPT_HANDS_FULL")
 	return ""
 

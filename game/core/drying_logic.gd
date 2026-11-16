@@ -69,10 +69,13 @@ func take_deposit() -> Dictionary:
 
 
 ## Récupère au plus `n` unités (les plus rares d'abord : c'est plus gratifiant).
-func take_some(n: int) -> Dictionary:
+## `only` : ne prendre que ce matériau (un tas par matériau) ; vide = les plus rares d'abord.
+func take_some(n: int, only: String = "") -> Dictionary:
 	var taken := {}
 	var order := Economy.RESOURCES.duplicate()
 	order.reverse()
+	if only != "":
+		order = [only]
 	for key in order:
 		if n <= 0:
 			break

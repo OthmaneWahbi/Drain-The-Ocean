@@ -209,12 +209,18 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `pump_view.gd` construit soit le levier, soit la tour du moulin ; les pales tournent vite quand `auto_pumped_l` a augmenté depuis l'image précédente.
 - Clic maintenu : `player.gd` regarde d'abord si la cible a `hold_use(player, delta)` et l'appelle à chaque image tant que le clic est enfoncé. `pump_view.gd` s'en sert et fait bouger son levier quand de l'eau passe.
 
-### La barre d'outils (M-27)
+### La barre d'outils (M-27) et les matériaux en main
 
-- `core/toolbar_logic.gd` (classe `ToolbarLogic`) : `slots` (5 noms d'outil, `""` = vide), `selected`. `select(i, owned)` et `cycle(dir, owned)` reçoivent un `Callable` qui dit si un outil est possédé : la logique ne connaît pas GameState. `ensure_valid()` remet la case 1 si l'outil tenu n'est plus disponible.
-- GameState : `owns_tool()` (seau et mains toujours, râteau si `has_rake`), `select_tool()` / `cycle_tool()` qui annulent un remplissage en cours et émettent `tool_changed`. `harvest()` prend tout seulement si `current_tool() == "rateau"`.
-- `player.gd` : `_handle_toolbar_input()` lit `tool_1`…`tool_5`, `tool_next`, `tool_prev` (déjà déclarées dans `input_setup.gd`) ; le seau et le râteau tenus sont affichés selon l'outil ; puiser et vider ne se font qu'avec le seau. La zone ne verse que si le seau est en main ; le tas de sel a un `use()` qui ratisse avec le râteau.
-- `hud.gd` construit la barre (5 `PanelContainer`) et la redessine sur `tool_changed` : bord jaune pour la case tenue, grisé pour les cases indisponibles.
+- `core/toolbar_logic.gd` (classe `ToolbarLogic`) : `slots` (5 textes : un outil, un matériau ou `""` pour une case vide = les mains), `selected`. `select()` / `cycle()` reçoivent un `Callable` qui dit si une case est utilisable (vide : toujours ; sinon possédée) : la logique ne connaît pas GameState. Pour ranger : `put(nom)` (première case vide, ou celle qui l'a déjà), `clear(nom)`, `first_free()`, `index_of()`, `swap(a, b)` (la sélection suit ce qu'on tenait).
+- GameState décide de ce qui va dans les cases :
+  - `owns_tool(x)` : le seau toujours, le râteau si `has_rake`, les tuyaux s'il en reste ou si on en a posé, un matériau si on en porte.
+  - `_sync_toolbar()` range tout : vide les cases devenues fausses (matériau posé ou dépensé), donne une case aux outils de `TOOLS` (d'abord) puis aux matériaux portés qui n'en ont pas, vérifie la case tenue et émet `tool_changed` seulement si quelque chose a changé. Appelée dans `add_carried`, `unload_to_stock`, le paiement de `order`, l'achat du râteau ou des tuyaux et le chargement.
+  - `add_carried(items)` ne prend un matériau que si `has_slot_for(clé)` ; le reste revient (« leftover »), comme quand les bras sont pleins. `can_carry(clé)` = place dans les bras **et** une case (utilisé par les coquillages et les invites).
+  - `swap_slots(a, b)` pour le menu ; la disposition est sauvegardée dans `upgrades.toolbar` et revérifiée au chargement (en dernier, car elle dépend des tuyaux et de ce qu'on porte).
+- `harvest(zone, resource)` : `DryingLogic.take_some(n, only)` ne prend que le matériau du tas visé ; le râteau tenu prend tout ce tas.
+- `scenes/ui/toolbar_menu.gd` (créé par `main.gd`, nommé « ToolbarMenu ») : action `toolbar_menu` (Tab) dans `input_setup.gd`. Il met `ui_open`, libère la souris et affiche 5 boutons ; `click_slot()` choisit une case puis appelle `GameState.swap_slots()` avec la suivante.
+- `hud.gd` : `slot_text(entrée)` (statique, réutilisé par le menu) écrit « Seau », « Sel ×3 » ou « Mains » ; la barre se redessine sur `tool_changed` et `carried_changed`. `player.gd` : 1-5 et molette, seau et râteau visibles selon la case tenue.
+- Les tas : `drying_zone_view.gd` crée un `SaltPile` par entrée de `config.pile_slots` (sel 0, minéraux +1, minéraux rares −1 case), placé à `GameState.pile_offset(zone, matériau)`, avec sa couleur. Chaque tas affiche et ramasse seulement son matériau.
 
 ### Les outils admin
 
@@ -256,3 +262,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #12 — Tuyaux à la main, débit des pompes, plusieurs caisses
 `PipeNetwork` réécrit (cases 3D, parcours en largeur), `GameState.pipes` / `pipe_stock` / `place_pipe` / `remove_pipe` / `can_place_pipe`, `PipeBuilder`, `PipePiece`, étiquette de débit (`last_lps`), `GameState.order()` qui renvoie une liste de caisses (`delay_s`), `open_crates()`, `crate_view.rest_position()` (5 rayons vers le bas : la caisse se pose sur ce qu'elle touche), `test_pumps.gd` réécrit (~30 tests).
+
+### PR #13 — Un tas par matériau, matériaux dans la barre, menu pour la ranger
+`ToolbarLogic` (`put`, `clear`, `swap`, cases vides utilisables), `GameState._sync_toolbar` / `has_slot_for` / `can_carry` / `swap_slots`, `harvest(zone, resource)`, `DryingLogic.take_some(n, only)`, `config.pile_slots`, emprises des zones agrandies, `toolbar_menu.gd`, `Hud.slot_text`, `test_toolbar.gd` réécrit (21 tests).

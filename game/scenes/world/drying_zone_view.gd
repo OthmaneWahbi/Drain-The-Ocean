@@ -1,12 +1,12 @@
 extends StaticBody3D
 ## Vue 3D d'une zone de séchage. Ne contient aucune règle : elle lit le DryingLogic de sa zone
 ## et appelle GameState quand le joueur agit.
-## Clic (l'outil, le seau) : verser dans la zone. Le sel s'entasse À CÔTÉ, sur un tas qu'on
-## ramasse avec E (les mains) : deux gestes, deux cibles, plus de confusion (retour d'Othmane).
+## Clic (l'outil, le seau) : verser dans la zone. Ce qui sèche s'entasse À CÔTÉ, un tas par
+## matériau (sel, minéraux, minéraux rares), qu'on ramasse avec E : deux gestes, deux cibles.
 
 var zone: Dictionary
 var _water: MeshInstance3D
-var _pile: SaltPile
+var _piles: Array[SaltPile] = []
 var _water_min_y: float
 var _water_max_y: float
 
@@ -70,13 +70,16 @@ func _build_wood_basin() -> void:
 	_add_pile()
 
 
-## Le tas occupe sa propre case de la grille, dans l'emprise de la zone (GameState.pile_offset) :
-## il ne peut donc jamais tomber sur un autre objet.
+## Un tas par matériau, chacun sur sa propre case de la grille, dans l'emprise de la zone
+## (GameState.pile_offset) : ils ne peuvent donc jamais tomber sur un autre objet.
 func _add_pile() -> void:
-	_pile = SaltPile.new()
-	_pile.zone = zone
-	_pile.position = GameState.pile_offset(zone)
-	add_child(_pile)
+	for resource: String in GameState.config.pile_slots:
+		var pile := SaltPile.new()
+		pile.zone = zone
+		pile.resource = resource
+		pile.position = GameState.pile_offset(zone, resource)
+		add_child(pile)
+		_piles.append(pile)
 
 
 func _process(_delta: float) -> void:
@@ -103,9 +106,15 @@ func use(_player: Node) -> void:
 		GameState.pour_bucket_into(zone)
 
 
-## Le tas de sel (et de minéraux) à côté de la zone. Il grossit avec le dépôt ; E pour ramasser.
+## Le tas d'UN matériau à côté de la zone. Il grossit avec le dépôt ; E pour ramasser.
 class SaltPile extends StaticBody3D:
+	const COLORS := {
+		"sel": Color(0.95, 0.95, 0.92),
+		"mineraux": Color(0.55, 0.55, 0.6),
+		"mineraux_rares": Color(0.6, 0.3, 0.85),
+	}
 	var zone: Dictionary
+	var resource: String = "sel"
 	var _mesh: MeshInstance3D
 	var _shape: CollisionShape3D
 
@@ -116,15 +125,18 @@ class SaltPile extends StaticBody3D:
 		cone.bottom_radius = 0.45
 		cone.height = 0.5
 		cone.radial_segments = 10
-		cone.material = Greybox.material(Greybox.SALT)
+		cone.material = Greybox.material(COLORS.get(resource, Greybox.SALT))
 		_mesh.mesh = cone
 		_mesh.position.y = 0.25
 		add_child(_mesh)
 		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
 		add_child(_shape)
 
+	func count() -> int:
+		return int((zone.logic as DryingLogic).deposit.get(resource, 0))
+
 	func _process(_delta: float) -> void:
-		var amount := Economy.count((zone.logic as DryingLogic).deposit)
+		var amount := count()
 		_mesh.visible = amount > 0
 		_shape.disabled = amount <= 0
 		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
@@ -133,20 +145,25 @@ class SaltPile extends StaticBody3D:
 		_mesh.position.y = 0.25 * s
 
 	func get_prompt(_player: Node) -> String:
-		var amount := Economy.count((zone.logic as DryingLogic).deposit)
+		var amount := count()
 		if amount <= 0:
 			return ""
+		var what := tr("RES_" + resource.to_upper())
+		if not GameState.has_slot_for(resource):
+			return tr("PROMPT_NO_SLOT") % what
+		if GameState.carry_space() <= 0:
+			return tr("PROMPT_HANDS_FULL")
 		if GameState.current_tool() == "rateau":
-			return tr("PROMPT_RAKE") % amount
-		return tr("PROMPT_PILE") % amount
+			return tr("PROMPT_RAKE") % [what, amount]
+		return tr("PROMPT_PILE") % [what, amount]
 
 	func interact(_player: Node) -> void:
-		GameState.harvest(zone)
+		GameState.harvest(zone, resource)
 
-	## Clic avec le râteau en main : tout ratisser d'un coup.
+	## Clic avec le râteau en main : tout le tas d'un coup.
 	func use(_player: Node) -> void:
 		if GameState.current_tool() == "rateau":
-			GameState.harvest(zone)
+			GameState.harvest(zone, resource)
 
 
 ## Ce que la touche G déplace (voir placement_controller.gd).

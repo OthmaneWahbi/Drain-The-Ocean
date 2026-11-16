@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.22 (tuyaux posés à la main, débit des pompes, une caisse par objet) |
+| Version du document | 0.23 (un tas par matériau, matériaux dans la barre, menu pour la ranger) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -350,11 +350,14 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** Un emplacement est valide si l'emprise (un cercle autour de l'objet) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
   - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
   - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
-  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** Le tas de sel d'une zone occupe sa propre case, à 2 ou 3 cases du centre, dans l'emprise de la zone (il tourne avec elle) ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
+  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** ~~Un seul tas de sel par zone~~ (v0.22). **[DÉCIDÉ]** Chaque matériau récolté a **son propre tas** à côté de la zone de séchage (Othmane, 2026-11-16). **[PROPOSÉ]** Les tas (sel, minéraux, minéraux rares) sont côte à côte, chacun sur sa case, à 2 ou 3 cases du centre, dans l'emprise de la zone (elle grandit : cuvette et bâche 3 m, bassin 4 m) et tournent avec elle ; E ramasse 3 unités du tas visé, le râteau tout le tas ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
   - **[DÉCIDÉ]** Avant d'apparaître, les coquillages, noix de coco, caisses et objets livrés vérifient ce qui occupe déjà la place (Othmane, 2026-11-16). **[PROPOSÉ]** S'il n'y a vraiment plus de place (plage pleine), rien n'apparaît plutôt que d'apparaître sur quelque chose. Le joueur compte aussi : rien n'apparaît ni ne se pose sur lui, et une caisse encore en vol réserve déjà sa place.
   - **[DÉCIDÉ]** Quand on ouvre une caisse qui contient un objet à poser (zone de séchage, miroir, condenseur…), le jeu passe **tout seul en mode déplacement** (Othmane, 2026-11-16). **[PROPOSÉ]** S'il y en a plusieurs, ils passent l'un après l'autre ; annuler laisse l'objet sur la case libre où il est apparu.
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
-- **[PROPOSÉ]** Barre d'outils (M-27, M-18 ; prototype v0.21) : 5 cases en bas de l'écran, choisies avec 1-5 ou la molette (qui saute les cases vides ou pas encore achetées). Cases : 1 seau, 2 mains, 3 râteau (allumée après l'achat), 4 et 5 vides pour plus tard.
+- **[PROPOSÉ]** Barre d'outils (M-27, M-18 ; prototype v0.21) : 5 cases en bas de l'écran, choisies avec 1-5 ou la molette. ~~Cases fixes (seau, mains, râteau…)~~ : remplacé en v0.23.
+  - **[DÉCIDÉ]** Chaque matériau porté **prend une des 5 cases** en main ; un **menu** permet de **réorganiser** les 5 cases (Othmane, 2026-11-16).
+  - **[PROPOSÉ]** Détails (v0.23) : au départ, le seau et 4 cases vides (une case vide = les mains nues). Un outil acheté (râteau, tuyaux) prend la première case vide. Un matériau ramassé (sel, minéraux, coquillages…) prend une case vide, avec sa quantité (« Sel ×3 ») ; la même case garde ensuite tout ce matériau. Sans case libre, on ne peut pas le prendre (« Plus de case libre »). La case se libère quand on pose tout à la palette ou qu'on le dépense. La limite de ce qu'on porte en tout (10, 40 avec la brouette) ne change pas. Un outil obtenu quand la barre est pleine prend la première case qui se libère.
+  - **[PROPOSÉ]** Menu « Ranger la barre » : **Tab**. On clique une case puis une autre pour les échanger ; ce qu'on tenait reste en main. Tab ou Échap pour fermer. La disposition est sauvegardée.
   - Le seau ne sert (puiser, verser, vider) que s'il est en main. Les mains servent à ne rien renverser ; E et la pompe à bras marchent avec n'importe quel outil.
   - Le râteau ne ramasse tout d'un coup que s'il est **en main** (clic ou E sur le tas) ; sinon on ramasse 3 par 3.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).

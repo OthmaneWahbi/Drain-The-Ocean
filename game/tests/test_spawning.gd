@@ -54,7 +54,7 @@ func test_shells_never_land_on_things_over_many_mornings() -> void:
 	# Des objets posés sur la plage, puis 40 matins d'affilée (on ramasse tout chaque jour).
 	gs.add_mirror(Vector3(0.5, 0.5, 17.5))
 	gs.add_station("rations", Vector3(-17.5, 0.5, 0.5))
-	gs.add_zone("bache", Vector3(12.5, 0.5, -12.5))
+	gs.add_zone("bache", Vector3(12.5, 0.5, -2.5))
 	for day in 40:
 		for p in gs.pickups.duplicate():
 			if p.kind == "shell":

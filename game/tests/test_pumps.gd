@@ -278,7 +278,7 @@ func test_buying_pipes_adds_pieces_and_lights_the_toolbar_slot() -> void:
 	gs.open_crates(gs.order(["tuyau", "tuyau"]))
 	assert_eq(gs.pipe_stock, 10, "5 pièces par achat")
 	assert_true(gs.owns_tool("tuyaux"))
-	gs.select_tool(3)
+	gs.select_tool(gs.toolbar.index_of("tuyaux"))
 	assert_eq(gs.current_tool(), "tuyaux")
 
 
