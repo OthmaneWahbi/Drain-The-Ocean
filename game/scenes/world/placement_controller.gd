@@ -5,6 +5,9 @@ extends Node3D
 ## R : tourner d'un quart de tour. Clic : poser (GameState.move_item). G ou Échap : annuler,
 ## l'objet revient à sa place et à son orientation.
 ##
+## Un objet qui sort d'une caisse (GameState.placement_requested) passe tout seul en mode
+## déplacement ; s'il y en a plusieurs, ils passent l'un après l'autre. Annuler le laisse où il est.
+##
 ## Ce nœud ne contient aucune règle : la validité vient de GameState.can_place / PlacementGrid.
 
 ## Distance maximale de visée pendant le déplacement (plus loin que la main).
@@ -25,6 +28,10 @@ var _disk: MeshInstance3D
 var _disk_mat: StandardMaterial3D
 var _grid: MeshInstance3D
 var _grid_mesh: ImmediateMesh
+## Objets sortis d'une caisse qui attendent leur tour.
+var _queue: Array[Dictionary] = []
+## Donne la vue 3D d'un objet de GameState (fourni par main.gd).
+var view_for: Callable = func(_it: Dictionary) -> Node3D: return null
 
 
 func _ready() -> void:
@@ -47,7 +54,18 @@ func _ready() -> void:
 	_grid.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_grid)
 	_set_visuals(false)
-	GameState.game_reset.connect(cancel)
+	GameState.game_reset.connect(_on_reset)
+	GameState.placement_requested.connect(request)
+
+
+## Un objet vient d'arriver : on le déplace tout de suite, ou dès que le précédent est posé.
+func request(p_item: Dictionary) -> void:
+	_queue.append(p_item)
+
+
+func _on_reset() -> void:
+	_queue.clear()
+	cancel()
 
 
 func _process(_delta: float) -> void:
@@ -55,9 +73,15 @@ func _process(_delta: float) -> void:
 	if player == null:
 		return
 	if not GameState.placing:
+		if _start_next_in_queue():
+			return
 		if Input.is_action_just_pressed(&"move_object") and not GameState.ui_open \
 				and player.target and player.target.has_method(&"get_movable"):
 			start(player.target)
+		return
+	# L'objet a disparu entre-temps (nouvelle partie, chargement…) : on arrête.
+	if not GameState.movable_items().has(item):
+		cancel()
 		return
 	# Échap libère la souris : on annule aussi le déplacement.
 	if Input.is_action_just_pressed(&"move_object") or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -71,6 +95,21 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed(&"use_tool") and _valid:
 		confirm()
 		player.prompt = ""
+
+
+## Lance le prochain objet en attente (s'il existe encore et que le joueur a la main).
+func _start_next_in_queue() -> bool:
+	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return false
+	while not _queue.is_empty():
+		var next: Dictionary = _queue.pop_front()
+		if not GameState.movable_items().has(next):
+			continue
+		var v: Node3D = view_for.call(next)
+		if v and is_instance_valid(v):
+			start(v)
+			return true
+	return false
 
 
 ## Entre en mode déplacement pour la vue visée.

@@ -35,9 +35,9 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane.
-- **Documents :** PRD v0.17. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). 93 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte.
+- **Documents :** PRD v0.18. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). 113 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
 - **Prochaine étape :** retours d'Othmane, puis la fin de T2 (pompe à bras, tuyaux, moulin-pompe = fin de démo), la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
@@ -123,6 +123,8 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - **R** tourne l'objet d'un quart de tour pendant le déplacement. L'orientation est dans l'état de l'objet, comme sa position.
 - La **palette** se déplace comme le reste ; le téléphone reste fixe.
 - Tout ce qui apparaît tout seul prend une case libre : une caisse livrée ou un objet qui en sort va sur la case libre la plus proche de l'endroit prévu ; un coquillage tombe au centre d'une case libre de la plage ; le tas de sel d'une zone a sa propre case, à l'intérieur de l'emprise de la zone (il tourne avec elle). Les noix de coco au pied des palmiers bloquent aussi leur place.
+- Avant d'apparaître, tout regarde ce qui est déjà là : objets posés, caisses (même encore en vol), coquillages, places des noix de coco, éléments fixes, et le joueur. S'il n'y a plus de place, rien n'apparaît. Une noix de coco ne repousse pas sous un objet.
+- Ouvrir une caisse qui contient des objets à poser enchaîne le mode déplacement pour chacun, l'un après l'autre.
 - La position et l'orientation sont sauvegardées, et les miroirs déplacés boostent les zones de leur nouvel emplacement.
 
 ### Le temps qui passe
@@ -147,6 +149,22 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — DÉCISION — Vérifier la place avant d'apparaître, mode G automatique
+- **Quoi :** Othmane : « Make sure que les coquillages et les autres spawnable objects prennent en compte qu'est-ce qui est où avant de spawner. When opening something from a crate that is to place like drying places, we switch to G mode automatically. […] run tests for all bug possibilities […] And make and push the next 3 releases but test in between ».
+- **Impact :** PRD §10 (v0.18). Trois releases suivantes prévues : pompe à bras + tuyaux, moulin-pompe + fin de démo, barre d'outils (M-27).
+
+### 2026-11-16 — MODIF — Cases vérifiées, mode G automatique, CI plus stricte
+- **Quoi :**
+  - Les emprises qui gênent comptent maintenant les coquillages et le joueur (`player_position`, rayon dans les données). Coquillage : 40 essais, sinon rien. Noix de coco : seulement si sa place est libre.
+  - `apply_item` renvoie l'objet posé ; `open_crate` émet `placement_requested` pour chacun ; le contrôleur de placement les met en file et les lance l'un après l'autre (s'il a la main).
+  - Le contrôleur annule si l'objet déplacé disparaît.
+  - 20 tests de cas tordus (`test_spawning.gd`) : 40 matins sans chevauchement, plage pleine, noix sous un objet, caisse en vol, grosse caisse de 11 objets, joueur, coquillage qui bloque puis se ramasse, échec de déplacement sans effet, eau et sel gardés, vieille sauvegarde mal rangée…
+- **Impact :** `game/core/game_state.gd`, `game_config`, `placement_controller.gd`, `main.gd`, `player.gd`, tests, CI.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Le lanceur de tests ignorait les erreurs
+- **Quoi :** un fichier de tests qui ne compile pas était ignoré (« 93 tests, 0 échec ») ; une erreur de script au milieu d'un test le laissait « ok ». Trouvé en écrivant `test_spawning.gd` (type non déduit, puis une commande refusée car les tongs sont uniques).
+- **Correction :** le lanceur compte un fichier qui ne compile pas comme un échec ; la CI échoue aussi si « SCRIPT ERROR » apparaît dans les tests ou dans le test de fumée.
 
 ### 2026-11-16 — DÉCISION — Rotation, palette déplaçable, cases pour ce qui apparaît
 - **Quoi :** Othmane demande : « Ajoute la rotation et garde le telephone fixe et la palette doit etre movable. Fixe ca et merge au main directement », puis « pour le sel et autre qui sont générés, ils doivent letre dans la grille correspondante pour que ca ne soit pas sur un autre objet ».

@@ -47,6 +47,7 @@ func _ready() -> void:
 	# Le mode déplacement des objets (G, M-22).
 	var placement := PlacementController.new()
 	placement.name = "Placement"
+	placement.view_for = func(it: Dictionary) -> Node3D: return depot if it.id == "depot" else _id_views.get(it.id)
 	add_child(placement)
 	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).
 	var gauge := WaterGauge.new()

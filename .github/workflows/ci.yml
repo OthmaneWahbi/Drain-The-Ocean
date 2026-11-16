@@ -27,7 +27,14 @@ jobs:
         run: ./godot --headless --path game --import
 
       - name: Lancer les tests
-        run: ./godot --headless --path game -s res://tests/run_tests.gd
+        # Une erreur de script pendant un test ne le fait pas échouer tout seul : on la cherche aussi.
+        run: |
+          set -o pipefail
+          ./godot --headless --path game -s res://tests/run_tests.gd 2>&1 | tee tests.log
+          ! grep -q "SCRIPT ERROR" tests.log
 
       - name: Lancer la scène principale (fumée)
-        run: ./godot --headless --path game --quit-after 120
+        run: |
+          set -o pipefail
+          ./godot --headless --path game --quit-after 120 2>&1 | tee smoke.log
+          ! grep -q "SCRIPT ERROR" smoke.log

@@ -129,6 +129,8 @@ extends Resource
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
 ## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
 @export var coconut_radius_m: float = 0.3
+## Le joueur occupe ce rayon : on ne pose rien et rien n'apparaît sur lui.
+@export var player_radius_m: float = 0.5
 ## Angle d'un appui sur R pendant un déplacement, en degrés.
 @export var rotation_step_deg: float = 90.0
 ## Obstacles fixes : (x, z, rayon) — téléphone, palmiers, jauge, rochers.
