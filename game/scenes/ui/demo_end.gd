@@ -48,23 +48,13 @@ func _build() -> void:
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.custom_minimum_size = Vector2(640, 300)
 	_panel.position = Vector2(-320, -150)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.08, 0.12, 0.96)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 28
-	style.content_margin_right = 28
-	style.content_margin_top = 22
-	style.content_margin_bottom = 22
-	_panel.add_theme_stylebox_override("panel", style)
+	_panel.theme = UiTheme.theme()
+	_panel.add_theme_stylebox_override("panel", UiTheme.paper(UiTheme.PAPER, UiTheme.INK, 14, 28))
 	add_child(_panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	_panel.add_child(box)
-	var title := Label.new()
-	title.text = tr("DEMO_END_TITLE")
-	title.add_theme_font_size_override("font_size", 40)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
+	box.add_child(UiTheme.banner("DEMO_END_TITLE", 40))
 	_text = Label.new()
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -73,7 +63,7 @@ func _build() -> void:
 	teaser.text = tr("DEMO_END_TEASER")
 	teaser.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	teaser.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	teaser.modulate = Color(1.0, 0.85, 0.5)
+	teaser.add_theme_color_override("font_color", UiTheme.RED_DARK)
 	box.add_child(teaser)
 	var button := Button.new()
 	button.text = tr("DEMO_END_CONTINUE")

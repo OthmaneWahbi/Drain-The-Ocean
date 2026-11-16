@@ -99,7 +99,7 @@ func test_phone_save_and_old_saves() -> void:
 
 # --- Dans la partie --------------------------------------------------------------------------
 
-func test_new_game_rings_and_tutorial_drops_the_paper_catalogue() -> void:
+func test_new_game_rings_and_tutorial_sends_the_catalogue_to_the_booth() -> void:
 	assert_true(gs.phone.is_ringing())
 	var added := []
 	gs.crate_added.connect(func(c, _a): added.append(c))
@@ -108,9 +108,27 @@ func test_new_game_rings_and_tutorial_drops_the_paper_catalogue() -> void:
 	assert_eq(added[0].items, ["catalogue_papier"])
 	assert_true(added[0].get("free", false), "caisse offerte : rien à arracher sur la palette")
 	assert_almost(float(added[0].delay_s), gs.config.hold_music_s, 1e-6, "après la musique d'attente")
+	assert_false(gs.catalogue_delivered, "pas de catalogue avant d'ouvrir la caisse")
 	gs.open_crate(added[0])
-	assert_eq(gs.decor.size(), 1)
-	assert_eq(gs.decor[0].kind, "catalogue_papier")
+	assert_true(gs.catalogue_delivered, "le catalogue part dans la cabine")
+	assert_eq(gs.decor.size(), 0, "rien n'est posé au sol (0.1.2)")
+
+
+func test_catalogue_delivery_is_saved_and_old_saves_migrate() -> void:
+	_answer_tutorial()
+	gs.open_crate(gs.crates[0])
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	gs.new_game()
+	assert_false(gs.catalogue_delivered)
+	gs.load_dict(data)
+	assert_true(gs.catalogue_delivered)
+	# Vieille sauvegarde : le catalogue papier était un décor posé au sol.
+	data.erase("catalogue_delivered")
+	data["decor"] = [{"kind": "catalogue_papier", "position": [1, 0.5, 1]}, {"kind": "flamant", "position": [2, 0.5, 2]}]
+	gs.load_dict(data)
+	assert_true(gs.catalogue_delivered)
+	assert_eq(gs.decor.size(), 1, "le catalogue a quitté le sol, le flamant reste")
+	assert_eq(gs.decor[0].kind, "flamant")
 
 
 func test_paper_catalogue_is_not_for_sale() -> void:

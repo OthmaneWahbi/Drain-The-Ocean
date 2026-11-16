@@ -1,0 +1,51 @@
+{
+	"tutorial": {
+		"start": "t1",
+		"nodes": {
+			"t1": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_1", "choices": [
+				{"text": "DLG_TUTO_1_A", "next": "t2"},
+				{"text": "DLG_TUTO_1_B", "next": "t2"}
+			]},
+			"t2": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_2", "next": "t3"},
+			"t3": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_3", "choices": [
+				{"text": "DLG_TUTO_3_A", "next": "t3b"},
+				{"text": "DLG_TUTO_3_B", "next": "t4"}
+			]},
+			"t3b": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_3B", "next": "t4"},
+			"t4": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_4", "next": "t5"},
+			"t5": {"speaker": "DLG_GINETTE", "text": "DLG_TUTO_5", "action": "hold_music"}
+		}
+	},
+	"offer": {
+		"start": "o1",
+		"nodes": {
+			"o1": {"speaker": "DLG_GINETTE", "text": "DLG_OFFER_1", "choices": [
+				{"text": "DLG_OFFER_1_A", "action": "open_catalogue"},
+				{"text": "DLG_OFFER_1_B", "next": "o2"}
+			]},
+			"o2": {"speaker": "DLG_GINETTE", "text": "DLG_OFFER_2"}
+		}
+	},
+	"call": {
+		"start": "c1",
+		"nodes": {
+			"c1": {"speaker": "DLG_GINETTE", "text": ["DLG_CALL_HELLO_1", "DLG_CALL_HELLO_2", "DLG_CALL_HELLO_3", "DLG_CALL_HELLO_4"], "choices": [
+				{"text": "DLG_CALL_ORDER", "action": "open_catalogue"},
+				{"text": "DLG_CALL_ASK", "next": "c2"},
+				{"text": "DLG_CALL_BYE", "next": "c4"}
+			]},
+			"c2": {"speaker": "DLG_GINETTE", "text": ["DLG_CALL_LEVEL_1", "DLG_CALL_LEVEL_2", "DLG_CALL_LEVEL_3"], "next": "c3"},
+			"c3": {"speaker": "DLG_GINETTE", "text": "DLG_CALL_ELSE", "choices": [
+				{"text": "DLG_CALL_ORDER", "action": "open_catalogue"},
+				{"text": "DLG_CALL_BYE", "next": "c4"}
+			]},
+			"c4": {"speaker": "DLG_GINETTE", "text": ["DLG_CALL_BYE_1", "DLG_CALL_BYE_2", "DLG_CALL_BYE_3"]}
+		}
+	},
+	"no_catalogue": {
+		"start": "n1",
+		"nodes": {
+			"n1": {"speaker": "DLG_GINETTE", "text": "DLG_NO_CATALOGUE"}
+		}
+	}
+}

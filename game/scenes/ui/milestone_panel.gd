@@ -20,10 +20,7 @@ func _ready() -> void:
 	_next_box.offset_right = -14.0
 	_next_box.offset_top = 12.0
 	_next_box.offset_bottom = 100.0
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0, 0, 0, 0.35)
-	style.set_corner_radius_all(6)
-	_next_box.add_theme_stylebox_override("panel", style)
+	_next_box.add_theme_stylebox_override("panel", UiTheme.paper(Color(UiTheme.INK, 0.55), UiTheme.PAPER, 12, 4))
 	add_child(_next_box)
 	_next_icon = MilestoneIcon.new()
 	_next_icon.custom_minimum_size = Vector2(130, 84)
@@ -43,9 +40,11 @@ func _ready() -> void:
 	_toast.add_child(_toast_icon)
 	_toast_reward = Label.new()
 	_toast_reward.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast_reward.add_theme_font_size_override("font_size", 22)
-	_toast_reward.add_theme_constant_override("outline_size", 8)
-	_toast_reward.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_toast_reward.theme = UiTheme.theme()
+	_toast_reward.theme_type_variation = "Hud"
+	_toast_reward.add_theme_font_override("font", UiTheme.title_font())
+	_toast_reward.add_theme_font_size_override("font_size", 30)
+	_toast_reward.add_theme_color_override("font_color", UiTheme.YELLOW)
 	_toast.add_child(_toast_reward)
 	GameState.milestone_reached.connect(func(m): _queue.append(m))
 	GameState.game_reset.connect(func(): _queue.clear())

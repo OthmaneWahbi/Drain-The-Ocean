@@ -158,9 +158,9 @@ func _build() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
 	_main_box.add_child(box)
-	box.add_child(MenuStyle.title("MENU_GAME_TITLE", 46))
-	var sub := MenuStyle.title("MENU_SUBTITLE", 16)
-	sub.modulate = Color(0.7, 0.85, 1.0)
+	box.add_child(UiTheme.banner("MENU_GAME_TITLE", 50))
+	var sub := MenuStyle.title("MENU_SUBTITLE", 18)
+	sub.theme_type_variation = "Fine"
 	box.add_child(sub)
 	var big_new := Button.new()
 	big_new.text = "MENU_NEW_GAME"
@@ -216,6 +216,7 @@ func _build_confirm(stack: Control) -> void:
 	box.add_theme_constant_override("separation", 14)
 	_confirm_box.add_child(box)
 	_confirm_label = MenuStyle.title("", 20)
+	_confirm_label.theme_type_variation = ""
 	_confirm_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_confirm_label)

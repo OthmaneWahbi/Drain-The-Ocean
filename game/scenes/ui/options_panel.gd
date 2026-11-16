@@ -16,7 +16,7 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	add_child(box)
-	box.add_child(MenuStyle.title("OPTIONS_TITLE", 30))
+	box.add_child(UiTheme.banner("OPTIONS_TITLE", 30))
 	_slider(box, "fov", "OPTIONS_FOV", 60.0, 110.0, 1.0)
 	_slider(box, "mouse_sensitivity", "OPTIONS_SENSITIVITY", 0.0005, 0.008, 0.0001)
 	_slider(box, "volume", "OPTIONS_VOLUME", 0.0, 1.0, 0.05)

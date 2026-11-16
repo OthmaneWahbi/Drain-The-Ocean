@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.32 (version 0.1.0 gardée, 0.1.1 : le terrain) |
+| Version du document | 0.33 (0.1.2 : palmiers, cabine téléphonique, catalogue, dialogues, interface) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -307,7 +307,8 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 ### 9.1 Passer commande
 
 - **[PROPOSÉ]** Décrocher le téléphone ouvre le **catalogue** : des pages illustrées, avec des pictogrammes et des prix en icônes de ressources. **[DÉCIDÉ]** Mixte : on décroche en 3D, puis un menu illustré façon catalogue papier (M-47).
-- **[PROPOSÉ]** Le premier appel est un tutoriel muet : on décroche, on entend une musique d'attente, une caisse tombe du ciel avec le catalogue papier dedans.
+- ~~**[PROPOSÉ]** Le premier appel est un tutoriel muet~~ → **[DÉCIDÉ]** (Othmane, 2026-11-16, version 0.1.2) : on parle au téléphone de la **cabine** avec un **système de dialogue** (sous-titres et choix de réponse, voir §19.6). Le premier appel : Ginette, de l'Agence, se présente, puis musique d'attente, puis une caisse tombe avec le catalogue papier, qui part **enchaîné dans la cabine** (jamais posé au sol).
+- **[DÉCIDÉ]** Le catalogue ne s'ouvre **que face à la cabine téléphonique** (Othmane, 2026-11-16).
 
 ### 9.2 Payer
 
@@ -739,6 +740,20 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 - **[PROPOSÉ]** Ciel cartoon : dégradé jour / coucher / nuit, disque du soleil net avec halo, étoiles la nuit. La couleur du soleil se réchauffe près de l'horizon.
 
 ---
+
+### 19.7 Version 0.1.2 : palmiers, cabine, catalogue et interface
+
+Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphonique et interface ; le catalogue accessible seulement face à la cabine, pas un objet posé au sol ; un catalogue drôle avec des images et des prix ; toute l'interface prend la direction artistique du catalogue (polices, couleurs) ; un système de dialogue avec sous-titres quand on parle à la cabine ; garder le "riiing" au-dessus de la cabine ». Ces points sont **[DÉCIDÉ]**. Les détails ci-dessous sont **[PROPOSÉ]**.
+
+- **[PROPOSÉ]** Modèles : palmiers, rochers, buissons des dunes et bois flotté du *Nature Kit* de Kenney (CC0), recolorés en cartoon au chargement ; couronne des palmiers doublée, noix de coco accrochées dessous. Aucune cabine téléphonique gratuite n'était accessible : la cabine (rouge, vitrée, bandeau « TÉLÉPHONE », téléphone mural, catalogue enchaîné sur une tablette) et les noix de coco sont faites en facettes par code. Crédits : `game/assets/CREDITS.md`.
+- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons).
+- **[PROPOSÉ]** Le Grand Catalogue de l'Agence : une double page. À gauche, les produits en vitrine (photo 3D qui tourne, nom, slogan drôle, description, prix sur étiquette, tampons « PROMO », « BIENTÔT », « DÉJÀ À VOUS ») ; à droite le bon de commande (ce qu'on a, le panier, le total).
+- **[PROPOSÉ]** Dialogues : Ginette, de l'Agence, au bout du fil. Sous-titres en bas de l'écran, texte qui s'écrit lettre par lettre, réponses au clic ou avec 1 à 4, Échap pour raccrocher. Trois conversations : premier appel, offre du jour (« Montrez-moi ça ! » ouvre le catalogue), appel normal (commander, demander s'il reste de l'eau, raccrocher). Les textes sont dans `data/dialogues.json`.
+- **[PROPOSÉ]** « Driiing ! Driiing ! » au-dessus de la cabine qui tremble ; la sonnerie se tait pendant la conversation.
+
+---
+
+
 
 ## 20. Glossaire
 
