@@ -23,3 +23,8 @@ static func is_valid(pos: Vector3, radius: float, others: Array, build_radius: f
 		if flat.distance_to(Vector2(op.x, op.z)) < radius + float(o.radius):
 			return false
 	return true
+
+
+## Ramène un angle entre 0 et 360 degrés.
+static func wrap_deg(deg: float) -> float:
+	return fposmod(deg, 360.0)

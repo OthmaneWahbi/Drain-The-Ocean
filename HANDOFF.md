@@ -35,10 +35,10 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille en PR #7.
-- **Documents :** PRD v0.16. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer les objets posés (G, grille de 1 m, vert/rouge). 88 tests.
-- **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, objets fixes, pas de rotation).
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane.
+- **Documents :** PRD v0.17. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). 93 tests.
+- **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
 - **Prochaine étape :** retours d'Othmane, puis la fin de T2 (pompe à bras, tuyaux, moulin-pompe = fin de démo), la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
@@ -120,7 +120,10 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - L'île est découpée en **cases de 1 m**. Chaque objet posé a une **emprise** : un cercle autour de son centre (2 m pour la cuvette, 3 m pour le bassin, 0,7 m pour le miroir…), réglée dans les données.
 - Une place est valide si l'emprise reste sur le sable sec (moins de 19,5 m du centre de l'île) et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère d'eau, listés dans les données).
 - En jeu : viser un objet + **G**. L'objet lui-même sert d'aperçu et suit le regard case par case ; un disque vert ou rouge montre son emprise et la grille s'affiche autour. Clic = poser (GameState vérifie encore et annonce « objet déplacé ») ; G ou Échap = annuler. Pendant ce mode, le seau et E sont coupés.
-- La position fait partie de l'état de chaque objet : elle est sauvegardée, et les miroirs déplacés boostent les zones de leur nouvel emplacement.
+- **R** tourne l'objet d'un quart de tour pendant le déplacement. L'orientation est dans l'état de l'objet, comme sa position.
+- La **palette** se déplace comme le reste ; le téléphone reste fixe.
+- Tout ce qui apparaît tout seul prend une case libre : une caisse livrée ou un objet qui en sort va sur la case libre la plus proche de l'endroit prévu ; un coquillage tombe au centre d'une case libre de la plage ; le tas de sel d'une zone a sa propre case, à l'intérieur de l'emprise de la zone (il tourne avec elle). Les noix de coco au pied des palmiers bloquent aussi leur place.
+- La position et l'orientation sont sauvegardées, et les miroirs déplacés boostent les zones de leur nouvel emplacement.
 
 ### Le temps qui passe
 
@@ -144,6 +147,19 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — DÉCISION — Rotation, palette déplaçable, cases pour ce qui apparaît
+- **Quoi :** Othmane demande : « Ajoute la rotation et garde le telephone fixe et la palette doit etre movable. Fixe ca et merge au main directement », puis « pour le sel et autre qui sont générés, ils doivent letre dans la grille correspondante pour que ca ne soit pas sur un autre objet ».
+- **Impact :** PRD §10 (v0.17). Détails (touche R, quart de tour, tas à 2 ou 3 cases) **[PROPOSÉ]**.
+
+### 2026-11-16 — MODIF — Rotation (R), palette déplaçable, cases libres
+- **Quoi :**
+  - `rotation_deg` dans chaque objet déplaçable, sauvegardée ; `move_item(item, pos, rotation)` ; touche R (quart de tour, réglé dans les données).
+  - `GameState.depot` : la palette devient un objet déplaçable comme les autres (position de départ dans les données) ; elle n'est plus un obstacle fixe.
+  - `find_free_spot()` : case libre la plus proche ; utilisé pour la cuvette de départ, les caisses livrées, les objets sortis des caisses. Coquillages au centre d'une case libre. Les caisses au sol et les noix de coco bloquent leur place.
+  - Tas de sel dans sa propre case (`pile_offset_cells`), emprises des zones agrandies pour l'inclure (cuvette et bâche 2,5 m, bassin 3,5 m).
+  - Cuvette de départ et palette recalées au centre d'une case. Anciennes sauvegardes lues sans perte (miroirs en liste, pas de palette). 5 nouveaux tests, 93 au total.
+- **Impact :** `game/core/`, `game/data/game_config.tres`, `game/scenes/`, strings, PRD v0.17, guide du code.
 
 ### 2026-11-16 — DÉCISION — Déplacer les objets avec une grille
 - **Quoi :** Othmane veut pouvoir changer les objets de place dans cette release, et propose une grille (« we definitely need to be able to change places for things in it. Maybe a grid system would be good ? »).

@@ -180,7 +180,11 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
   - Chaque image, `_follow_aim()` tire un rayon depuis la caméra (14 m) en excluant le joueur ET la vue déplacée (sinon le rayon toucherait l'objet lui-même), aligne le point touché, demande `can_place`, déplace la vue (elle sert d'aperçu), colore le disque d'emprise (`CylinderMesh`) et redessine la grille avec un `ImmediateMesh` en lignes.
   - Clic → `confirm()` → `GameState.move_item`. G ou souris libérée (Échap) → `cancel()` : la vue reprend `item.position`.
   - Il est ajouté à la scène après le joueur, donc traité après lui dans la même image : le clic qui pose l'objet ne vide pas aussi le seau.
-- `main.gd` retient aussi les zones et décors par id (`_spawn_view`) et, sur `item_moved`, recale la vue (utile si un autre code que le contrôleur déplace un objet).
+- `main.gd` retient aussi les zones et décors par id (`_spawn_view`) et, sur `item_moved`, recale la vue : position ET `rotation_degrees.y` (utile au chargement et si un autre code que le contrôleur déplace un objet).
+- **Rotation** : chaque dictionnaire déplaçable peut avoir `rotation_deg`. `move_item(item, pos, rotation_deg = NAN)` : NAN veut dire « garder l'orientation ». Dans le contrôleur, R ajoute `config.rotation_step_deg` à l'angle d'aperçu ; `confirm()` le passe à `move_item`. Les emprises sont des cercles : tourner ne change donc jamais la validité.
+- **Palette** : `GameState.depot = {id: "depot", kind: "palette", position, rotation_deg}`, dans `movable_items()`. Sa vue reste le nœud `Depot` de `main.tscn` (`depot.gd` a `get_movable()`), et `_on_item_moved` la reconnaît à son id. `_emit_all()` émet `item_moved(depot)` pour la remettre en place après une nouvelle partie ou un chargement.
+- **Tout ce qui apparaît prend une case** : `find_free_spot(radius, near)` part de la case de `near` et teste des carrés de plus en plus grands avec `PlacementGrid.is_valid` contre `_blockers_except({})` (objets, caisses au sol, obstacles fixes, noix de coco). Appelé par `next_drop_position()` (caisses), `apply_item()` (objets posés) et `new_game()` (cuvette). `_random_beach_spot()` aligne le coquillage et retire au sort s'il tombe sur quelque chose.
+- **Tas de sel** : `GameState.pile_offset(zone)` = nombre entier de cases (`config.pile_offset_cells`) le long de l'axe X local. `drying_zone_view._add_pile()` s'en sert ; le tas est un enfant de la vue, donc il tourne avec elle. Les emprises des zones l'englobent, donc il ne peut pas toucher un autre objet.
 
 ### Les outils admin
 
@@ -206,4 +210,4 @@ Logiques pures (séchage, seau, économie, jour/nuit, endurance), GameState sour
 `GameState.simulate()` / `advance_time()` (F6 fait vivre le monde), palette à un tas par ressource, `unlocked_tier` + catalogue grisé, Manuel du bricoleur, bassin en bois, miroir solaire (`mirrors`, `zone_boost`), panneau du catalogue opaque et défilant.
 
 ### PR #7 — Déplacer les objets sur une grille
-`PlacementGrid` (aligner, valider), `GameState.move_item` / `can_place` / `item_moved` / `placing`, emprises et obstacles fixes dans `GameConfig`, `get_movable()` sur les vues, `PlacementController` (touche G, aperçu, disque vert/rouge, grille en `ImmediateMesh`), `test_placement.gd`.
+`PlacementGrid` (aligner, valider), `GameState.move_item` / `can_place` / `item_moved` / `placing`, emprises et obstacles fixes dans `GameConfig`, `get_movable()` sur les vues, `PlacementController` (touche G, aperçu, disque vert/rouge, grille en `ImmediateMesh`), `test_placement.gd`. Puis : rotation (R, `rotation_deg`), palette déplaçable (`GameState.depot`), `find_free_spot()` pour caisses, objets livrés et coquillages, tas de sel dans sa propre case (`pile_offset`).

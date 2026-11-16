@@ -2,7 +2,8 @@ class_name PlacementController
 extends Node3D
 ## Le mode déplacement (M-22) : viser un objet + G, il suit le regard case par case,
 ## un disque vert (ou rouge si c'est interdit) montre son emprise et la grille s'affiche autour.
-## Clic : poser (GameState.move_item). G ou Échap : annuler, l'objet revient à sa place.
+## R : tourner d'un quart de tour. Clic : poser (GameState.move_item). G ou Échap : annuler,
+## l'objet revient à sa place et à son orientation.
 ##
 ## Ce nœud ne contient aucune règle : la validité vient de GameState.can_place / PlacementGrid.
 
@@ -18,6 +19,7 @@ const BLOCKED_COLOR := Color(0.95, 0.25, 0.2, 0.45)
 var item: Dictionary = {}
 var view: Node3D = null
 var _target_pos: Vector3
+var _rotation_deg: float = 0.0
 var _valid: bool = false
 var _disk: MeshInstance3D
 var _disk_mat: StandardMaterial3D
@@ -62,6 +64,8 @@ func _process(_delta: float) -> void:
 		cancel()
 		player.prompt = ""
 		return
+	if Input.is_action_just_pressed(&"rotate_object"):
+		_rotation_deg = PlacementGrid.wrap_deg(_rotation_deg + GameState.config.rotation_step_deg)
 	_follow_aim(player)
 	player.prompt = tr("PROMPT_PLACE") if _valid else tr("PROMPT_PLACE_BLOCKED")
 	if Input.is_action_just_pressed(&"use_tool") and _valid:
@@ -74,6 +78,7 @@ func start(p_view: Node3D) -> void:
 	view = p_view
 	item = view.get_movable()
 	_target_pos = item.position
+	_rotation_deg = GameState.item_rotation(item)
 	GameState.placing = true
 	var r := GameState.footprint(item)
 	var cyl := _disk.mesh as CylinderMesh
@@ -85,7 +90,7 @@ func start(p_view: Node3D) -> void:
 
 ## Pose l'objet sur la case visée (si elle est valide).
 func confirm() -> bool:
-	var ok := GameState.move_item(item, _target_pos)
+	var ok := GameState.move_item(item, _target_pos, _rotation_deg)
 	_finish()
 	return ok
 
@@ -100,6 +105,7 @@ func cancel() -> void:
 func _finish() -> void:
 	if view and is_instance_valid(view) and not item.is_empty():
 		view.position = item.position
+		view.rotation_degrees.y = GameState.item_rotation(item)
 	view = null
 	item = {}
 	GameState.placing = false
@@ -131,6 +137,7 @@ func _follow_aim(player: Node) -> void:
 	_target_pos.y = y
 	_valid = GameState.can_place(item, _target_pos)
 	view.position = _target_pos
+	view.rotation_degrees.y = _rotation_deg
 	_disk.position = _target_pos + Vector3(0, 0.03, 0)
 	_disk_mat.albedo_color = OK_COLOR if _valid else BLOCKED_COLOR
 	_draw_grid(_target_pos)

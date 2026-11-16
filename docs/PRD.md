@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.16 (déplacer les objets posés sur l'île, sur une grille) |
+| Version du document | 0.17 (grille : rotation, palette déplaçable, tout ce qui apparaît prend une case libre) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -335,7 +335,10 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 - **[DÉCIDÉ]** On peut **déplacer les objets posés sur l'île**, avec une **grille** (Othmane, 2026-11-16, « Maybe a grid system would be good ? »).
   - **[PROPOSÉ]** Détails du prototype : l'île est découpée en cases de **1 m**. On vise un objet et on appuie sur **G** : l'objet suit le regard case par case, la grille s'affiche autour, et un disque montre son **emprise** (vert = possible, rouge = impossible). **Clic** pour poser, **G** ou Échap pour annuler (l'objet revient à sa place).
   - **[PROPOSÉ]** Un emplacement est valide si l'emprise (un cercle autour de l'objet) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
-  - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors. Le téléphone et la palette restent fixes pour l'instant. Pas de rotation pour l'instant. Les objets livrés atterrissent toujours près de la palette, puis on les range.
+  - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
+  - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
+  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** Le tas de sel d'une zone occupe sa propre case, à 2 ou 3 cases du centre, dans l'emprise de la zone (il tourne avec elle) ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
+  - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).
 - **[PROPOSÉ]** Détails de la nage (prototype) : on nage quand les pieds sont à plus de 1,2 m sous la surface ; on flotte la tête hors de l'eau ; Espace fait monter ; avancer contre le rivage fait se hisser hors de l'eau. L'endurance baisse dans l'eau profonde même immobile (on fait du sur-place), reste stable en marchant sur terre, et ne remonte qu'à l'arrêt sur terre. À zéro dans l'eau : noyade. Course impossible tant qu'on n'est pas remonté à 25 % après épuisement.

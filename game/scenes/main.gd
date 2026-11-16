@@ -125,6 +125,7 @@ func _spawn_view(item: Dictionary, script: GDScript) -> void:
 	var view: Node3D = script.new()
 	_views.add_child(view)
 	view.setup(item)
+	view.rotation_degrees.y = GameState.item_rotation(item)
 	_id_views[item.id] = view
 
 
@@ -145,9 +146,11 @@ func _on_decor_added(decor: Dictionary) -> void:
 
 ## Un objet a changé de place : sa vue le suit.
 func _on_item_moved(item: Dictionary) -> void:
-	var view: Node3D = _id_views.get(item.id)
+	# La palette est dans la scène (main.tscn), les autres vues sont retenues par id.
+	var view: Node3D = depot if item.id == "depot" else _id_views.get(item.id)
 	if view and is_instance_valid(view):
 		view.position = item.position
+		view.rotation_degrees.y = GameState.item_rotation(item)
 
 
 func _on_crate_added(crate: Dictionary, animate: bool) -> void:

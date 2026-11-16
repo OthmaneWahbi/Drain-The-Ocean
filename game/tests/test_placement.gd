@@ -86,3 +86,69 @@ func test_decor_gets_an_id() -> void:
 	assert_true(item != null)
 	gs.apply_item(item, Vector3(0.5, 0.5, 0.5))
 	assert_true(String(gs.decor[0].get("id", "")) != "")
+
+
+func test_rotation_is_kept_and_saved() -> void:
+	var basin: Dictionary = gs.zones[0]
+	assert_true(gs.move_item(basin, basin.position, 450.0))
+	assert_almost(gs.item_rotation(basin), 90.0, 1e-6, "450° = 90° :")
+	assert_true(gs.move_item(basin, basin.position + Vector3(1, 0, 0)))
+	assert_almost(gs.item_rotation(basin), 90.0, 1e-6, "sans angle, on garde l'orientation :")
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	var other: Node = GameStateScript.new()
+	other.setup(gs.config)
+	other.load_dict(data)
+	assert_almost(other.item_rotation(other.zones[0]), 90.0)
+	other.free()
+
+
+func test_depot_is_movable_and_saved() -> void:
+	assert_true(gs.movable_items().has(gs.depot))
+	assert_true(gs.move_item(gs.depot, Vector3(4.5, 0.5, -9.5), 180.0))
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	var other: Node = GameStateScript.new()
+	other.setup(gs.config)
+	other.load_dict(data)
+	assert_almost(other.depot.position.x, 4.5)
+	assert_almost(other.depot.position.z, -9.5)
+	assert_almost(other.item_rotation(other.depot), 180.0)
+	other.free()
+
+
+func test_old_saves_without_rotation_still_load() -> void:
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	data.erase("depot")
+	data["mirrors"] = [[0.5, 0.5, -10.5]]
+	var other: Node = GameStateScript.new()
+	other.setup(gs.config)
+	other.load_dict(data)
+	assert_eq(other.mirrors.size(), 1)
+	assert_eq(other.depot.position, gs.config.depot_position)
+	other.free()
+
+
+## Les objets livrés, les caisses et les coquillages tombent toujours sur une case libre.
+func test_spawned_things_take_a_free_cell() -> void:
+	var basin: Dictionary = gs.zones[0]
+	var spot: Vector3 = gs.find_free_spot(gs.footprint_of("rations"), basin.position)
+	assert_true(spot.distance_to(basin.position) > 0.1, "pas sur la cuvette :")
+	assert_true(PlacementGrid.is_valid(spot, gs.footprint_of("rations"), gs.blockers_for({}), gs.config.build_radius_m))
+	assert_almost(fposmod(spot.x, 1.0), 0.5, 1e-6, "au centre d'une case :")
+	var item: CatalogItem = gs.catalog.find(&"rations")
+	gs.apply_item(item, basin.position)
+	var st: Dictionary = gs.stations[0]
+	assert_true(gs.can_place(st, st.position), "la caisse de rations n'est sur rien :")
+	for i in 30:
+		var shell_spot: Vector3 = gs._random_beach_spot()
+		assert_true(PlacementGrid.is_valid(shell_spot, 0.25, gs.blockers_for({}), gs.config.build_radius_m))
+	for i in 6:
+		var drop: Vector3 = gs.next_drop_position()
+		assert_true(PlacementGrid.is_valid(drop, gs.footprint_of("caisse"), gs.blockers_for({}), gs.config.build_radius_m))
+
+
+func test_salt_pile_sits_inside_its_zone_footprint() -> void:
+	for kind in ["cuvette", "bache", "bassin_bois"]:
+		var z := {"kind": kind}
+		var off: Vector3 = gs.pile_offset(z)
+		assert_true(off.x + 0.5 <= gs.footprint_of(kind) + 1e-6, "%s : le tas déborde :" % kind)
+		assert_almost(fposmod(off.x, 1.0), 0.0, 1e-6, "le tas est à un nombre entier de cases :")
