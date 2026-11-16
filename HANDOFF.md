@@ -35,9 +35,9 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** M0 fusionné. Jalon **M2** (boucle de base) en PR #3, avec la nage, l'endurance, les outils T1 et une partie de M1 (niveau d'eau honnête, jauge).
-- **Documents :** PRD v0.11. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min. Sauvegarde de toute la partie. 60 tests.
+- **Phase :** M0 et M2 fusionnés (PR #2, #3). Retours du premier test d'Othmane en PR #4.
+- **Documents :** PRD v0.12. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Sauvegarde de toute la partie. 65 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel).
 - **Prochaine étape :** retours d'Othmane, puis la fin de M1 (shader d'eau, terrain de fond, mesure de perf), la faim et la soif légères, la barre d'outils, le manuel du bricoleur et T2.
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
@@ -62,9 +62,9 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - **Puiser :** le joueur, debout dans l'eau, maintient le clic environ 1 s ; le seau se remplit (10 L, ou 20 L avec le grand seau). Ces litres sont **retirés de l'océan** à ce moment. Chaque seau a une petite chance de remonter un coquillage, et un coquillage une petite chance d'être une perle.
 - **Verser :** visée sur une zone de séchage + clic. La zone n'accepte que la place libre ; le reste reste dans le seau. Vider le seau ailleurs (sable, mer) **rend l'eau à l'océan** (M-33, M-34).
 - **Sécher :** chaque zone évapore à débit fixe (`capacité ÷ 45 s` de jour, ×0,3 la nuit). Tous les 4 L évaporés (réglage `liters_per_salt`), elle ajoute 1 sel à son dépôt, plus un tirage de minéral et de minéral rare. Le séchage continue partout, même loin du joueur (M-42).
-- **Récolter et porter :** clic sur une zone sans eau à verser : 3 unités du dépôt passent dans les mains (les plus rares d'abord), ou tout le dépôt avec le râteau. On porte 10 unités au maximum (40 avec la brouette). Ce qui ne rentre pas reste dans la zone.
+- **Récolter et porter :** le dépôt d'une zone s'affiche comme un **tas à côté d'elle**, qui grossit avec la quantité. E sur le tas : 3 unités passent dans les mains (les plus rares d'abord), ou tout le tas avec le râteau. Le clic sur la zone ne sert qu'à verser. On porte 10 unités au maximum (40 avec la brouette). Ce qui ne rentre pas reste dans la zone.
 - **Déposer :** E sur la palette de dépôt : tout ce qui est porté passe dans le **stock**. Seul le stock de la palette sert à payer (troc).
-- **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier ; « Commander » vérifie qu'on peut payer, retire le prix du stock, marque les objets uniques comme possédés et crée une **caisse**.
+- **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier (articles identiques regroupés « ×N ») ; « Commander » vérifie qu'on peut payer avec les bras + la palette, retire le prix des bras d'abord puis de la palette, marque les objets uniques comme possédés et crée une **caisse**.
 - **Livrer :** un avion traverse le ciel, passe au-dessus de la palette, largue la caisse qui descend en parachute (5 s au total). Les caisses successives tombent en spirale autour du point de livraison pour ne pas s'empiler.
 - **Ouvrir :** E sur la caisse posée : chaque objet est appliqué (nouvelle zone de séchage posée à côté, seau agrandi, décor posé), puis la caisse disparaît.
 
@@ -103,9 +103,16 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - Un rayon part du centre de la caméra (portée 3 m, allongée en 3e personne). L'objet visé affiche une invite au centre de l'écran.
 - Le clic gauche utilise l'**outil** (le seau), avec un ordre de priorité : agir sur l'objet visé (verser, récolter) ; sinon puiser si on est dans l'eau ; sinon vider le seau. La touche E sert aux **interactions** (téléphone, palette, caisse).
 
-### Touches de debug (provisoires)
+### Sauvegarde manuelle et outils admin
 
-- **F5** sauvegarde, **F7** maintenu vide l'océan très vite (pour voir l'eau baisser), **F8** maintenu accélère le temps ×10, **F9** nouvelle partie, **F10** ajoute 50 sel et 5 minéraux.
+- **F5** sauvegarde (vraie fonction du jeu, M-78).
+- Les outils de triche vivent **tous** dans un module à part, `game/admin/`, chargé au démarrage. Pour les retirer : supprimer ce dossier et sa ligne dans la liste des modules chargés au démarrage (`project.godot`). Rien d'autre n'en dépend. Ils se coupent seuls dans une version exportée « release ».
+- Touches : **F1** affiche la liste, **F6** +3 h, **F7** maintenu vide l'océan, **F8** maintenu temps ×10, **F9** nouvelle partie, **F10** +50 sel +5 minéraux, **F11** +10 000 de chaque ressource, **F12** ouvre toutes les caisses tout de suite.
+
+### Le ciel
+
+- Le soleil suit une courbe selon l'heure et s'éteint sous l'horizon. La lune suit le chemin inverse : une lumière bleutée très faible, plus un disque blanc dessiné loin dans le ciel.
+- Le plan d'eau suit le joueur à l'horizontale (on n'en voit jamais le bord), et le bas du ciel a la couleur de la mer, pour éviter une bande claire à l'horizon.
 
 ### Tests
 
@@ -114,6 +121,28 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Retours du premier test : panier, paiement, tas de sel, lune, outils admin
+- **Quoi :**
+  - Panier : les articles identiques sont regroupés (« Nom ×N »).
+  - Paiement avec les bras puis la palette ; le catalogue affiche les deux.
+  - Le sel s'entasse à côté de chaque zone ; E sur le tas pour ramasser ; le clic sur la zone ne sert plus qu'à verser.
+  - Ciel : le soleil s'éteint la nuit (fini le « soleil noir »), une lune apparaît ; le plan d'eau suit le joueur et le bas du ciel prend la couleur de la mer ; reflets de l'eau adoucis.
+  - Outils admin regroupés dans `game/admin/admin_tools.gd` (touches F1, F6 à F12), retirés de la scène principale.
+  - 5 nouveaux tests (65 au total).
+- **Pourquoi :** retours d'Othmane après son premier test de M2.
+- **Impact :** `game/core/economy.gd`, `game/core/game_state.gd`, `game/scenes/ui/catalogue*.gd`, `game/scenes/world/drying_zone_view.gd`, `game/scenes/main.gd`, `game/scenes/main.tscn`, `game/admin/`, `game/project.godot`, `game/localization/strings.csv`, `game/tests/`, PRD v0.12 (§6.3, §9.2, §10, §15, §19.1).
+- **Par :** Claude
+
+### 2026-11-16 — NOTE — La lueur à l'horizon dépend du rendu
+- **Quoi :** sur les captures de Claude (rendu logiciel « Compatibility »), l'eau près de l'horizon reste plus claire qu'en vrai. Si Othmane voit encore une lueur sur son PC (Forward+), il faudra une capture de son écran pour viser la bonne cause (reflet du soleil, brouillard ou ciel).
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Retours du premier test de M2
+- **Quoi :** Othmane demande : panier regroupé « Nom ×N » ; pouvoir payer avec ce qu'on porte + la réserve ; ne plus tout faire avec le même bouton (idée : le sel s'entasse à côté de l'eau) ; corriger la lueur à l'horizon et le « soleil noir » la nuit (une lune) ; pouvoir déplacer les objets de l'île (plus tard, consigné dans le PRD) ; des outils admin pour tout tester, faciles à retirer.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD v0.12.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Rythme 1 min 30, nage et endurance, niveau d'eau, outils T1
 - **Quoi :**

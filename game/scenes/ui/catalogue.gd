@@ -1,6 +1,6 @@
 extends CanvasLayer
 ## Le catalogue de l'agence, ouvert en décrochant le téléphone (M-47 : on décroche en 3D,
-## puis un menu illustré). Panier (M-49), paiement avec le stock de la palette.
+## puis un menu illustré). Panier (M-49), paiement avec ce qu'on porte puis la palette.
 ## Le jeu ne se met pas en pause pendant les courses (M-74).
 
 var _cart: Array[String] = []
@@ -132,7 +132,7 @@ func _order() -> void:
 
 
 func _refresh() -> void:
-	_stock_label.text = "%s : %s" % [tr("CAT_ON_PALLET"), format_items(GameState.stock, true)]
+	_stock_label.text = "%s : %s\n%s : %s" % [tr("CAT_ON_PALLET"), format_items(GameState.stock, true), tr("HUD_CARRIED"), format_items(GameState.carried)]
 	for id in _item_buttons:
 		var item := GameState.catalog.find(StringName(id))
 		_item_buttons[id].disabled = not GameState.can_buy(item) or (item.unique and _cart.has(id))
@@ -140,10 +140,10 @@ func _refresh() -> void:
 		_cart_label.text = tr("CAT_EMPTY_CART")
 		_order_button.disabled = true
 		return
-	var names := _cart.map(func(i): return tr(GameState.catalog.find(StringName(i)).name_key))
+	var names := CatalogueFormat.format_cart(_cart, func(i): return tr(GameState.catalog.find(StringName(i)).name_key))
 	var total := GameState.cart_price(_cart)
-	_cart_label.text = "%s : %s\n%s : %s" % [tr("CAT_CART"), ", ".join(names), tr("CAT_TOTAL"), format_items(total)]
-	_order_button.disabled = not Economy.can_afford(GameState.stock, total)
+	_cart_label.text = "%s : %s\n%s : %s" % [tr("CAT_CART"), names, tr("CAT_TOTAL"), format_items(total)]
+	_order_button.disabled = not Economy.can_afford(GameState.available_resources(), total)
 
 
 

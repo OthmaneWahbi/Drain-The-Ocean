@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.11 (premier achat vers 1 min 30, nage, niveau d'eau visible, outils T1) |
+| Version du document | 0.12 (retours de test : paiement, tas de sel, lune, déplacement des objets, outils admin) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -181,7 +181,7 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
   - Une zone **pleine** sèche entièrement en **45 s** de jour. L'évaporation est donc un débit fixe par zone, `capacité ÷ 45 s` (la cuvette de 40 L évapore environ 0,9 L/s), qu'elle soit pleine ou presque vide. Plus de surface = plus de débit, conformément à la règle ci-dessus.
   - La nuit, ce débit est multiplié par 0,3 (M-40).
   - Chaque tranche de **4 L évaporés** donne 1 sel (valeur `liters_per_salt` dans les données), plus un tirage de minéral (10 %) et de minéral rare (0,5 %). D'abord 10 L ; passé à 4 L pour le premier achat vers 1 min 30.
-  - Récolte à la main : **3 unités par clic** ; le râteau prend toute la zone d'un coup (M-39).
+  - **[DÉCIDÉ]** Le sel s'entasse **à côté** de la zone, pas dedans (idée d'Othmane, 2026-11-16) : verser (clic, l'outil) et ramasser (le tas) sont deux cibles différentes. **[PROPOSÉ]** On ramasse le tas avec **E** (les mains), **3 unités par appui** ; le râteau prend tout le tas d'un coup (M-39).
   - Puiser donne 3 % de chance de coquillage par seau, et chaque coquillage 2 % de chance de perle.
   - Conséquence : les 15 sel de la bâche sèchent en ~68 s dans la cuvette ; avec les trajets, le premier achat arrive vers 1 min 30.
   - L'autre lecture (« chaque seau versé sèche en 45 s, indépendamment ») rendrait la surface inutile ; elle a été écartée pour cette raison.
@@ -297,6 +297,8 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 - **[PROPOSÉ]** Le joueur dépose ses ressources sur une **zone de dépôt** (une palette, puis une plateforme). Lors de la commande, l'avion passe en rase-mottes et **arrache le dépôt avec un crochet** sans ralentir (gag récurrent). Plus tard, un tapis roulant alimente automatiquement la zone.
 - **[PROPOSÉ]** Le paiement se valide dès que le dépôt contient assez ; l'excédent reste sur place.
+- **[DÉCIDÉ]** On paie avec **ce qu'on porte plus la palette** (Othmane, 2026-11-16) : avec X sel dans les bras et Y sur la palette, on peut acheter un objet à X + Y. Les bras sont vidés en premier.
+- **[DÉCIDÉ]** Dans le panier, les articles identiques sont regroupés : « Bâche de séchage ×3 » (Othmane, 2026-11-16).
 
 ### 9.3 Recevoir
 
@@ -420,6 +422,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 - **[DÉCIDÉ]** Jeu principal : 3D low-poly, dans le même esprit visuel que *How to Fish* (Q-01).
 - **[PROPOSÉ]** Couleurs vives, eau très soignée (c'est le personnage principal du jeu). Ciel et lumière qui changent avec le jour.
+- **[DÉCIDÉ]** La nuit, une **lune** à la place du soleil (le soleil disparaît sous l'horizon), et pas de lueur étrange à l'horizon (Othmane, 2026-11-16).
 - **[PROPOSÉ]** Mini-jeu et mobile : pixel art très simple, palette restreinte (ex. 16 couleurs).
 - **[PROPOSÉ]** Audio : vagues, vent, mouettes au début, puis bruits de machines de plus en plus présents. Musique d'attente du téléphone qui devient un thème récurrent (et peut-être la musique du générique). Le son du drain est le moment sonore le plus important du jeu.
 - **[PROPOSÉ]** Contraste voulu : l'île est paisible au début et devient une usine bruyante. Le silence après le drain doit frapper.
@@ -587,6 +590,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 - **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 5 s, offres spéciales environ une fois par jour, ouverture des caisses, pose avec aperçu fantôme.
 - **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1 ; **[PROPOSÉ]** 30 sel, porte 40 unités au lieu de 10), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
 - **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
+- **[DÉCIDÉ]** **Outils admin** pour tester (beaucoup de ressources, accélérer le temps, vider l'océan…), regroupés dans un seul module facile à retirer avant la démo (Othmane, 2026-11-16). Ils sont coupés d'office dans une version exportée « release ».
 - **Fin de démo :** teaser des machines T3, puis écran de fin de démo. La vraie fin (drain, avion publicitaire, temps, générique) est construite mais accessible seulement par une touche de debug.
 - **Système :** menu principal, 3 emplacements, sauvegarde automatique, chronomètre, options de base, FR + EN.
 - **Clins d'œil :** les traits sur le palmier, le pilote qui fait coucou. Le tourbillon lointain est **hors MVP** (N-01).
@@ -603,7 +607,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont
 
 **Technique.** M-09 dernière Godot 4.x stable, figée · M-10 GDScript typé · M-11 référence : i9, RTX 4 Go VRAM, ~12 Go RAM · M-12 Git LFS (*quota à surveiller*) · M-13 tests automatiques sur chaque PR · M-14 1080p de référence, fenêtré + plein écran, 16:9 et ultra-large.
 
-**Contrôles.** M-15 disposition du clavier détectée + touches réassignables · M-16 manette plus tard · M-17 courir + petit saut · M-18 clic gauche = outil, E = interagir, molette/1-5 = outils · M-19 3e personne au-dessus de l'épaule, orbite souris · M-20 bascule avec V · M-21 FOV, balancement de tête désactivable, sensibilité · M-22 placement en 1re personne avec aperçu fantôme.
+**Contrôles.** M-15 disposition du clavier détectée + touches réassignables · M-16 manette plus tard · M-17 courir + petit saut · M-18 clic gauche = outil, E = interagir, molette/1-5 = outils · M-19 3e personne au-dessus de l'épaule, orbite souris · M-20 bascule avec V · M-21 FOV, balancement de tête désactivable, sensibilité · M-22 placement en 1re personne avec aperçu fantôme. **[DÉCIDÉ]** On pourra **déplacer les objets déjà posés sur l'île** (zones de séchage, palette, décors…), à implémenter plus tard (Othmane, 2026-11-16).
 
 **Personnage.** M-23 fixe et neutre pour le MVP · M-24 nage avec **endurance** (aussi pour courir), noyade si on part loin sans plan · M-25 pas de limite artificielle : *on peut aller très loin sans rien trouver ; des milliers de km sans se noyer = fin du jeu* · M-26 **survie légère : endurance façon BotW, faim et soif légères** · M-27 barre de 5 cases · M-28 **ressources portées à la main au début, stock automatique après un achat** (brouette, tapis).
 

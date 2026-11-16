@@ -79,6 +79,14 @@ func test_first_purchase_drying_time_fits_ninety_seconds() -> void:
 	assert_true(liters / rate <= 70.0, "séchage de %d sel : %.0f s" % [price, liters / rate])
 
 
+func test_can_pay_with_hands_and_pallet_together() -> void:
+	gs.stock["sel"] = 10
+	gs.carried = {"sel": 5}
+	assert_false(gs.order(["bache"]).is_empty(), "5 dans les bras + 10 sur la palette = 15 :")
+	assert_eq(gs.carried_count(), 0)
+	assert_eq(int(gs.stock["sel"]), 0)
+
+
 func test_order_refused_without_enough_stock() -> void:
 	assert_true(gs.order(["bache"]).is_empty())
 	assert_true(gs.crates.is_empty())

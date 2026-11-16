@@ -14,7 +14,6 @@ RES_PERLES,perles,pearls
 PROMPT_FILL,[Clic maintenu] Puiser,[Hold click] Scoop water
 PROMPT_POUR,[Clic] Verser,[Click] Pour
 PROMPT_POUR_OUT,[Clic] Vider le seau,[Click] Empty the bucket
-PROMPT_HARVEST,[Clic] Récolter,[Click] Harvest
 PROMPT_PHONE,[E] Décrocher,[E] Pick up
 PROMPT_DEPOT,[E] Déposer (%d),[E] Drop off (%d)
 PROMPT_CRATE,[E] Ouvrir la caisse,[E] Open the crate
@@ -47,3 +46,4 @@ ITEM_YOKE,Palanche,Yoke
 ITEM_YOKE_DESC,Deux seaux à la fois.,Two buckets at once.
 HUD_STAMINA,Endurance,Stamina
 GAUGE_TITLE,Niveau de l'océan,Ocean level
+PROMPT_PILE,[E] Ramasser le tas (%d),[E] Pick up the pile (%d)
