@@ -1,0 +1,22 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+export.cfg
+export_credentials.cfg
+
+# Exports
+/build/
+*.exe
+*.pck
+*.apk
+*.aab
+
+# Mono / C# (si jamais utilisé)
+.mono/
+data_*/
+mono_crash.*.json
+
+# Système
+.DS_Store
+Thumbs.db
