@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.23 (un tas par matériau, matériaux dans la barre, menu pour la ranger) |
+| Version du document | 0.24 (monde vivant : vagues, sous l'eau, fond marin, nuages, animaux) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -697,6 +697,13 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane.
 | **M8 — Mobile** | Portage du clicker | Plus tard |
 
 ---
+
+### 19.5 Réalisation de la démo
+
+Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue à implémenter toutes les fonctionnalités restantes » **[DÉCIDÉ]**). Les détails sont **[PROPOSÉ]** tant qu'Othmane ne les a pas validés.
+
+- **[DÉCIDÉ]** Sous l'eau, l'image prend un **filtre bleu** (Othmane, 2026-11-16). **[PROPOSÉ]** Filtre bleu-vert qui ondule, bords assombris et brouillard bleu épais quand les yeux sont sous la surface ; la surface se voit d'en dessous.
+- **[PROPOSÉ]** Monde vivant (v0.24) : océan à vagues (trois vagues de Gerstner, 20 cm environ), turquoise sur le sable et bleu profond au large selon l'épaisseur d'eau, écume au bord du rivage ; fond marin (rochers, algues, coraux) seulement autour de l'île, de 28 à 110 m ; nuages en boules qui dérivent avec le vent ; 5 mouettes qui tournent au-dessus de l'île ; 3 bancs de poissons qui suivent l'eau quand elle baisse (et disparaissent quand il n'y en a plus assez) ; un crabe qui trottine de côté au bord de la plage. Rien de tout cela n'a d'effet sur le jeu.
 
 ## 20. Glossaire
 
