@@ -132,6 +132,10 @@ extends Resource
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5, "moulin_pompe": 15.5}
 
+@export_group("Barre d'outils")
+## Les 5 cases de la barre (M-27) : un outil par case, "" = case vide (pour plus tard).
+@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "mains", "rateau", "", ""])
+
 @export_group("Pompes et tuyaux")
 ## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
 @export var pump_rates_lps: Dictionary = {"pompe_bras": 20.0, "moulin_pompe": 10.0}

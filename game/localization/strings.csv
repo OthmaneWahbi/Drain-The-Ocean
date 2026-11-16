@@ -84,3 +84,7 @@ DEMO_END_TITLE,Fin de la démo,End of the demo
 DEMO_END_TEXT,"Ton île pompe toute seule. L'océan, lui, n'a presque pas bougé.\nTemps de jeu : %s · Eau retirée : %s L · Baisse : %s","Your island pumps on its own. The ocean has barely moved.\nPlay time: %s · Water removed: %s L · Drop: %s"
 DEMO_END_TEASER,"Bientôt (T3) : pompe motorisée, éolienne, panneaux solaires, collecteur de sel automatique, tapis roulant…","Coming soon (T3): motor pump, wind turbine, solar panels, automatic salt collector, conveyor belt…"
 DEMO_END_CONTINUE,Continuer à jouer,Keep playing
+PROMPT_RAKE,[Clic] Tout ratisser (%d),[Click] Rake it all (%d)
+TOOL_SEAU,Seau,Bucket
+TOOL_MAINS,Mains,Hands
+TOOL_RATEAU,Râteau,Rake

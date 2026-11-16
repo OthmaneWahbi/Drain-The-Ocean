@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.20 (moulin-pompe et fin de la démo) |
+| Version du document | 0.21 (barre d'outils de 5 cases) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -347,6 +347,9 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[DÉCIDÉ]** Avant d'apparaître, les coquillages, noix de coco, caisses et objets livrés vérifient ce qui occupe déjà la place (Othmane, 2026-11-16). **[PROPOSÉ]** S'il n'y a vraiment plus de place (plage pleine), rien n'apparaît plutôt que d'apparaître sur quelque chose. Le joueur compte aussi : rien n'apparaît ni ne se pose sur lui, et une caisse encore en vol réserve déjà sa place.
   - **[DÉCIDÉ]** Quand on ouvre une caisse qui contient un objet à poser (zone de séchage, miroir, condenseur…), le jeu passe **tout seul en mode déplacement** (Othmane, 2026-11-16). **[PROPOSÉ]** S'il y en a plusieurs, ils passent l'un après l'autre ; annuler laisse l'objet sur la case libre où il est apparu.
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
+- **[PROPOSÉ]** Barre d'outils (M-27, M-18 ; prototype v0.21) : 5 cases en bas de l'écran, choisies avec 1-5 ou la molette (qui saute les cases vides ou pas encore achetées). Cases : 1 seau, 2 mains, 3 râteau (allumée après l'achat), 4 et 5 vides pour plus tard.
+  - Le seau ne sert (puiser, verser, vider) que s'il est en main. Les mains servent à ne rien renverser ; E et la pompe à bras marchent avec n'importe quel outil.
+  - Le râteau ne ramasse tout d'un coup que s'il est **en main** (clic ou E sur le tas) ; sinon on ramasse 3 par 3.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).
 - **[PROPOSÉ]** Détails de la nage (prototype) : on nage quand les pieds sont à plus de 1,2 m sous la surface ; on flotte la tête hors de l'eau ; Espace fait monter ; avancer contre le rivage fait se hisser hors de l'eau. L'endurance baisse dans l'eau profonde même immobile (on fait du sur-place), reste stable en marchant sur terre, et ne remonte qu'à l'arrêt sur terre. À zéro dans l'eau : noyade. Course impossible tant qu'on n'est pas remonté à 25 % après épuisement.

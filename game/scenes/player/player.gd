@@ -22,6 +22,8 @@ var third_person: bool = false
 var target: Node = null
 ## Texte d'aide affiché par le HUD (« [Clic] Verser », etc.).
 var prompt: String = ""
+var _bucket_node: Node3D
+var _rake_node: Node3D
 var _bucket_water: MeshInstance3D
 var _second_bucket: Node3D
 ## Vrai quand le personnage nage (pieds assez loin sous la surface).
@@ -43,12 +45,20 @@ func _build_bucket() -> void:
 	var bucket := Node3D.new()
 	bucket.position = Vector3(0.38, -0.42, -0.65)
 	head.add_child(bucket)
+	_bucket_node = bucket
 	bucket.add_child(Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3.ZERO, 12))
 	_bucket_water = Greybox.cylinder(0.12, 0.02, Greybox.WATER, Vector3(0, 0.11, 0), 12)
 	bucket.add_child(_bucket_water)
 	# Le second seau de la palanche, à gauche.
 	_second_bucket = Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3(-0.38, -0.42, -0.65), 12)
 	head.add_child(_second_bucket)
+	# Le râteau, tenu quand on le choisit dans la barre d'outils (M-27).
+	_rake_node = Node3D.new()
+	_rake_node.position = Vector3(0.35, -0.35, -0.7)
+	_rake_node.rotation_degrees = Vector3(-30, 0, 0)
+	_rake_node.add_child(Greybox.box(Vector3(0.04, 0.04, 1.1), Greybox.WOOD, Vector3(0, 0, -0.3)))
+	_rake_node.add_child(Greybox.box(Vector3(0.5, 0.06, 0.06), Greybox.ROCK, Vector3(0, -0.04, -0.85)))
+	head.add_child(_rake_node)
 
 
 func _build_fade() -> void:
@@ -69,6 +79,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
+		return
+	if not GameState.placing and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and _handle_toolbar_input(event):
 		return
 	if event.is_action_pressed(&"pause"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -162,9 +174,27 @@ func _apply_view() -> void:
 	body_mesh.visible = third_person
 
 
+## Barre d'outils : 1-5 choisit une case, la molette passe à la suivante (M-18, M-27).
+func _handle_toolbar_input(event: InputEvent) -> bool:
+	for i in 5:
+		if event.is_action_pressed(StringName("tool_%d" % (i + 1))):
+			GameState.select_tool(i)
+			return true
+	if event.is_action_pressed(&"tool_next"):
+		GameState.cycle_tool(1)
+		return true
+	if event.is_action_pressed(&"tool_prev"):
+		GameState.cycle_tool(-1)
+		return true
+	return false
+
+
 func _process(delta: float) -> void:
+	var tool := GameState.current_tool()
+	_bucket_node.visible = tool == "seau"
+	_rake_node.visible = tool == "rateau"
 	_bucket_water.visible = not GameState.bucket.is_empty()
-	_second_bucket.visible = GameState.bucket_count > 1
+	_second_bucket.visible = tool == "seau" and GameState.bucket_count > 1
 	if GameState.placing:
 		return  # le mode déplacement (PlacementController) gère la souris et le texte d'aide
 	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -193,6 +223,10 @@ func _handle_tool(delta: float) -> void:
 		bucket.cancel_fill()
 		if Input.is_action_just_pressed(&"use_tool"):
 			target.use(self)
+		return
+	# Puiser et vider : seulement avec le seau en main.
+	if GameState.current_tool() != "seau":
+		bucket.cancel_fill()
 		return
 	if is_in_water() and not bucket.is_full():
 		prompt = tr("PROMPT_FILL")

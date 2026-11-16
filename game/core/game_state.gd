@@ -27,6 +27,8 @@ signal pump_added(pump: Dictionary)
 signal network_changed
 ## Le moulin-pompe a assez pompé tout seul : c'est la fin de la démo (M-05). Une seule fois.
 signal demo_finished
+## On a changé d'outil dans la barre (M-27).
+signal tool_changed
 signal tier_unlocked(tier: int)
 ## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
 signal item_moved(item: Dictionary)
@@ -66,6 +68,8 @@ var bucket_count: int = 1
 var carry_capacity: int
 var speed_multiplier: float = 1.0
 var has_rake: bool = false
+## La barre d'outils de 5 cases : quel outil on tient (M-27).
+var toolbar: ToolbarLogic = ToolbarLogic.new()
 ## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
 var stamina: StaminaLogic
 ## Faim et soif (sauvegardées).
@@ -138,6 +142,7 @@ func _reset_state() -> void:
 	carry_capacity = config.hand_carry_capacity
 	speed_multiplier = 1.0
 	has_rake = false
+	toolbar = ToolbarLogic.new(config.toolbar_slots)
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
 	pickups = []
@@ -263,9 +268,42 @@ func add_carried(items: Dictionary) -> Dictionary:
 ## avec le râteau. Ce qu'on ne peut pas porter reste dans la zone.
 func harvest(zone: Dictionary) -> void:
 	var logic: DryingLogic = zone.logic
-	var n := carry_space() if has_rake else mini(config.manual_harvest_per_click, carry_space())
+	# Le râteau ramasse tout d'un coup, mais seulement si on le TIENT (barre d'outils).
+	var n := carry_space() if current_tool() == "rateau" else mini(config.manual_harvest_per_click, carry_space())
 	var leftover := add_carried(logic.take_some(n))
 	Economy.add(logic.deposit, leftover)
+
+
+# --- Barre d'outils (M-27) --------------------------------------------------------------------
+
+## L'outil tenu : "seau", "mains", "rateau"…
+func current_tool() -> String:
+	return toolbar.current()
+
+
+## Vrai si on possède cet outil (le seau et les mains dès le départ, le râteau après achat).
+func owns_tool(tool: String) -> bool:
+	match tool:
+		"seau", "mains":
+			return true
+		"rateau":
+			return has_rake
+	return false
+
+
+func select_tool(index: int) -> void:
+	if toolbar.select(index, owns_tool):
+		_on_tool_changed()
+
+
+func cycle_tool(direction: int) -> void:
+	if toolbar.cycle(direction, owns_tool):
+		_on_tool_changed()
+
+
+func _on_tool_changed() -> void:
+	bucket.cancel_fill()
+	tool_changed.emit()
 
 
 ## Pose tout ce qu'on porte sur la palette : ça devient le stock utilisable pour payer.
@@ -406,6 +444,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			speed_multiplier = maxf(speed_multiplier, item.effect_value)
 		CatalogItem.Effect.RAKE:
 			has_rake = true
+			tool_changed.emit()  # la case du râteau s'allume
 		CatalogItem.Effect.STATION:
 			return add_station(item.effect_param, position)
 		CatalogItem.Effect.UNLOCK_TIER:
@@ -747,7 +786,7 @@ func to_dict() -> Dictionary:
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
-		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
+		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "tool": toolbar.selected},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 	}
@@ -763,6 +802,8 @@ func load_dict(data: Dictionary) -> void:
 	carry_capacity = maxi(int(up.get("carry_capacity", carry_capacity)), config.hand_carry_capacity)
 	speed_multiplier = maxf(float(up.get("speed_multiplier", 1.0)), 1.0)
 	has_rake = bool(up.get("has_rake", false))
+	toolbar.selected = int(up.get("tool", 0))
+	toolbar.ensure_valid(owns_tool)
 	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))
@@ -847,6 +888,7 @@ func _notification(what: int) -> void:
 # --- Outils internes -----------------------------------------------------------------------
 
 func _emit_all() -> void:
+	tool_changed.emit()
 	network_changed.emit()
 	item_moved.emit(depot)  # la palette n'est pas recréée : on la remet à sa place
 	survival_changed.emit()
