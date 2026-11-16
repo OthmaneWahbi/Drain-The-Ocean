@@ -203,7 +203,7 @@ func _build() -> void:
 	stack.add_child(_options)
 	_build_confirm(stack)
 	# Les textes des emplacements sont composés à la main : on les refait au changement de langue.
-	Settings.changed.connect(func(): if _root.visible: refresh())
+	Settings.events.changed.connect(func(): if _root.visible: refresh())
 
 
 func _build_confirm(stack: Control) -> void:
