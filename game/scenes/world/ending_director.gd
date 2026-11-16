@@ -98,7 +98,7 @@ func _process(delta: float) -> void:
 			_whirl.position.y = GameState.water_level_y() + 0.05
 		EndingLogic.Phase.WALK:
 			_walker.position = _walk_from.lerp(_walk_from + Vector3(0, 0, -16), t)
-			_walker.position.y = -3.0 + absf(sin(t * 40.0)) * 0.06
+			_walker.position.y = GameState.terrain.height(_walker.position.x, _walker.position.z) + absf(sin(t * 40.0)) * 0.06
 			# Plan large en troisième personne : le petit personnage, le fond immense.
 			_camera.look_at_from_position(_walker.position + Vector3(6, 4, 9), _walker.position + Vector3(0, 1, -4))
 		EndingLogic.Phase.PLANE:

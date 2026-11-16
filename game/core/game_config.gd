@@ -126,6 +126,8 @@ extends Resource
 @export var grid_cell_m: float = 1.0
 ## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
 @export var build_radius_m: float = 19.5
+## Hauteur du fond marin (le terrain y descend et y reste ; la bonde de la fin y est posée).
+@export var seabed_y: float = -3.0
 ## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
 @export var footprints: Dictionary = {
 	"cuvette": 3.0, "bache": 3.0, "bassin_bois": 4.0,

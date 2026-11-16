@@ -19,6 +19,7 @@ func _ready() -> void:
 	coral_mat.albedo_color = Color(0.9, 0.45, 0.45)
 	for i in 70:
 		var p := AmbientMotion.ring_point(rng, 28.0, 110.0, SEABED_Y)
+		p.y = GameState.terrain.height(p.x, p.z)  # posé sur le vrai fond (il descend en pente près de l'île)
 		var m := MeshInstance3D.new()
 		var kind := rng.randi_range(0, 2)
 		if kind == 0:

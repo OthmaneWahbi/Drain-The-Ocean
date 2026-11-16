@@ -40,6 +40,12 @@ func _ready() -> void:
 	_views.name = "Views"
 	add_child(_views)
 	_build_moon()
+	# Le ciel cartoon (dégradé, soleil rond, étoiles) : il suit la lumière du soleil tout seul.
+	SkyStyle.install(world_env.environment)
+	# Le terrain low poly de l'île (0.1.1) : plateau, plages, dunes en terrasses, fond marin.
+	var terrain := TerrainView.new()
+	terrain.name = "Terrain"
+	add_child(terrain)
 	# Le monde vivant : océan à vagues, filtre sous l'eau, fond marin, nuages, animaux.
 	# Chaque morceau est indépendant ; on peut en retirer un sans toucher aux autres.
 	var ocean := OceanView.new()
@@ -154,7 +160,8 @@ func _update_sun() -> void:
 	sun.rotation_degrees = Vector3(-elevation, 35.0, 0.0)
 	sun.visible = elevation > -2.0
 	var daylight := clampf(elevation / 15.0, 0.0, 1.0)
-	sun.light_energy = lerpf(0.0, 0.9, daylight)
+	sun.light_energy = lerpf(0.0, 1.0, daylight)
+	sun.light_color = SkyStyle.sun_color(elevation)
 	# La lune suit le chemin inverse du soleil.
 	var moon_elevation := -elevation
 	_moon.rotation_degrees = Vector3(-moon_elevation, 215.0, 0.0)

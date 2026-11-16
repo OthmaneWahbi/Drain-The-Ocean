@@ -120,6 +120,8 @@ var current_slot: int = 1
 ## Faux tant qu'aucun emplacement n'est choisi (menu principal) : rien n'est écrit sur le disque,
 ## ni toutes les 2 min, ni en quittant. Sinon on écraserait l'emplacement 1 avec une partie vide.
 var autosave_enabled: bool = false
+## La forme du terrain (hauteur du sol partout), créée avec la configuration.
+var terrain: TerrainLogic
 ## La vraie fin en cours (EndingLogic), ou null.
 var ending: EndingLogic = null
 ## De combien l'eau descend en plus pendant la fin (la bonde, puis le glouglou).
@@ -154,6 +156,8 @@ func _ready() -> void:
 func setup(config_override: GameConfig = null) -> void:
 	config = config_override if config_override else load(CONFIG_PATH) as GameConfig
 	catalog = load(CATALOG_PATH) as CatalogDatabase
+	# La forme de l'île (0.1.1) : la même pour le rendu, la collision et les décors.
+	terrain = TerrainLogic.new(config.ground_y, config.build_radius_m, config.seabed_y)
 	rng.randomize()
 	new_game()
 
