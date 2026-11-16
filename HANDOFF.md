@@ -35,9 +35,9 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils.
-- **Documents :** PRD v0.21. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. Barre d'outils de 5 cases (seau, mains, râteau). 146 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils. PR #12 : tuyaux posés à la main, débit des pompes, une caisse par objet.
+- **Documents :** PRD v0.22. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux posés à la main pièce par pièce, au sol ou en hauteur, avec le débit affiché au-dessus des pompes. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. Barre d'outils de 5 cases (seau, mains, râteau, tuyaux). Une caisse par objet à poser. 162 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
 - **Prochaine étape :** retours d'Othmane sur les 4 releases, puis le toboggan à sacs (N-09), l'objet payé en perle, et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
@@ -65,8 +65,8 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - **La palette** a un emplacement par ressource : chaque tas a sa couleur, sa hauteur (qui grandit vite au début puis ralentit) et son compteur.
 - **Récolter et porter :** le dépôt d'une zone s'affiche comme un **tas à côté d'elle**, qui grossit avec la quantité. E sur le tas : 3 unités passent dans les mains (les plus rares d'abord), ou tout le tas avec le râteau. Le clic sur la zone ne sert qu'à verser. On porte 10 unités au maximum (40 avec la brouette). Ce qui ne rentre pas reste dans la zone.
 - **Déposer :** E sur la palette de dépôt : tout ce qui est porté passe dans le **stock**. Seul le stock de la palette sert à payer (troc).
-- **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier (articles identiques regroupés « ×N ») ; « Commander » vérifie qu'on peut payer avec les bras + la palette, retire le prix des bras d'abord puis de la palette, marque les objets uniques comme possédés et crée une **caisse**.
-- **Livrer :** un avion traverse le ciel, passe au-dessus de la palette, largue la caisse qui descend en parachute (5 s au total). Les caisses successives tombent en spirale autour du point de livraison pour ne pas s'empiler.
+- **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier (articles identiques regroupés « ×N ») ; « Commander » vérifie qu'on peut payer avec les bras + la palette, retire le prix des bras d'abord puis de la palette, marque les objets uniques comme possédés et crée **une caisse par objet à poser** (plus une caisse commune pour les améliorations).
+- **Livrer :** un avion traverse le ciel, passe au-dessus de la palette, largue la caisse qui descend en parachute (5 s au total). Les caisses successives tombent en spirale autour du point de livraison pour ne pas s'empiler ; les avions d'une même commande passent l'un après l'autre, et une caisse qui tombe sur un objet reste posée dessus.
 - **Ouvrir :** E sur la caisse posée : chaque objet est appliqué (nouvelle zone de séchage posée à côté, seau agrandi, décor posé), puis la caisse disparaît.
 
 ### Les améliorations
@@ -130,13 +130,14 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ### Pompes et tuyaux (T2)
 
 - La pompe à bras se pose au bord de l'eau. Clic maintenu : elle aspire 20 L/s dans l'océan, mais seulement ce que les zones reliées peuvent recevoir (jamais un litre perdu).
-- Les tuyaux sont un stock de tronçons de 4 m. Le réseau se calcule tout seul à chaque changement : pompe par pompe, on relie les zones de la plus proche à la plus lointaine tant qu'il reste assez de tronçons pour atteindre leur bord.
-- L'eau remplit la zone la plus proche d'abord. Les tuyaux sont dessinés de la pompe au bord de chaque zone reliée.
+- Les tuyaux se posent à la main, une pièce par case de 1 m, au sol ou en hauteur (niveaux 0 à 4). L'eau part de la pompe, suit les pièces qui se touchent et se verse dans les zones sous ou au bord d'une pièce, les plus proches (en longueur de tuyau) d'abord.
+- Rien n'est mémorisé sur les liaisons : le chemin de l'eau est recalculé à chaque pompage à partir des pièces posées. Déplacer un objet ne peut donc jamais laisser un réseau faux.
+- Chaque pompe affiche son débit réel (0 si rien n'est relié ou si tout est plein).
 - Le moulin-pompe est une pompe « automatique » : la même étape qui fait vivre le monde le fait pomper (10 L/s), sans le joueur. On compte ce qu'il a pompé ; à 200 L, c'est la fin de la démo (une seule fois, mémorisée dans la sauvegarde).
 
 ### La barre d'outils
 
-- 5 cases (seau, mains, râteau, deux vides). On ne tient qu'un outil : le seau ne puise et ne verse que s'il est en main ; le râteau ne ramasse tout d'un coup que s'il est en main. Une case n'est utilisable que si l'outil est possédé. L'outil tenu est sauvegardé (et vérifié au chargement).
+- 5 cases (seau, mains, râteau, tuyaux, une vide). On ne tient qu'un outil : le seau ne puise et ne verse que s'il est en main ; le râteau ne ramasse tout d'un coup que s'il est en main. Une case n'est utilisable que si l'outil est possédé. L'outil tenu est sauvegardé (et vérifié au chargement).
 
 ### Le temps qui passe
 
@@ -160,6 +161,31 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — DÉCISION — Tuyaux à la main, débit visible, plusieurs caisses
+- **Quoi :** Othmane : « rework the piping system, the piping needs to be done manually by the player + on peut le faire vertical ou horizontal, comme on veut ». Les pompes montrent leur débit quand on s'approche, la pompe à bras quand on s'en sert. Une commande avec plusieurs objets à poser → plusieurs caisses. Une caisse qui tombe sur quelque chose reste dessus. « Make sure the pumping doesn't break when changing the position of something. » « Make everything and push to main. »
+- **Impact :** PRD v0.22 (§9 T2, §15 livraison).
+
+### 2026-11-16 — MODIF — Tuyaux posés à la main, débit des pompes, une caisse par objet
+- **Quoi :**
+  - `core/pipe_network.gd` réécrit : les tuyaux sont des pièces sur des cases 3D (grille de 1 m, niveaux 0 à 4) ; l'eau suit les pièces reliées depuis la pompe (parcours en largeur) et se verse dans les zones sous ou à côté d'une pièce, les plus proches d'abord.
+  - `GameState` : `pipes`, `pipe_stock` (+5 pièces par lot de 50 sel), `can_place_pipe`, `place_pipe`, `remove_pipe`, `zones_for_pump`, `wet_pipes`, `last_lps` ; anciennes sauvegardes : chaque tronçon de 4 m devient 4 pièces en stock.
+  - Nouvel outil « Tuyaux » (case 4 de la barre) et `scenes/world/pipe_builder.gd` (cube fantôme vert/rouge, clic pour poser, E pour reprendre) ; `pipes_view.gd` dessine chaque pièce (bleue si l'eau y passe).
+  - `pump_view.gd` : étiquette de débit au-dessus des pompes (à moins de 7 m ; la pompe à bras seulement quand on pompe).
+  - `GameState.order()` renvoie une liste de caisses (une par objet à poser + une pour le reste, avions décalés de 1,2 s) ; `open_crates()`. `crate_view.gd` : la caisse se pose sur ce qu'elle touche (5 rayons vers le bas).
+  - `test_pumps.gd` réécrit (pose, hauteur, trous dans le réseau, deux zones, déplacements de pompe/zone/moulin, sauvegarde), 3 tests de caisses dans `test_spawning.gd`. 162 tests.
+- **Pourquoi :** demande d'Othmane ci-dessus.
+- **Impact :** PRD v0.22, `game/core/`, `game/scenes/`, `game/data/`, strings, tests, guide du code.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Pompe bloquée par sa propre pièce de tuyau
+- **Quoi :** `test_moving_the_pump_along_its_pipe_keeps_working` : impossible de poser la pompe à côté d'une pièce au sol.
+- **Cause :** l'objet comptait rayon de pompe (0,8) + rayon de tuyau (0,45) > 1 case, alors que la pose du tuyau ne comptait que le rayon de la pompe : règle pas symétrique.
+- **Correction :** rayon d'une pièce 0,2 m, même calcul dans les deux sens ; emprise du moulin 0,8.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Tests de pompes qui dépendaient du hasard
+- **Quoi :** `test_moving_the_pump_away_disconnects_it_cleanly` échouait parfois.
+- **Cause :** un coquillage tiré au hasard occupait la case visée.
+- **Correction :** `test_pumps.gd` et `test_windmill.gd` retirent les coquillages au départ. Aussi : le test de fin de démo vise un seuil que la seule cuvette reliée peut atteindre (60 L).
 
 ### 2026-11-16 — MODIF — Barre d'outils de 5 cases (M-27)
 - **Quoi :** `core/toolbar_logic.gd` (cases, choix, molette qui saute les cases indisponibles, vérification au chargement), `GameState` (`toolbar`, `current_tool`, `owns_tool`, `select_tool`, `cycle_tool`, signal `tool_changed`, outil sauvegardé), touches 1-5 et molette dans `player.gd`, seau et râteau visibles selon l'outil, seau et râteau qui n'agissent qu'en main, barre dans le HUD, 10 tests (`test_toolbar.gd`). Le test « râteau » de la boucle complète demande maintenant de le prendre en main.

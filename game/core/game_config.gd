@@ -123,7 +123,7 @@ extends Resource
 @export var footprints: Dictionary = {
 	"cuvette": 2.5, "bache": 2.5, "bassin_bois": 3.5,
 	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
-	"caisse": 0.6, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 1.5,
+	"caisse": 0.6, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 0.8,
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -134,7 +134,7 @@ extends Resource
 
 @export_group("Barre d'outils")
 ## Les 5 cases de la barre (M-27) : un outil par case, "" = case vide (pour plus tard).
-@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "mains", "rateau", "", ""])
+@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "mains", "rateau", "tuyaux", ""])
 
 @export_group("Pompes et tuyaux")
 ## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
@@ -143,8 +143,16 @@ extends Resource
 @export var auto_pump_kinds: PackedStringArray = PackedStringArray(["moulin_pompe"])
 ## Litres pompés tout seuls avant l'écran de fin de démo (M-05).
 @export var demo_end_auto_pumped_l: float = 200.0
-## Longueur d'un tronçon de tuyau, en mètres.
-@export var pipe_segment_m: float = 4.0
+## Quand une commande fait plusieurs caisses, les avions passent à cet intervalle (secondes).
+@export var crate_stagger_s: float = 1.2
+## Hauteur du sable de l'île (là où se posent les objets et les tuyaux du niveau 0).
+@export var ground_y: float = 0.5
+## Les tuyaux se posent à la main, une pièce par case de la grille (1 m), jusqu'à ce niveau de hauteur.
+@export var pipe_max_level: int = 4
+## Emprise d'une pièce de tuyau au sol (pour que rien ne se pose dessus).
+@export var pipe_radius_m: float = 0.2
+## Une pièce de tuyau dont le centre est à moins de ce rayon d'une zone y verse son eau.
+@export var inlet_radius: Dictionary = {"cuvette": 1.5, "bache": 1.5, "bassin_bois": 2.5}
 
 @export_group("Placement (suite)")
 ## Le joueur occupe ce rayon : on ne pose rien et rien n'apparaît sur lui.

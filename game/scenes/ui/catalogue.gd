@@ -140,8 +140,8 @@ func _add_to_cart(id: String) -> void:
 
 
 func _order() -> void:
-	var crate := GameState.order(_cart)
-	if crate.is_empty():
+	var crates := GameState.order(_cart)
+	if crates.is_empty():
 		_message.text = tr("CAT_NOT_ENOUGH")
 		return
 	_cart.clear()

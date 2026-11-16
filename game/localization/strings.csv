@@ -71,11 +71,11 @@ PROMPT_MOVE,[G] Déplacer,[G] Move
 PROMPT_PLACE,[Clic] Poser · [R] Tourner · [G] Annuler,[Click] Place · [R] Rotate · [G] Cancel
 PROMPT_PLACE_BLOCKED,Impossible ici · [R] Tourner · [G] Annuler,Can't place here · [R] Rotate · [G] Cancel
 ITEM_HAND_PUMP,Pompe à bras,Hand pump
-ITEM_HAND_PUMP_DESC,"Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s vers les bassins reliés par des tuyaux.","Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes."
-ITEM_PIPE,Tuyau (4 m),Pipe (4 m)
-ITEM_PIPE_DESC,"Un tronçon de 4 m. Les pompes se relient toutes seules aux bassins les plus proches.","A 4 m section. Pumps link themselves to the nearest basins."
+ITEM_HAND_PUMP_DESC,"Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s dans les tuyaux que tu as posés.","Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes."
+ITEM_PIPE,Tuyaux (5 pièces),Pipes (5 pieces)
+ITEM_PIPE_DESC,"5 pièces de 1 m à poser à la main (case 4 de la barre) : au sol ou en hauteur, comme tu veux, de la pompe jusqu'au-dessus d'une zone.","5 one-metre pieces to place by hand (slot 4): on the ground or up high, any shape, from the pump to above a zone."
 PROMPT_PUMP,[Clic maintenu] Pomper · %d zone(s) reliée(s),[Hold click] Pump · %d zone(s) linked
-PUMP_NO_LINK,"Pompe : aucune zone reliée (il faut des tuyaux : %d / %d utilisés)","Pump: no zone linked (needs pipes: %d / %d used)"
+PUMP_NO_LINK,"%s : aucune zone reliée (pose des tuyaux de la pompe jusqu'au-dessus d'une zone)","%s: no zone linked (lay pipes from the pump to above a zone)"
 PUMP_FULL,Pompe : les zones reliées sont pleines,Pump: the linked zones are full
 ITEM_WINDMILL_PUMP,Moulin-pompe,Windmill pump
 ITEM_WINDMILL_PUMP_DESC,"La première machine : se pose au bord de l'eau et pompe 10 L/s TOUTE SEULE vers les zones reliées.","The first machine: goes at the water's edge and pumps 10 L/s ON ITS OWN into linked zones."
@@ -88,3 +88,12 @@ PROMPT_RAKE,[Clic] Tout ratisser (%d),[Click] Rake it all (%d)
 TOOL_SEAU,Seau,Bucket
 TOOL_MAINS,Mains,Hands
 TOOL_RATEAU,Râteau,Rake
+PIPE_NAME,Tuyau,Pipe
+PROMPT_PIPE_REMOVE,[E] Reprendre le tuyau,[E] Take the pipe back
+PROMPT_PIPE_PLACE,[Clic] Poser un tuyau (%d en stock),[Click] Place a pipe (%d left)
+PROMPT_PIPE_BLOCKED,Pas de tuyau ici (%d en stock),No pipe here (%d left)
+PROMPT_PIPE_EMPTY,Plus de tuyaux : commande-en au téléphone,No pipes left: order some by phone
+TOOL_TUYAUX,Tuyaux,Pipes
+PUMP_RATE,%s : %d L/s,%s: %d L/s
+PUMP_NAME_POMPE_BRAS,Pompe à bras,Hand pump
+PUMP_NAME_MOULIN_POMPE,Moulin-pompe,Windmill pump

@@ -1,44 +1,85 @@
 class_name PipeNetwork
 extends RefCounted
-## Les tuyaux qui relient les pompes aux zones de séchage (T2, PRD §7), sans aucun affichage.
+## Les tuyaux (T2, PRD §7), sans aucun affichage : une grille de CASES en 3D.
 ##
-## On possède un nombre de TRONÇONS (achetés au catalogue), chacun de `segment_m` mètres.
-## Les liaisons se font toutes seules : chaque pompe, dans l'ordre, se relie à ses zones de la
-## plus proche à la plus lointaine, tant qu'il reste assez de tronçons. Déplacer un objet ou
-## acheter des tuyaux refait le réseau.
+## Le joueur pose les tuyaux à la main, une pièce par case (1 m) : au sol (niveau 0) ou en
+## hauteur (niveaux 1, 2…). Deux pièces voisines (6 directions : avant, arrière, gauche, droite,
+## haut, bas) sont reliées d'office : on peut faire des lignes droites, des coudes, des T, des
+## montées verticales, comme on veut.
+##
+## Une pompe pousse l'eau dans les pièces qui la touchent (à côté d'elle au sol, ou juste
+## au-dessus). L'eau suit les pièces reliées et tombe dans une zone de séchage quand une pièce
+## est au-dessus de la zone (ou dedans). Rien n'est mémorisé : on recalcule tout à chaque fois,
+## donc déplacer une pompe, une zone ou un tuyau ne peut pas laisser un réseau « cassé ».
+
+const DIRS: Array[Vector3i] = [
+	Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, 1),
+	Vector3i(0, 0, -1), Vector3i(0, 1, 0), Vector3i(0, -1, 0),
+]
 
 
-## Liaisons : liste de {pump, zone, segments, from: Vector3, to: Vector3}.
-## `pumps` / `zones` : dictionnaires {position, …} ; `zone_radius` : Callable(zone) -> rayon,
-## car le tuyau s'arrête au bord de la zone.
-static func links(pumps: Array, zones: Array, segments: int, segment_m: float, zone_radius: Callable) -> Array:
-	var out := []
-	var left := segments
-	for pump in pumps:
-		var pp: Vector3 = pump.position
-		var sorted := zones.duplicate()
-		sorted.sort_custom(func(a, b): return _flat(pp, a.position) < _flat(pp, b.position))
-		for zone in sorted:
-			var need := segments_needed(pp, zone.position, float(zone_radius.call(zone)), segment_m)
-			if need > left:
-				continue
-			left -= need
-			out.append({"pump": pump, "zone": zone, "segments": need, "from": pp, "to": edge_point(pp, zone.position, float(zone_radius.call(zone)))})
+## La case (niveau 0) qui contient ce point.
+static func cell_of(pos: Vector3, cell_m: float = 1.0) -> Vector3i:
+	return Vector3i(floori(pos.x / cell_m), 0, floori(pos.z / cell_m))
+
+
+## Centre d'une case dans le monde. `ground_y` : hauteur du sol ; le niveau 0 est posé dessus.
+static func cell_center(cell: Vector3i, cell_m: float, ground_y: float) -> Vector3:
+	return Vector3((cell.x + 0.5) * cell_m, ground_y + 0.2 + cell.y * cell_m, (cell.z + 0.5) * cell_m)
+
+
+## Pièces voisines d'une case.
+static func neighbors(cell: Vector3i, cells: Dictionary) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	for d in DIRS:
+		if cells.has(cell + d):
+			out.append(cell + d)
 	return out
 
 
-## Nombre de tronçons pour aller du centre de la pompe au bord de la zone (au moins 1).
-static func segments_needed(from: Vector3, zone_pos: Vector3, zone_radius: float, segment_m: float) -> int:
-	var length := maxf(_flat(from, zone_pos) - zone_radius, 0.0)
-	return maxi(int(ceil(length / segment_m - 1e-6)), 1)
+## Les cases où un tuyau touche la pompe : les 4 cases autour d'elle au sol, et celle du dessus.
+static func pump_ports(pump_cell: Vector3i) -> Array[Vector3i]:
+	return [pump_cell + Vector3i(1, 0, 0), pump_cell + Vector3i(-1, 0, 0), pump_cell + Vector3i(0, 0, 1),
+		pump_cell + Vector3i(0, 0, -1), pump_cell + Vector3i(0, 1, 0)]
 
 
-## Le point du bord de la zone le plus proche de la pompe.
-static func edge_point(from: Vector3, zone_pos: Vector3, zone_radius: float) -> Vector3:
-	var d := Vector3(from.x - zone_pos.x, 0.0, from.z - zone_pos.z)
-	if d.length() < 1e-6:
-		return zone_pos
-	return zone_pos + d.normalized() * minf(zone_radius, d.length())
+## Parcours en largeur depuis les pièces qui touchent la pompe : case -> distance (en pièces).
+static func reach(pump_cell: Vector3i, cells: Dictionary) -> Dictionary:
+	var dist := {}
+	var queue: Array[Vector3i] = []
+	for port in pump_ports(pump_cell):
+		if cells.has(port) and not dist.has(port):
+			dist[port] = 1
+			queue.append(port)
+	while not queue.is_empty():
+		var c: Vector3i = queue.pop_front()
+		for n in neighbors(c, cells):
+			if not dist.has(n):
+				dist[n] = int(dist[c]) + 1
+				queue.append(n)
+	return dist
+
+
+## Vrai si la pièce est au-dessus de la zone (ou dedans) : son centre est dans le rayon de la zone.
+static func feeds(cell: Vector3i, zone_pos: Vector3, zone_radius: float, cell_m: float = 1.0) -> bool:
+	var c := Vector2((cell.x + 0.5) * cell_m, (cell.z + 0.5) * cell_m)
+	return c.distance_to(Vector2(zone_pos.x, zone_pos.z)) <= zone_radius
+
+
+## Les zones remplies par une pompe, de la plus proche (en pièces de tuyau) à la plus lointaine.
+static func zones_reached(pump_pos: Vector3, cells: Dictionary, zones: Array, zone_radius: Callable, cell_m: float = 1.0) -> Array:
+	var dist := reach(cell_of(pump_pos, cell_m), cells)
+	var found := []
+	for zone in zones:
+		var best := -1
+		var r := float(zone_radius.call(zone))
+		for c in dist:
+			if feeds(c, zone.position, r, cell_m) and (best < 0 or int(dist[c]) < best):
+				best = int(dist[c])
+		if best >= 0:
+			found.append({"zone": zone, "dist": best})
+	found.sort_custom(func(a, b): return a.dist < b.dist)
+	return found.map(func(f): return f.zone)
 
 
 ## Verse `liters` dans les zones, dans l'ordre donné (la plus proche d'abord). Renvoie ce qui
@@ -50,7 +91,3 @@ static func distribute(liters: float, zones: Array) -> float:
 			break
 		poured += (zone.logic as DryingLogic).add_water(liters - poured)
 	return poured
-
-
-static func _flat(a: Vector3, b: Vector3) -> float:
-	return Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))

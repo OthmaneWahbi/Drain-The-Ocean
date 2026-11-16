@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.21 (barre d'outils de 5 cases) |
+| Version du document | 0.22 (tuyaux posés à la main, débit des pompes, une caisse par objet) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -216,7 +216,12 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
 
 - **[PROPOSÉ]** Pompe à bras et tuyaux (prototype, v0.19) :
   - La **pompe à bras** (500 sel + 40 minéraux) se pose **au bord de l'eau** (sur la plage, à plus de 15,5 m du centre de l'île). On **maintient le clic** dessus pour pomper **20 L/s** (M-58 : elle reste active, pas automatique).
-  - L'eau va dans les zones de séchage **reliées par des tuyaux**. Un **tuyau** (50 sel) est un tronçon de **4 m**. Les liaisons se font **toutes seules** : chaque pompe se relie à ses zones de la plus proche à la plus lointaine, tant qu'il reste des tronçons (il en faut assez pour aller jusqu'au bord de la zone). Déplacer une zone ou une pompe refait le réseau.
+  - ~~Liaisons automatiques par tronçons de 4 m (v0.19)~~ : remplacé en v0.22 par la pose à la main ci-dessous.
+  - **[DÉCIDÉ]** Les tuyaux se posent **à la main** par le joueur, à l'**horizontale ou à la verticale**, librement : on compose le réseau comme on veut (Othmane, 2026-11-16).
+  - **[PROPOSÉ]** Détails de la pose (v0.22) : un lot de tuyaux (50 sel) donne **5 pièces**. Une pièce occupe **une case de la grille** (1 m) à un **niveau de hauteur** de 0 (au sol) à 4. On prend l'outil « Tuyaux » dans la barre, on vise : un cube fantôme vert (ou rouge) montre où la pièce ira ; clic pour poser. En visant une pièce, la nouvelle se colle sur la face visée (au-dessus, à côté…). Une pièce en hauteur doit toucher une autre pièce ou être juste au-dessus d'une pompe. Avec l’outil en main, **E sur une pièce** la reprend dans le stock.
+  - **[PROPOSÉ]** Une pompe envoie l'eau dans les pièces qui la touchent (les 4 cases autour et la case au-dessus) ; l'eau suit les pièces reliées entre elles. Une pièce **au-dessus ou au bord d'une zone** (assez près de son centre) y verse l'eau. Les zones les plus proches de la pompe en suivant les tuyaux sont remplies d'abord. Les tuyaux mouillés sont bleus, les autres gris.
+  - **[PROPOSÉ]** Au sol, une pièce bloque les objets (sauf les zones de séchage, qu'un tuyau peut surplomber pour les remplir). En hauteur, elle passe au-dessus de tout. Déplacer une pompe, une zone ou un autre objet ne casse rien : le réseau est recalculé à chaque fois à partir des pièces posées (Othmane, 2026-11-16 : « le pompage ne doit pas casser quand on déplace quelque chose » **[DÉCIDÉ]**).
+  - **[DÉCIDÉ]** Les pompes **affichent leur débit** quand on s'en approche ; la pompe à bras l'affiche quand on s'en sert (Othmane, 2026-11-16). **[PROPOSÉ]** Une étiquette « Moulin-pompe : 10 L/s » flotte au-dessus de la pompe à moins de 7 m ; 0 L/s quand rien n'est relié ou que les zones sont pleines.
   - On remplit la zone la plus proche d'abord. Quand toutes les zones reliées sont pleines, la pompe ne prend plus rien à l'océan.
 - **[PROPOSÉ]** Moulin-pompe (prototype, v0.20) : 1 500 sel + 100 minéraux + 10 minéraux rares, un seul par partie. Il se pose au bord de l'eau et pompe **10 L/s tout seul**, même quand le joueur est loin, par le même réseau de tuyaux.
 - **[PROPOSÉ]** Fin de la démo (M-05) : quand le moulin-pompe a pompé 200 L tout seul, un gros avion sombre passe au-dessus de l'île avec des silhouettes de machines T3, puis un écran « Fin de la démo » donne le bilan (temps, eau retirée, baisse du niveau) et annonce T3. « Continuer à jouer » ferme l'écran ; il ne revient plus, même après un chargement.
@@ -318,6 +323,8 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 - **[DÉCIDÉ]** Délai : **5 secondes** (M-51).
 - **[DÉCIDÉ]** **Offres spéciales** : environ une fois par jour de jeu, le téléphone sonne ; on décroche pour voir un article à prix réduit pendant une journée (M-54, N-08).
 - **[PROPOSÉ]** La caisse est larguée en parachute **à peu près** au bon endroit. Au début elle tombe parfois à l'eau près du rivage et flotte jusqu'à la plage (gag sans pénalité).
+- **[DÉCIDÉ]** Quand une commande contient plusieurs objets à poser, l'avion largue **plusieurs caisses** (Othmane, 2026-11-16). **[PROPOSÉ]** Une caisse par objet à poser (zone, miroir, pompe, décor…) ; les améliorations (tongs, grand seau, tuyaux…) partagent une seule caisse. Les avions passent l'un après l'autre (1,2 s d'écart).
+- **[DÉCIDÉ]** Une caisse qui tombe sur quelque chose **reste posée dessus** au lieu de passer au travers (Othmane, 2026-11-16).
 - **[PROPOSÉ]** Les avions grossissent avec les paliers : petit hydravion → avion cargo → escadrille → avion absurde qui largue une machine géante entière.
 - **[PROPOSÉ]** Les achats ne peuvent jamais être perdus : un objet qui tombe mal finit toujours par revenir sur la plage.
 

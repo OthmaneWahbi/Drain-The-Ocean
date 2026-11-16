@@ -13,6 +13,8 @@ func before_each() -> void:
 	gs.setup(cfg)
 	gs.stock = {"sel": 100000, "mineraux": 100000, "mineraux_rares": 1000, "coquillages": 1000, "perles": 10}
 	gs.unlocked_tier = 2
+	# Les coquillages tombent au hasard : on les retire pour que les placements soient reproductibles.
+	gs.pickups.clear()
 
 
 func after_each() -> void:
@@ -24,9 +26,15 @@ func _windmill_next_to_basin() -> Dictionary:
 	return gs.add_pump("moulin_pompe", Vector3(-0.5, 0.5, 16.5))
 
 
+func _pipe_to_basin() -> void:
+	gs.pipe_stock += 3
+	for c in [Vector3i(-1, 0, 15), Vector3i(-1, 0, 14), Vector3i(-1, 0, 13)]:
+		assert_true(gs.place_pipe(c))
+
+
 func test_windmill_pumps_on_its_own_with_time() -> void:
 	_windmill_next_to_basin()
-	gs.pipe_segments = 1
+	_pipe_to_basin()
 	gs.advance_time(2.0, 1.0)
 	# (une partie s'évapore déjà : on compte ce qui est sorti de l'océan)
 	assert_almost(gs.ocean.removed_l, 2.0 * gs.config.pump_rates_lps["moulin_pompe"], 1e-6)
@@ -43,7 +51,7 @@ func test_windmill_without_pipes_does_nothing() -> void:
 func test_hand_pump_never_counts_as_automatic() -> void:
 	assert_true(gs.move_item(gs.zones[0], Vector3(-0.5, 0.5, 12.5)))
 	var hand: Dictionary = gs.add_pump("pompe_bras", Vector3(-0.5, 0.5, 16.5))
-	gs.pipe_segments = 1
+	_pipe_to_basin()
 	gs.run_pump(hand, 5.0)
 	assert_almost(gs.auto_pumped_l, 0.0)
 	assert_false(gs.is_auto_pump(hand))
@@ -51,8 +59,9 @@ func test_hand_pump_never_counts_as_automatic() -> void:
 
 func test_demo_ends_once_after_enough_automatic_water() -> void:
 	_windmill_next_to_basin()
-	gs.pipe_segments = 20
-	gs.add_zone("bassin_bois", gs.find_free_spot(gs.footprint_of("bassin_bois"), Vector3(-6.5, 0.5, 12.5)))
+	_pipe_to_basin()
+	# Seule la cuvette (40 L) est reliée : on fixe un seuil qu'elle peut atteindre en s'évaporant.
+	gs.config.demo_end_auto_pumped_l = 60.0
 	var ends := [0]
 	gs.demo_finished.connect(func(): ends[0] += 1)
 	gs.advance_time(5.0)
@@ -83,7 +92,7 @@ func test_windmill_is_unique_shore_only_and_tier_2() -> void:
 	var item: CatalogItem = gs.catalog.find(&"moulin_pompe")
 	assert_true(item.unique)
 	assert_true(gs.can_buy(item))
-	gs.open_crate(gs.order(["moulin_pompe"]))
+	gs.open_crates(gs.order(["moulin_pompe"]))
 	assert_false(gs.can_buy(item), "un seul moulin")
 	var w: Dictionary = gs.pumps[0]
 	assert_true(Vector2(w.position.x, w.position.z).length() >= 15.5 - 1e-6)
