@@ -253,41 +253,63 @@ func carry_space() -> int:
 
 ## Ajoute des ressources dans les bras, dans la limite de ce qu'on peut porter.
 ## Renvoie ce qui n'a pas pu être pris.
+## Chaque matériau porté prend une case de la barre : sans case libre, on ne le prend pas.
 func add_carried(items: Dictionary) -> Dictionary:
+	_sync_toolbar()
 	var leftover := {}
 	for k in items:
 		var key := String(k)
 		var n := int(items[k])
-		var take := mini(n, carry_space())
+		var take := mini(n, carry_space()) if has_slot_for(key) else 0
 		if take > 0:
 			carried[key] = int(carried.get(key, 0)) + take
+			toolbar.put(key)
 		if n - take > 0:
 			leftover[key] = n - take
 	carried_changed.emit()
+	_sync_toolbar()
 	return leftover
+
+
+## Vrai si ce matériau a déjà sa case dans la barre, ou s'il reste une case vide.
+func has_slot_for(key: String) -> bool:
+	return toolbar.index_of(key) >= 0 or toolbar.first_free() >= 0
+
+
+## Vrai si on peut prendre au moins une unité de ce matériau (place dans les bras ET une case).
+func can_carry(key: String) -> bool:
+	return carry_space() > 0 and has_slot_for(key)
 
 
 ## Récolte le dépôt d'une zone (M-39) : quelques unités par clic à la main, tout d'un coup
 ## avec le râteau. Ce qu'on ne peut pas porter reste dans la zone.
-func harvest(zone: Dictionary) -> void:
+## `resource` : le tas visé (un tas par matériau) ; vide = n'importe lequel.
+func harvest(zone: Dictionary, resource: String = "") -> void:
 	var logic: DryingLogic = zone.logic
 	# Le râteau ramasse tout d'un coup, mais seulement si on le TIENT (barre d'outils).
 	var n := carry_space() if current_tool() == "rateau" else mini(config.manual_harvest_per_click, carry_space())
-	var leftover := add_carried(logic.take_some(n))
+	var leftover := add_carried(logic.take_some(n, resource))
 	Economy.add(logic.deposit, leftover)
 
 
 # --- Barre d'outils (M-27) --------------------------------------------------------------------
 
-## L'outil tenu : "seau", "mains", "rateau"…
+## Les outils, dans l'ordre où ils prennent une case quand on les obtient.
+const TOOLS: Array[String] = ["seau", "rateau", "tuyaux"]
+
+
+## Ce que contient la case tenue : un outil ("seau", "rateau", "tuyaux"), un matériau porté
+## ("sel"…) ou "" (les mains nues).
 func current_tool() -> String:
 	return toolbar.current()
 
 
-## Vrai si on possède cet outil (le seau et les mains dès le départ, le râteau après achat).
+## Vrai si on possède cet outil (le seau dès le départ, le râteau après achat) ou si on porte ce matériau.
 func owns_tool(tool: String) -> bool:
+	if Economy.RESOURCES.has(tool):
+		return int(carried.get(tool, 0)) > 0
 	match tool:
-		"seau", "mains":
+		"", "seau":
 			return true
 		"rateau":
 			return has_rake
@@ -311,12 +333,43 @@ func _on_tool_changed() -> void:
 	tool_changed.emit()
 
 
+## Échange deux cases de la barre (menu de réorganisation). On garde en main ce qu'on tenait.
+func swap_slots(a: int, b: int) -> bool:
+	if not toolbar.swap(a, b):
+		return false
+	tool_changed.emit()
+	return true
+
+
+## Range la barre : libère les cases des matériaux qu'on ne porte plus et des outils perdus,
+## puis donne une case aux outils possédés (d'abord) et aux matériaux portés qui n'en ont pas.
+func _sync_toolbar() -> void:
+	var before := toolbar.slots.duplicate()
+	var before_selected := toolbar.selected
+	for i in toolbar.slots.size():
+		var entry := toolbar.slots[i]
+		if entry != "" and not owns_tool(entry):
+			toolbar.slots[i] = ""
+	for t in TOOLS:
+		if owns_tool(t):
+			toolbar.put(t)
+	for key in Economy.RESOURCES:
+		if int(carried.get(key, 0)) > 0:
+			toolbar.put(key)
+	toolbar.ensure_valid(owns_tool)
+	if toolbar.slots != before or toolbar.selected != before_selected:
+		if toolbar.selected != before_selected or toolbar.slots[toolbar.selected] != before[before_selected]:
+			bucket.cancel_fill()
+		tool_changed.emit()
+
+
 ## Pose tout ce qu'on porte sur la palette : ça devient le stock utilisable pour payer.
 func unload_to_stock() -> int:
 	var n := carried_count()
 	Economy.add(stock, carried)
 	carried = {}
 	carried_changed.emit()
+	_sync_toolbar()
 	stock_changed.emit()
 	return n
 
@@ -390,6 +443,7 @@ func order(item_ids: Array) -> Array[Dictionary]:
 		if int(carried[k]) <= 0:
 			carried.erase(k)
 	carried_changed.emit()
+	_sync_toolbar()
 	for id in item_ids:
 		var item := catalog.find(StringName(id))
 		if item.unique:
@@ -477,7 +531,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			speed_multiplier = maxf(speed_multiplier, item.effect_value)
 		CatalogItem.Effect.RAKE:
 			has_rake = true
-			tool_changed.emit()  # la case du râteau s'allume
+			_sync_toolbar()  # le râteau prend une case
 		CatalogItem.Effect.STATION:
 			return add_station(item.effect_param, position)
 		CatalogItem.Effect.UNLOCK_TIER:
@@ -490,7 +544,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 		CatalogItem.Effect.PIPES:
 			pipe_stock += maxi(int(item.effect_value), 1)
 			network_changed.emit()
-			tool_changed.emit()  # la case « tuyaux » de la barre s'allume
+			_sync_toolbar()  # les tuyaux prennent une case
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -564,7 +618,7 @@ func take_pickup(p: Dictionary) -> bool:
 			survival.drink(config.coconut_water)
 			survival_changed.emit()
 		"shell":
-			if carry_space() <= 0:
+			if not can_carry("coquillages"):
 				return false
 			var found := {"coquillages": 1}
 			if rng.randf() < config.pearl_chance_per_shell:
@@ -745,9 +799,12 @@ func footprint_of(kind: String) -> float:
 	return float(config.footprints.get(kind, 1.0))
 
 
-## Où est le tas de sel d'une zone, par rapport à son centre (avant rotation) : sa propre case.
-func pile_offset(zone: Dictionary) -> Vector3:
-	return Vector3(float(config.pile_offset_cells.get(String(zone.kind), 2)) * config.grid_cell_m, 0.0, 0.0)
+## Où est le tas d'un matériau, par rapport au centre de sa zone (avant rotation) : chaque
+## matériau a sa propre case, côte à côte (config.pile_slots), dans l'emprise de la zone.
+func pile_offset(zone: Dictionary, resource: String = "sel") -> Vector3:
+	var x := float(config.pile_offset_cells.get(String(zone.kind), 2))
+	var z := float(config.pile_slots.get(resource, 0))
+	return Vector3(x, 0.0, z) * config.grid_cell_m
 
 
 ## Tous les objets qu'on peut déplacer.
@@ -879,7 +936,7 @@ func to_dict() -> Dictionary:
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
-		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "tool": toolbar.selected},
+		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 	}
@@ -895,8 +952,6 @@ func load_dict(data: Dictionary) -> void:
 	carry_capacity = maxi(int(up.get("carry_capacity", carry_capacity)), config.hand_carry_capacity)
 	speed_multiplier = maxf(float(up.get("speed_multiplier", 1.0)), 1.0)
 	has_rake = bool(up.get("has_rake", false))
-	toolbar.selected = int(up.get("tool", 0))
-	toolbar.ensure_valid(owns_tool)
 	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))
@@ -954,6 +1009,13 @@ func load_dict(data: Dictionary) -> void:
 	owned = data.get("owned", {}).duplicate()
 	_deliveries_count = int(data.get("deliveries_count", 0))
 	play_time_s = float(data.get("play_time_s", 0.0))
+	# La barre en dernier : elle dépend des outils, des tuyaux et de ce qu'on porte.
+	var saved_slots = up.get("toolbar", [])
+	if saved_slots is Array and saved_slots.size() == toolbar.slots.size():
+		for i in saved_slots.size():
+			toolbar.slots[i] = String(saved_slots[i]) if saved_slots[i] is String else ""
+	toolbar.selected = int(up.get("tool", 0))
+	_sync_toolbar()
 	_emit_all()
 
 

@@ -13,6 +13,7 @@ const MirrorView := preload("res://scenes/world/mirror_view.gd")
 const PumpView := preload("res://scenes/world/pump_view.gd")
 const PipesView := preload("res://scenes/world/pipes_view.gd")
 const DemoEnd := preload("res://scenes/ui/demo_end.gd")
+const ToolbarMenu := preload("res://scenes/ui/toolbar_menu.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -57,6 +58,9 @@ func _ready() -> void:
 	builder.name = "PipeBuilder"
 	add_child(builder)
 	# La fin de la démo (M-05), déclenchée par le moulin-pompe.
+	var toolbar_menu := ToolbarMenu.new()
+	toolbar_menu.name = "ToolbarMenu"
+	add_child(toolbar_menu)
 	var demo_end := DemoEnd.new()
 	demo_end.name = "DemoEnd"
 	add_child(demo_end)

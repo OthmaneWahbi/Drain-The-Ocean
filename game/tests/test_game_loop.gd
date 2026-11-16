@@ -116,7 +116,7 @@ func test_rake_harvests_everything_at_once() -> void:
 	basin.logic.deposit = {"sel": 8}
 	gs.harvest(basin)
 	assert_eq(gs.carried_count(), 3, "râteau acheté mais pas en main : 3 par 3")
-	gs.select_tool(2)
+	gs.select_tool(gs.toolbar.index_of("rateau"))
 	assert_eq(gs.current_tool(), "rateau")
 	gs.harvest(basin)
 	assert_eq(gs.carried_count(), 8)

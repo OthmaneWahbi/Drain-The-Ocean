@@ -121,20 +121,23 @@ extends Resource
 @export var build_radius_m: float = 19.5
 ## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
 @export var footprints: Dictionary = {
-	"cuvette": 2.5, "bache": 2.5, "bassin_bois": 3.5,
+	"cuvette": 3.0, "bache": 3.0, "bassin_bois": 4.0,
 	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
 	"caisse": 0.6, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 0.8,
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
+## Un tas par matériau, côte à côte : décalage en cases (perpendiculaire) de chaque tas.
+@export var pile_slots: Dictionary = {"sel": 0, "mineraux": 1, "mineraux_rares": -1}
 ## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
 @export var coconut_radius_m: float = 0.3
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5, "moulin_pompe": 15.5}
 
 @export_group("Barre d'outils")
-## Les 5 cases de la barre (M-27) : un outil par case, "" = case vide (pour plus tard).
-@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "mains", "rateau", "tuyaux", ""])
+## Les 5 cases de la barre au début d'une partie (M-27) : "" = case vide (les mains nues).
+## Les outils achetés et les matériaux portés prennent ensuite les cases vides.
+@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "", "", "", ""])
 
 @export_group("Pompes et tuyaux")
 ## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
