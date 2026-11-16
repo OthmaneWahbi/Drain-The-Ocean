@@ -197,6 +197,9 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - GameState : `pumps` (dictionnaires comme les autres objets, donc déplaçables et sauvegardés), `pipe_segments` (un entier). `pipe_links()` recalcule le réseau à chaque appel (quelques objets, c'est instantané) : pas d'état à garder synchronisé. `run_pump(pump, delta)` calcule la place libre, prend `min(débit × delta, place)` à l'océan, répartit, et rend le surplus éventuel.
 - `network_changed` est émis quand une zone ou une pompe est ajoutée, un objet déplacé, des tuyaux achetés, ou une partie chargée ; `pipes_view.gd` s'y abonne et redessine des cylindres couchés (`look_at` + quart de tour).
 - Placement « au bord de l'eau » : `PlacementGrid.is_valid(..., min_center_radius)` ; `GameState.min_center_radius_of(kind)` lit `config.shore_only_kinds`. `find_free_spot()` le prend aussi, donc une pompe sortie d'une caisse apparaît déjà sur la plage.
+- Moulin-pompe : c'est une pompe comme une autre (`kind = "moulin_pompe"`), mais listée dans `config.auto_pump_kinds`. `simulate()` appelle `_run_auto_pumps(delta)`, qui fait `run_pump()` pour chaque pompe automatique et additionne dans `auto_pumped_l`. Au seuil (`demo_end_auto_pumped_l`), `demo_done` passe à vrai et `demo_finished` est émis une seule fois.
+- `scenes/ui/demo_end.gd` (créé par `main.gd`) écoute `demo_finished` : il fait passer un gros avion sombre (des boîtes noires) avec un `Tween`, puis au bout de 6 s affiche le panneau (bilan avec `Hud.format_time`, `format_liters`, `WaterGauge.format_drop_mm`), met `ui_open` et libère la souris. Le bouton referme tout.
+- `pump_view.gd` construit soit le levier, soit la tour du moulin ; les pales tournent vite quand `auto_pumped_l` a augmenté depuis l'image précédente.
 - Clic maintenu : `player.gd` regarde d'abord si la cible a `hold_use(player, delta)` et l'appelle à chaque image tant que le clic est enfoncé. `pump_view.gd` s'en sert et fait bouger son levier quand de l'eau passe.
 
 ### Les outils admin
@@ -230,3 +233,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #9 — Pompe à bras et tuyaux
 `PipeNetwork`, `GameState.pumps` / `pipe_segments` / `run_pump` / `network_changed`, effets `PUMP` et `PIPES`, `shore_only_kinds`, `pump_view.gd`, `pipes_view.gd`, `hold_use` dans le joueur, `test_pumps.gd`.
+
+### PR #10 — Moulin-pompe et fin de la démo
+`auto_pump_kinds`, `_run_auto_pumps()`, `auto_pumped_l`, `demo_done`, `demo_finished`, vue du moulin, `demo_end.gd`, `test_windmill.gd`.

@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.19 (pompe à bras et tuyaux) |
+| Version du document | 0.20 (moulin-pompe et fin de la démo) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -218,6 +218,8 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
   - La **pompe à bras** (500 sel + 40 minéraux) se pose **au bord de l'eau** (sur la plage, à plus de 15,5 m du centre de l'île). On **maintient le clic** dessus pour pomper **20 L/s** (M-58 : elle reste active, pas automatique).
   - L'eau va dans les zones de séchage **reliées par des tuyaux**. Un **tuyau** (50 sel) est un tronçon de **4 m**. Les liaisons se font **toutes seules** : chaque pompe se relie à ses zones de la plus proche à la plus lointaine, tant qu'il reste des tronçons (il en faut assez pour aller jusqu'au bord de la zone). Déplacer une zone ou une pompe refait le réseau.
   - On remplit la zone la plus proche d'abord. Quand toutes les zones reliées sont pleines, la pompe ne prend plus rien à l'océan.
+- **[PROPOSÉ]** Moulin-pompe (prototype, v0.20) : 1 500 sel + 100 minéraux + 10 minéraux rares, un seul par partie. Il se pose au bord de l'eau et pompe **10 L/s tout seul**, même quand le joueur est loin, par le même réseau de tuyaux.
+- **[PROPOSÉ]** Fin de la démo (M-05) : quand le moulin-pompe a pompé 200 L tout seul, un gros avion sombre passe au-dessus de l'île avec des silhouettes de machines T3, puis un écran « Fin de la démo » donne le bilan (temps, eau retirée, baisse du niveau) et annonce T3. « Continuer à jouer » ferme l'écran ; il ne revient plus, même après un chargement.
 - **[DÉCIDÉ]** (prototype, 2026-11-16) Le **Manuel du bricoleur** (250 sel + 25 minéraux + 10 coquillages, liste M-57) débloque T2. Avant, les articles T2 sont visibles en grisé avec « Requiert le Manuel du bricoleur ». **[PROPOSÉ]** Bassin en bois : 200 L, séché en 45 s. Miroir solaire : +50 % d'évaporation pour chaque zone à moins de 6 m (plusieurs miroirs s'additionnent).
 - **[PROPOSÉ]** Chaque palier se débloque par un **achat clé** au catalogue (ex. « le manuel de la pompe » sous forme de schéma illustré), pas par un arbre de compétences abstrait.
 - **[PROPOSÉ]** Les objets d'un palier inférieur restent utiles un moment, puis deviennent décoratifs. Le joueur peut les revendre ou les garder.
