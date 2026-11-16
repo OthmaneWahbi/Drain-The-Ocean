@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.12 (retours de test : paiement, tas de sel, lune, déplacement des objets, outils admin) |
+| Version du document | 0.13 (survie légère : faim, soif, noix de coco, rations, bâche de condensation ; coquillages du matin) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -88,6 +88,10 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 - **[DÉCIDÉ]** Survie **légère** (M-26, 2026-11-16) : **endurance** (style *Zelda: Breath of the Wild*, consommée en courant et en nageant), **faim et soif légères**. Le jeu reste détendu.
   - **[DÉCIDÉ]** **Nourriture** : noix de coco sur les palmiers et rations au catalogue. **Eau douce** : bâche de condensation (achat T1) (N-02).
   - **[DÉCIDÉ]** Faim ou soif à zéro : **pas de mort**, l'endurance maximale baisse jusqu'à ce qu'on mange ou boive (N-03).
+  - **[PROPOSÉ]** Valeurs du prototype : la faim se vide en 15 min, la soif en 10 min. À zéro, l'endurance max perd jusqu'à 30 % par besoin, progressivement en 2 min ; manger ou boire efface aussitôt cette pénalité.
+  - **[PROPOSÉ]** Noix de coco : une par emplacement sous les palmiers (5), qui revient chaque matin si elle a été mangée ; E pour la manger (+35 % de faim, +25 % de soif).
+  - **[PROPOSÉ]** Rations : 8 sel la caisse de 5 repas (+60 % de faim chacun) ; la caisse disparaît vide.
+  - **[PROPOSÉ]** Bâche de condensation : 20 sel ; produit une gorgée d'eau douce toutes les 90 s (3 au plus) ; E pour boire (+50 % de soif).
   - **[DÉCIDÉ]** **Endurance** : ~20 s de course ou ~60 s de nage. Elle remonte à l'arrêt **sur la terre ferme** ; **dans l'eau, elle ne remonte jamais**, même immobile. Améliorable avec la nourriture et des objets du catalogue (N-05).
 - **[DÉCIDÉ]** Cycle jour/nuit : **20 min réelles par jour**, évaporation ×0,3 la nuit (M-40). La nuit est belle et calme, pas punitive.
 
@@ -615,7 +619,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont
 
 **Séchage.** M-36 cuvette rocheuse de départ, bâche en premier achat · M-37 45 s, *améliorable plus tard* · M-38 capacité maximale · M-39 récolte au clic puis au râteau · M-40 jour de 20 min, ×0,3 la nuit · M-41 pose libre sur sable plat · M-42 le séchage continue partout.
 
-**Ressources.** M-43 sel 1 garanti, minéraux 10 %, rares 0,5 %, coquillage 3 % au puisage · M-44 coquillages qui réapparaissent chaque matin · M-45 **perle dans le MVP** · M-46 pas de limite de stockage.
+**Ressources.** M-43 sel 1 garanti, minéraux 10 %, rares 0,5 %, coquillage 3 % au puisage · M-44 coquillages qui réapparaissent chaque matin (**[PROPOSÉ]** 5 sur la plage chaque matin, ramassés avec E, 2 % de perle) · M-45 **perle dans le MVP** · M-46 pas de limite de stockage.
 
 **Téléphone.** M-47 catalogue mixte · M-48 premier appel en tutoriel muet · M-49 panier · M-50 palette arrachée au crochet · M-51 **livraison en 5 s** · M-52 caisse ouverte avec E · M-53 gag du bateau · M-54 **le téléphone sonne parfois pour des offres spéciales** · M-55 musique d'attente devenue thème · M-56 pas de revente.
 

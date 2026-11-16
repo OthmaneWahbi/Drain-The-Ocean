@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -77,6 +77,26 @@ effect = 3
 effect_value = 2.0
 unique = true
 
+[sub_resource type="Resource" id="condenser"]
+script = ExtResource("2")
+id = &"condenseur"
+name_key = "ITEM_CONDENSER"
+desc_key = "ITEM_CONDENSER_DESC"
+tier = 1
+price = {"sel": 20}
+effect = 7
+effect_param = "condenseur"
+
+[sub_resource type="Resource" id="rations"]
+script = ExtResource("2")
+id = &"rations"
+name_key = "ITEM_RATIONS"
+desc_key = "ITEM_RATIONS_DESC"
+tier = 1
+price = {"sel": 8}
+effect = 7
+effect_param = "rations"
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("boat")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat")])

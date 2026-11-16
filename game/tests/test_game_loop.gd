@@ -13,6 +13,7 @@ func before_each() -> void:
 	cfg.shell_chance_per_scoop = 0.0
 	cfg.mineral_chance = 0.0
 	cfg.rare_mineral_chance = 0.0
+	cfg.pearl_chance_per_shell = 0.0
 	gs.setup(cfg)
 
 
@@ -194,4 +195,64 @@ func test_save_keeps_upgrades() -> void:
 	assert_eq(other.carry_capacity, 40)
 	assert_true(other.has_rake)
 	assert_almost(other.speed_multiplier, 1.2)
+	other.free()
+
+
+func test_new_game_puts_coconuts_and_shells() -> void:
+	var coconuts: Array = gs.pickups.filter(func(p): return p.kind == "coconut")
+	var shells: Array = gs.pickups.filter(func(p): return p.kind == "shell")
+	assert_eq(coconuts.size(), gs.config.coconut_spots.size())
+	assert_eq(shells.size(), gs.config.shells_per_morning)
+
+
+func test_eating_a_coconut_feeds_and_waters() -> void:
+	gs.survival.food = 0.2
+	gs.survival.water = 0.2
+	var nut: Dictionary = gs.pickups.filter(func(p): return p.kind == "coconut")[0]
+	assert_true(gs.take_pickup(nut))
+	assert_almost(gs.survival.food, 0.55, 1e-6)
+	assert_almost(gs.survival.water, 0.45, 1e-6)
+	assert_false(gs.pickups.has(nut))
+
+
+func test_shells_go_to_hands_and_come_back_each_morning() -> void:
+	for shell in gs.pickups.filter(func(p): return p.kind == "shell"):
+		gs.take_pickup(shell)
+	assert_eq(int(gs.carried["coquillages"]), gs.config.shells_per_morning)
+	gs._morning_refill()
+	assert_eq(gs.pickups.filter(func(p): return p.kind == "shell").size(), gs.config.shells_per_morning)
+	assert_eq(gs.pickups.filter(func(p): return p.kind == "coconut").size(), gs.config.coconut_spots.size(), "une seule noix par place :")
+
+
+func test_condenser_and_rations_from_catalogue() -> void:
+	gs.stock["sel"] = 28
+	gs.open_crate(gs.order(["condenseur", "rations"]))
+	assert_eq(gs.stations.size(), 2)
+	var condenser: Dictionary = gs.stations.filter(func(st): return st.kind == "condenseur")[0]
+	var rations: Dictionary = gs.stations.filter(func(st): return st.kind == "rations")[0]
+	assert_false(gs.use_station(condenser), "vide au début :")
+	condenser.logic.step(gs.config.condenser_period_s)
+	gs.survival.water = 0.1
+	assert_true(gs.use_station(condenser))
+	assert_almost(gs.survival.water, 0.6, 1e-6)
+	for i in gs.config.ration_portions:
+		gs.use_station(rations)
+	assert_false(gs.stations.has(rations), "caisse de rations vide = retirée :")
+
+
+func test_save_keeps_survival_pickups_and_stations() -> void:
+	gs.survival.food = 0.3
+	gs.stock["sel"] = 20
+	gs.open_crate(gs.order(["condenseur"]))
+	gs.stations[0].logic.amount = 2
+	gs.take_pickup(gs.pickups[0])
+	var n: int = gs.pickups.size()
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	var other: Node = GameStateScript.new()
+	other.setup(gs.config)
+	other.load_dict(data)
+	assert_eq(other.pickups.size(), n)
+	assert_eq(other.stations.size(), 1)
+	assert_eq(other.stations[0].logic.amount, 2)
+	assert_almost(other.survival.food, gs.survival.food, 1e-6)
 	other.free()

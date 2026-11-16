@@ -80,3 +80,28 @@ extends Resource
 ## Noyade (N-04) : durée du fondu au noir, puis retour sur la plage.
 @export var drown_fade_s: float = 0.8
 @export var respawn_position: Vector3 = Vector3(0, 1, 6)
+
+@export_group("Survie légère")
+## Secondes pour que la faim (puis la soif) passe de pleine à vide (M-26, N-03).
+@export var food_empty_s: float = 900.0
+@export var water_empty_s: float = 600.0
+## À zéro : l'endurance max perd jusqu'à cette part par besoin, en `starving_penalty_time_s` secondes.
+@export var starving_penalty_max: float = 0.3
+@export var starving_penalty_time_s: float = 120.0
+## Noix de coco (N-02) : ce qu'elle nourrit et désaltère ; où elles tombent sous les palmiers.
+@export var coconut_food: float = 0.35
+@export var coconut_water: float = 0.25
+@export var coconut_spots: PackedVector3Array = PackedVector3Array()
+## Rations : portions par caisse et ce que chacune nourrit.
+@export var ration_portions: int = 5
+@export var ration_food: float = 0.6
+## Bâche de condensation : une gorgée toutes les `condenser_period_s` s, au plus `condenser_capacity`.
+@export var condenser_period_s: float = 90.0
+@export var condenser_capacity: int = 3
+@export var condenser_water: float = 0.5
+
+@export_group("Plage")
+## Coquillages déposés sur la plage chaque matin (M-44), dans un anneau autour du centre.
+@export var shells_per_morning: int = 5
+@export var beach_radius_min: float = 16.5
+@export var beach_radius_max: float = 19.3

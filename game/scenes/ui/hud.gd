@@ -10,10 +10,16 @@ extends CanvasLayer
 @onready var prompt_label: Label = $Prompt
 @onready var fill_bar: ProgressBar = $FillBar
 var stamina_bar: ProgressBar
+var survival_label: Label
 
 
 func _ready() -> void:
 	_build_stamina_bar()
+	survival_label = Label.new()
+	survival_label.name = "Survival"
+	survival_label.add_theme_font_size_override("font_size", 14)
+	$Margin/VBox.add_child(survival_label)
+	GameState.survival_changed.connect(_refresh_survival)
 	GameState.ocean_changed.connect(_refresh_ocean)
 	GameState.stock_changed.connect(_refresh_items)
 	GameState.carried_changed.connect(_refresh_items)
@@ -31,11 +37,25 @@ func _process(_delta: float) -> void:
 	var progress := GameState.bucket.fill_progress_ratio()
 	fill_bar.visible = progress > 0.0
 	fill_bar.value = progress * 100.0
+	_refresh_survival()
 	# Endurance : visible seulement quand elle n'est pas pleine (comme dans BotW).
 	var stamina := GameState.stamina
 	stamina_bar.visible = not stamina.is_full()
 	stamina_bar.value = stamina.value * 100.0
 	stamina_bar.modulate = Color(1, 0.35, 0.3) if stamina.exhausted or stamina.value < 0.25 else Color(0.55, 0.9, 0.4)
+
+
+func _refresh_survival() -> void:
+	var sv := GameState.survival
+	survival_label.text = "%s : %s · %s : %s" % [tr("HUD_FOOD"), gauge(sv.food), tr("HUD_WATER"), gauge(sv.water)]
+	# Rouge quand un besoin est vide : l'endurance max baisse.
+	survival_label.modulate = Color(1, 0.45, 0.4) if sv.food <= 0.0 or sv.water <= 0.0 else Color.WHITE
+
+
+## Petite jauge en texte : « ▮▮▮▯▯ ».
+static func gauge(ratio: float) -> String:
+	var full := clampi(int(ceil(ratio * 5.0 - 0.001)), 0, 5)
+	return "▮".repeat(full) + "▯".repeat(5 - full)
 
 
 func _build_stamina_bar() -> void:

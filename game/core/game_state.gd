@@ -15,6 +15,11 @@ signal crate_added(crate: Dictionary, animate: bool)
 signal crate_removed(crate: Dictionary)
 signal decor_added(decor: Dictionary)
 signal new_morning
+signal pickup_added(pickup: Dictionary)
+signal pickup_removed(pickup: Dictionary)
+signal station_added(station: Dictionary)
+signal station_removed(station: Dictionary)
+signal survival_changed
 signal game_reset
 
 const CONFIG_PATH := "res://data/game_config.tres"
@@ -48,6 +53,12 @@ var speed_multiplier: float = 1.0
 var has_rake: bool = false
 ## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
 var stamina: StaminaLogic
+## Faim et soif (sauvegardées).
+var survival: SurvivalLogic
+## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
+var pickups: Array[Dictionary] = []
+## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
+var stations: Array[Dictionary] = []
 var play_time_s: float = 0.0
 var current_slot: int = 1
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
@@ -74,6 +85,7 @@ func setup(config_override: GameConfig = null) -> void:
 func new_game() -> void:
 	_reset_state()
 	add_zone("cuvette", config.basin_position)
+	_morning_refill()
 	_emit_all()
 
 
@@ -94,6 +106,9 @@ func _reset_state() -> void:
 	speed_multiplier = 1.0
 	has_rake = false
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
+	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
+	pickups = []
+	stations = []
 	play_time_s = 0.0
 	_autosave_timer = 0.0
 	_next_id = 1
@@ -105,10 +120,15 @@ func _process(delta: float) -> void:
 	# Chronomètre de partie : ne tourne que quand le jeu n'est pas en pause (PRD §11).
 	play_time_s += delta
 	if day.step(delta):
+		_morning_refill()
 		new_morning.emit()
 	var multiplier := day.evaporation_multiplier(config.night_evaporation_factor)
 	for zone in zones:
 		(zone.logic as DryingLogic).step(delta, multiplier, rng)
+	for st in stations:
+		(st.logic as StationLogic).step(delta)
+	survival.step(delta)
+	stamina.set_max(survival.stamina_cap())
 	_autosave_timer += delta
 	if _autosave_timer >= config.autosave_interval_s:
 		_autosave_timer = 0.0
@@ -300,6 +320,8 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 			speed_multiplier = maxf(speed_multiplier, item.effect_value)
 		CatalogItem.Effect.RAKE:
 			has_rake = true
+		CatalogItem.Effect.STATION:
+			add_station(item.effect_param, position)
 		CatalogItem.Effect.DECOR:
 			var d := {"kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -310,6 +332,94 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 func _refresh_bucket() -> void:
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket_changed.emit()
+
+
+# --- Survie légère et plage (N-02, N-03, M-44) ------------------------------------------
+
+## Chaque matin : une noix de coco revient sous chaque palmier qui n'en a plus, et la plage
+## reçoit de nouveaux coquillages (on complète jusqu'à `shells_per_morning`).
+func _morning_refill() -> void:
+	for spot in config.coconut_spots:
+		if not _has_pickup_at("coconut", spot):
+			add_pickup("coconut", spot)
+	var shells := pickups.filter(func(p): return p.kind == "shell").size()
+	for i in maxi(config.shells_per_morning - shells, 0):
+		add_pickup("shell", _random_beach_spot())
+
+
+func _random_beach_spot() -> Vector3:
+	var angle := rng.randf() * TAU
+	var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
+	return Vector3(cos(angle) * radius, 0.52, sin(angle) * radius)
+
+
+func _has_pickup_at(kind: String, position: Vector3) -> bool:
+	for p in pickups:
+		if p.kind == kind and (p.position as Vector3).distance_to(position) < 0.1:
+			return true
+	return false
+
+
+func add_pickup(kind: String, position: Vector3) -> Dictionary:
+	var p := {"id": _new_id("pickup"), "kind": kind, "position": position}
+	pickups.append(p)
+	pickup_added.emit(p)
+	return p
+
+
+## Ramasser avec E : la noix de coco se mange tout de suite ; le coquillage va dans les bras
+## (2 % de chance d'y trouver une perle, N-07). Renvoie faux si les bras sont pleins.
+func take_pickup(p: Dictionary) -> bool:
+	if not pickups.has(p):
+		return false
+	match p.kind:
+		"coconut":
+			survival.eat(config.coconut_food)
+			survival.drink(config.coconut_water)
+			survival_changed.emit()
+		"shell":
+			if carry_space() <= 0:
+				return false
+			var found := {"coquillages": 1}
+			if rng.randf() < config.pearl_chance_per_shell:
+				found["perles"] = 1
+			add_carried(found)
+	pickups.erase(p)
+	pickup_removed.emit(p)
+	return true
+
+
+func add_station(kind: String, position: Vector3) -> Dictionary:
+	var logic: StationLogic
+	match kind:
+		"condenseur":
+			logic = StationLogic.new(0, config.condenser_capacity, config.condenser_period_s)
+		"rations":
+			logic = StationLogic.new(config.ration_portions, config.ration_portions, 0.0)
+		_:
+			push_error("Type d'objet inconnu : %s" % kind)
+			return {}
+	var st := {"id": _new_id("station"), "kind": kind, "position": position, "logic": logic}
+	stations.append(st)
+	station_added.emit(st)
+	return st
+
+
+## E sur une bâche de condensation : boire une gorgée ; sur une caisse de rations : manger.
+func use_station(st: Dictionary) -> bool:
+	var logic: StationLogic = st.logic
+	if not logic.take_one():
+		return false
+	match st.kind:
+		"condenseur":
+			survival.drink(config.condenser_water)
+		"rations":
+			survival.eat(config.ration_food)
+	survival_changed.emit()
+	if logic.is_spent():
+		stations.erase(st)
+		station_removed.emit(st)
+	return true
 
 
 # --- Niveau de l'eau -----------------------------------------------------------------------
@@ -332,6 +442,9 @@ func to_dict() -> Dictionary:
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position)}),
 		"owned": owned.duplicate(),
+		"survival": survival.to_dict(),
+		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
+		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "logic": (st.logic as StationLogic).to_dict()}),
 		"upgrades": {"bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
@@ -370,6 +483,16 @@ func load_dict(data: Dictionary) -> void:
 		var dec := {"kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
 		decor.append(dec)
 		decor_added.emit(dec)
+	survival.load_dict(data.get("survival", {}))
+	if data.has("pickups"):
+		for p in data.get("pickups", []):
+			add_pickup(String(p.get("kind", "")), _a2v(p.get("position", [])))
+	else:
+		_morning_refill()  # sauvegarde d'avant cette version : on garnit la plage
+	for st in data.get("stations", []):
+		var station := add_station(String(st.get("kind", "")), _a2v(st.get("position", [])))
+		if not station.is_empty():
+			(station.logic as StationLogic).load_dict(st.get("logic", {}))
 	owned = data.get("owned", {}).duplicate()
 	_deliveries_count = int(data.get("deliveries_count", 0))
 	play_time_s = float(data.get("play_time_s", 0.0))
@@ -404,6 +527,7 @@ func _notification(what: int) -> void:
 # --- Outils internes -----------------------------------------------------------------------
 
 func _emit_all() -> void:
+	survival_changed.emit()
 	ocean_changed.emit()
 	stock_changed.emit()
 	carried_changed.emit()
