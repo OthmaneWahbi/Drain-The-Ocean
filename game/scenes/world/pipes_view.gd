@@ -37,6 +37,7 @@ func rebuild() -> void:
 				_arm(piece, Vector3(0, -0.2, 0), color)
 				break
 		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.5))
+		PhysicsLayers.make_walk_through(piece)  # on le vise, on ne s'y coince pas
 
 
 func _touches_pump(cell: Vector3i, d: Vector3i) -> bool:

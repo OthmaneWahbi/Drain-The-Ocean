@@ -33,11 +33,19 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 ## Balancement de la tête (M-21) : hauteur de repos de la tête et horloge de marche.
 var _head_rest_y: float = 0.0
 var _walk_time: float = 0.0
+## Anti-blocage : détecte qu'on est coincé et cherche une place libre.
+var _unstuck: UnstuckLogic
+var _last_position: Vector3
 
 
 func _ready() -> void:
 	add_to_group(&"player")
 	_head_rest_y = head.position.y
+	# On ne se cogne qu'aux objets solides ; tas, tuyaux et coquillages se traversent.
+	collision_layer = PhysicsLayers.SOLID
+	collision_mask = PhysicsLayers.SOLID
+	_unstuck = UnstuckLogic.new(GameState.config.unstuck_check_after_s)
+	_last_position = global_position
 	_build_bucket()
 	_build_fade()
 	_apply_view()
@@ -129,6 +137,10 @@ func _physics_process(delta: float) -> void:
 	velocity.z = lerpf(velocity.z, target_velocity.z, weight)
 	move_and_slide()
 	_update_head_bob(delta, speed)
+	var moved := Vector2(global_position.x - _last_position.x, global_position.z - _last_position.z).length()
+	_last_position = global_position
+	if _unstuck.update(delta, input != Vector2.ZERO and not swimming and not _drowning, moved) and is_trapped():
+		free_from_trap()
 
 	# Endurance (N-05) : elle ne remonte qu'à l'arrêt sur la terre ferme.
 	var activity := StaminaLogic.Activity.WALK_ON_LAND
@@ -169,6 +181,63 @@ func _drown() -> void:
 	tween.tween_interval(0.6)
 	tween.tween_property(_fade, "color:a", 0.0, cfg.drown_fade_s)
 	tween.tween_callback(func(): _drowning = false)
+
+
+## Coincé : aucune des 8 directions ne laisse avancer de `UnstuckLogic.ESCAPE_M` (plus que la
+## largeur du personnage). Contre un simple mur, on peut toujours partir de côté ou en arrière.
+func is_trapped() -> bool:
+	var free: Array = []
+	for dir in UnstuckLogic.probe_directions(UnstuckLogic.ESCAPE_M):
+		free.append(not test_move(global_transform, dir))
+	return UnstuckLogic.is_trapped(free)
+
+
+## Se pose sur la place libre la plus proche (avec du sol dessous), sinon retour sur la plage.
+func free_from_trap() -> void:
+	var spot: Variant = find_free_spot(global_position, false)
+	if spot == null:
+		rescue()
+	else:
+		_teleport(spot)
+
+
+## Retour sur la plage (bouton « Me débloquer » du menu pause, ou si rien d'autre ne marche).
+## Si un objet a été posé sur le point de retour, on se met à côté.
+func rescue() -> void:
+	var home := GameState.config.respawn_position
+	var spot: Variant = find_free_spot(home, true)
+	_teleport(spot if spot != null else home)
+
+
+## Place libre la plus proche de `origin` pour la capsule du joueur, avec du sol dessous.
+## Renvoie null s'il n'y en a pas dans le rayon de recherche.
+func find_free_spot(origin: Vector3, include_origin: bool) -> Variant:
+	var cfg := GameState.config
+	var col := $Collision as CollisionShape3D
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = col.shape
+	query.collision_mask = PhysicsLayers.SOLID
+	query.exclude = [get_rid()]
+	var spots: Array[Vector3] = []
+	if include_origin:
+		spots.append(origin)
+	spots.append_array(UnstuckLogic.candidates(origin, cfg.unstuck_step_m, cfg.unstuck_search_m))
+	for spot in spots:
+		query.transform = Transform3D(Basis.IDENTITY, spot + col.position + Vector3(0, 0.05, 0))
+		if not space.intersect_shape(query, 1).is_empty():
+			continue
+		var down := PhysicsRayQueryParameters3D.create(spot + Vector3(0, 0.5, 0), spot + Vector3(0, -2.0, 0), PhysicsLayers.SOLID, [get_rid()])
+		if space.intersect_ray(down).is_empty():
+			continue  # pas de sol : on ne se jette pas à l'eau
+		return spot
+	return null
+
+
+func _teleport(spot: Vector3) -> void:
+	global_position = spot + Vector3(0, 0.05, 0)
+	velocity = Vector3.ZERO
+	_last_position = global_position
 
 
 ## Balancement de la tête en marchant sur la terre ferme (M-21, désactivable dans les options).
@@ -274,7 +343,7 @@ func _find_target() -> Node:
 	var length := reach + (spring_length() if third_person else 0.0)
 	var from := cam.global_position
 	var to := from - cam.global_transform.basis.z * length
-	var query := PhysicsRayQueryParameters3D.create(from, to)
+	var query := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.AIM)
 	query.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():

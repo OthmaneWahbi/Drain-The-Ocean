@@ -260,6 +260,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `main_menu.gd` (`MainMenu`, `PROCESS_MODE_ALWAYS`) met l'arbre en pause, coupe la sauvegarde auto, lit `SaveSystem.summary(slot)` ; Jouer appelle `GameState.play_slot(slot)` (charge, ou partie neuve sauvegardée tout de suite). `pause_menu.gd` (`PauseMenu`) répond à Échap seulement si aucun autre menu n'a la main (`GameState.ui_open`).
 - `GameState.autosave_enabled` est faux tant qu'aucun emplacement n'est choisi : ni la minuterie, ni l'achat, ni la fermeture de la fenêtre n'écrasent un emplacement. `save_dir` permet aux tests d'écrire ailleurs.
 
+### L'anti-blocage (PR #19)
+
+- `core/physics_layers.gd` (`PhysicsLayers`) : couche 1 = SOLID, couche 2 = WALK_THROUGH. `make_walk_through(corps)` met un objet sur la couche 2 sans masque. Le joueur a `collision_mask = SOLID` : il traverse la couche 2. Son rayon de visée utilise `AIM = SOLID | WALK_THROUGH` : il trouve toujours les tas et les tuyaux.
+- `core/unstuck_logic.gd` (`UnstuckLogic`, pur) : `update(delta, veut_avancer, déplacement)` rend vrai après 1 s sans bouger ; `probe_directions()` (8 vecteurs), `is_trapped()`, `candidates()` (cercles de plus en plus grands, triés par distance).
+- Dans `player.gd` : `is_trapped()` appelle `test_move()` (méthode de `CharacterBody3D` qui simule un déplacement sans le faire) dans les 8 directions ; `find_free_spot()` essaie chaque place avec `intersect_shape` (la capsule du joueur y tient-elle ?) puis un rayon vers le bas (y a-t-il du sol ?). `rescue()` sert au bouton du menu pause.
+- `tests/scenarios/softlock.gd` : un script `SceneTree` qui charge la vraie scène, appuie sur les touches (`Input.action_press`) et vérifie les positions : c'est un test d'intégration, à côté des tests unitaires.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -318,3 +325,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #18 — Menus et options
 `SettingsLogic`, autoload `Settings`, `MenuStyle`, `OptionsPanel`, `MainMenu`, `PauseMenu`, `SaveSystem.summary`, `GameState.play_slot` / `autosave`, `test_settings.gd`.
+
+### PR #19 — Anti-blocage
+`PhysicsLayers`, `UnstuckLogic`, `player.is_trapped` / `find_free_spot` / `rescue`, bouton « Me débloquer », `test_unstuck.gd`, `tests/scenarios/softlock.gd`.

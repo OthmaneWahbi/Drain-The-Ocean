@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.28 (menu principal, 3 emplacements, options, pause) |
+| Version du document | 0.29 (anti-blocage) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -717,6 +717,8 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 - **[PROPOSÉ]** Jalons comparatifs (v0.27 ; M-70) : en haut à droite, le pictogramme du prochain jalon se remplit d'eau à mesure qu'on vide l'océan (pas de texte). En le franchissant, un grand pictogramme plein apparaît avec sa récompense, posée sur la palette. Les trois de la démo : **baignoire** (150 L, +10 sel), **piscine gonflable** (2 000 L, +1 perle), **piscine** (30 000 L, +5 minéraux rares) ; ensuite la piscine olympique (2,5 millions de litres). La liste est dans les données (`GameConfig.milestones`). Un jalon franchi le reste, même si l'eau retourne à l'océan.
 
 - **[PROPOSÉ]** Menus et options (v0.28 ; M-21, M-71, M-72, M-73, M-77) : au lancement, un **menu principal** avec 3 emplacements de sauvegarde (temps de jeu, litres retirés, date), Jouer / Effacer, Options, Quitter ; le jeu est en pause derrière et rien n'est sauvegardé tant qu'aucun emplacement n'est choisi. **Échap** ouvre le menu pause (vraie pause : le chronomètre s'arrête) : Reprendre, Sauvegarder, Options, Menu principal, Quitter ; il ne s'ouvre pas par-dessus le catalogue (M-74). **Options** (à part des parties, `user://settings.json`) : champ de vision 60-110, sensibilité, volume, balancement de la tête, plein écran, langue FR/EN, chronomètre speedrun. Le chronomètre de partie est **caché** par défaut (le HUD montre l'heure du jeu) ; l'option speedrun l'affiche au centième. Sauvegarde automatique aussi **après chaque achat**.
+
+- **[DÉCIDÉ]** Anti-blocage (v0.29, demande d'Othmane, 2026-11-16 : « Make sure no softlocking is possible ») : on ne doit jamais pouvoir rester coincé. (1) Les **petits objets se traversent** : tas de matériaux, tuyaux, coquillages, noix de coco ; on les vise toujours (E, clic) mais on ne s'y cogne pas. (2) **Détection automatique** : si l'on essaie d'avancer sans bouger pendant 1 s et qu'aucune des 8 directions ne laisse partir de 80 cm, le personnage se pose sur la place libre la plus proche (avec du sol, cercles de 50 cm jusqu'à 4 m). (3) **Filet de sécurité** : bouton « Me débloquer » dans le menu pause, qui ramène sur la plage (à côté si un objet bloque le point de retour). Valeurs dans `GameConfig` (`unstuck_*`).
 
 ## 20. Glossaire
 
