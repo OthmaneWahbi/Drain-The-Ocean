@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.4 (texte sobre autorisé dans les textures ; écran du temps de partie ; retour au menu) |
+| Version du document | 0.5 (sauvegarde finie rouverte avant le drain ; vidage manuel possible mais fastidieux) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -316,6 +316,11 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 ## 11. La fin : le drain
 
 - **[DÉCIDÉ]** Quand il reste **5 % d'eau ou moins**, un drain est visible au fond de l'océan. Le joueur peut simplement l'ouvrir pour vider le reste. C'est censé être drôle.
+- **[DÉCIDÉ]** **Le drain n'est pas obligatoire** (2026-11-16) : le joueur doit pouvoir vider le reste de l'océan sans l'ouvrir s'il le veut. Mais **les derniers litres** ne peuvent partir que de deux façons : **à la main avec le seau**, ou **par le drain**. Les finir au seau doit être volontairement **fastidieux**.
+  - **[PROPOSÉ]** Mécanique : sous un certain seuil (ex. les dernières flaques, quelques milliers de litres *(provisoire)*), l'eau est trop peu profonde et trop éparpillée pour les machines. Les pompes aspirent de l'air (gag sonore), les évaporateurs n'ont plus rien à traiter, et ils s'arrêtent d'eux-mêmes. Il ne reste que des flaques au fond, et le seau.
+  - **[PROPOSÉ]** Le seau de départ (cosmétiquement usé, voir [12](#12-clins-dœil-lore-uniquement-visuel)) redevient l'outil du moment : boucle de fin qui fait écho au tout début du jeu.
+  - **[PROPOSÉ]** Si le joueur vide tout à la main, le drain est à sec. Il l'ouvre quand même (ou marche simplement vers le bord) et la fin se déroule normalement (traversée à pied, avion publicitaire, temps, générique). Le temps affiché sera bien sûr plus long.
+  - **[QUESTION Q-26]** Finir au seau mérite-t-il une petite récompense ou un détail différent dans la fin (succès secret, le drain fait juste un petit « plop » à sec, le pilote applaudit) ? Recommandation : **succès secret + « plop » à sec**, sans changer le reste de la fin.
 - **[PROPOSÉ]** Déroulé :
   1. À ≤ 5 %, l'eau restante est assez basse et claire pour révéler, au centre, un **énorme drain** (style bonde de baignoire) avec sa **chaîne**.
   2. Le joueur marche jusqu'au centre sur le fond découvert (trajet long et solennel, musique qui monte).
@@ -338,7 +343,8 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   2. Générique.
   3. **Retour au menu principal.** La run est terminée ; il n'y a pas d'exploration après la fin.
 - **[PROPOSÉ]** Le temps affiché est le **temps de jeu réel** (chronomètre qui ne tourne que quand la partie est ouverte et non en pause), enregistré dans la sauvegarde. La sauvegarde terminée est marquée « finie » et le meilleur temps est conservé dans le menu.
-- **[QUESTION Q-25]** Une sauvegarde finie peut-elle être rechargée (par exemple pour revoir la fin), ou est-elle verrouillée ? Recommandation : verrouillée, avec seulement le temps affiché dans le menu.
+- **[DÉCIDÉ]** Une sauvegarde déjà terminée **se rouvre juste avant l'ouverture du drain** au fond de l'océan (Q-25, 2026-11-16).
+  - **[PROPOSÉ]** Techniquement : un **point de reprise** est enregistré automatiquement quand le joueur arrive devant le drain (ou au passage sous le seuil des derniers litres). Charger une sauvegarde finie recharge ce point. Le temps de la première fin reste celui affiché dans le menu.
 
 ---
 
@@ -490,6 +496,7 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 | P-06 | **Pourquoi ne pas nager ?** | Moyenne | Trop loin = on se réveille sur l'île | 10 |
 | P-07 | **La fin peut frustrer** : « J'ai tout fait pour rien ? » | Moyenne | C'est le but, mais on adoucit : indices visibles depuis le début, récompense post-générique, exploration libre | 11 |
 | P-08 | **Le drain atteignable trop tôt** (plongée, exploit) | Moyenne | Invisible et inaccessible avant 5 % | 11 |
+| P-18 | **Finir sans le drain** : si les machines vident tout, la blague du drain disparaît | Moyenne | Les machines s'arrêtent sur les derniers litres ; seul le seau (fastidieux) ou le drain les finit | 11 |
 | P-09 | **La place sur l'île** : trop de machines, trop de stock | Moyenne | L'île grandit avec la baisse ; stock affiché par paliers ; entrepôts au catalogue | 8.5, 16.3 |
 | P-10 | **Économie à une seule ressource utile** : le sel perd sa valeur | Moyenne | Troc direct et chaque palier exige une ressource plus rare | 6.2 |
 | P-11 | **La vie marine** : ton morbide si les poissons meurent | Moyenne | Les poissons reculent et partent par le drain | 8.7 |
@@ -521,7 +528,7 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 
 Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée dans HANDOFF.md + mise à jour de ce document.
 
-**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu (toutes le 2026-11-16).
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain (toutes le 2026-11-16).
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
@@ -537,7 +544,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
 | **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
-| **Q-25** | Une sauvegarde finie peut-elle être rechargée ? | Oui / Non, verrouillée | **Verrouillée**, temps affiché dans le menu |
+| **Q-26** | Finir l'océan au seau (sans le drain) change-t-il quelque chose dans la fin ? | Rien / Succès secret / Détail de mise en scène | **Succès secret + « plop » à sec** |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |

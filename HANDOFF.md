@@ -36,14 +36,32 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.4 en revue (PR #1).
+- **Documents :** PRD v0.5 en revue (PR #1).
 - **Prochaine étape :** Othmane répond aux questions ouvertes du PRD (section 18), puis jalon M0 (fondations du projet Godot).
-- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport, puis temps de partie, générique et retour au menu ; texte sobre autorisé dans les textures.
-- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont la nouvelle Q-25 (une sauvegarde finie peut-elle être rechargée).
+- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport, puis temps de partie, générique et retour au menu ; texte sobre autorisé dans les textures ; sauvegarde finie rouverte juste avant le drain ; vidage sans drain possible, mais les derniers litres seulement au seau.
+- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont la nouvelle Q-26 (finir au seau change-t-il quelque chose dans la fin).
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — PRD v0.5 : reprise des sauvegardes finies et vidage manuel
+- **Quoi :** §11 complétée (drain facultatif, derniers litres au seau ou par le drain, point de reprise avant le drain) ; ajout du problème P-18 et de la question Q-26 ; Q-25 retirée.
+- **Pourquoi :** décisions d'Othmane.
+- **Impact :** PRD §11, §17, §18.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Le drain est facultatif, mais les derniers litres se vident au seau ou par le drain
+- **Quoi :** le joueur doit pouvoir vider le reste de l'océan sans ouvrir le drain s'il le veut. Les derniers litres ne peuvent partir qu'à la main (seau) ou par le drain, et les finir au seau doit être fastidieux.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §11 ; les machines doivent cesser de fonctionner sous un seuil (proposition).
+- **Par :** Othmane
+
+### 2026-11-16 — DÉCISION — Une sauvegarde terminée se rouvre juste avant le drain (Q-25)
+- **Quoi :** recharger une partie finie ramène le joueur au fond de l'océan, juste avant d'ouvrir le drain.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §11 ; système de sauvegarde (point de reprise).
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — PRD v0.4 : texte dans les textures et fin de la run
 - **Quoi :** §11 (banderole, écran du temps, retour au menu), §12 (règle du texte assouplie), §2, §4.4, §16.1, P-16, §18 (Q-23 et Q-24 retirées, ajout de Q-25), §19 mis à jour. Ajout d'un chronomètre de temps de jeu réel dans la sauvegarde **[PROPOSÉ]**.
