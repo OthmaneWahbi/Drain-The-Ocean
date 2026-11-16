@@ -14,6 +14,11 @@ func _ready() -> void:
 	for i in cfg.palms.size():
 		var p := cfg.palms[i]
 		_add_palm(Vector3(p.x, terrain.height(p.x, p.y), p.y), p.z, i)
+	for i in cfg.outer_palms.size():
+		var p := cfg.outer_palms[i]
+		var y := terrain.height(p.x, p.y)
+		if y > 0.15:  # jamais dans l'eau
+			_add_palm(Vector3(p.x, y, p.y), p.z, cfg.palms.size() + i)
 	for r in cfg.rocks:
 		_add_rock(Vector3(r.x, terrain.height(r.x, r.y), r.y), r.z)
 	_scatter(cfg.dune_bushes, cfg.driftwood)

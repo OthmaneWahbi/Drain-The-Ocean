@@ -116,7 +116,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _build_walker() -> void:
 	_walker = Node3D.new()
-	_walk_from = Vector3(2, -3.0, -27)
+	_walk_from = Vector3(2, -3.0, -40)
 	_walker.add_child(Greybox.cylinder(0.3, 1.6, Color(0.95, 0.75, 0.3), Vector3(0, 0.8, 0), 10))
 	_walker.add_child(Greybox.box(Vector3(0.3, 0.3, 0.3), Color(0.9, 0.75, 0.6), Vector3(0, 1.8, 0)))
 	_walker.add_child(Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3(0.4, 0.7, 0), 10))  # son seau
@@ -130,7 +130,7 @@ func _fly_ad_plane() -> void:
 	_scene.add_child(_plane)
 	_plane.hide_hook()
 	var banner := Node3D.new()
-	banner.position = Vector3(0, 0, -26)
+	banner.position = Vector3(0, 0, -36)
 	banner.add_child(Greybox.box(Vector3(0.03, 0.03, 4.0), Color(0.3, 0.3, 0.3), Vector3(0, 0, 22.0)))
 	banner.add_child(Greybox.box(Vector3(0.05, 1.8, 40.0), Color(0.97, 0.95, 0.88)))
 	for side in [-1.0, 1.0]:

@@ -1,5 +1,7 @@
 extends CanvasLayer
-## HUD greybox, petit et simple (M-68) : océan, temps, heure, stock, bras, seau, aide contextuelle.
+## HUD petit et simple (M-68). Depuis 0.1.3, seulement l'essentiel : l'océan restant en haut,
+## la barre d'outils en bas (le seau y montre son eau), et à côté d'elle la faim et la soif en
+## jauges rondes animées (NeedGauge). Le stock, l'heure, ce qu'on porte… sont dans le menu pause.
 
 @onready var ocean_label: Label = $Margin/VBox/Ocean
 @onready var time_label: Label = $Margin/VBox/Time
@@ -13,6 +15,8 @@ var stamina_bar: ProgressBar
 var survival_label: Label
 ## Les 5 cases de la barre d'outils (M-27), en bas au centre.
 var toolbar_slots: Array[PanelContainer] = []
+var food_gauge: NeedGauge
+var water_gauge: NeedGauge
 var _toolbar_labels: Array[Label] = []
 
 
@@ -30,6 +34,7 @@ func _ready() -> void:
 	GameState.bucket_changed.connect(_refresh_items)
 	_build_toolbar()
 	GameState.tool_changed.connect(refresh_toolbar)
+	GameState.bucket_changed.connect(refresh_toolbar)  # l'eau du seau, dans sa case
 	GameState.carried_changed.connect(refresh_toolbar)  # les quantités portées dans les cases
 	refresh_toolbar()
 	_refresh_ocean()
@@ -42,6 +47,7 @@ func _process(_delta: float) -> void:
 	# Le chronomètre de partie est caché, sauf avec l'option « speedrun » (M-73).
 	var clock := "%02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)]
 	time_label.text = "%s · %s : %s" % [clock, tr("HUD_PLAY_TIME"), format_precise(GameState.play_time_s)] if Settings.data.show_timer else clock
+	time_label.visible = Settings.data.show_timer  # l'heure se lit dans le ciel ; le chrono, en option
 	hint_label.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.ui_open
 	var player := get_tree().get_first_node_in_group(&"player")
 	prompt_label.text = player.prompt if player else ""
@@ -58,6 +64,9 @@ func _process(_delta: float) -> void:
 
 func _refresh_survival() -> void:
 	var sv := GameState.survival
+	if food_gauge:
+		food_gauge.level = sv.food
+		water_gauge.level = sv.water
 	survival_label.text = "%s : %s · %s : %s" % [tr("HUD_FOOD"), gauge(sv.food), tr("HUD_WATER"), gauge(sv.water)]
 	# Rouge quand un besoin est vide : l'endurance max baisse.
 	survival_label.modulate = Color(1, 0.55, 0.45) if sv.food <= 0.0 or sv.water <= 0.0 else Color.WHITE
@@ -73,16 +82,28 @@ func _build_toolbar() -> void:
 	var row := HBoxContainer.new()
 	row.name = "Toolbar"
 	row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	row.offset_left = -250.0
-	row.offset_right = 250.0
-	row.offset_top = -84.0
+	row.offset_left = -330.0
+	row.offset_right = 330.0
+	row.offset_top = -94.0
 	row.offset_bottom = -14.0
 	row.add_theme_constant_override("separation", 6)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(row)
+	# La faim et la soif, juste à gauche des cases.
+	food_gauge = NeedGauge.new(NeedGauge.Kind.FOOD)
+	food_gauge.name = "Food"
+	food_gauge.tooltip_text = tr("HUD_FOOD")
+	row.add_child(food_gauge)
+	water_gauge = NeedGauge.new(NeedGauge.Kind.WATER)
+	water_gauge.name = "Water"
+	water_gauge.tooltip_text = tr("HUD_WATER")
+	row.add_child(water_gauge)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(10, 0)
+	row.add_child(gap)
 	for i in 5:
 		var slot := PanelContainer.new()
-		slot.custom_minimum_size = Vector2(92, 66)
+		slot.custom_minimum_size = Vector2(96, 76)
 		var label := Label.new()
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -111,6 +132,8 @@ func refresh_toolbar() -> void:
 		var tool: String = tb.slots[i] if i < tb.slots.size() else ""
 		var available := tb.is_available(i, GameState.owns_tool) if i < tb.slots.size() else false
 		_toolbar_labels[i].text = "%d\n%s" % [i + 1, slot_text(tool)]
+		if tool == "seau":
+			_toolbar_labels[i].text += "\n%d / %d L" % [int(GameState.bucket.water_l), int(GameState.bucket.capacity_l)]
 		var picked := i == tb.selected
 		var style := UiTheme.paper(UiTheme.YELLOW if picked else Color(UiTheme.PAPER, 0.88), UiTheme.RED if picked else UiTheme.INK, 10, 4)
 		style.set_border_width_all(4 if picked else 2)
@@ -137,6 +160,9 @@ func _apply_style() -> void:
 		small.add_theme_font_size_override("font_size", 18)
 	ocean_label.add_theme_color_override("font_color", UiTheme.YELLOW)
 	prompt_label.add_theme_font_size_override("font_size", 22)
+	# Les détails (palette, bras, seau, faim en texte) vont au menu pause : le HUD reste léger.
+	for extra: Label in [stock_label, carried_label, bucket_label, survival_label]:
+		extra.visible = false
 	# L'aide « cliquer pour jouer » passe au-dessus de la barre d'outils, plus grande qu'avant.
 	hint_label.offset_top = -140.0
 	hint_label.offset_bottom = -104.0

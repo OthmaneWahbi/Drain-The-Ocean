@@ -99,7 +99,7 @@ func _ready() -> void:
 	add_child(placement)
 	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).
 	var gauge := WaterGauge.new()
-	gauge.position = Vector3(3, 0.5, 17)
+	gauge.position = Vector3(3, 0.5, 22)
 	gauge.rotation_degrees.y = 180.0
 	add_child(gauge)
 	# Le menu pause (Échap) et le menu principal (3 emplacements, M-71).

@@ -15,9 +15,9 @@ var _t := 0.0
 func _ready() -> void:
 	_rng.seed = 99
 	for i in 5:
-		add_child(Seagull.new(_rng.randf_range(14.0, 32.0), _rng.randf_range(11.0, 20.0), _rng.randf_range(0.0, TAU), _rng.randf_range(0.18, 0.32) * (1.0 if i % 2 == 0 else -1.0)))
+		add_child(Seagull.new(_rng.randf_range(18.0, 44.0), _rng.randf_range(11.0, 22.0), _rng.randf_range(0.0, TAU), _rng.randf_range(0.18, 0.32) * (1.0 if i % 2 == 0 else -1.0)))
 	for school in 3:
-		var radius := _rng.randf_range(30.0, 55.0)
+		var radius := _rng.randf_range(46.0, 70.0)
 		var start := _rng.randf_range(0.0, TAU)
 		var speed := _rng.randf_range(0.05, 0.09) * (1.0 if school % 2 == 0 else -1.0)
 		for i in 6:
@@ -125,7 +125,7 @@ class Crab extends Node3D:
 				var leg := Fauna._part(Vector3(0.14, 0.03, 0.03), Color(0.75, 0.2, 0.12), Vector3(0.22 * side, 0.05, -0.08 + i * 0.08))
 				add_child(leg)
 				_legs.append(leg)
-		position = AmbientMotion.ring_point(_rng, 17.0, 19.2, 0.5)
+		position = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
 		_target = position
 
 	func _process(delta: float) -> void:
@@ -135,7 +135,7 @@ class Crab extends Node3D:
 			return
 		var to := _target - position
 		if to.length() < 0.1:
-			_target = AmbientMotion.ring_point(_rng, 17.0, 19.2, 0.5)
+			_target = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
 			# Pas trop loin d'un coup : un crabe, ça trottine.
 			_target = position + (_target - position).limit_length(4.0)
 			_rest = _rng.randf_range(1.0, 4.0)

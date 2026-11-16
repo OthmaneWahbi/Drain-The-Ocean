@@ -206,3 +206,6 @@ ITEM_WINDMILL_PUMP_PITCH,Il travaille pendant que vous dormez !,It works while y
 ITEM_SLIDE_PITCH,Wiiiiiiiiii ! (pour les sacs),Wheeeeeee! (for bags)
 ITEM_FLAMINGO_PITCH,Indispensable. Totalement inutile.,Essential. Totally useless.
 ITEM_PAPER_CATALOGUE_PITCH,Vous le lisez en ce moment.,You're reading it right now.
+PAUSE_INFO_TITLE,Mon île,My island
+PAUSE_INFO_HOUR,Heure,Time of day
+PAUSE_INFO_NEEDS,Faim %d %% · Soif %d %%,Food %d%% · Water %d%%

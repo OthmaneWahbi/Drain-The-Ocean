@@ -6,7 +6,7 @@ extends StaticBody3D
 ## et la pente. La collision est le même maillage (on marche exactement sur ce qu'on voit).
 
 ## Demi-largeur du terrain (m) et taille d'une case (m).
-const HALF := 46.0
+const HALF := 72.0
 const CELL := 1.25
 
 var logic: TerrainLogic
