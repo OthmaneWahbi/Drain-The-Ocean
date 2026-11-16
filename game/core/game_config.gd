@@ -72,8 +72,8 @@ extends Resource
 ## Vitesse de montée pour se hisser sur le rivage depuis l'eau.
 @export var swim_climb_velocity: float = 4.0
 ## Endurance (N-05) : secondes de course, secondes de nage, temps pour remonter à fond à l'arrêt sur terre.
-@export var stamina_run_s: float = 20.0
-@export var stamina_swim_s: float = 60.0
+@export var stamina_run_s: float = 10.0
+@export var stamina_swim_s: float = 30.0
 @export var stamina_regen_s: float = 5.0
 ## Après épuisement, on ne peut plus courir avant d'être remonté à cette part (style BotW).
 @export var stamina_exhausted_ratio: float = 0.25

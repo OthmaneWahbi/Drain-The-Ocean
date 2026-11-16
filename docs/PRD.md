@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.13 (survie légère : faim, soif, noix de coco, rations, bâche de condensation ; coquillages du matin) |
+| Version du document | 0.14 (endurance réduite de moitié : ~10 s de course, ~30 s de nage) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -92,7 +92,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
   - **[PROPOSÉ]** Noix de coco : une par emplacement sous les palmiers (5), qui revient chaque matin si elle a été mangée ; E pour la manger (+35 % de faim, +25 % de soif).
   - **[PROPOSÉ]** Rations : 8 sel la caisse de 5 repas (+60 % de faim chacun) ; la caisse disparaît vide.
   - **[PROPOSÉ]** Bâche de condensation : 20 sel ; produit une gorgée d'eau douce toutes les 90 s (3 au plus) ; E pour boire (+50 % de soif).
-  - **[DÉCIDÉ]** **Endurance** : ~20 s de course ou ~60 s de nage. Elle remonte à l'arrêt **sur la terre ferme** ; **dans l'eau, elle ne remonte jamais**, même immobile. Améliorable avec la nourriture et des objets du catalogue (N-05).
+  - **[DÉCIDÉ]** **Endurance** : ~10 s de course ou ~30 s de nage (Othmane, 2026-11-16 : moitié des ~20 s / ~60 s de N-05, « trop généreux »). Elle remonte à l'arrêt **sur la terre ferme** ; **dans l'eau, elle ne remonte jamais**, même immobile. Améliorable avec la nourriture et des objets du catalogue (N-05).
 - **[DÉCIDÉ]** Cycle jour/nuit : **20 min réelles par jour**, évaporation ×0,3 la nuit (M-40). La nuit est belle et calme, pas punitive.
 
 ### 4.2 Le téléphone
