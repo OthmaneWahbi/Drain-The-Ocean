@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.2 (Q-01, Q-07, Q-13 tranchées ; Q-16 reformulée) |
+| Version du document | 0.3 (fin du jeu décidée : l'avion publicitaire) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -323,13 +323,21 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   4. Le joueur reste au milieu du fond à sec, avec son seau, devant toutes ses machines désormais inutiles.
 - **[PROPOSÉ]** Indice dès le début : un **minuscule tourbillon** permanent à la surface, très loin, à l'emplacement du drain. Visible pour les joueurs attentifs. Il grossit très légèrement à mesure que le niveau baisse.
 - **[PROPOSÉ]** Peut-on atteindre le drain avant 5 % (scaphandre, plongée) ? Non : avant 5 %, l'eau est trop profonde et trouble pour le voir, et aucun objet du catalogue ne permet de plonger aussi bas. *[QUESTION Q-15]*
-- **[QUESTION Q-16]** **Que se passe-t-il juste après l'ouverture du drain ?** Le drain lui-même est décidé ; la question porte sur *ce que voit et fait le joueur une fois l'océan vidé*, c'est-à-dire la toute fin du jeu. Options concrètes :
-  - **A. Générique direct.** Le tourbillon finit, plan sur le personnage seul avec son seau, générique. Retour au menu. Simple et efficace.
-  - **B. Générique + exploration libre (recommandé).** Après le générique, le joueur reprend la main sur le fond de l'océan entièrement à sec : il peut marcher partout, trouver les clins d'œil manqués, visiter les épaves. Pas de nouvel objectif.
-  - **C. Épilogue comique.** Après le drain, un dernier gag avant le générique. Exemples : le téléphone sonne pour la première fois de la partie (c'est l'agence qui vient livrer… un bouchon) ; ou la caméra s'élève très haut et laisse deviner que l'océan était une gigantesque baignoire, sans jamais le montrer clairement.
-  - **D. Le joueur part vraiment.** Il marche jusqu'au bord du bassin asséché et le franchit. Ce qu'il trouve de l'autre côté est à inventer (et doit rester un clin d'œil, sans texte).
-  - **E. Mode infini / Nouvelle partie +.** Après le générique, on entend un robinet s'ouvrir : l'océan se remplit, on recommence avec un bonus (machines conservées, objectifs de vitesse, succès).
-  - Les options se combinent. Recommandation : **C + B** (un gag final court, puis exploration libre), avec **E** en option débloquée après la première fin.
+- **[DÉCIDÉ]** **Le gag final : l'avion publicitaire** (Q-16, 2026-11-16).
+  1. Une fois l'océan drainé, le joueur **traverse à pied** le fond asséché, en direction du bord (vers le monde qu'il voulait rejoindre depuis le début).
+  2. Pendant qu'il marche, un **avion publicitaire** de l'agence de livraison passe juste au-dessus de lui, en traînant une banderole.
+  3. La banderole annonce que l'agence qu'il utilisait depuis le début est **maintenant aussi une société de transport** et peut vous emmener **de n'importe où à n'importe où**. Autrement dit : il aurait pu juste appeler.
+  4. Le joueur voit l'avion s'éloigner. **Générique. Fin.**
+- **[PROPOSÉ]** Détails de mise en scène :
+  - La caméra peut passer brièvement en troisième personne (plan large : petit personnage avec son seau, immense fond asséché, avion au-dessus), puis rester sur l'avion qui s'éloigne.
+  - Le pilote est celui de toutes les livraisons (avec sa barbe blanchie, voir [12](#12-clins-dœil-lore-uniquement-visuel)), et fait son petit signe de la main.
+  - Le téléphone rouge, resté sur l'île au loin, peut sonner une seule fois au même moment (optionnel).
+- **[QUESTION Q-23]** La banderole est la seule exception possible à la règle « pas de texte dans le monde ». Options :
+  - **A. Pictogrammes seulement** : logo de l'agence + un personnage dans l'avion + une flèche entre deux points. Cohérent avec la règle, compris par tout le monde sans traduction.
+  - **B. Un vrai slogan écrit** (traduit dans chaque langue). Plus direct et plus drôle à lire, mais c'est le seul texte du jeu.
+  - **C. Les deux** : un slogan court + les pictogrammes.
+  - Recommandation : **C**, avec un slogan très court. Le fait que ce soit le seul texte du jeu rend la chute encore plus forte.
+- **[QUESTION Q-24]** Après le générique : retour au menu, ou possibilité de reprendre la partie pour explorer le fond asséché et trouver les clins d'œil manqués ? Recommandation : **reprise possible**, sans nouvel objectif.
 
 ---
 
@@ -512,7 +520,7 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 
 Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée dans HANDOFF.md + mise à jour de ce document.
 
-**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne (toutes le 2026-11-16).
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire (toutes le 2026-11-16).
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
@@ -528,7 +536,8 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
 | **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
-| **Q-16** | Que voit et fait le joueur juste après avoir ouvert le drain (fin du jeu) ? | Générique direct / Exploration libre / Épilogue comique / Partir vraiment / Mode infini (voir §11) | **Épilogue comique + exploration libre** |
+| **Q-23** | La banderole de l'avion publicitaire final : texte ou pictogrammes ? | Pictogrammes / Slogan écrit / Les deux | **Les deux** (slogan très court) |
+| **Q-24** | Après le générique final : retour au menu ou exploration libre ? | Menu / Exploration libre | **Exploration libre** |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |
@@ -549,7 +558,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
 | **M4 — Contenu** | T3 à T6, fond marin complet, toutes les zones | On peut finir le jeu (avec debug d'accélération) |
-| **M5 — La fin** | Drain, tourbillon, générique, post-fin | La scène fait rire un testeur |
+| **M5 — La fin** | Drain, tourbillon, traversée à pied, avion publicitaire, générique | La scène fait rire un testeur |
 | **M6 — Clicker** | Mini-jeu pixel art complet dans la console portable | Jouable du début au drain |
 | **M7 — Finition** | Équilibrage, polish, options, langues, succès | Version 1.0 PC |
 | **M8 — Mobile** | Portage du clicker | Plus tard |

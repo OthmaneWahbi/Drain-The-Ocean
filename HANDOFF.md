@@ -36,14 +36,26 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.2 en revue (PR #1).
+- **Documents :** PRD v0.3 en revue (PR #1).
 - **Prochaine étape :** Othmane répond aux questions ouvertes du PRD (section 18), puis jalon M0 (fondations du projet Godot).
-- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne.
-- **Questions ouvertes :** 19 restantes (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)). La plus structurante : Q-16 (que se passe-t-il juste après l'ouverture du drain).
+- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport.
+- **Questions ouvertes :** 20 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont Q-23 (texte ou pictogrammes sur la banderole finale) et Q-24 (après le générique).
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — PRD v0.3 : la fin du jeu
+- **Quoi :** §11 réécrite avec la fin décidée ; Q-16 retirée ; ajout de Q-23 (banderole : texte ou pictogrammes, car le jeu n'a sinon aucun texte dans le monde) et Q-24 (retour au menu ou exploration libre après le générique) ; jalon M5 mis à jour.
+- **Pourquoi :** décision d'Othmane sur Q-16.
+- **Impact :** PRD §11, §18, §19.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Fin du jeu : l'avion publicitaire (Q-16)
+- **Quoi :** une fois l'océan drainé, le joueur traverse l'océan asséché à pied. Un avion publicitaire passe juste au-dessus de lui : la banderole annonce que l'agence de livraison qu'il utilisait est maintenant aussi une société de transport, qui peut vous emmener de n'importe où à n'importe où. Le joueur le voit en marchant, puis générique. Fin.
+- **Pourquoi :** choix d'Othmane ; dernier gag qui répond à « pourquoi l'agence ne m'emmène pas ? ».
+- **Impact :** PRD §11.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — PRD v0.2 : intégration des décisions et vocabulaire « drain »
 - **Quoi :** PRD passé en v0.2. Q-01, Q-07 et Q-13 passées en **[DÉCIDÉ]** et retirées de la liste des questions. Le mot « bonde » est remplacé par « **drain** » partout (terme d'Othmane), la §6.2 explique concrètement le troc, et Q-16 est reformulée avec des options concrètes (générique direct, exploration libre, épilogue comique, partir vraiment, mode infini).
