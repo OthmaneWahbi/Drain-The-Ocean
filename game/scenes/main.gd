@@ -1,6 +1,7 @@
 extends Node3D
 ## Chef d'orchestre de la scène : crée une vue 3D pour chaque élément de GameState
-## (zones, caisses, décors), anime le soleil, et gère les touches de debug.
+## (zones, caisses, décors), anime le soleil, place la surface de l'océan à sa vraie hauteur,
+## et gère les touches de debug.
 
 const DryingZoneView := preload("res://scenes/world/drying_zone_view.gd")
 const CrateView := preload("res://scenes/world/crate_view.gd")
@@ -13,6 +14,7 @@ const CHUTE_TIME_S := 1.5
 @onready var sun: DirectionalLight3D = $Sun
 @onready var depot: Node3D = $Depot
 @onready var world_env: WorldEnvironment = $WorldEnvironment
+@onready var ocean_mesh: Node3D = $Ocean
 
 var _views: Node3D
 var _crate_views: Dictionary = {}  # id de caisse -> vue
@@ -27,12 +29,19 @@ func _ready() -> void:
 	GameState.crate_added.connect(_on_crate_added)
 	GameState.crate_removed.connect(_on_crate_removed)
 	GameState.decor_added.connect(_on_decor_added)
+	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).
+	var gauge := WaterGauge.new()
+	gauge.position = Vector3(3, 0.5, 17)
+	gauge.rotation_degrees.y = 180.0
+	add_child(gauge)
 	# La partie en mémoire a été créée avant la scène : on rejoue son contenu.
 	GameState.continue_or_new()
 
 
 func _process(_delta: float) -> void:
 	_update_sun()
+	# Le plan d'eau suit la hauteur honnête calculée depuis le volume retiré (M1).
+	ocean_mesh.position.y = GameState.water_level_y()
 
 
 func _update_sun() -> void:
@@ -57,9 +66,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			GameState.stock_changed.emit()
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	# Debug : maintenir F8 accélère le temps ×10 (pour tester le séchage).
 	Engine.time_scale = 10.0 if Input.is_physical_key_pressed(KEY_F8) else 1.0
+	# Debug : maintenir F7 vide l'océan à grande vitesse, pour voir l'eau baisser (M1).
+	if Input.is_physical_key_pressed(KEY_F7):
+		var ocean := GameState.ocean
+		ocean.remove_water(ocean.total_volume_l * GameState.config.debug_drain_ratio_per_s * delta)
+		GameState.ocean_changed.emit()
 
 
 func _clear_views() -> void:

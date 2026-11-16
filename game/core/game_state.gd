@@ -39,6 +39,15 @@ var crates: Array[Dictionary] = []
 var decor: Array[Dictionary] = []
 ## Achats uniques déjà faits (id -> true).
 var owned: Dictionary = {}
+## Améliorations appliquées (caisses ouvertes) : contenance d'un seau, nombre de seaux (palanche),
+## capacité de transport (brouette), multiplicateur de vitesse (tongs), râteau.
+var bucket_unit_l: float
+var bucket_count: int = 1
+var carry_capacity: int
+var speed_multiplier: float = 1.0
+var has_rake: bool = false
+## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
+var stamina: StaminaLogic
 var play_time_s: float = 0.0
 var current_slot: int = 1
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
@@ -79,6 +88,12 @@ func _reset_state() -> void:
 	crates = []
 	decor = []
 	owned = {}
+	bucket_unit_l = config.starting_bucket_capacity_l
+	bucket_count = 1
+	carry_capacity = config.hand_carry_capacity
+	speed_multiplier = 1.0
+	has_rake = false
+	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	play_time_s = 0.0
 	_autosave_timer = 0.0
 	_next_id = 1
@@ -137,7 +152,7 @@ func carried_count() -> int:
 
 
 func carry_space() -> int:
-	return maxi(config.hand_carry_capacity - carried_count(), 0)
+	return maxi(carry_capacity - carried_count(), 0)
 
 
 ## Ajoute des ressources dans les bras, dans la limite de ce qu'on peut porter.
@@ -156,10 +171,12 @@ func add_carried(items: Dictionary) -> Dictionary:
 	return leftover
 
 
-## Récolte le dépôt d'une zone. Ce qu'on ne peut pas porter reste dans la zone.
+## Récolte le dépôt d'une zone (M-39) : quelques unités par clic à la main, tout d'un coup
+## avec le râteau. Ce qu'on ne peut pas porter reste dans la zone.
 func harvest(zone: Dictionary) -> void:
 	var logic: DryingLogic = zone.logic
-	var leftover := add_carried(logic.take_deposit())
+	var n := carry_space() if has_rake else mini(config.manual_harvest_per_click, carry_space())
+	var leftover := add_carried(logic.take_some(n))
 	Economy.add(logic.deposit, leftover)
 
 
@@ -185,6 +202,7 @@ func add_zone(kind: String, position: Vector3) -> Dictionary:
 		_:
 			push_error("Type de zone inconnu : %s" % kind)
 			return {}
+	logic.liters_per_salt = config.liters_per_salt
 	logic.mineral_chance = config.mineral_chance
 	logic.rare_mineral_chance = config.rare_mineral_chance
 	var zone := {"id": _new_id("zone"), "kind": kind, "position": position, "logic": logic}
@@ -260,12 +278,35 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 		CatalogItem.Effect.DRYING_ZONE:
 			add_zone(item.effect_param, position)
 		CatalogItem.Effect.BUCKET_CAPACITY:
-			bucket.capacity_l = maxf(bucket.capacity_l, item.effect_value)
-			bucket_changed.emit()
+			bucket_unit_l = maxf(bucket_unit_l, item.effect_value)
+			_refresh_bucket()
+		CatalogItem.Effect.BUCKET_COUNT:
+			bucket_count = maxi(bucket_count, int(item.effect_value))
+			_refresh_bucket()
+		CatalogItem.Effect.CARRY_CAPACITY:
+			carry_capacity = maxi(carry_capacity, int(item.effect_value))
+			carried_changed.emit()
+		CatalogItem.Effect.WALK_SPEED:
+			speed_multiplier = maxf(speed_multiplier, item.effect_value)
+		CatalogItem.Effect.RAKE:
+			has_rake = true
 		CatalogItem.Effect.DECOR:
 			var d := {"kind": item.effect_param, "position": position}
 			decor.append(d)
 			decor_added.emit(d)
+
+
+## Contenance totale = un seau × nombre de seaux (la palanche en porte deux).
+func _refresh_bucket() -> void:
+	bucket.capacity_l = bucket_unit_l * bucket_count
+	bucket_changed.emit()
+
+
+# --- Niveau de l'eau -----------------------------------------------------------------------
+
+## Hauteur réelle (honnête) de la surface de l'océan, en mètres.
+func water_level_y() -> float:
+	return config.sea_level_y - ocean.level_drop_m(config.ocean_surface_m2)
 
 
 # --- Sauvegarde ----------------------------------------------------------------------------
@@ -281,6 +322,7 @@ func to_dict() -> Dictionary:
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position)}),
 		"owned": owned.duplicate(),
+		"upgrades": {"bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 	}
@@ -289,7 +331,17 @@ func to_dict() -> Dictionary:
 func load_dict(data: Dictionary) -> void:
 	_reset_state()
 	ocean.load_dict(data.get("ocean", {}))
+	var up: Dictionary = data.get("upgrades", {})
+	# Anciennes sauvegardes (sans "upgrades") : la contenance du seau suffit.
+	bucket_unit_l = maxf(float(up.get("bucket_unit_l", float(data.get("bucket", {}).get("capacity_l", bucket_unit_l)))), config.starting_bucket_capacity_l)
+	bucket_count = maxi(int(up.get("bucket_count", 1)), 1)
+	carry_capacity = maxi(int(up.get("carry_capacity", carry_capacity)), config.hand_carry_capacity)
+	speed_multiplier = maxf(float(up.get("speed_multiplier", 1.0)), 1.0)
+	has_rake = bool(up.get("has_rake", false))
+	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))
+	bucket.capacity_l = bucket_unit_l * bucket_count
+	bucket.water_l = minf(bucket.water_l, bucket.capacity_l)
 	day.load_dict(data.get("day", {}))
 	stock = Economy.empty_stock()
 	Economy.add(stock, Economy.sanitize(data.get("stock", {})))

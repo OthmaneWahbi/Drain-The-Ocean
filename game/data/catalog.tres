@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -34,6 +34,49 @@ price = {"sel": 999}
 effect = 2
 effect_param = "bateau_en_bouteille"
 
+[sub_resource type="Resource" id="tongs"]
+script = ExtResource("2")
+id = &"tongs"
+name_key = "ITEM_TONGS"
+desc_key = "ITEM_TONGS_DESC"
+tier = 1
+price = {"coquillages": 2, "sel": 25}
+effect = 5
+effect_value = 1.2
+unique = true
+
+[sub_resource type="Resource" id="wheelbarrow"]
+script = ExtResource("2")
+id = &"brouette"
+name_key = "ITEM_WHEELBARROW"
+desc_key = "ITEM_WHEELBARROW_DESC"
+tier = 1
+price = {"sel": 30}
+effect = 4
+effect_value = 40.0
+unique = true
+
+[sub_resource type="Resource" id="rake"]
+script = ExtResource("2")
+id = &"rateau"
+name_key = "ITEM_RAKE"
+desc_key = "ITEM_RAKE_DESC"
+tier = 1
+price = {"mineraux": 5, "sel": 60}
+effect = 6
+unique = true
+
+[sub_resource type="Resource" id="yoke"]
+script = ExtResource("2")
+id = &"palanche"
+name_key = "ITEM_YOKE"
+desc_key = "ITEM_YOKE_DESC"
+tier = 1
+price = {"mineraux": 10, "sel": 120}
+effect = 3
+effect_value = 2.0
+unique = true
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("boat")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("boat")])

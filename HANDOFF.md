@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** M0 fusionné. Jalon **M2** (boucle de base) en PR. M1 (eau qui baisse visuellement) reste à faire.
-- **Documents :** PRD v0.10. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Catalogue de départ : bâche (15 sel), grand seau (40 sel, unique), bateau en bouteille (999 sel, décor). Cycle jour/nuit de 20 min. Sauvegarde de toute la partie. 43 tests.
-- **À valider par Othmane :** la règle de séchage proposée (PRD §6.3) ; elle fixe le rythme du premier achat (~3 min).
-- **Prochaine étape :** retours d'Othmane sur M2, puis M1 (niveau de l'eau visible) et la suite de T0/T1 (râteau, brouette, palanche).
+- **Phase :** M0 fusionné. Jalon **M2** (boucle de base) en PR #3, avec la nage, l'endurance, les outils T1 et une partie de M1 (niveau d'eau honnête, jauge).
+- **Documents :** PRD v0.11. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min. Sauvegarde de toute la partie. 60 tests.
+- **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel).
+- **Prochaine étape :** retours d'Othmane, puis la fin de M1 (shader d'eau, terrain de fond, mesure de perf), la faim et la soif légères, la barre d'outils, le manuel du bricoleur et T2.
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -61,12 +61,31 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 
 - **Puiser :** le joueur, debout dans l'eau, maintient le clic environ 1 s ; le seau se remplit (10 L, ou 20 L avec le grand seau). Ces litres sont **retirés de l'océan** à ce moment. Chaque seau a une petite chance de remonter un coquillage, et un coquillage une petite chance d'être une perle.
 - **Verser :** visée sur une zone de séchage + clic. La zone n'accepte que la place libre ; le reste reste dans le seau. Vider le seau ailleurs (sable, mer) **rend l'eau à l'océan** (M-33, M-34).
-- **Sécher :** chaque zone évapore à débit fixe (`capacité ÷ 45 s` de jour, ×0,3 la nuit). Tous les 10 L évaporés, elle ajoute 1 sel à son dépôt, plus un tirage de minéral et de minéral rare. Le séchage continue partout, même loin du joueur (M-42).
-- **Récolter et porter :** clic sur une zone sans eau à verser : son dépôt passe dans les mains du joueur, 10 unités au maximum. Ce qui ne rentre pas reste dans la zone.
+- **Sécher :** chaque zone évapore à débit fixe (`capacité ÷ 45 s` de jour, ×0,3 la nuit). Tous les 4 L évaporés (réglage `liters_per_salt`), elle ajoute 1 sel à son dépôt, plus un tirage de minéral et de minéral rare. Le séchage continue partout, même loin du joueur (M-42).
+- **Récolter et porter :** clic sur une zone sans eau à verser : 3 unités du dépôt passent dans les mains (les plus rares d'abord), ou tout le dépôt avec le râteau. On porte 10 unités au maximum (40 avec la brouette). Ce qui ne rentre pas reste dans la zone.
 - **Déposer :** E sur la palette de dépôt : tout ce qui est porté passe dans le **stock**. Seul le stock de la palette sert à payer (troc).
 - **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier ; « Commander » vérifie qu'on peut payer, retire le prix du stock, marque les objets uniques comme possédés et crée une **caisse**.
 - **Livrer :** un avion traverse le ciel, passe au-dessus de la palette, largue la caisse qui descend en parachute (5 s au total). Les caisses successives tombent en spirale autour du point de livraison pour ne pas s'empiler.
 - **Ouvrir :** E sur la caisse posée : chaque objet est appliqué (nouvelle zone de séchage posée à côté, seau agrandi, décor posé), puis la caisse disparaît.
+
+### Les améliorations
+
+- Les objets « outils » ne créent rien dans le monde : ils changent des **caractéristiques** tenues par GameState et sauvegardées avec la partie : contenance d'un seau (grand seau), nombre de seaux (palanche, ×2), capacité de transport (brouette), vitesse de marche (tongs, +20 %), râteau (récolte complète).
+- La contenance du seau se calcule toujours : contenance d'un seau × nombre de seaux. Grand seau + palanche = 2 × 20 L = 40 L.
+- Un objet « unique » est marqué possédé dès la commande (on ne peut pas le recommander pendant que sa caisse tombe), mais son effet ne s'applique qu'à l'ouverture de la caisse.
+
+### Le niveau de l'eau (M1)
+
+- Une seule variable de vérité : le volume retiré. La hauteur de la surface s'en déduit : volume retiré ÷ surface du bassin (2,8 × 10¹³ m²). Pour l'instant le bassin a des bords droits ; plus tard, une table hauteur = f(volume) tirée de la forme du fond.
+- Le plan d'eau 3D est placé à cette hauteur à chaque image, et tout ce qui dépend de l'eau (puiser, nager) utilise cette même hauteur.
+- La jauge à aiguille sur la plage affiche la vraie baisse en millimètres, et son aiguille suit une échelle logarithmique (chaque graduation = ×10) pour bouger dès le premier seau.
+
+### Le corps : nage et endurance
+
+- L'endurance est une valeur de 0 à 1, gérée par un petit objet de logique pure. Courir la vide en 20 s, nager en 60 s. Elle ne remonte qu'à l'arrêt sur la terre ferme ; marcher ne la change pas ; dans l'eau, elle ne remonte jamais. Vidée en courant, on ne peut plus courir avant d'être remonté à 25 %.
+- On nage quand les pieds sont à plus de 1,2 m sous la surface : la gravité est remplacée par une flottaison qui ramène la tête hors de l'eau. Espace fait monter. Avancer contre un bord (le rivage) fait se hisser jusqu'à reprendre pied.
+- Endurance à zéro dans l'eau : noyade. Fondu au noir, retour au point de départ sur la plage, endurance pleine, rien n'est perdu (N-04).
+- La jauge d'endurance apparaît en bas de l'écran seulement quand elle n'est pas pleine ; elle devient rouge sous 25 % ou quand on est essoufflé.
 
 ### Le temps
 
@@ -86,15 +105,46 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 
 ### Touches de debug (provisoires)
 
-- **F5** sauvegarde, **F8** maintenu accélère le temps ×10, **F9** nouvelle partie, **F10** ajoute 50 sel et 5 minéraux.
+- **F5** sauvegarde, **F7** maintenu vide l'océan très vite (pour voir l'eau baisser), **F8** maintenu accélère le temps ×10, **F9** nouvelle partie, **F10** ajoute 50 sel et 5 minéraux.
 
 ### Tests
 
-- Chaque règle de la logique pure a ses tests. Un test « boucle complète » joue toute la partie de M2 sans écran, sur un petit océan et sans hasard : puiser, verser, sécher, récolter, déposer, commander, ouvrir, puis sauvegarder et recharger.
+- Chaque règle de la logique pure a ses tests (océan, séchage, seau, économie, jour/nuit, endurance, jauge). Un test « boucle complète » joue toute la partie de M2 sans écran, sur un petit océan et sans hasard : puiser, verser, sécher, récolter, déposer, commander, ouvrir, puis sauvegarder et recharger.
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Rythme 1 min 30, nage et endurance, niveau d'eau, outils T1
+- **Quoi :**
+  - Rythme : 4 L évaporés par sel au lieu de 10 (nouvelle valeur `liters_per_salt` dans les données ; c'était une constante dans le code, contraire à la règle du CLAUDE.md). Récolte à la main par 3 unités par clic.
+  - Endurance (logique pure + 4 tests) et jauge dans le HUD.
+  - Nage : flottaison, Espace pour monter, se hisser sur le rivage, noyade avec fondu au noir et retour sur la plage.
+  - Niveau d'eau honnête calculé depuis le volume retiré ; le plan d'eau suit cette hauteur ; jauge à aiguille logarithmique sur la plage ; touche de debug F7.
+  - Catalogue : brouette (30 sel, 40 unités), tongs (25 sel + 2 coquillages, +20 % de vitesse), râteau (60 sel + 5 minéraux), palanche (120 sel + 10 minéraux, deux seaux). Les améliorations sont sauvegardées.
+  - Valeurs de déplacement (marche, course, nage) déplacées du joueur vers les données.
+  - 17 nouveaux tests (60 au total). Vérifié en scène : on nage, on remonte sur le rivage, la noyade ramène sur la plage, l'eau baisse avec F7.
+- **Pourquoi :** retours d'Othmane sur M2, puis « Continue ».
+- **Impact :** `game/core/` (stamina_logic, drying_logic, ocean_model, game_state, game_config, catalog_item), `game/data/`, `game/scenes/` (player, main, hud, world/water_gauge), `game/tests/`, PRD v0.11 (§5.4, §6.3, §8.2, §10, §19.1, §19.4), section « Architecture et logique ».
+- **Par :** Claude
+
+### 2026-11-16 — TEST ÉCHOUÉ — Endurance pas tout à fait vide, nageur bloqué au rivage
+- **Quoi :**
+  1. `test_running_empties_in_twenty_seconds` et `test_swimming_lasts_sixty_seconds` échouaient : 19 s puis 1 s de course laissaient ~0,000001 d'endurance (arrondi des flottants). Correction : en dessous de 10⁻⁶, l'endurance vaut 0.
+  2. Test en scène : le nageur qui avançait contre le rivage montait de quelques centimètres puis retombait sans fin. Cause : dès que les pieds dépassaient 1,2 m de profondeur, il ne « nageait » plus et l'escalade s'arrêtait. Correction : l'escalade continue tant que les pieds sont sous la surface et qu'on avance contre le bord.
+  3. `test_game_loop.gd` ne se chargeait pas (types non déduits sur une variable non typée) ; corrigé par des types explicites.
+- **Impact :** `game/core/stamina_logic.gd`, `game/scenes/player/player.gd`, `game/tests/test_game_loop.gd`.
+- **Par :** Claude
+
+### 2026-11-16 — NOTE — « ERR_CANT_OPEN » au lancement dans le conteneur de Claude
+- **Quoi :** l'erreur « Condition status < 0 … ERR_CANT_OPEN » vient du pilote audio (ALSA) : le conteneur n'a pas de carte son. Sans effet sur un vrai PC.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Premier achat vers 1 min 30, et la nage tout de suite
+- **Quoi :** après avoir testé M2, Othmane trouve le premier achat (3 min) « beaucoup trop long » : il le veut vers 1 min 30. Il demande aussi la nage dès maintenant, car tomber dans l'eau bloquait le joueur. Puis « Continue » : enchaîner sur la suite (niveau d'eau, râteau, brouette, palanche).
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §5.4 (remplace « moins de 3 minutes », M-59), §6.3, §10.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Jalon M2 : boucle de base jouable en greybox
 - **Quoi :**

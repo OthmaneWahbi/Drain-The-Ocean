@@ -5,12 +5,11 @@ extends RefCounted
 ## Règle (interprétation de M-37) : l'évaporation est limitée par la SURFACE, pas par la quantité d'eau.
 ## Une zone vide son plein en `dry_time_s` secondes au soleil, quel que soit son remplissage.
 ## Donc une cuvette de 40 L sèche 40 L en 45 s : verser 4 seaux d'affilée sèche aussi vite qu'un seul.
-## Tous les `LITERS_PER_ROLL` litres évaporés, on obtient 1 sel et on tire au sort minéraux et minéraux rares.
-
-const LITERS_PER_ROLL := 10.0
+## Tous les `liters_per_salt` litres évaporés, on obtient 1 sel et on tire au sort minéraux et minéraux rares.
 
 var capacity_l: float
 var dry_time_s: float
+var liters_per_salt: float = 10.0
 var mineral_chance: float = 0.10
 var rare_mineral_chance: float = 0.005
 var water_l: float = 0.0
@@ -49,8 +48,8 @@ func step(delta: float, multiplier: float, rng: RandomNumberGenerator) -> void:
 	var evaporated := minf(water_l, evaporation_rate_lps() * multiplier * delta)
 	water_l -= evaporated
 	_evaporated_acc += evaporated
-	while _evaporated_acc >= LITERS_PER_ROLL - 0.0001:
-		_evaporated_acc -= LITERS_PER_ROLL
+	while _evaporated_acc >= liters_per_salt - 0.0001:
+		_evaporated_acc -= liters_per_salt
 		_add(&"sel", 1)
 		if rng.randf() < mineral_chance:
 			_add(&"mineraux", 1)
@@ -66,6 +65,26 @@ func has_deposit() -> bool:
 func take_deposit() -> Dictionary:
 	var taken := deposit
 	deposit = {}
+	return taken
+
+
+## Récupère au plus `n` unités (les plus rares d'abord : c'est plus gratifiant).
+func take_some(n: int) -> Dictionary:
+	var taken := {}
+	var order := Economy.RESOURCES.duplicate()
+	order.reverse()
+	for key in order:
+		if n <= 0:
+			break
+		var have := int(deposit.get(key, 0))
+		var take := mini(have, n)
+		if take > 0:
+			taken[key] = take
+			n -= take
+			if have - take > 0:
+				deposit[key] = have - take
+			else:
+				deposit.erase(key)
 	return taken
 
 

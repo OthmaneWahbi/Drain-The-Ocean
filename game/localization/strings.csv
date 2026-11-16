@@ -37,3 +37,13 @@ ITEM_BIG_BUCKET,Grand seau,Big bucket
 ITEM_BIG_BUCKET_DESC,20 L par trajet au lieu de 10.,20 L per trip instead of 10.
 ITEM_BOAT,Bateau,Boat
 ITEM_BOAT_DESC,Pour quitter l'île. Livraison garantie.,To leave the island. Delivery guaranteed.
+ITEM_WHEELBARROW,Brouette,Wheelbarrow
+ITEM_WHEELBARROW_DESC,Porter 40 unités au lieu de 10.,Carry 40 units instead of 10.
+ITEM_TONGS,Tongs,Flip-flops
+ITEM_TONGS_DESC,+20 % de vitesse de marche.,+20% walking speed.
+ITEM_RAKE,Râteau à sel,Salt rake
+ITEM_RAKE_DESC,Récolte toute une zone d'un coup.,Harvests a whole area at once.
+ITEM_YOKE,Palanche,Yoke
+ITEM_YOKE_DESC,Deux seaux à la fois.,Two buckets at once.
+HUD_STAMINA,Endurance,Stamina
+GAUGE_TITLE,Niveau de l'océan,Ocean level

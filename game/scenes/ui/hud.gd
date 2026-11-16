@@ -9,9 +9,11 @@ extends CanvasLayer
 @onready var hint_label: Label = $Hint
 @onready var prompt_label: Label = $Prompt
 @onready var fill_bar: ProgressBar = $FillBar
+var stamina_bar: ProgressBar
 
 
 func _ready() -> void:
+	_build_stamina_bar()
 	GameState.ocean_changed.connect(_refresh_ocean)
 	GameState.stock_changed.connect(_refresh_items)
 	GameState.carried_changed.connect(_refresh_items)
@@ -29,6 +31,25 @@ func _process(_delta: float) -> void:
 	var progress := GameState.bucket.fill_progress_ratio()
 	fill_bar.visible = progress > 0.0
 	fill_bar.value = progress * 100.0
+	# Endurance : visible seulement quand elle n'est pas pleine (comme dans BotW).
+	var stamina := GameState.stamina
+	stamina_bar.visible = not stamina.is_full()
+	stamina_bar.value = stamina.value * 100.0
+	stamina_bar.modulate = Color(1, 0.35, 0.3) if stamina.exhausted or stamina.value < 0.25 else Color(0.55, 0.9, 0.4)
+
+
+func _build_stamina_bar() -> void:
+	stamina_bar = ProgressBar.new()
+	stamina_bar.name = "StaminaBar"
+	stamina_bar.show_percentage = false
+	stamina_bar.tooltip_text = tr("HUD_STAMINA")
+	stamina_bar.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	stamina_bar.offset_left = -120.0
+	stamina_bar.offset_right = 120.0
+	stamina_bar.offset_top = -100.0
+	stamina_bar.offset_bottom = -86.0
+	stamina_bar.visible = false
+	add_child(stamina_bar)
 
 
 func _refresh_ocean() -> void:
@@ -39,7 +60,7 @@ func _refresh_ocean() -> void:
 
 func _refresh_items() -> void:
 	stock_label.text = "%s : %s" % [tr("HUD_STOCK"), CatalogueFormat.format_items(GameState.stock, true)]
-	carried_label.text = "%s (%d/%d) : %s" % [tr("HUD_CARRIED"), GameState.carried_count(), GameState.config.hand_carry_capacity, CatalogueFormat.format_items(GameState.carried)]
+	carried_label.text = "%s (%d/%d) : %s" % [tr("HUD_CARRIED"), GameState.carried_count(), GameState.carry_capacity, CatalogueFormat.format_items(GameState.carried)]
 	bucket_label.text = tr("HUD_BUCKET") % [GameState.bucket.water_l, GameState.bucket.capacity_l]
 
 

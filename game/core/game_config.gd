@@ -34,7 +34,11 @@ extends Resource
 @export var tarp_dry_time_s: float = 45.0
 
 @export_group("Ressources")
-## Chances de tirage par 10 L évaporés (M-43).
+## Litres à évaporer pour obtenir 1 sel (réglé pour un premier achat vers 1 min 30).
+@export var liters_per_salt: float = 4.0
+## Unités ramassées par clic sans râteau (M-39 : récolte au clic, puis râteau).
+@export var manual_harvest_per_click: int = 3
+## Chances de tirage à chaque sel produit (M-43).
 @export var mineral_chance: float = 0.10
 @export var rare_mineral_chance: float = 0.005
 ## Chance de remonter un coquillage à chaque puisage (M-43).
@@ -49,3 +53,30 @@ extends Resource
 @export var delivery_center: Vector3 = Vector3(4, 0.5, 9)
 ## Durée totale entre la commande et l'atterrissage de la caisse (M-51).
 @export var delivery_time_s: float = 5.0
+
+@export_group("Océan visible")
+## Surface du bassin, en m² : sert à convertir le volume retiré en baisse du niveau (PRD §8.3).
+## Rayon ~3 000 km (N-06) : π × (3 × 10⁶)² ≈ 2,8 × 10¹³ m², soit ~100 m de profondeur moyenne.
+@export var ocean_surface_m2: float = 2.83e13
+## Debug (F7 maintenu) : part du volume retirée par seconde, pour voir l'eau baisser (M1).
+@export var debug_drain_ratio_per_s: float = 0.002
+
+@export_group("Personnage")
+@export var walk_speed: float = 4.5
+@export var sprint_speed: float = 7.0
+@export var swim_speed: float = 2.6
+## Profondeur des pieds sous la surface à partir de laquelle on nage (au lieu de marcher).
+@export var swim_depth_m: float = 1.2
+## Profondeur des pieds quand on flotte : la tête dépasse de l'eau.
+@export var float_depth_m: float = 1.35
+## Vitesse de montée pour se hisser sur le rivage depuis l'eau.
+@export var swim_climb_velocity: float = 4.0
+## Endurance (N-05) : secondes de course, secondes de nage, temps pour remonter à fond à l'arrêt sur terre.
+@export var stamina_run_s: float = 20.0
+@export var stamina_swim_s: float = 60.0
+@export var stamina_regen_s: float = 5.0
+## Après épuisement, on ne peut plus courir avant d'être remonté à cette part (style BotW).
+@export var stamina_exhausted_ratio: float = 0.25
+## Noyade (N-04) : durée du fondu au noir, puis retour sur la plage.
+@export var drown_fade_s: float = 0.8
+@export var respawn_position: Vector3 = Vector3(0, 1, 6)

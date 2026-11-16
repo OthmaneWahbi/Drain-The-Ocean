@@ -2,13 +2,12 @@ extends CharacterBody3D
 ## Joueur greybox : marcher, courir, sauter, regarder à la souris,
 ## vue à la 1re personne avec bascule en 3e personne (Q-13, M-19, M-20).
 ## M2 : le seau (puiser, verser, vider), la visée des objets et l'interaction (E).
-## Endurance, faim, soif et nage arrivent au jalon suivant.
+## Nage et endurance (M-24, N-04, N-05) : on flotte, on nage, on se hisse sur le rivage ;
+## l'endurance ne remonte jamais dans l'eau, et à zéro on se noie (retour sur la plage, sans perte).
 
 ## Portée de la main, en mètres (comptée depuis la caméra à la 1re personne).
 @export var reach: float = 3.0
 
-@export var walk_speed: float = 4.5
-@export var sprint_speed: float = 7.0
 @export var jump_velocity: float = 4.2
 @export var mouse_sensitivity: float = 0.0025
 @export var acceleration: float = 12.0
@@ -24,12 +23,18 @@ var target: Node = null
 ## Texte d'aide affiché par le HUD (« [Clic] Verser », etc.).
 var prompt: String = ""
 var _bucket_water: MeshInstance3D
+var _second_bucket: Node3D
+## Vrai quand le personnage nage (pieds assez loin sous la surface).
+var swimming: bool = false
+var _drowning: bool = false
+var _fade: ColorRect
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 
 
 func _ready() -> void:
 	add_to_group(&"player")
 	_build_bucket()
+	_build_fade()
 	_apply_view()
 
 
@@ -41,6 +46,21 @@ func _build_bucket() -> void:
 	bucket.add_child(Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3.ZERO, 12))
 	_bucket_water = Greybox.cylinder(0.12, 0.02, Greybox.WATER, Vector3(0, 0.11, 0), 12)
 	bucket.add_child(_bucket_water)
+	# Le second seau de la palanche, à gauche.
+	_second_bucket = Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3(-0.38, -0.42, -0.65), 12)
+	head.add_child(_second_bucket)
+
+
+func _build_fade() -> void:
+	# Écran noir de la noyade (N-04).
+	var layer := CanvasLayer.new()
+	layer.layer = 10
+	add_child(layer)
+	_fade = ColorRect.new()
+	_fade.color = Color(0, 0, 0, 0)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(_fade)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -61,21 +81,77 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_on_floor():
-		velocity.y -= _gravity * delta
-	elif Input.is_action_just_pressed(&"jump") and not GameState.ui_open:
-		velocity.y = jump_velocity
+	var cfg := GameState.config
+	var water_y := GameState.water_level_y()
+	swimming = global_position.y < water_y - cfg.swim_depth_m
 
 	var input := Vector2.ZERO
-	if not GameState.ui_open:
+	if not GameState.ui_open and not _drowning:
 		input = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
 	var direction := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
-	var speed := sprint_speed if Input.is_action_pressed(&"sprint") else walk_speed  # M-31 : le seau ne ralentit pas
-	var target := direction * speed
+	var stamina := GameState.stamina
+	var wants_sprint := Input.is_action_pressed(&"sprint") and input != Vector2.ZERO and not swimming
+	var running := wants_sprint and stamina.can_run()
+
+	var speed: float
+	if swimming:
+		speed = cfg.swim_speed
+		_swim_vertical(delta, water_y, input)
+	else:
+		speed = (cfg.sprint_speed if running else cfg.walk_speed) * GameState.speed_multiplier  # M-31 : le seau ne ralentit pas
+		if not is_on_floor():
+			velocity.y -= _gravity * delta
+			# Fin de l'escalade du rivage : on continue de se hisser tant que les pieds sont dans l'eau.
+			if is_on_wall() and input.y < 0.0 and global_position.y < water_y:
+				velocity.y = cfg.swim_climb_velocity
+		elif Input.is_action_just_pressed(&"jump") and not GameState.ui_open and not _drowning:
+			velocity.y = jump_velocity
+
+	var target_velocity := direction * speed
 	var weight := clampf(acceleration * delta, 0.0, 1.0)
-	velocity.x = lerpf(velocity.x, target.x, weight)
-	velocity.z = lerpf(velocity.z, target.z, weight)
+	velocity.x = lerpf(velocity.x, target_velocity.x, weight)
+	velocity.z = lerpf(velocity.z, target_velocity.z, weight)
 	move_and_slide()
+
+	# Endurance (N-05) : elle ne remonte qu'à l'arrêt sur la terre ferme.
+	var activity := StaminaLogic.Activity.WALK_ON_LAND
+	if swimming:
+		activity = StaminaLogic.Activity.SWIM
+	elif running:
+		activity = StaminaLogic.Activity.RUN
+	elif input == Vector2.ZERO and is_on_floor():
+		activity = StaminaLogic.Activity.REST_ON_LAND
+	stamina.step(delta, activity)
+	if swimming and stamina.is_empty() and not _drowning:
+		_drown()
+
+
+## Flottaison : on remonte doucement jusqu'à avoir la tête hors de l'eau. Espace pousse vers le haut.
+## Contre un bord (rivage), avancer fait se hisser hors de l'eau.
+func _swim_vertical(delta: float, water_y: float, input: Vector2) -> void:
+	var cfg := GameState.config
+	var float_y := water_y - cfg.float_depth_m
+	var target_vy := clampf((float_y - global_position.y) * 3.0, -2.0, 2.0)
+	if Input.is_action_pressed(&"jump") and not _drowning:
+		target_vy = maxf(target_vy, 1.5)
+	if is_on_wall() and input.y < 0.0:
+		target_vy = cfg.swim_climb_velocity
+	velocity.y = lerpf(velocity.y, target_vy, clampf(6.0 * delta, 0.0, 1.0))
+
+
+## Noyade (N-04) : écran noir, retour sur la plage, rien n'est perdu.
+func _drown() -> void:
+	_drowning = true
+	var cfg := GameState.config
+	var tween := create_tween()
+	tween.tween_property(_fade, "color:a", 1.0, cfg.drown_fade_s)
+	tween.tween_callback(func():
+		global_position = cfg.respawn_position
+		velocity = Vector3.ZERO
+		GameState.stamina.refill())
+	tween.tween_interval(0.6)
+	tween.tween_property(_fade, "color:a", 0.0, cfg.drown_fade_s)
+	tween.tween_callback(func(): _drowning = false)
 
 
 func _apply_view() -> void:
@@ -87,6 +163,7 @@ func _apply_view() -> void:
 
 func _process(delta: float) -> void:
 	_bucket_water.visible = not GameState.bucket.is_empty()
+	_second_bucket.visible = GameState.bucket_count > 1
 	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		GameState.bucket.cancel_fill()
 		prompt = ""
@@ -121,9 +198,9 @@ func _handle_tool(delta: float) -> void:
 			GameState.pour_bucket_out()
 
 
-## Les pieds sont sous le niveau de la mer : on peut puiser.
+## Les pieds sont sous la surface de l'océan : on peut puiser (en marchant ou en nageant).
 func is_in_water() -> bool:
-	return global_position.y < GameState.config.sea_level_y - 0.05
+	return global_position.y < GameState.water_level_y() - 0.05
 
 
 ## Rayon tiré depuis le centre de l'écran pour trouver ce que le joueur vise.

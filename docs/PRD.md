@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.10 (jalon M2 : règle de séchage proposée, catalogue de départ) |
+| Version du document | 0.11 (premier achat vers 1 min 30, nage, niveau d'eau visible, outils T1) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -135,7 +135,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 ### 5.4 Durée cible
 
 - **[PROPOSÉ]** 6 à 10 heures pour finir, 12 à 15 heures pour tout trouver (clins d'œil, succès). *[QUESTION Q-02]*
-- **[PROPOSÉ]** Premier achat en moins de 3 minutes. Premier palier technologique en moins de 15 minutes. Le joueur ne doit jamais rester plus de ~10 minutes sans objectif atteignable visible.
+- **[DÉCIDÉ]** Premier achat **vers 1 min 30** (Othmane, 2026-11-16, après avoir testé M2 : 3 min, « beaucoup trop long »). **[PROPOSÉ]** Premier palier technologique en moins de 15 minutes. Le joueur ne doit jamais rester plus de ~10 minutes sans objectif atteignable visible.
 
 ### 5.5 Actif contre inactif (idle)
 
@@ -180,9 +180,10 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
 - **[PROPOSÉ]** Lecture de M-37 retenue pour le prototype M2 (à valider par Othmane) :
   - Une zone **pleine** sèche entièrement en **45 s** de jour. L'évaporation est donc un débit fixe par zone, `capacité ÷ 45 s` (la cuvette de 40 L évapore environ 0,9 L/s), qu'elle soit pleine ou presque vide. Plus de surface = plus de débit, conformément à la règle ci-dessus.
   - La nuit, ce débit est multiplié par 0,3 (M-40).
-  - Chaque tranche de **10 L évaporés** donne 1 sel, plus un tirage de minéral (10 %) et de minéral rare (0,5 %).
+  - Chaque tranche de **4 L évaporés** donne 1 sel (valeur `liters_per_salt` dans les données), plus un tirage de minéral (10 %) et de minéral rare (0,5 %). D'abord 10 L ; passé à 4 L pour le premier achat vers 1 min 30.
+  - Récolte à la main : **3 unités par clic** ; le râteau prend toute la zone d'un coup (M-39).
   - Puiser donne 3 % de chance de coquillage par seau, et chaque coquillage 2 % de chance de perle.
-  - Conséquence : le premier achat (bâche, 15 sel) arrive vers 3 minutes, ce qui respecte M-01.
+  - Conséquence : les 15 sel de la bâche sèchent en ~68 s dans la cuvette ; avec les trajets, le premier achat arrive vers 1 min 30.
   - L'autre lecture (« chaque seau versé sèche en 45 s, indépendamment ») rendrait la surface inutile ; elle a été écartée pour cette raison.
 
 ### 6.4 Équilibrage
@@ -241,6 +242,7 @@ Ordre de grandeur (à recalculer avec le nouveau volume) : pour une dernière ph
 4. **Le niveau réel** de l'eau, honnête, qui commence à bouger visiblement au palier T3/T4.
 5. **Le fond marin conçu pour révéler beaucoup tôt** : un plateau peu profond autour de l'île (voir 8.4) fait que les premiers centimètres dévoilent beaucoup de sable.
 6. **[DÉCIDÉ]** Dès la démo, un **repère de niveau d'eau** doit montrer que le niveau bouge, même d'un tout petit peu (M-62). Une **jauge à aiguille** plantée près de la plage (comme un comparateur d'atelier) : les chiffres restent honnêtes, mais l'aiguille amplifie des dixièmes de millimètre pour que le mouvement se voie. **[DÉCIDÉ]** (N-10)
+   - **[PROPOSÉ]** Avec le volume de N-06, un seau ne fait baisser le niveau que de ~3,5 × 10⁻¹³ mm : même amplifiée, une aiguille linéaire ne bougerait pas de la démo. L'aiguille suit donc une **échelle logarithmique** (chaque graduation = ×10, de 10⁻¹⁶ m à 1 m) : elle bouge dès le premier seau. Le chiffre affiché sous le cadran reste la vraie baisse en millimètres.
 
 ### 8.3 Le niveau de l'eau
 
@@ -324,6 +326,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).
+- **[PROPOSÉ]** Détails de la nage (prototype) : on nage quand les pieds sont à plus de 1,2 m sous la surface ; on flotte la tête hors de l'eau ; Espace fait monter ; avancer contre le rivage fait se hisser hors de l'eau. L'endurance baisse dans l'eau profonde même immobile (on fait du sur-place), reste stable en marchant sur terre, et ne remonte qu'à l'arrêt sur terre. À zéro dans l'eau : noyade. Course impossible tant qu'on n'est pas remonté à 25 % après épuisement.
 - **[DÉCIDÉ]** Pas de mur invisible ni de « réveil sur l'île » pour limiter l'exploration (M-25) : le joueur peut aller **vraiment loin**, mais il n'y trouve rien. S'il est assez malin pour parcourir **des milliers de kilomètres** sans se noyer ni épuiser son endurance, il **termine le jeu** tout simplement (fin secrète). La distance nécessaire doit être immense, et cette liberté ne doit pas coûter de performances. **[DÉCIDÉ]** Pour que ce soit cohérent, le bassin à vider est **réellement immense** (rayon de plusieurs milliers de km) ; seule la zone autour de l'île est détaillée, le reste est un plan d'eau vide (N-06). Voir [8.1](#81-le-problème-déchelle) et [16.3](#163-performances).
 - **[PROPOSÉ]** Le personnage ne parle pas, ne pense pas en bulles. Ses émotions passent par l'animation.
 
@@ -582,7 +585,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 - **Séchage :** zones avec surface et capacité, évaporation selon le soleil, récolte manuelle puis au râteau.
 - **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin), perle ; transport à la main au début, stock automatique après un achat.
 - **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 5 s, offres spéciales environ une fois par jour, ouverture des caisses, pose avec aperçu fantôme.
-- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
+- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1 ; **[PROPOSÉ]** 30 sel, porte 40 unités au lieu de 10), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
 - **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
 - **Fin de démo :** teaser des machines T3, puis écran de fin de démo. La vraie fin (drain, avion publicitaire, temps, générique) est construite mais accessible seulement par une touche de debug.
 - **Système :** menu principal, 3 emplacements, sauvegarde automatique, chronomètre, options de base, FR + EN.
@@ -646,7 +649,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane.
 | Jalon | Contenu | Critère de réussite |
 |---|---|---|
 | **M0 — Fondations** | Projet Godot, structure du dépôt, CI, tests, sauvegarde, scène greybox jouable | Les tests passent en CI ; on se promène sur l'île greybox en 1re/3e personne. **Fait (PR #2, 2026-11-16)** |
-| **M1 — Prototype de l'eau** | Île grise, plan d'eau shader, terrain de fond, variable volume → hauteur, perf mesurée | 60 i/s avec le terrain complet ; on peut faire baisser l'eau avec une touche de debug |
+| **M1 — Prototype de l'eau** | Île grise, plan d'eau shader, terrain de fond, variable volume → hauteur, perf mesurée | 60 i/s avec le terrain complet ; on peut faire baisser l'eau avec une touche de debug. **En partie fait (2026-11-16)** : hauteur honnête volume → niveau, jauge à aiguille, touche F7 ; restent le shader d'eau, le terrain de fond et la mesure de perf. |
 | **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet. **Prototype livré en PR (2026-11-16)** : seau, cuvette, bâche, grand seau, bateau en bouteille, palette de dépôt, téléphone et catalogue, avion et caisse en parachute, cycle jour/nuit. |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
 | **M4 — Contenu** | T3 à T6, fond marin complet, toutes les zones | On peut finir le jeu (avec debug d'accélération) |

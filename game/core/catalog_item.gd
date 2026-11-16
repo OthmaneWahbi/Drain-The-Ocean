@@ -3,7 +3,8 @@ extends Resource
 ## Un article du catalogue de l'agence (PRD §9). Les valeurs vivent dans data/catalog.tres.
 
 ## Ce que fait l'objet une fois la caisse ouverte.
-enum Effect { DRYING_ZONE, BUCKET_CAPACITY, DECOR }
+## (Ne jamais réordonner : le fichier de données stocke ces valeurs par numéro.)
+enum Effect { DRYING_ZONE, BUCKET_CAPACITY, DECOR, BUCKET_COUNT, CARRY_CAPACITY, WALK_SPEED, RAKE }
 
 @export var id: StringName
 @export var name_key: String

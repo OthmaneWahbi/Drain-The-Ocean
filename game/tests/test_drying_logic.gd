@@ -58,3 +58,22 @@ func test_round_trip() -> void:
 	c.load_dict(z.to_dict())
 	assert_almost(c.water_l, 25.0)
 	assert_eq(int(c.deposit["sel"]), 3)
+
+
+func test_salt_rate_comes_from_data() -> void:
+	var z := DryingLogic.new(40.0, 45.0)
+	z.liters_per_salt = 4.0
+	z.add_water(40.0)
+	z.step(45.0, 1.0, rng)
+	assert_eq(int(z.deposit["sel"]), 10)
+
+
+func test_take_some_takes_rarest_first() -> void:
+	var z := DryingLogic.new(40.0, 45.0)
+	z.deposit = {"sel": 5, "mineraux": 1, "mineraux_rares": 1}
+	var taken := z.take_some(3)
+	assert_eq(int(taken["mineraux_rares"]), 1)
+	assert_eq(int(taken["mineraux"]), 1)
+	assert_eq(int(taken["sel"]), 1)
+	assert_eq(int(z.deposit["sel"]), 4)
+	assert_false(z.deposit.has("mineraux"))
