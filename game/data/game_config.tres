@@ -112,6 +112,35 @@ inlet_radius = {
 "bassin_bois": 2.5,
 "cuvette": 1.5
 }
+milestones = [{
+"icon": "baignoire",
+"id": "baignoire",
+"liters": 150.0,
+"reward": {
+"sel": 10
+}
+}, {
+"icon": "piscine_gonflable",
+"id": "piscine_gonflable",
+"liters": 2000.0,
+"reward": {
+"perles": 1
+}
+}, {
+"icon": "piscine",
+"id": "piscine",
+"liters": 30000.0,
+"reward": {
+"mineraux_rares": 5
+}
+}, {
+"icon": "piscine_olympique",
+"id": "piscine_olympique",
+"liters": 2500000.0,
+"reward": {
+"perles": 3
+}
+}]
 slide_reach_m = 3.0
 slide_period_s = 8.0
 offer_chance_per_day = 0.7

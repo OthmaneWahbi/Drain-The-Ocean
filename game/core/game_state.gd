@@ -15,6 +15,8 @@ signal crate_added(crate: Dictionary, animate: bool)
 signal crate_removed(crate: Dictionary)
 signal decor_added(decor: Dictionary)
 signal new_morning
+## Un jalon comparatif vient d'être franchi (M-70) : {"id", "icon", "liters", "reward"}.
+signal milestone_reached(milestone: Dictionary)
 ## Le téléphone se met à sonner, s'arrête, ou une offre change (PRD §9, M-48, M-54).
 signal phone_changed
 ## On a décroché : `reason` vaut PhoneLogic.Ring.TUTORIAL ou OFFER.
@@ -57,6 +59,7 @@ var ocean: OceanModel
 var bucket: BucketLogic
 var day: DayCycleLogic
 var phone: PhoneLogic
+var milestones: MilestoneLogic
 ## Ressources posées sur la palette (servent à payer l'agence).
 var stock: Dictionary = {}
 ## Ressources que le joueur porte dans les bras (M-28).
@@ -144,6 +147,7 @@ func _reset_state() -> void:
 	bucket = BucketLogic.new(config.starting_bucket_capacity_l, config.bucket_fill_time_s)
 	day = DayCycleLogic.new(config.day_length_s, config.start_hour)
 	phone = PhoneLogic.new()
+	milestones = MilestoneLogic.new(config.milestones)
 	stock = Economy.empty_stock()
 	carried = {}
 	zones = []
@@ -201,6 +205,7 @@ func simulate(delta: float) -> void:
 		(st.logic as StationLogic).step(delta)
 	_run_auto_pumps(delta)
 	_run_slides(delta)
+	check_milestones()
 	survival.step(delta)
 	stamina.set_max(survival.stamina_cap())
 	survival_changed.emit()
@@ -238,6 +243,7 @@ func fill_bucket() -> void:
 			add_carried({"perles": 1})
 	ocean_changed.emit()
 	bucket_changed.emit()
+	check_milestones()
 
 
 ## Verse le seau dans une zone de séchage. Renvoie la quantité acceptée.
@@ -797,6 +803,16 @@ func run_pump(pump: Dictionary, delta: float) -> float:
 	return poured
 
 
+# --- Jalons comparatifs (M-70) -----------------------------------------------------------
+
+## Regarde si l'eau retirée franchit un jalon ; chaque jalon donne sa récompense sur la palette.
+func check_milestones() -> void:
+	for m in milestones.update(ocean.removed_l):
+		Economy.add(stock, m.get("reward", {}))
+		stock_changed.emit()
+		milestone_reached.emit(m)
+
+
 # --- Toboggan à sacs (T2, N-09, M-28 : le stock devient automatique) ---------------------
 
 func add_slide(kind: String, position: Vector3) -> Dictionary:
@@ -1024,6 +1040,7 @@ func to_dict() -> Dictionary:
 		"bucket": bucket.to_dict(),
 		"day": day.to_dict(),
 		"phone": phone.to_dict(),
+		"milestones": milestones.to_dict(),
 		"stock": stock.duplicate(),
 		"carried": carried.duplicate(),
 		"zones": zones.map(func(z): return {"kind": z.kind, "position": _v2a(z.position), "rotation_deg": item_rotation(z), "logic": (z.logic as DryingLogic).to_dict()}),
@@ -1064,6 +1081,11 @@ func load_dict(data: Dictionary) -> void:
 	bucket.water_l = minf(bucket.water_l, bucket.capacity_l)
 	day.load_dict(data.get("day", {}))
 	phone.load_dict(data.get("phone", {}))
+	if data.has("milestones"):
+		milestones.load_dict(data.milestones)
+	else:
+		# Vieille sauvegarde : les jalons déjà dépassés comptent, sans redonner les récompenses.
+		milestones.update(ocean.removed_l)
 	stock = Economy.empty_stock()
 	Economy.add(stock, Economy.sanitize(data.get("stock", {})))
 	carried = Economy.sanitize(data.get("carried", {}))

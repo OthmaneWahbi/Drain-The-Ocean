@@ -245,6 +245,12 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `slide_view.gd` écoute `slide_sent` et fait glisser des sacs (des `Tween`) le long de la goulotte.
 - Le flamant est un article `DECOR` ordinaire au prix `{"perles": 1}` : le paiement en perle n'a demandé aucun code, le troc gère déjà toutes les ressources.
 
+### Les jalons comparatifs (PR #17)
+
+- `core/milestone_logic.gd` (`MilestoneLogic`, pur) : la liste (triée par litres) et `reached`, le nombre de jalons atteints. `update(retiré)` rend les jalons franchis à l'instant (plusieurs d'un coup si besoin, jamais deux fois) ; `next()` et `progress(retiré)` servent à l'affichage.
+- GameState : `milestones` ; `check_milestones()` est appelé après `fill_bucket()` et à chaque `simulate()` (pompes, moulin) ; chaque jalon franchi ajoute sa récompense au stock et émet `milestone_reached`. Au chargement d'une vieille sauvegarde, on recalcule les jalons sans redonner les récompenses.
+- `scenes/ui/milestone_icon.gd` (`MilestoneIcon`) dessine le pictogramme avec `_draw()` (rectangles, lignes, cercles) et le remplit d'eau selon `fill`. `milestone_panel.gd` lit `GameState.milestones` à chaque image pour le petit pictogramme, et met les jalons franchis dans une file pour les montrer l'un après l'autre (un `Tween` qui fait grossir puis s'effacer).
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -297,3 +303,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #16 — Toboggan à sacs, flamant payé en perle
 `Effect.SLIDE`, `GameState.slides` / `add_slide` / `zones_for_slide` / `slide_unload` / `_run_slides`, `slide_view.gd`, décor `flamant`, `test_content.gd`.
+
+### PR #17 — Jalons comparatifs
+`MilestoneLogic`, `GameConfig.milestones`, `GameState.check_milestones` / `milestone_reached`, `MilestoneIcon`, `milestone_panel.gd`, `test_milestones.gd`.

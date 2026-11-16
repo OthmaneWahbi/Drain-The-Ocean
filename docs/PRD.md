@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.26 (toboggan à sacs, flamant payé en perle) |
+| Version du document | 0.27 (3 premiers jalons comparatifs) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -713,6 +713,8 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 
 - **[PROPOSÉ]** Toboggan à sacs (v0.26 ; N-09, M-28 « stock automatique après un achat ») : T2, 250 sel + 25 minéraux, se pose et se déplace comme les autres objets. E dessus : on y jette tout ce qu'on porte, ça glisse jusqu'à la palette (plus besoin d'y marcher). Toutes les 8 s, il envoie aussi à la palette les tas des zones de séchage dont le bord est à moins de 3 m de lui. Plusieurs toboggans peuvent servir plusieurs zones.
 - **[PROPOSÉ]** Objet payé en perle (v0.26 ; N-07) : le **flamant rose gonflable**, 1 perle, T1, un seul par partie, purement décoratif.
+
+- **[PROPOSÉ]** Jalons comparatifs (v0.27 ; M-70) : en haut à droite, le pictogramme du prochain jalon se remplit d'eau à mesure qu'on vide l'océan (pas de texte). En le franchissant, un grand pictogramme plein apparaît avec sa récompense, posée sur la palette. Les trois de la démo : **baignoire** (150 L, +10 sel), **piscine gonflable** (2 000 L, +1 perle), **piscine** (30 000 L, +5 minéraux rares) ; ensuite la piscine olympique (2,5 millions de litres). La liste est dans les données (`GameConfig.milestones`). Un jalon franchi le reste, même si l'eau retourne à l'océan.
 
 ## 20. Glossaire
 
