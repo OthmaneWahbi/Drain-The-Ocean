@@ -60,6 +60,8 @@ static func summary(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
 		"play_time_s": float(data.get("play_time_s", 0.0)),
 		"removed_l": float(data.get("ocean", {}).get("removed_l", 0.0)),
 		"saved_at_unix": float(data.get("saved_at_unix", 0.0)),
+		"best_time_s": float(data.get("best_time_s", 0.0)),
+		"finished_runs": int(data.get("finished_runs", 0)),
 	}
 
 

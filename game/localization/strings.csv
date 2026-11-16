@@ -118,6 +118,13 @@ MENU_SUBTITLE,"Un seau, une île, tout un océan.","One bucket, one island, a wh
 MENU_SLOT,Emplacement %d,Slot %d
 MENU_SLOT_EMPTY,vide,empty
 MENU_PLAY,Jouer,Play
+MENU_CONTINUE,Continuer,Continue
+MENU_NEW,Nouvelle,New
+MENU_NEW_GAME,Nouvelle partie,New game
+MENU_YES,"Oui, je confirme","Yes, confirm"
+MENU_CANCEL,Annuler,Cancel
+MENU_CONFIRM_OVERWRITE,Écraser la partie de l'emplacement %d par une nouvelle partie ?,Overwrite the game in slot %d with a new game?
+MENU_CONFIRM_DELETE,Effacer pour de bon la partie de l'emplacement %d ?,Permanently delete the game in slot %d?
 MENU_DELETE,Effacer,Delete
 MENU_OPTIONS,Options,Options
 MENU_QUIT,Quitter,Quit
@@ -136,3 +143,6 @@ PAUSE_SAVE,Sauvegarder,Save
 PAUSE_SAVED,Partie sauvegardée.,Game saved.
 PAUSE_MAIN_MENU,Menu principal,Main menu
 PAUSE_UNSTUCK,Me débloquer (retour plage),Get unstuck (back to the beach)
+ENDING_BANNER,"AGENCE DE LIVRAISON — MAINTENANT AUSSI TRANSPORTEUR : DE N'IMPORTE OÙ À N'IMPORTE OÙ !","DELIVERY AGENCY — NOW ALSO A TRAVEL COMPANY: FROM ANYWHERE TO ANYWHERE!"
+ENDING_TIME,"Océan vidé en %s","Ocean drained in %s"
+ENDING_CREDITS,"DRAIN THE OCEAN\n\n\nIdée, conception et décisions\nOthmane\n\nCode et prototype\nOthmane et Claude\n\nMoteur\nGodot Engine\n\nPilote de l'agence\nToujours le même\n\n\nMerci d'avoir joué !\n(Vous auriez pu juste appeler.)","DRAIN THE OCEAN\n\n\nIdea, design and decisions\nOthmane\n\nCode and prototype\nOthmane and Claude\n\nEngine\nGodot Engine\n\nAgency pilot\nSame as always\n\n\nThanks for playing!\n(You could have just called.)"

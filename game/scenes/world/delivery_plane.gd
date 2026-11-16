@@ -41,6 +41,11 @@ func _process(delta: float) -> void:
 	_hook.global_rotation = Vector3.ZERO
 
 
+## Sans crochet (l'avion publicitaire de la fin).
+func hide_hook() -> void:
+	_hook.visible = false
+
+
 ## Le paiement arraché pend au crochet et part avec l'avion.
 func carry_bundle(colors: Array) -> void:
 	for i in colors.size():

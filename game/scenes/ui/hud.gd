@@ -36,6 +36,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	visible = GameState.ending == null  # la fin se joue sans HUD
 	var h := GameState.day.hour()
 	# Le chronomètre de partie est caché, sauf avec l'option « speedrun » (M-73).
 	var clock := "%02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)]

@@ -52,6 +52,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	visible = GameState.ending == null  # la fin se joue sans HUD
 	var next := GameState.milestones.next()
 	_next_box.visible = not next.is_empty()
 	if not next.is_empty():
