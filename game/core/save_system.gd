@@ -50,6 +50,19 @@ static func delete(slot: int, dir: String = DEFAULT_DIR) -> void:
 		DirAccess.remove_absolute(slot_path(slot, dir))
 
 
+## Ce que le menu principal montre d'un emplacement (M-71) : temps de jeu, litres retirés, date.
+## Vide si l'emplacement est vide ou illisible.
+static func summary(slot: int, dir: String = DEFAULT_DIR) -> Dictionary:
+	var data := read(slot, dir)
+	if data.is_empty():
+		return {}
+	return {
+		"play_time_s": float(data.get("play_time_s", 0.0)),
+		"removed_l": float(data.get("ocean", {}).get("removed_l", 0.0)),
+		"saved_at_unix": float(data.get("saved_at_unix", 0.0)),
+	}
+
+
 ## Met à niveau une sauvegarde ancienne vers SAVE_VERSION. Chaque nouvelle version ajoute une étape ici.
 static func migrate(data: Dictionary) -> Dictionary:
 	var version := int(data.get("save_version", 0))

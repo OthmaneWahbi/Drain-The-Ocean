@@ -5,7 +5,7 @@ HUD_PLAY_TIME,Temps,Time
 HUD_STOCK,Palette,Pallet
 HUD_CARRIED,Dans les bras,Carrying
 HUD_BUCKET,Seau : %.0f / %.0f L,Bucket: %.0f / %.0f L
-HUD_HINT_CAPTURE,Clic pour jouer · Échap pour libérer la souris · V pour changer de vue,Click to play · Esc to release the mouse · V to switch view
+HUD_HINT_CAPTURE,Clic pour jouer · Échap : pause · V pour changer de vue,Click to play · Esc: pause · V to switch view
 RES_SEL,sel,salt
 RES_MINERAUX,minéraux,minerals
 RES_MINERAUX_RARES,minéraux rares,rare minerals
@@ -113,3 +113,25 @@ ITEM_FLAMINGO,Flamant rose gonflable,Inflatable flamingo
 ITEM_FLAMINGO_DESC,Ne sert absolument à rien. Payé en perle.,Absolutely useless. Paid with a pearl.
 PROMPT_SLIDE,[E] Jeter dans le toboggan (%d),[E] Throw in the slide (%d)
 SLIDE_STATE,Toboggan : %d zone(s) branchée(s),Slide: %d zone(s) hooked up
+MENU_GAME_TITLE,Drain the Ocean,Drain the Ocean
+MENU_SUBTITLE,"Un seau, une île, tout un océan.","One bucket, one island, a whole ocean."
+MENU_SLOT,Emplacement %d,Slot %d
+MENU_SLOT_EMPTY,vide,empty
+MENU_PLAY,Jouer,Play
+MENU_DELETE,Effacer,Delete
+MENU_OPTIONS,Options,Options
+MENU_QUIT,Quitter,Quit
+MENU_BACK,Retour,Back
+OPTIONS_TITLE,Options,Options
+OPTIONS_FOV,Champ de vision,Field of view
+OPTIONS_SENSITIVITY,Sensibilité de la souris,Mouse sensitivity
+OPTIONS_VOLUME,Volume,Volume
+OPTIONS_HEAD_BOB,Balancement de la tête,Head bob
+OPTIONS_FULLSCREEN,Plein écran,Fullscreen
+OPTIONS_TIMER,Chronomètre (speedrun),Timer (speedrun)
+OPTIONS_LANGUAGE,Langue,Language
+PAUSE_TITLE,Pause,Paused
+PAUSE_RESUME,Reprendre,Resume
+PAUSE_SAVE,Sauvegarder,Save
+PAUSE_SAVED,Partie sauvegardée.,Game saved.
+PAUSE_MAIN_MENU,Menu principal,Main menu

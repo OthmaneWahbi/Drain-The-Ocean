@@ -38,3 +38,9 @@ jobs:
           set -o pipefail
           ./godot --headless --path game --quit-after 120 2>&1 | tee smoke.log
           ! grep -q "SCRIPT ERROR" smoke.log
+
+      - name: Lancer la partie sans le menu principal (fumée)
+        run: |
+          set -o pipefail
+          DTO_SKIP_MENU=1 ./godot --headless --path game --quit-after 120 2>&1 | tee smoke2.log
+          ! grep -q "SCRIPT ERROR" smoke2.log

@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.27 (3 premiers jalons comparatifs) |
+| Version du document | 0.28 (menu principal, 3 emplacements, options, pause) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -715,6 +715,8 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 - **[PROPOSÉ]** Objet payé en perle (v0.26 ; N-07) : le **flamant rose gonflable**, 1 perle, T1, un seul par partie, purement décoratif.
 
 - **[PROPOSÉ]** Jalons comparatifs (v0.27 ; M-70) : en haut à droite, le pictogramme du prochain jalon se remplit d'eau à mesure qu'on vide l'océan (pas de texte). En le franchissant, un grand pictogramme plein apparaît avec sa récompense, posée sur la palette. Les trois de la démo : **baignoire** (150 L, +10 sel), **piscine gonflable** (2 000 L, +1 perle), **piscine** (30 000 L, +5 minéraux rares) ; ensuite la piscine olympique (2,5 millions de litres). La liste est dans les données (`GameConfig.milestones`). Un jalon franchi le reste, même si l'eau retourne à l'océan.
+
+- **[PROPOSÉ]** Menus et options (v0.28 ; M-21, M-71, M-72, M-73, M-77) : au lancement, un **menu principal** avec 3 emplacements de sauvegarde (temps de jeu, litres retirés, date), Jouer / Effacer, Options, Quitter ; le jeu est en pause derrière et rien n'est sauvegardé tant qu'aucun emplacement n'est choisi. **Échap** ouvre le menu pause (vraie pause : le chronomètre s'arrête) : Reprendre, Sauvegarder, Options, Menu principal, Quitter ; il ne s'ouvre pas par-dessus le catalogue (M-74). **Options** (à part des parties, `user://settings.json`) : champ de vision 60-110, sensibilité, volume, balancement de la tête, plein écran, langue FR/EN, chronomètre speedrun. Le chronomètre de partie est **caché** par défaut (le HUD montre l'heure du jeu) ; l'option speedrun l'affiche au centième. Sauvegarde automatique aussi **après chaque achat**.
 
 ## 20. Glossaire
 

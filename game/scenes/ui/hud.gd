@@ -37,7 +37,9 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var h := GameState.day.hour()
-	time_label.text = "%s : %s · %02d:%02d" % [tr("HUD_PLAY_TIME"), format_time(GameState.play_time_s), int(h), int(fmod(h, 1.0) * 60.0)]
+	# Le chronomètre de partie est caché, sauf avec l'option « speedrun » (M-73).
+	var clock := "%02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)]
+	time_label.text = "%s · %s : %s" % [clock, tr("HUD_PLAY_TIME"), format_precise(GameState.play_time_s)] if Settings.data.show_timer else clock
 	hint_label.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.ui_open
 	var player := get_tree().get_first_node_in_group(&"player")
 	prompt_label.text = player.prompt if player else ""
@@ -143,6 +145,12 @@ func _refresh_items() -> void:
 static func format_time(seconds: float) -> String:
 	var s := int(seconds)
 	return "%02d:%02d:%02d" % [s / 3600, (s / 60) % 60, s % 60]
+
+
+## Chronomètre précis (option speedrun) : « 01:02:05.90 ».
+static func format_precise(seconds: float) -> String:
+	var cs := int(round(maxf(seconds, 0.0) * 100.0))
+	return "%02d:%02d:%02d.%02d" % [cs / 360000, (cs / 6000) % 60, (cs / 100) % 60, cs % 100]
 
 
 ## 1 234 567 → « 1,23 M » ; reste lisible jusqu'aux nombres astronomiques.
