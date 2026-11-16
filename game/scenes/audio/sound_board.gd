@@ -59,7 +59,10 @@ func _process(_delta: float) -> void:
 		play("pour", -4.0)
 	_last_bucket_l = water
 	# Le téléphone sonne tant qu'on ne décroche pas.
-	if GameState.phone.is_ringing() and GameState.ending == null:
+	# Pendant la conversation du premier appel, on a décroché : plus de sonnerie.
+	var booth := get_tree().get_first_node_in_group(&"phone_booth")
+	var in_call: bool = booth != null and booth.is_in_call()
+	if GameState.phone.is_ringing() and GameState.ending == null and not in_call:
 		if not _ring.playing:
 			_ring.play()
 	elif _ring.playing:

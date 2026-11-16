@@ -46,6 +46,10 @@ func _ready() -> void:
 	var terrain := TerrainView.new()
 	terrain.name = "Terrain"
 	add_child(terrain)
+	# Palmiers, noix de coco, rochers, buissons des dunes (0.1.2, modèles CC0 retouchés).
+	var props := IslandProps.new()
+	props.name = "Props"
+	add_child(props)
 	# Le monde vivant : océan à vagues, filtre sous l'eau, fond marin, nuages, animaux.
 	# Chaque morceau est indépendant ; on peut en retirer un sans toucher aux autres.
 	var ocean := OceanView.new()
@@ -102,6 +106,10 @@ func _ready() -> void:
 	var pause_menu := PauseMenu.new()
 	pause_menu.name = "PauseMenu"
 	add_child(pause_menu)
+	# Les sous-titres et les réponses au téléphone de la cabine (0.1.2).
+	var dialogue := DialogueBox.new()
+	dialogue.name = "Dialogue"
+	add_child(dialogue)
 	var main_menu := MainMenu.new()
 	main_menu.name = "MainMenu"
 	add_child(main_menu)
@@ -116,12 +124,16 @@ func _ready() -> void:
 	sounds.name = "Sounds"
 	add_child(sounds)
 	# Les traits des réveils, sur le palmier le plus proche de la plage (M-84).
+	# Le palmier est penché : on suit son tronc à 1,2 m du sol, côté centre de l'île.
 	var marks := PalmMarks.new()
 	marks.name = "PalmMarks"
-	var palm := Vector3(-13, 1.7, -3)
-	var to_center := Vector3(-palm.x, 0, -palm.z).normalized()
 	add_child(marks)
-	marks.look_at_from_position(palm + to_center * 0.215, palm - to_center)
+	var palm_body := props.palm_near(Vector3(-13, 0, -3))
+	var palm_model: Node3D = palm_body.get_meta("model")
+	var trunk := Models.trunk_at(palm_model, 1.2)
+	var palm := palm_model.global_transform * (trunk[0] as Vector3)
+	var to_center := Vector3(-palm.x, 0, -palm.z).normalized()
+	marks.look_at_from_position(palm + to_center * (float(trunk[1]) * palm_model.global_transform.basis.get_scale().x + 0.01), palm - to_center)
 	# La partie en mémoire a été créée avant la scène : on rejoue son contenu.
 	# DTO_SKIP_MENU=1 (captures d'écran, essais) saute le menu et reprend l'emplacement 1.
 	if OS.get_environment("DTO_SKIP_MENU") != "":

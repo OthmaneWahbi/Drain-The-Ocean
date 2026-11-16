@@ -95,14 +95,14 @@ func _build() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	_main_box.add_child(box)
-	box.add_child(MenuStyle.title("PAUSE_TITLE", 34))
+	box.add_child(UiTheme.banner("PAUSE_TITLE", 34))
 	for entry in [["PAUSE_RESUME", resume], ["PAUSE_SAVE", save_now], ["MENU_OPTIONS", _show_options.bind(true)], ["PAUSE_UNSTUCK", unstuck], ["MENU_NEW_GAME", to_main_menu], ["PAUSE_MAIN_MENU", to_main_menu], ["MENU_QUIT", _quit]]:
 		var b := Button.new()
 		b.text = entry[0]
 		b.pressed.connect(entry[1])
 		box.add_child(b)
 	_saved_label = MenuStyle.title("", 14)
-	_saved_label.modulate = Color(0.6, 1.0, 0.6)
+	_saved_label.add_theme_color_override("font_color", UiTheme.GREEN)
 	box.add_child(_saved_label)
 	_options = OptionsPanel.new()
 	_options.closed.connect(_show_options.bind(false))

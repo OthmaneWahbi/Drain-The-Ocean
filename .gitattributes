@@ -17,3 +17,8 @@
 *.mp3 filter=lfs diff=lfs merge=lfs -text
 *.ttf filter=lfs diff=lfs merge=lfs -text
 *.otf filter=lfs diff=lfs merge=lfs -text
+
+# Petits assets du jeu (< 100 Ko : polices, modèles CC0 low poly) : versionnés normalement, sans LFS,
+# pour que le dépôt reste utilisable sans serveur LFS (0.1.2). Les gros fichiers restent en LFS.
+game/assets/fonts/*.ttf -filter -diff -merge binary
+game/assets/models/cc0/*.glb -filter -diff -merge binary

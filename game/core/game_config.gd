@@ -127,6 +127,13 @@ extends Resource
 ## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
 @export var build_radius_m: float = 19.5
 ## Hauteur du fond marin (le terrain y descend et y reste ; la bonde de la fin y est posée).
+## Les palmiers (0.1.2) : (x, z, hauteur en m). Ils sont aussi dans `fixed_obstacles`.
+@export var palms: PackedVector3Array = PackedVector3Array([Vector3(-10, -8, 5.6), Vector3(-13, -3, 5.0), Vector3(11, -9, 6.0)])
+## Les rochers de la plage (0.1.2) : (x, z, largeur en m). Ils sont aussi dans `fixed_obstacles`.
+@export var rocks: PackedVector3Array = PackedVector3Array([Vector3(14, 6, 2.8), Vector3(-15, 9, 2.6)])
+## Buissons sur les dunes et bois flotté sur les plages (décor sans collision, 0.1.2).
+@export var dune_bushes: int = 46
+@export var driftwood: int = 7
 @export var seabed_y: float = -3.0
 ## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
 @export var footprints: Dictionary = {

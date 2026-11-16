@@ -14,13 +14,13 @@ RES_PERLES,perles,pearls
 PROMPT_FILL,[Clic maintenu] Puiser,[Hold click] Scoop water
 PROMPT_POUR,[Clic] Verser,[Click] Pour
 PROMPT_POUR_OUT,[Clic] Vider le seau,[Click] Empty the bucket
-PROMPT_PHONE,[E] Décrocher,[E] Pick up
+PROMPT_PHONE,[E] Téléphoner à l'Agence,[E] Call the Agency
 PROMPT_DEPOT,[E] Déposer (%d),[E] Drop off (%d)
 PROMPT_CRATE,[E] Ouvrir la caisse,[E] Open the crate
 DEPOT_STATE,Palette : %d,Pallet: %d
 ZONE_STATE,%.0f / %.0f L,%.0f / %.0f L
 ZONE_FULL,Plein,Full
-CAT_TITLE,Agence de livraison,Delivery agency
+CAT_TITLE,Le Grand Catalogue de l'Agence,The Agency's Big Catalogue
 CAT_ON_PALLET,Sur la palette,On the pallet
 CAT_ADD,Ajouter,Add
 CAT_CART,Panier,Cart
@@ -71,17 +71,17 @@ PROMPT_MOVE,[G] Déplacer,[G] Move
 PROMPT_PLACE,[Clic] Poser · [R] Tourner · [G] Annuler,[Click] Place · [R] Rotate · [G] Cancel
 PROMPT_PLACE_BLOCKED,Impossible ici · [R] Tourner · [G] Annuler,Can't place here · [R] Rotate · [G] Cancel
 ITEM_HAND_PUMP,Pompe à bras,Hand pump
-ITEM_HAND_PUMP_DESC,"Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s dans les tuyaux que tu as posés.","Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes."
+ITEM_HAND_PUMP_DESC,Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s dans les tuyaux que tu as posés.,Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes.
 ITEM_PIPE,Tuyaux (5 pièces),Pipes (5 pieces)
 ITEM_PIPE_DESC,"5 pièces de 1 m à poser à la main (case 4 de la barre) : au sol ou en hauteur, comme tu veux, de la pompe jusqu'au-dessus d'une zone.","5 one-metre pieces to place by hand (slot 4): on the ground or up high, any shape, from the pump to above a zone."
 PROMPT_PUMP,[Clic maintenu] Pomper · %d zone(s) reliée(s),[Hold click] Pump · %d zone(s) linked
-PUMP_NO_LINK,"%s : aucune zone reliée (pose des tuyaux de la pompe jusqu'au-dessus d'une zone)","%s: no zone linked (lay pipes from the pump to above a zone)"
+PUMP_NO_LINK,%s : aucune zone reliée (pose des tuyaux de la pompe jusqu'au-dessus d'une zone),%s: no zone linked (lay pipes from the pump to above a zone)
 PUMP_FULL,Pompe : les zones reliées sont pleines,Pump: the linked zones are full
 ITEM_WINDMILL_PUMP,Moulin-pompe,Windmill pump
-ITEM_WINDMILL_PUMP_DESC,"La première machine : se pose au bord de l'eau et pompe 10 L/s TOUTE SEULE vers les zones reliées.","The first machine: goes at the water's edge and pumps 10 L/s ON ITS OWN into linked zones."
+ITEM_WINDMILL_PUMP_DESC,La première machine : se pose au bord de l'eau et pompe 10 L/s TOUTE SEULE vers les zones reliées.,The first machine: goes at the water's edge and pumps 10 L/s ON ITS OWN into linked zones.
 WINDMILL_STATE,Moulin-pompe : pompe tout seul · %d zone(s) reliée(s),Windmill pump: pumps on its own · %d zone(s) linked
 DEMO_END_TITLE,Fin de la démo,End of the demo
-DEMO_END_TEXT,"Ton île pompe toute seule. L'océan, lui, n'a presque pas bougé.\nTemps de jeu : %s · Eau retirée : %s L · Baisse : %s","Your island pumps on its own. The ocean has barely moved.\nPlay time: %s · Water removed: %s L · Drop: %s"
+DEMO_END_TEXT,"Ton île pompe toute seule. L'océan, lui, n'a presque pas bougé.\nTemps de jeu : %s · Eau retirée : %s L · Baisse : %s",Your island pumps on its own. The ocean has barely moved.\nPlay time: %s · Water removed: %s L · Drop: %s
 DEMO_END_TEASER,"Bientôt (T3) : pompe motorisée, éolienne, panneaux solaires, collecteur de sel automatique, tapis roulant…","Coming soon (T3): motor pump, wind turbine, solar panels, automatic salt collector, conveyor belt…"
 DEMO_END_CONTINUE,Continuer à jouer,Keep playing
 PROMPT_RAKE,[Clic] Tout ratisser : %s (%d),[Click] Rake it all: %s (%d)
@@ -101,12 +101,12 @@ PROMPT_NO_SLOT,Plus de case libre pour : %s · [Tab] Ranger la barre,No free slo
 TOOL_EMPTY,Mains,Hands
 TOOLBAR_MENU_TITLE,Ranger la barre,Arrange the bar
 TOOLBAR_MENU_HINT,Clique une case puis une autre pour les échanger. [Tab] ou [Échap] pour fermer.,Click a slot then another to swap them. [Tab] or [Esc] to close.
-PHONE_RING,Dring !,Ring!
+PHONE_RING,Driiing ! Driiing !,Riiing! Riiing!
 PROMPT_PHONE_ANSWER,[E] Décrocher,[E] Answer
 PHONE_HOLD_MUSIC,♪ Musique d'attente… ♪,♪ Hold music… ♪
 CAT_OFFER,Offre du jour : %s (au lieu de %s),Today's offer: %s (instead of %s)
 ITEM_PAPER_CATALOGUE,Catalogue papier,Paper catalogue
-ITEM_PAPER_CATALOGUE_DESC,Le catalogue de l'agence. Il ne sert à rien : tout se commande au téléphone.,The agency's catalogue. Useless: everything is ordered by phone.
+ITEM_PAPER_CATALOGUE_DESC,Le catalogue de l'Agence. Il arrive enchaîné dans la cabine téléphonique.,The Agency's catalogue. It ends up chained inside the phone booth.
 ITEM_SLIDE,Toboggan à sacs,Bag slide
 ITEM_SLIDE_DESC,"On y jette ce qu'on porte et ça glisse jusqu'à la palette. Posé près d'une zone de séchage, il y envoie son sel tout seul.","Throw what you carry in and it slides to the pallet. Next to a drying zone, it sends its salt by itself."
 ITEM_FLAMINGO,Flamant rose gonflable,Inflatable flamingo
@@ -143,6 +143,66 @@ PAUSE_SAVE,Sauvegarder,Save
 PAUSE_SAVED,Partie sauvegardée.,Game saved.
 PAUSE_MAIN_MENU,Menu principal,Main menu
 PAUSE_UNSTUCK,Me débloquer (retour plage),Get unstuck (back to the beach)
-ENDING_BANNER,"AGENCE DE LIVRAISON — MAINTENANT AUSSI TRANSPORTEUR : DE N'IMPORTE OÙ À N'IMPORTE OÙ !","DELIVERY AGENCY — NOW ALSO A TRAVEL COMPANY: FROM ANYWHERE TO ANYWHERE!"
-ENDING_TIME,"Océan vidé en %s","Ocean drained in %s"
+ENDING_BANNER,AGENCE DE LIVRAISON — MAINTENANT AUSSI TRANSPORTEUR : DE N'IMPORTE OÙ À N'IMPORTE OÙ !,DELIVERY AGENCY — NOW ALSO A TRAVEL COMPANY: FROM ANYWHERE TO ANYWHERE!
+ENDING_TIME,Océan vidé en %s,Ocean drained in %s
 ENDING_CREDITS,"DRAIN THE OCEAN\n\n\nIdée, conception et décisions\nOthmane\n\nCode et prototype\nOthmane et Claude\n\nMoteur\nGodot Engine\n\nPilote de l'agence\nToujours le même\n\n\nMerci d'avoir joué !\n(Vous auriez pu juste appeler.)","DRAIN THE OCEAN\n\n\nIdea, design and decisions\nOthmane\n\nCode and prototype\nOthmane and Claude\n\nEngine\nGodot Engine\n\nAgency pilot\nSame as always\n\n\nThanks for playing!\n(You could have just called.)"
+DLG_GINETTE,"Ginette, de l'Agence","Ginette, from the Agency"
+DLG_TUTO_1,"Agence de livraison, Ginette à l'appareil ! Vous appelez bien d'une île déserte ?","Delivery Agency, Ginette speaking! You're calling from a desert island, right?"
+DLG_TUTO_1_A,C'est vous qui m'appelez…,You're the one calling me…
+DLG_TUTO_1_B,Euh… oui ?,Er… yes?
+DLG_TUTO_2,Parfait. Et vous voulez vider l'océan. Avec un seau. Je note : « client motivé ».,"Perfect. And you want to empty the ocean. With a bucket. I'm writing down: ""motivated customer""."
+DLG_TUTO_3,"On livre partout, par avion, et on se fait payer en sel. Le sel, c'est notre monnaie.","We deliver anywhere, by plane, and we get paid in salt. Salt is our currency."
+DLG_TUTO_3_A,En sel ? Pourquoi ?,In salt? Why?
+DLG_TUTO_3_B,Ça me va.,Works for me.
+DLG_TUTO_3B,Je ne pose pas de questions au comptable. Faites pareil.,I don't ask the accountant questions. Do the same.
+DLG_TUTO_4,"Je vous envoie notre catalogue par avion. Il sera enchaîné dans la cabine : on en a perdu beaucoup, des catalogues.",I'm sending you our catalogue by plane. It'll be chained inside the booth: we've lost a lot of catalogues.
+DLG_TUTO_5,Je vous mets en attente. Ne quittez pas…,I'm putting you on hold. Don't hang up…
+DLG_OFFER_1,"Ginette, de l'Agence ! Offre du jour, rien que pour vous : « %s » à prix cassé, jusqu'à ce soir !","Ginette, from the Agency! Today's offer, just for you: ""%s"" at a crazy price, until tonight!"
+DLG_OFFER_1_A,Montrez-moi ça !,Show me!
+DLG_OFFER_1_B,Non merci.,No thanks.
+DLG_OFFER_2,Très bien. Je dirai au comptable que vous avez dit non. Il va pleurer.,Fine. I'll tell the accountant you said no. He's going to cry.
+DLG_CALL_HELLO_1,"Agence de livraison, j'écoute !","Delivery Agency, I'm listening!"
+DLG_CALL_HELLO_2,Encore vous ! Ça me fait plaisir. Un peu.,You again! Nice to hear from you. A little.
+DLG_CALL_HELLO_3,Ginette à l'appareil. Vous êtes toujours sur votre île ?,Ginette speaking. Still on your island?
+DLG_CALL_HELLO_4,"Agence de livraison, bonjour ! Votre appel est très important pour nous. Enfin, pour moi.","Delivery Agency, hello! Your call is very important to us. Well, to me."
+DLG_CALL_ORDER,Je voudrais commander.,I'd like to order.
+DLG_CALL_ASK,Il reste beaucoup d'eau ?,Is there much water left?
+DLG_CALL_BYE,"Rien, je raccroche.","Nothing, I'm hanging up."
+DLG_CALL_LEVEL_1,Selon nos calculs : oui.,According to our calculations: yes.
+DLG_CALL_LEVEL_2,Je regarde par la fenêtre… Oui. Toujours un océan.,Let me look out the window… Yes. Still an ocean.
+DLG_CALL_LEVEL_3,Le comptable dit « presque tout ». Le comptable est optimiste.,"The accountant says ""almost all of it"". The accountant is an optimist."
+DLG_CALL_ELSE,Autre chose ?,Anything else?
+DLG_CALL_BYE_1,Au revoir ! Et pensez à vous hydrater.,Goodbye! And remember to stay hydrated.
+DLG_CALL_BYE_2,Bonne vidange !,Happy draining!
+DLG_CALL_BYE_3,Clic. (Elle a raccroché la première.),Click. (She hung up first.)
+DLG_NO_CATALOGUE,"Votre catalogue est dans la caisse que l'avion a larguée. Ouvrez-la, mon chou !","Your catalogue is in the crate the plane dropped. Open it, sweetie!"
+DLG_CONTINUE,[E] Suite,[E] Next
+DLG_HANG_UP_HINT,Échap : raccrocher,Esc: hang up
+BOOTH_SIGN,TÉLÉPHONE,TELEPHONE
+CAT_SUBTITLE,"Livraison par avion · Paiement en sel · Ni repris, ni échangé","Delivered by plane · Paid in salt · No refunds, no returns"
+CAT_SEASON,Collection Printemps-Été-Toute-l'année,Spring-Summer-All-Year Collection
+CAT_ORDER_FORM,Bon de commande,Order form
+CAT_WALLET,Vous avez,You have
+CAT_SOON,BIENTÔT,SOON
+CAT_PROMO,PROMO,SALE
+CAT_OWNED,DÉJÀ À VOUS,ALREADY YOURS
+CAT_INSTEAD,au lieu de %s,instead of %s
+CAT_FOOTER,* Photos non contractuelles. L'océan n'est pas inclus.,* Pictures for illustration only. Ocean not included.
+ITEM_TARP_PITCH,Le best-seller ! Le soleil fait tout le travail.,The best-seller! The sun does all the work.
+ITEM_BIG_BUCKET_PITCH,Deux fois plus de seau. Même océan.,Twice the bucket. Same ocean.
+ITEM_BOAT_PITCH,"Le rêve ! (Livré en bouteille, montage non fourni.)","The dream! (Delivered in a bottle, assembly not included.)"
+ITEM_WHEELBARROW_PITCH,Une roue. Zéro problème.,One wheel. Zero problems.
+ITEM_TONGS_PITCH,Le bruit « flip-flop » est offert.,"The ""flip-flop"" sound is free."
+ITEM_RAKE_PITCH,Ratisse plus vite que son ombre.,Rakes faster than its shadow.
+ITEM_YOKE_PITCH,Vos épaules vont adorer. Ou pas.,Your shoulders will love it. Or not.
+ITEM_CONDENSER_PITCH,De l'eau douce avec de l'eau salée. Magie !,Fresh water from salt water. Magic!
+ITEM_RATIONS_PITCH,Goût « repas ». Garanti sans goût.,"""Meal"" flavour. Guaranteed flavourless."
+ITEM_MANUAL_PITCH,Tout ce que les tuyaux ne vous diront jamais.,Everything pipes will never tell you.
+ITEM_WOOD_BASIN_PITCH,Plus grand. Plus bois. Plus bassin.,Bigger. Woodier. Basinier.
+ITEM_MIRROR_PITCH,"Le soleil, mais en double.","The sun, but twice."
+ITEM_HAND_PUMP_PITCH,"Musclez vos bras, videz l'océan.","Build your arms, drain the ocean."
+ITEM_PIPE_PITCH,Des tuyaux. Pour tuyauter.,Pipes. For piping.
+ITEM_WINDMILL_PUMP_PITCH,Il travaille pendant que vous dormez !,It works while you sleep!
+ITEM_SLIDE_PITCH,Wiiiiiiiiii ! (pour les sacs),Wheeeeeee! (for bags)
+ITEM_FLAMINGO_PITCH,Indispensable. Totalement inutile.,Essential. Totally useless.
+ITEM_PAPER_CATALOGUE_PITCH,Vous le lisez en ce moment.,You're reading it right now.

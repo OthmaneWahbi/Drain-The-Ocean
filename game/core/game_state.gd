@@ -137,6 +137,10 @@ var pre_ending_removed_l: float = 0.0
 var finished_runs: int = 0
 ## Dossier des sauvegardes (les tests en utilisent un autre).
 var save_dir: String = SaveSystem.DEFAULT_DIR
+## Le catalogue papier est arrivé (caisse du premier appel) : il est enchaîné dans la cabine.
+var catalogue_delivered: bool = false
+## Les conversations au téléphone de la cabine (data/dialogues.json).
+var dialogues: Dictionary = {}
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
 var ui_open: bool = false
 ## Vrai pendant le mode déplacement d'un objet (G) : le joueur ne puise ni n'interagit.
@@ -158,6 +162,7 @@ func setup(config_override: GameConfig = null) -> void:
 	catalog = load(CATALOG_PATH) as CatalogDatabase
 	# La forme de l'île (0.1.1) : la même pour le rendu, la collision et les décors.
 	terrain = TerrainLogic.new(config.ground_y, config.build_radius_m, config.seabed_y)
+	dialogues = DialogueLogic.load_file()
 	rng.randomize()
 	new_game()
 
@@ -175,6 +180,7 @@ func _reset_state() -> void:
 	bucket = BucketLogic.new(config.starting_bucket_capacity_l, config.bucket_fill_time_s)
 	day = DayCycleLogic.new(config.day_length_s, config.start_hour)
 	phone = PhoneLogic.new()
+	catalogue_delivered = false
 	milestones = MilestoneLogic.new(config.milestones)
 	stock = Economy.empty_stock()
 	carried = {}
@@ -642,6 +648,10 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			pipe_stock += maxi(int(item.effect_value), 1)
 			network_changed.emit()
 			_sync_toolbar()  # les tuyaux prennent une case
+		CatalogItem.Effect.CATALOGUE:
+			# Le catalogue ne se pose pas au sol : il part tout seul dans la cabine.
+			catalogue_delivered = true
+			phone_changed.emit()
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -1141,6 +1151,7 @@ func to_dict() -> Dictionary:
 		"bucket": bucket.to_dict(),
 		"day": day.to_dict(),
 		"phone": phone.to_dict(),
+		"catalogue_delivered": catalogue_delivered,
 		"milestones": milestones.to_dict(),
 		"stock": stock.duplicate(),
 		"carried": carried.duplicate(),
@@ -1186,6 +1197,8 @@ func load_dict(data: Dictionary) -> void:
 	bucket.water_l = minf(bucket.water_l, bucket.capacity_l)
 	day.load_dict(data.get("day", {}))
 	phone.load_dict(data.get("phone", {}))
+	# Vieille sauvegarde : le catalogue papier posé au sol part dans la cabine.
+	catalogue_delivered = bool(data.get("catalogue_delivered", phone.tutorial_done))
 	if data.has("milestones"):
 		milestones.load_dict(data.milestones)
 	else:
@@ -1206,6 +1219,9 @@ func load_dict(data: Dictionary) -> void:
 		crates.append(crate)
 		crate_added.emit(crate, false)
 	for d in data.get("decor", []):
+		if String(d.get("kind", "")) == "catalogue_papier":
+			catalogue_delivered = true
+			continue
 		var dec := {"id": _new_id("decor"), "kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
 		decor.append(dec)
 		decor_added.emit(dec)

@@ -22,6 +22,7 @@ func _ready() -> void:
 	survival_label.name = "Survival"
 	survival_label.add_theme_font_size_override("font_size", 14)
 	$Margin/VBox.add_child(survival_label)
+	_apply_style()
 	GameState.survival_changed.connect(_refresh_survival)
 	GameState.ocean_changed.connect(_refresh_ocean)
 	GameState.stock_changed.connect(_refresh_items)
@@ -59,7 +60,7 @@ func _refresh_survival() -> void:
 	var sv := GameState.survival
 	survival_label.text = "%s : %s · %s : %s" % [tr("HUD_FOOD"), gauge(sv.food), tr("HUD_WATER"), gauge(sv.water)]
 	# Rouge quand un besoin est vide : l'endurance max baisse.
-	survival_label.modulate = Color(1, 0.45, 0.4) if sv.food <= 0.0 or sv.water <= 0.0 else Color.WHITE
+	survival_label.modulate = Color(1, 0.55, 0.45) if sv.food <= 0.0 or sv.water <= 0.0 else Color.WHITE
 
 
 ## Petite jauge en texte : « ▮▮▮▯▯ ».
@@ -72,20 +73,22 @@ func _build_toolbar() -> void:
 	var row := HBoxContainer.new()
 	row.name = "Toolbar"
 	row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	row.offset_left = -190.0
-	row.offset_right = 190.0
-	row.offset_top = -74.0
+	row.offset_left = -250.0
+	row.offset_right = 250.0
+	row.offset_top = -84.0
 	row.offset_bottom = -14.0
 	row.add_theme_constant_override("separation", 6)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(row)
 	for i in 5:
 		var slot := PanelContainer.new()
-		slot.custom_minimum_size = Vector2(70, 56)
+		slot.custom_minimum_size = Vector2(92, 66)
 		var label := Label.new()
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_font_override("font", UiTheme.bold_font())
+		label.add_theme_font_size_override("font_size", 15)
+		label.add_theme_color_override("font_color", UiTheme.INK)
 		slot.add_child(label)
 		row.add_child(slot)
 		toolbar_slots.append(slot)
@@ -108,13 +111,35 @@ func refresh_toolbar() -> void:
 		var tool: String = tb.slots[i] if i < tb.slots.size() else ""
 		var available := tb.is_available(i, GameState.owns_tool) if i < tb.slots.size() else false
 		_toolbar_labels[i].text = "%d\n%s" % [i + 1, slot_text(tool)]
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0, 0, 0, 0.45)
-		style.set_corner_radius_all(6)
-		style.set_border_width_all(3 if i == tb.selected else 1)
-		style.border_color = Color(1.0, 0.85, 0.3) if i == tb.selected else Color(1, 1, 1, 0.25)
+		var picked := i == tb.selected
+		var style := UiTheme.paper(UiTheme.YELLOW if picked else Color(UiTheme.PAPER, 0.88), UiTheme.RED if picked else UiTheme.INK, 10, 4)
+		style.set_border_width_all(4 if picked else 2)
+		style.shadow_offset = Vector2(3, 3)
 		toolbar_slots[i].add_theme_stylebox_override("panel", style)
 		toolbar_slots[i].modulate = Color.WHITE if available and tool != "" else Color(1, 1, 1, 0.55)
+
+
+## Le style du catalogue (UiTheme) : textes blancs cernés d'encre, en Fredoka ; l'océan restant
+## en gros, avec la police des titres.
+func _apply_style() -> void:
+	for child in get_children():
+		if child is Control:
+			(child as Control).theme = UiTheme.theme()
+	for label: Label in find_children("*", "Label", true, false):
+		if label.get_parent() is PanelContainer:
+			continue  # les cases de la barre : texte d'encre sur papier
+		label.remove_theme_color_override("font_outline_color")
+		label.remove_theme_constant_override("outline_size")
+		label.theme_type_variation = "Hud"
+	ocean_label.add_theme_font_override("font", UiTheme.title_font())
+	ocean_label.add_theme_font_size_override("font_size", 28)
+	for small: Label in [time_label, stock_label, carried_label, bucket_label, survival_label]:
+		small.add_theme_font_size_override("font_size", 18)
+	ocean_label.add_theme_color_override("font_color", UiTheme.YELLOW)
+	prompt_label.add_theme_font_size_override("font_size", 22)
+	# L'aide « cliquer pour jouer » passe au-dessus de la barre d'outils, plus grande qu'avant.
+	hint_label.offset_top = -140.0
+	hint_label.offset_bottom = -104.0
 
 
 func _build_stamina_bar() -> void:

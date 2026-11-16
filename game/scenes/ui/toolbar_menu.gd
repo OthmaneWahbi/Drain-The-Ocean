@@ -68,10 +68,7 @@ func _build() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 	_panel = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.14, 0.17, 0.95)
-	style.set_corner_radius_all(6)
-	_panel.add_theme_stylebox_override("panel", style)
+	_panel.theme = UiTheme.theme()
 	center.add_child(_panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -80,11 +77,7 @@ func _build() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	margin.add_child(box)
-	var title := Label.new()
-	title.text = tr("TOOLBAR_MENU_TITLE")
-	title.add_theme_font_size_override("font_size", 22)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
+	box.add_child(UiTheme.banner("TOOLBAR_MENU_TITLE", 26))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -98,7 +91,7 @@ func _build() -> void:
 		_buttons.append(b)
 	var hint := Label.new()
 	hint.text = tr("TOOLBAR_MENU_HINT")
-	hint.add_theme_font_size_override("font_size", 13)
+	hint.theme_type_variation = "Fine"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(hint)
 
@@ -108,4 +101,4 @@ func _refresh() -> void:
 	for i in _buttons.size():
 		var entry: String = tb.slots[i] if i < tb.slots.size() else ""
 		_buttons[i].text = "%d\n%s" % [i + 1, HudScript.slot_text(entry)]
-		_buttons[i].modulate = Color(1.0, 0.85, 0.3) if i == _picked else Color.WHITE
+		_buttons[i].theme_type_variation = "Tag" if i == _picked else ""

@@ -293,6 +293,17 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Ciel** (`shaders/sky.gdshader`, `SkyStyle`) : dégradé selon la hauteur du soleil (`LIGHT0_DIRECTION`), disque et halo, étoiles la nuit. `main.gd._update_sun` colore la lumière avec `SkyStyle.sun_color()`.
 - Ceux qui posent des choses au sol (décor du fond, marcheur de la fin, `player.find_free_spot`) demandent `GameState.terrain.height()` ou lancent un rayon vers le bas.
 
+### La cabine, les dialogues, le catalogue et l'interface (PR #24)
+
+- **`scenes/world/models.gd` (`Models`)** : charge un modèle CC0 (`load_model`), remplace ses matériaux par des couleurs cartoon (`RECOLOR`, faces des deux côtés), le pose au sol (`fit_on_ground`). `palm()` ajoute une deuxième couronne tournée et des noix de coco, et range le profil du tronc en méta (`trunk_at` sert aux traits des réveils). `coconut()` et `facet_sphere()` font des boules à facettes ; `phone_booth()` construit la cabine (nœuds `Shake`, `Shake/Phone/Handset`, `Shake/Catalogue`).
+- **`scenes/world/island_props.gd` (`IslandProps`)** : place les palmiers et rochers de `GameConfig` sur `GameState.terrain`, et sème buissons et bois flotté (graine fixe, hors zone constructible, sans collision).
+- **`scenes/world/phone.gd`** : la cabine. `interact()` choisit la conversation (`tutorial`, `offer`, `call` ou `no_catalogue`) et la lance dans la `DialogueBox` ; pour le premier appel, `GameState.answer_phone()` n'est appelé qu'à la fin (la caisse part après la musique d'attente). L'action `open_catalogue` ouvre le catalogue : c'est le seul chemin vers lui.
+- **`core/dialogue_logic.gd` (`DialogueLogic`)** + **`data/dialogues.json`** : une conversation = des répliques (interlocuteur, texte ou variantes, `next` ou `choices`, `action`). `advance()`, `choose(i)`, `errors()` (vérifie le fichier), `text_keys()` (vérifie les traductions).
+- **`scenes/ui/dialogue_box.gd` (`DialogueBox`)** : affiche la réplique lettre par lettre, puis les réponses ; E/Espace/clic avance, 1-4 répond, Échap raccroche ; signal `finished`.
+- **`scenes/ui/ui_theme.gd` (`UiTheme`)** : couleurs, polices (avec la police de Godot en secours pour ♪ ▮ ★), le `Theme` commun (variantes `Title`, `Price`, `Fine`, `Hud`, `Tag`) et des fabriques : `paper()`, `banner()`, `price_tag()`, `stamp()`. `MenuStyle` passe par lui.
+- **`scenes/ui/catalogue.gd`** : grille de vignettes (`ProductPhoto` = un `SubViewport` avec son propre monde 3D, le modèle de `ProductModels` sur un plateau tournant, rendu seulement quand il est visible) et bon de commande.
+- **`GameState.catalogue_delivered`** : mis à vrai par l'effet `CATALOGUE` du catalogue papier ; sauvegardé ; une vieille sauvegarde qui avait le catalogue au sol est migrée.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -366,3 +377,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #23 — Version 0.1.1 : terrain, eau, ciel
 `TerrainLogic`, `TerrainView`, `SkyStyle`, `sky.gdshader`, `ocean.gdshader` cartoon, `GameState.terrain`, `GameConfig.seabed_y`, `test_terrain.gd`.
+
+### PR #24 — Version 0.1.2 : cabine, dialogues, catalogue, interface
+`Models`, `IslandProps`, `DialogueLogic`, `data/dialogues.json`, `DialogueBox`, `UiTheme`, `ProductModels`, `ProductPhoto`, catalogue refait, `GameState.catalogue_delivered`, `CatalogItem.Effect.CATALOGUE`, `test_dialogue.gd`, `test_models.gd`.
