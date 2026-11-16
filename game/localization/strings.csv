@@ -67,3 +67,6 @@ ITEM_MIRROR,Miroir solaire,Solar mirror
 ITEM_MIRROR_DESC,+50 % d'évaporation pour les zones à moins de 6 m.,+50% evaporation for areas within 6 m.
 CAT_LOCKED,Requiert le Manuel du bricoleur,Requires the Handyman's manual
 MIRROR_STATE,Miroir solaire : +%d %% d'évaporation autour,Solar mirror: +%d%% evaporation nearby
+PROMPT_MOVE,[G] Déplacer,[G] Move
+PROMPT_PLACE,[Clic] Poser · [G] Annuler,[Click] Place · [G] Cancel
+PROMPT_PLACE_BLOCKED,Impossible ici · [G] Annuler,Can't place here · [G] Cancel

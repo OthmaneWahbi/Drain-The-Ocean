@@ -111,3 +111,16 @@ extends Resource
 @export var shells_per_morning: int = 5
 @export var beach_radius_min: float = 16.5
 @export var beach_radius_max: float = 19.3
+
+@export_group("Placement")
+## Taille d'une case de la grille de placement, en mètres.
+@export var grid_cell_m: float = 1.0
+## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
+@export var build_radius_m: float = 19.5
+## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
+@export var footprints: Dictionary = {
+	"cuvette": 2.0, "bache": 1.8, "bassin_bois": 3.0,
+	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4,
+}
+## Obstacles fixes : (x, z, rayon) — téléphone, palette, palmiers, jauge, rochers.
+@export var fixed_obstacles: PackedVector3Array = PackedVector3Array()

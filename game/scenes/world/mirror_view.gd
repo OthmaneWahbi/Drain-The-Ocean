@@ -29,3 +29,8 @@ func setup(m: Dictionary) -> void:
 
 func get_prompt(_player: Node) -> String:
 	return tr("MIRROR_STATE") % int(GameState.config.mirror_bonus * 100.0)
+
+
+## Ce que la touche G déplace (voir placement_controller.gd).
+func get_movable() -> Dictionary:
+	return mirror

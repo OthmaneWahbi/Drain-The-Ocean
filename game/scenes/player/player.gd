@@ -164,12 +164,16 @@ func _apply_view() -> void:
 func _process(delta: float) -> void:
 	_bucket_water.visible = not GameState.bucket.is_empty()
 	_second_bucket.visible = GameState.bucket_count > 1
+	if GameState.placing:
+		return  # le mode déplacement (PlacementController) gère la souris et le texte d'aide
 	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		GameState.bucket.cancel_fill()
 		prompt = ""
 		return
 	target = _find_target()
 	prompt = target.get_prompt(self) if target else ""
+	if target and target.has_method(&"get_movable"):
+		prompt = tr("PROMPT_MOVE") if prompt == "" else "%s · %s" % [prompt, tr("PROMPT_MOVE")]
 	_handle_tool(delta)
 	if Input.is_action_just_pressed(&"interact") and target and target.has_method(&"interact"):
 		target.interact(self)

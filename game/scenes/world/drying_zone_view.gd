@@ -136,3 +136,8 @@ class SaltPile extends StaticBody3D:
 
 	func interact(_player: Node) -> void:
 		GameState.harvest(zone)
+
+
+## Ce que la touche G déplace (voir placement_controller.gd).
+func get_movable() -> Dictionary:
+	return zone

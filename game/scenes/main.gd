@@ -43,6 +43,11 @@ func _ready() -> void:
 	GameState.mirror_added.connect(_spawn_view.bind(MirrorView))
 	GameState.pickup_removed.connect(_remove_view)
 	GameState.station_removed.connect(_remove_view)
+	GameState.item_moved.connect(_on_item_moved)
+	# Le mode déplacement des objets (G, M-22).
+	var placement := PlacementController.new()
+	placement.name = "Placement"
+	add_child(placement)
 	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).
 	var gauge := WaterGauge.new()
 	gauge.position = Vector3(3, 0.5, 17)
@@ -131,15 +136,18 @@ func _remove_view(item: Dictionary) -> void:
 
 
 func _on_zone_added(zone: Dictionary) -> void:
-	var view := DryingZoneView.new()
-	_views.add_child(view)
-	view.setup(zone)
+	_spawn_view(zone, DryingZoneView)
 
 
 func _on_decor_added(decor: Dictionary) -> void:
-	var view := DecorView.new()
-	_views.add_child(view)
-	view.setup(decor)
+	_spawn_view(decor, DecorView)
+
+
+## Un objet a changé de place : sa vue le suit.
+func _on_item_moved(item: Dictionary) -> void:
+	var view: Node3D = _id_views.get(item.id)
+	if view and is_instance_valid(view):
+		view.position = item.position
 
 
 func _on_crate_added(crate: Dictionary, animate: bool) -> void:

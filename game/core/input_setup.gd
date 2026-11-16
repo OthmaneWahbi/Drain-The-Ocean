@@ -12,6 +12,7 @@ const KEY_BINDINGS := {
 	&"sprint": KEY_SHIFT,
 	&"interact": KEY_E,
 	&"toggle_view": KEY_V,
+	&"move_object": KEY_G,
 	&"pause": KEY_ESCAPE,
 	&"tool_1": KEY_1,
 	&"tool_2": KEY_2,

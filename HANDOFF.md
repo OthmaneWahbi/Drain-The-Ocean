@@ -35,10 +35,10 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane.
-- **Documents :** PRD v0.15. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. 81 tests.
-- **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel).
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille en PR #7.
+- **Documents :** PRD v0.16. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer les objets posés (G, grille de 1 m, vert/rouge). 88 tests.
+- **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, objets fixes, pas de rotation).
 - **Prochaine étape :** retours d'Othmane, puis la fin de T2 (pompe à bras, tuyaux, moulin-pompe = fin de démo), la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
@@ -115,6 +115,13 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - Le catalogue montre tous les articles. Ceux d'un palier pas encore débloqué sont grisés (« Requiert le Manuel du bricoleur ») et ne peuvent pas être commandés.
 - Le Manuel du bricoleur débloque T2. Premiers articles T2 : le bassin en bois (grande zone de 200 L) et le miroir solaire, qui accélère de 50 % l'évaporation des zones à moins de 6 m (les miroirs s'additionnent).
 
+### Déplacer les objets (grille)
+
+- L'île est découpée en **cases de 1 m**. Chaque objet posé a une **emprise** : un cercle autour de son centre (2 m pour la cuvette, 3 m pour le bassin, 0,7 m pour le miroir…), réglée dans les données.
+- Une place est valide si l'emprise reste sur le sable sec (moins de 19,5 m du centre de l'île) et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère d'eau, listés dans les données).
+- En jeu : viser un objet + **G**. L'objet lui-même sert d'aperçu et suit le regard case par case ; un disque vert ou rouge montre son emprise et la grille s'affiche autour. Clic = poser (GameState vérifie encore et annonce « objet déplacé ») ; G ou Échap = annuler. Pendant ce mode, le seau et E sont coupés.
+- La position fait partie de l'état de chaque objet : elle est sauvegardée, et les miroirs déplacés boostent les zones de leur nouvel emplacement.
+
 ### Le temps qui passe
 
 - Une seule étape fait vivre le monde : l'heure (et le matin), le séchage, les objets à portions, la faim et la soif. L'avance rapide de l'admin (F6) passe par la même étape, découpée en pas de 5 s.
@@ -137,6 +144,29 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — DÉCISION — Déplacer les objets avec une grille
+- **Quoi :** Othmane veut pouvoir changer les objets de place dans cette release, et propose une grille (« we definitely need to be able to change places for things in it. Maybe a grid system would be good ? »).
+- **Pourquoi :** la décision « déplacer plus tard » (PRD §19.2, M-22) devient prioritaire.
+- **Impact :** PRD §10 et §19.2 (v0.16). Les détails (cases de 1 m, emprises, objets fixes, pas de rotation) restent **[PROPOSÉ]**.
+
+### 2026-11-16 — MODIF — Mode déplacement sur grille (G)
+- **Quoi :**
+  - Nouvelles règles pures `core/placement_grid.gd` (aligner sur une case, vérifier l'île et les chevauchements).
+  - GameState : `move_item`, `can_place`, `movable_items`, signal `item_moved`, drapeau `placing` ; les décors ont un id, les miroirs un type.
+  - Données : taille de case, rayon constructible, emprise par type, obstacles fixes.
+  - Nouvelle vue `scenes/world/placement_controller.gd` (aperçu, disque vert/rouge, grille dessinée), touche G, invites « [G] Déplacer », « [Clic] Poser · [G] Annuler », « Impossible ici ».
+  - Les décors deviennent visables (corps physique). 7 nouveaux tests (`test_placement.gd`), 88 au total.
+- **Pourquoi :** demande d'Othmane (entrée ci-dessus).
+- **Impact :** `game/core/`, `game/data/game_config.tres`, `game/scenes/`, `game/localization/strings.csv`, PRD v0.16, `docs/GUIDE_CODE.md`.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Type non déduit dans le contrôleur de placement
+- **Quoi :** au lancement de la scène (capture d'écran), `placement_controller.gd` ne compilait pas : « Cannot infer the type of "hit" ». Les tests automatiques passaient, car ils ne chargent pas la scène principale.
+- **Cause :** le joueur est passé en `Node` non typé, donc le résultat du rayon n'a pas de type connu.
+- **Correction :** type écrit en toutes lettres (`var hit: Dictionary`). Le test de fumée de la CI attrape ce genre d'erreur.
+
+### 2026-11-16 — NOTE — Disque d'emprise et profondeur
+- **Quoi :** dessiné « par-dessus tout », le disque vert recouvrait l'objet déplacé. Il est maintenant dessiné normalement, juste au-dessus du sable ; la grille est en bleu foncé pour rester visible sur le sable clair.
 
 ### 2026-11-16 — MODIF — F6 corrigé, palette par ressource, début de T2
 - **Quoi :**

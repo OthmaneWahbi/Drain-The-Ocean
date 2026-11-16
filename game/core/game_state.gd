@@ -22,6 +22,8 @@ signal station_removed(station: Dictionary)
 signal survival_changed
 signal mirror_added(mirror: Dictionary)
 signal tier_unlocked(tier: int)
+## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
+signal item_moved(item: Dictionary)
 signal game_reset
 
 const CONFIG_PATH := "res://data/game_config.tres"
@@ -69,6 +71,8 @@ var play_time_s: float = 0.0
 var current_slot: int = 1
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
 var ui_open: bool = false
+## Vrai pendant le mode déplacement d'un objet (G) : le joueur ne puise ni n'interagit.
+var placing: bool = false
 
 var _autosave_timer: float = 0.0
 var _next_id: int = 1
@@ -369,7 +373,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 		CatalogItem.Effect.MIRROR:
 			add_mirror(position)
 		CatalogItem.Effect.DECOR:
-			var d := {"kind": item.effect_param, "position": position}
+			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
 			decor_added.emit(d)
 
@@ -436,7 +440,7 @@ func take_pickup(p: Dictionary) -> bool:
 
 
 func add_mirror(position: Vector3) -> Dictionary:
-	var m := {"id": _new_id("mirror"), "position": position}
+	var m := {"id": _new_id("mirror"), "kind": "miroir", "position": position}
 	mirrors.append(m)
 	mirror_added.emit(m)
 	return m
@@ -472,6 +476,53 @@ func use_station(st: Dictionary) -> bool:
 	if logic.is_spent():
 		stations.erase(st)
 		station_removed.emit(st)
+	return true
+
+
+# --- Déplacer les objets (grille) -------------------------------------------------------------
+
+## Le « type » d'un objet déplaçable, qui donne son emprise : "cuvette", "miroir"…
+func item_kind(item: Dictionary) -> String:
+	return String(item.get("kind", "miroir"))
+
+
+func footprint(item: Dictionary) -> float:
+	return float(config.footprints.get(item_kind(item), 1.0))
+
+
+## Tous les objets qu'on peut déplacer.
+func movable_items() -> Array[Dictionary]:
+	var all: Array[Dictionary] = []
+	all.append_array(zones)
+	all.append_array(stations)
+	all.append_array(mirrors)
+	all.append_array(decor)
+	return all
+
+
+## Emprises qui gênent `item` (tous les autres objets + les obstacles fixes).
+func blockers_for(item: Dictionary) -> Array:
+	var out := []
+	for other in movable_items():
+		if other != item:
+			out.append({"position": other.position, "radius": footprint(other)})
+	for o in config.fixed_obstacles:
+		out.append({"position": Vector3(o.x, 0.0, o.y), "radius": o.z})
+	return out
+
+
+func can_place(item: Dictionary, pos: Vector3) -> bool:
+	return PlacementGrid.is_valid(pos, footprint(item), blockers_for(item), config.build_radius_m)
+
+
+## Déplace un objet sur la case visée. Renvoie faux si l'emplacement n'est pas valide.
+func move_item(item: Dictionary, pos: Vector3) -> bool:
+	var snapped := PlacementGrid.snap(pos, config.grid_cell_m)
+	snapped.y = (item.position as Vector3).y
+	if not can_place(item, snapped):
+		return false
+	item.position = snapped
+	item_moved.emit(item)
 	return true
 
 
@@ -535,7 +586,7 @@ func load_dict(data: Dictionary) -> void:
 		crates.append(crate)
 		crate_added.emit(crate, false)
 	for d in data.get("decor", []):
-		var dec := {"kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
+		var dec := {"id": _new_id("decor"), "kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
 		decor.append(dec)
 		decor_added.emit(dec)
 	survival.load_dict(data.get("survival", {}))
