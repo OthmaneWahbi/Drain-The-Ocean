@@ -251,6 +251,15 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - GameState : `milestones` ; `check_milestones()` est appelé après `fill_bucket()` et à chaque `simulate()` (pompes, moulin) ; chaque jalon franchi ajoute sa récompense au stock et émet `milestone_reached`. Au chargement d'une vieille sauvegarde, on recalcule les jalons sans redonner les récompenses.
 - `scenes/ui/milestone_icon.gd` (`MilestoneIcon`) dessine le pictogramme avec `_draw()` (rectangles, lignes, cercles) et le remplit d'eau selon `fill`. `milestone_panel.gd` lit `GameState.milestones` à chaque image pour le petit pictogramme, et met les jalons franchis dans une file pour les montrer l'un après l'autre (un `Tween` qui fait grossir puis s'effacer).
 
+### Menus, emplacements et options (PR #18)
+
+- `core/settings_logic.gd` (`SettingsLogic`, pur) : les valeurs, `sanitize()` (bornes), `to_dict`/`load_dict`, et `bob_offset()` (le balancement de tête, une sinusoïde nulle à l'arrêt ou si l'option est coupée).
+- Autoload `Settings` (`core/settings.gd`) : lit/écrit `user://settings.json`, `set_value(clé, valeur)` applique (langue via `TranslationServer`, volume du bus Master, plein écran) puis enregistre et émet `changed`. `persist = false` empêche d'écrire.
+- Le joueur lit `Settings.data` à chaque image (FOV, sensibilité, balancement) : rien à brancher.
+- `scenes/ui/menu_style.gd` (`MenuStyle`) : panneau, titre, fond, thème communs. `options_panel.gd` (`OptionsPanel`) est un seul panneau réutilisé par les deux menus. Les textes des boutons sont des **clés** de traduction : Godot les retraduit seul quand on change de langue.
+- `main_menu.gd` (`MainMenu`, `PROCESS_MODE_ALWAYS`) met l'arbre en pause, coupe la sauvegarde auto, lit `SaveSystem.summary(slot)` ; Jouer appelle `GameState.play_slot(slot)` (charge, ou partie neuve sauvegardée tout de suite). `pause_menu.gd` (`PauseMenu`) répond à Échap seulement si aucun autre menu n'a la main (`GameState.ui_open`).
+- `GameState.autosave_enabled` est faux tant qu'aucun emplacement n'est choisi : ni la minuterie, ni l'achat, ni la fermeture de la fenêtre n'écrasent un emplacement. `save_dir` permet aux tests d'écrire ailleurs.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -306,3 +315,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #17 — Jalons comparatifs
 `MilestoneLogic`, `GameConfig.milestones`, `GameState.check_milestones` / `milestone_reached`, `MilestoneIcon`, `milestone_panel.gd`, `test_milestones.gd`.
+
+### PR #18 — Menus et options
+`SettingsLogic`, autoload `Settings`, `MenuStyle`, `OptionsPanel`, `MainMenu`, `PauseMenu`, `SaveSystem.summary`, `GameState.play_slot` / `autosave`, `test_settings.gd`.

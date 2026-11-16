@@ -111,6 +111,11 @@ var player_position: Vector3 = FAR_AWAY
 var unlocked_tier: int = 1
 var play_time_s: float = 0.0
 var current_slot: int = 1
+## Faux tant qu'aucun emplacement n'est choisi (menu principal) : rien n'est écrit sur le disque,
+## ni toutes les 2 min, ni en quittant. Sinon on écraserait l'emplacement 1 avec une partie vide.
+var autosave_enabled: bool = false
+## Dossier des sauvegardes (les tests en utilisent un autre).
+var save_dir: String = SaveSystem.DEFAULT_DIR
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
 var ui_open: bool = false
 ## Vrai pendant le mode déplacement d'un objet (G) : le joueur ne puise ni n'interagit.
@@ -187,7 +192,7 @@ func _process(delta: float) -> void:
 	_autosave_timer += delta
 	if _autosave_timer >= config.autosave_interval_s:
 		_autosave_timer = 0.0
-		save_game()
+		autosave()
 
 
 ## Fait avancer le monde de `delta` secondes : heure, séchage, objets à portions, faim et soif.
@@ -515,6 +520,7 @@ func order(item_ids: Array) -> Array[Dictionary]:
 	stock_changed.emit()
 	for crate in made:
 		crate_added.emit(crate, true)
+	autosave()  # sauvegarde après un achat (M-77)
 	return made
 
 
@@ -1150,11 +1156,11 @@ func load_dict(data: Dictionary) -> void:
 
 
 func save_game() -> Error:
-	return SaveSystem.write(current_slot, to_dict())
+	return SaveSystem.write(current_slot, to_dict(), save_dir)
 
 
 func load_game(slot: int) -> bool:
-	var data := SaveSystem.read(slot)
+	var data := SaveSystem.read(slot, save_dir)
 	if data.is_empty():
 		return false
 	current_slot = slot
@@ -1162,15 +1168,37 @@ func load_game(slot: int) -> bool:
 	return true
 
 
-## En attendant le menu principal (M-71) : on reprend l'emplacement 1 s'il existe.
+## Sans menu principal (tests, captures) : on reprend l'emplacement 1 s'il existe.
 func continue_or_new() -> void:
 	if not load_game(current_slot):
 		new_game()
+	autosave_enabled = true
+
+
+## Menu principal (M-71) : reprend l'emplacement `slot`, ou y commence une partie neuve.
+## À partir de là, la partie est sauvegardée dans cet emplacement.
+func play_slot(slot: int) -> void:
+	current_slot = slot
+	if not load_game(slot):
+		new_game()
+	autosave_enabled = true
+	save_game()
+
+
+## Sauvegarde automatique (M-77) : seulement quand une partie a été choisie.
+func autosave() -> void:
+	if autosave_enabled:
+		save_game()
+
+
+## Efface un emplacement (menu principal). Ne touche pas à la partie en cours.
+func delete_slot(slot: int) -> void:
+	SaveSystem.delete(slot, save_dir)
 
 
 func _notification(what: int) -> void:
 	# Sauvegarde en quittant (M-77).
-	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and autosave_enabled:
 		save_game()
 
 

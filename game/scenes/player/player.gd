@@ -9,7 +9,6 @@ extends CharacterBody3D
 @export var reach: float = 3.0
 
 @export var jump_velocity: float = 4.2
-@export var mouse_sensitivity: float = 0.0025
 @export var acceleration: float = 12.0
 
 @onready var head: Node3D = $Head
@@ -31,10 +30,14 @@ var swimming: bool = false
 var _drowning: bool = false
 var _fade: ColorRect
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
+## Balancement de la tête (M-21) : hauteur de repos de la tête et horloge de marche.
+var _head_rest_y: float = 0.0
+var _walk_time: float = 0.0
 
 
 func _ready() -> void:
 	add_to_group(&"player")
+	_head_rest_y = head.position.y
 	_build_bucket()
 	_build_fade()
 	_apply_view()
@@ -82,14 +85,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not GameState.placing and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and _handle_toolbar_input(event):
 		return
-	if event.is_action_pressed(&"pause"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	elif event.is_action_pressed(&"toggle_view"):
+	# Échap ouvre le menu pause (PauseMenu), qui libère la souris.
+	if event.is_action_pressed(&"toggle_view"):
 		third_person = not third_person
 		_apply_view()
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		head.rotation.x = clampf(head.rotation.x - event.relative.y * mouse_sensitivity, deg_to_rad(-85.0), deg_to_rad(85.0))
+		var sens := Settings.data.mouse_sensitivity  # option du joueur (M-21)
+		rotate_y(-event.relative.x * sens)
+		head.rotation.x = clampf(head.rotation.x - event.relative.y * sens, deg_to_rad(-85.0), deg_to_rad(85.0))
 
 
 func _physics_process(delta: float) -> void:
@@ -125,6 +128,7 @@ func _physics_process(delta: float) -> void:
 	velocity.x = lerpf(velocity.x, target_velocity.x, weight)
 	velocity.z = lerpf(velocity.z, target_velocity.z, weight)
 	move_and_slide()
+	_update_head_bob(delta, speed)
 
 	# Endurance (N-05) : elle ne remonte qu'à l'arrêt sur la terre ferme.
 	var activity := StaminaLogic.Activity.WALK_ON_LAND
@@ -165,6 +169,20 @@ func _drown() -> void:
 	tween.tween_interval(0.6)
 	tween.tween_property(_fade, "color:a", 0.0, cfg.drown_fade_s)
 	tween.tween_callback(func(): _drowning = false)
+
+
+## Balancement de la tête en marchant sur la terre ferme (M-21, désactivable dans les options).
+## Le champ de vision des options est appliqué ici aussi.
+func _update_head_bob(delta: float, speed: float) -> void:
+	fp_camera.fov = Settings.data.fov
+	var ground_speed := Vector2(velocity.x, velocity.z).length()
+	var ratio := ground_speed / maxf(speed, 0.01) if is_on_floor() and not swimming else 0.0
+	if ratio > 0.1:
+		_walk_time += delta * (1.0 + ratio * 0.4)
+	else:
+		_walk_time = 0.0
+	var target_y := _head_rest_y + SettingsLogic.bob_offset(_walk_time, ratio, Settings.data.head_bob)
+	head.position.y = lerpf(head.position.y, target_y, clampf(delta * 12.0, 0.0, 1.0))
 
 
 func _apply_view() -> void:

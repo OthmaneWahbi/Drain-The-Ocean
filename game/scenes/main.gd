@@ -91,8 +91,21 @@ func _ready() -> void:
 	gauge.position = Vector3(3, 0.5, 17)
 	gauge.rotation_degrees.y = 180.0
 	add_child(gauge)
+	# Le menu pause (Échap) et le menu principal (3 emplacements, M-71).
+	var pause_menu := PauseMenu.new()
+	pause_menu.name = "PauseMenu"
+	add_child(pause_menu)
+	var main_menu := MainMenu.new()
+	main_menu.name = "MainMenu"
+	add_child(main_menu)
+	pause_menu.main_menu_requested.connect(main_menu.open_menu)
 	# La partie en mémoire a été créée avant la scène : on rejoue son contenu.
-	GameState.continue_or_new()
+	# DTO_SKIP_MENU=1 (captures d'écran, essais) saute le menu et reprend l'emplacement 1.
+	if OS.get_environment("DTO_SKIP_MENU") != "":
+		GameState.continue_or_new()
+	else:
+		GameState.new_game()  # une île neuve, figée derrière le menu
+		main_menu.open_menu()
 
 
 func _process(_delta: float) -> void:
