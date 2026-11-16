@@ -15,6 +15,10 @@ signal crate_added(crate: Dictionary, animate: bool)
 signal crate_removed(crate: Dictionary)
 signal decor_added(decor: Dictionary)
 signal new_morning
+## Le téléphone se met à sonner, s'arrête, ou une offre change (PRD §9, M-48, M-54).
+signal phone_changed
+## On a décroché : `reason` vaut PhoneLogic.Ring.TUTORIAL ou OFFER.
+signal phone_answered(reason: int)
 signal pickup_added(pickup: Dictionary)
 signal pickup_removed(pickup: Dictionary)
 signal station_added(station: Dictionary)
@@ -49,6 +53,7 @@ var rng := RandomNumberGenerator.new()
 var ocean: OceanModel
 var bucket: BucketLogic
 var day: DayCycleLogic
+var phone: PhoneLogic
 ## Ressources posées sur la palette (servent à payer l'agence).
 var stock: Dictionary = {}
 ## Ressources que le joueur porte dans les bras (M-28).
@@ -133,6 +138,7 @@ func _reset_state() -> void:
 	ocean = OceanModel.new(config.total_ocean_volume_l, config.drain_threshold_ratio)
 	bucket = BucketLogic.new(config.starting_bucket_capacity_l, config.bucket_fill_time_s)
 	day = DayCycleLogic.new(config.day_length_s, config.start_hour)
+	phone = PhoneLogic.new()
 	stock = Economy.empty_stock()
 	carried = {}
 	zones = []
@@ -179,6 +185,8 @@ func _process(delta: float) -> void:
 func simulate(delta: float) -> void:
 	if day.step(delta):
 		_morning_refill()
+		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
+			phone_changed.emit()
 		new_morning.emit()
 	var base := day.evaporation_multiplier(config.night_evaporation_factor)
 	for zone in zones:
@@ -405,8 +413,37 @@ func cart_price(item_ids: Array) -> Dictionary:
 	for id in item_ids:
 		var item := catalog.find(StringName(id))
 		if item:
-			prices.append(item.price)
+			prices.append(price_of(item))
 	return Economy.sum(prices)
+
+
+## Le prix d'un article aujourd'hui : réduit si c'est l'offre du jour décrochée au téléphone.
+func price_of(item: CatalogItem) -> Dictionary:
+	if phone.has_offer(String(item.id), day.day_index):
+		return PhoneLogic.discounted(item.price, config.offer_price_factor)
+	return item.price
+
+
+## Les articles qui peuvent faire l'objet d'une offre : achetables et pas cachés.
+func offer_candidates() -> Array:
+	var out := []
+	for item in catalog.items:
+		if can_buy(item) and not item.price.is_empty():
+			out.append(String(item.id))
+	return out
+
+
+## On décroche le téléphone. Le premier appel (tutoriel muet) fait tomber, après la musique
+## d'attente, une caisse avec le catalogue papier. Une offre devient valable pour la journée.
+func answer_phone() -> int:
+	var why := phone.answer(day.day_index)
+	if why == PhoneLogic.Ring.TUTORIAL:
+		var crate := _new_crate([config.tutorial_crate_item], config.hold_music_s)
+		crate["free"] = true
+		crate_added.emit(crate, true)
+	phone_changed.emit()
+	phone_answered.emit(why)
+	return why
 
 
 ## Tout ce qui peut servir à payer : la palette plus ce qu'on a dans les bras.
@@ -419,7 +456,7 @@ func is_unlocked(item: CatalogItem) -> bool:
 
 
 func can_buy(item: CatalogItem) -> bool:
-	return is_unlocked(item) and not (item.unique and owned.has(String(item.id)))
+	return not item.hidden and is_unlocked(item) and not (item.unique and owned.has(String(item.id)))
 
 
 ## Passe commande : paie avec les bras puis la palette, et crée la caisse qui sera larguée.
@@ -459,14 +496,21 @@ func order(item_ids: Array) -> Array[Dictionary]:
 		groups.append(others)
 	var made: Array[Dictionary] = []
 	for g in groups:
-		var crate := {"id": _new_id("crate"), "position": next_drop_position(), "items": g, "delay_s": made.size() * config.crate_stagger_s}
-		crates.append(crate)
-		_deliveries_count += 1
-		made.append(crate)
+		made.append(_new_crate(g, made.size() * config.crate_stagger_s))
+	if not made.is_empty():
+		made[0]["paid"] = price  # l'avion de la première caisse emporte le paiement
 	stock_changed.emit()
 	for crate in made:
 		crate_added.emit(crate, true)
 	return made
+
+
+## Une caisse sur une case libre, qui sera larguée après `delay_s` secondes.
+func _new_crate(items: Array, delay_s: float) -> Dictionary:
+	var crate := {"id": _new_id("crate"), "position": next_drop_position(), "items": items, "delay_s": delay_s}
+	crates.append(crate)
+	_deliveries_count += 1
+	return crate
 
 
 ## Vrai pour un article qui se pose sur l'île (il aura sa propre caisse).
@@ -858,7 +902,9 @@ func find_free_spot(radius: float, near: Vector3, min_center_radius: float = 0.0
 	var cell := config.grid_cell_m
 	var start := PlacementGrid.snap(near, cell)
 	var blockers := _blockers_except({})
-	for ring in 16:
+	# Assez d'anneaux pour couvrir toute l'île, même en partant d'un bord.
+	var rings := int(ceil(config.build_radius_m * 2.0 / cell)) + 1
+	for ring in rings:
 		for dx in range(-ring, ring + 1):
 			for dz in range(-ring, ring + 1):
 				if maxi(absi(dx), absi(dz)) != ring:
@@ -920,6 +966,7 @@ func to_dict() -> Dictionary:
 		"ocean": ocean.to_dict(),
 		"bucket": bucket.to_dict(),
 		"day": day.to_dict(),
+		"phone": phone.to_dict(),
 		"stock": stock.duplicate(),
 		"carried": carried.duplicate(),
 		"zones": zones.map(func(z): return {"kind": z.kind, "position": _v2a(z.position), "rotation_deg": item_rotation(z), "logic": (z.logic as DryingLogic).to_dict()}),
@@ -958,6 +1005,7 @@ func load_dict(data: Dictionary) -> void:
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.water_l = minf(bucket.water_l, bucket.capacity_l)
 	day.load_dict(data.get("day", {}))
+	phone.load_dict(data.get("phone", {}))
 	stock = Economy.empty_stock()
 	Economy.add(stock, Economy.sanitize(data.get("stock", {})))
 	carried = Economy.sanitize(data.get("carried", {}))
@@ -1048,6 +1096,7 @@ func _notification(what: int) -> void:
 
 func _emit_all() -> void:
 	tool_changed.emit()
+	phone_changed.emit()
 	network_changed.emit()
 	item_moved.emit(depot)  # la palette n'est pas recréée : on la remet à sa place
 	survival_changed.emit()

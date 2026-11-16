@@ -147,6 +147,16 @@ price = {"sel": 50}
 effect = 11
 effect_value = 5.0
 
+[sub_resource type="Resource" id="paper_catalogue"]
+script = ExtResource("2")
+id = &"catalogue_papier"
+name_key = "ITEM_PAPER_CATALOGUE"
+desc_key = "ITEM_PAPER_CATALOGUE_DESC"
+effect = 2
+effect_param = "catalogue_papier"
+unique = true
+hidden = true
+
 [sub_resource type="Resource" id="windmill_pump"]
 script = ExtResource("2")
 id = &"moulin_pompe"
@@ -160,4 +170,4 @@ unique = true
 
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("paper_catalogue")])

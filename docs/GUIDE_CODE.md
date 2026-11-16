@@ -229,6 +229,14 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Sous l'eau** (`scenes/ui/underwater_overlay.gd`, `shaders/underwater.gdshader`) : un `ColorRect` plein écran lit l'image (`hint_screen_texture`), la fait onduler, la teinte et assombrit les bords ; en même temps, le brouillard de l'`Environment` passe au bleu épais (et revient à l'ancien en sortant). `is_camera_under(y caméra, niveau)` est statique et testée.
 - **Vie** : `core/ambient_motion.gd` (pur : cercle, tangente, profondeur permise aux poissons, point dans un anneau, retour de l'autre côté, battement d'ailes). `fauna.gd` contient trois petites classes (`Seagull`, `Fish`, `Crab`) faites de boîtes ; `clouds.gd` déplace 16 nuages avec le vent ; `seabed_decor.gd` pose rochers, algues et coraux avec une graine fixe. Aucun n'a de collision ni de règle : `main.gd` les crée et on peut retirer chacun sans rien casser.
 
+### Le téléphone (PR #15)
+
+- `core/phone_logic.gd` (`PhoneLogic`, pur) : `ringing` (`Ring.NONE`, `TUTORIAL`, `OFFER`), `tutorial_done`, l'offre en attente (`_pending_item`) et l'offre valable (`offer_item`, `offer_day`). `answer(jour)` rend la raison de l'appel et active l'offre pour ce jour ; `on_new_morning(rng, chance, candidats)` fait (ou non) sonner ; `discounted(prix, facteur)` arrondit au-dessus.
+- GameState : `phone` ; à chaque matin de `simulate()`, `phone.on_new_morning(…, offer_candidates())`. `answer_phone()` : tutoriel → `_new_crate(["catalogue_papier"], hold_music_s)` marquée `free` ; émet `phone_changed` et `phone_answered(raison)`. `price_of(article)` applique l'offre, `cart_price()` s'en sert, donc la commande paie le bon prix sans autre changement.
+- `CatalogItem.hidden` : l'article n'est pas dans la liste du catalogue et `can_buy()` le refuse (le catalogue papier n'arrive que par le premier appel).
+- `phone.gd` lit `GameState.phone` à chaque image (tremblement, « Dring ! ») ; `interact()` décroche s'il sonne, sinon ouvre le catalogue. Sur `phone_answered(OFFER)`, il ouvre le catalogue ; `catalogue.gd` affiche le prix de l'offre en jaune.
+- Crochet : `order()` met `paid` (le prix) sur la première caisse. `main.gd` relie `plane.hooked` (émis au passage bas au-dessus de la palette) à `plane.carry_bundle(couleurs)`. Le crochet est un `Node3D` dont la rotation globale est remise à zéro à chaque image : la corde reste verticale.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -275,3 +283,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #14 — Monde vivant
 `OceanView` + shader de Gerstner et de profondeur, `UnderwaterOverlay` + shader plein écran, `SeabedDecor`, `Clouds`, `Fauna`, `AmbientMotion`, `test_ambient.gd`.
+
+### PR #15 — Téléphone
+`PhoneLogic`, `GameState.answer_phone` / `price_of` / `offer_candidates` / `_new_crate`, `CatalogItem.hidden`, catalogue papier, sonnerie et musique d'attente (`phone.gd`), crochet et pilote (`delivery_plane.gd`), `test_phone.gd`. Aussi : `find_free_spot` cherche sur toute l'île.

@@ -14,6 +14,7 @@ const PumpView := preload("res://scenes/world/pump_view.gd")
 const PipesView := preload("res://scenes/world/pipes_view.gd")
 const DemoEnd := preload("res://scenes/ui/demo_end.gd")
 const ToolbarMenu := preload("res://scenes/ui/toolbar_menu.gd")
+const DepotScript := preload("res://scenes/world/depot.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -195,11 +196,24 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 	var plane := DeliveryPlane.new()
 	_views.add_child(plane)
 	var drop_at := maxf(GameState.config.delivery_time_s - CHUTE_TIME_S, 0.5)
+	# Le crochet arrache le paiement sur la palette (sauf pour la caisse offerte du premier appel).
+	if not crate.get("free", false):
+		var paid: Dictionary = crate.get("paid", {})
+		plane.hooked.connect(func(): plane.carry_bundle(_bundle_colors(paid)))
 	plane.dropped.connect(func():
 		if is_instance_valid(view):
 			view.visible = true
 			view.drop_from(16.0, CHUTE_TIME_S))
 	plane.fly(depot.global_position, crate.position, drop_at)
+
+
+## Une boîte par ressource payée, aux couleurs de la palette (au moins une).
+func _bundle_colors(paid: Dictionary) -> Array:
+	var out := []
+	for r in Economy.RESOURCES:
+		if int(paid.get(r, 0)) > 0:
+			out.append(DepotScript.COLORS[r])
+	return out if not out.is_empty() else [Greybox.WOOD]
 
 
 func _on_crate_removed(crate: Dictionary) -> void:
