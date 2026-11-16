@@ -82,5 +82,6 @@ pile_offset_cells = {
 "cuvette": 2
 }
 coconut_radius_m = 0.3
+player_radius_m = 0.5
 rotation_step_deg = 90.0
 fixed_obstacles = PackedVector3Array(5, -3, 0.8, -10, -8, 0.6, -13, -3, 0.6, 11, -9, 0.6, 3, 17, 0.6, 14, 6, 1.6, -15, 9, 1.6)

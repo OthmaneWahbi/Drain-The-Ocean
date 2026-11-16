@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.17 (grille : rotation, palette déplaçable, tout ce qui apparaît prend une case libre) |
+| Version du document | 0.18 (tout ce qui apparaît vérifie sa case ; mode déplacement automatique à l'ouverture d'une caisse) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -338,6 +338,8 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
   - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
   - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** Le tas de sel d'une zone occupe sa propre case, à 2 ou 3 cases du centre, dans l'emprise de la zone (il tourne avec elle) ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
+  - **[DÉCIDÉ]** Avant d'apparaître, les coquillages, noix de coco, caisses et objets livrés vérifient ce qui occupe déjà la place (Othmane, 2026-11-16). **[PROPOSÉ]** S'il n'y a vraiment plus de place (plage pleine), rien n'apparaît plutôt que d'apparaître sur quelque chose. Le joueur compte aussi : rien n'apparaît ni ne se pose sur lui, et une caisse encore en vol réserve déjà sa place.
+  - **[DÉCIDÉ]** Quand on ouvre une caisse qui contient un objet à poser (zone de séchage, miroir, condenseur…), le jeu passe **tout seul en mode déplacement** (Othmane, 2026-11-16). **[PROPOSÉ]** S'il y en a plusieurs, ils passent l'un après l'autre ; annuler laisse l'objet sur la case libre où il est apparu.
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).

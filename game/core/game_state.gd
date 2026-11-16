@@ -24,9 +24,14 @@ signal mirror_added(mirror: Dictionary)
 signal tier_unlocked(tier: int)
 ## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
 signal item_moved(item: Dictionary)
+## Un objet vient de sortir d'une caisse : le jeu passe tout de suite en mode déplacement.
+signal placement_requested(item: Dictionary)
 signal game_reset
 
 const CONFIG_PATH := "res://data/game_config.tres"
+const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
+## Renvoyé quand aucune case libre n'a été trouvée.
+const NO_SPOT := Vector3(INF, INF, INF)
 const CATALOG_PATH := "res://data/catalog.tres"
 
 var config: GameConfig
@@ -67,6 +72,9 @@ var stations: Array[Dictionary] = []
 var mirrors: Array[Dictionary] = []
 ## La palette de dépôt : {id: "depot", kind: "palette", position, rotation_deg}. Déplaçable comme le reste.
 var depot: Dictionary = {}
+## Où se tient le joueur (mis à jour par sa vue) : rien n'apparaît ni ne se pose sur lui.
+## Très loin par défaut (tests sans scène).
+var player_position: Vector3 = FAR_AWAY
 ## Palier débloqué : 1 au départ, 2 avec le Manuel du bricoleur (PRD §7).
 var unlocked_tier: int = 1
 var play_time_s: float = 0.0
@@ -343,23 +351,29 @@ func open_crate(crate: Dictionary) -> void:
 	if not crates.has(crate):
 		return
 	crates.erase(crate)
-	var offset := 0
+	var placed: Array[Dictionary] = []
 	for id in crate.items:
 		var item := catalog.find(StringName(id))
 		if item:
-			apply_item(item, crate.position + Vector3(offset * 2.5, 0, 0))
-			offset += 1
+			var obj := apply_item(item, crate.position)
+			if not obj.is_empty():
+				placed.append(obj)
 	crate_removed.emit(crate)
+	# Chaque objet à poser passe en mode déplacement, l'un après l'autre.
+	for obj in placed:
+		placement_requested.emit(obj)
 
 
-func apply_item(item: CatalogItem, position: Vector3) -> void:
+## Applique l'effet d'un article. Renvoie l'objet posé sur l'île (zone, objet à portions,
+## miroir, décor), ou un dictionnaire vide pour une amélioration.
+func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
 	if item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR]:
 		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
 		position = find_free_spot(footprint_of(kind), position)
 	match item.effect:
 		CatalogItem.Effect.DRYING_ZONE:
-			add_zone(item.effect_param, position)
+			return add_zone(item.effect_param, position)
 		CatalogItem.Effect.BUCKET_CAPACITY:
 			bucket_unit_l = maxf(bucket_unit_l, item.effect_value)
 			_refresh_bucket()
@@ -374,16 +388,18 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 		CatalogItem.Effect.RAKE:
 			has_rake = true
 		CatalogItem.Effect.STATION:
-			add_station(item.effect_param, position)
+			return add_station(item.effect_param, position)
 		CatalogItem.Effect.UNLOCK_TIER:
 			unlocked_tier = maxi(unlocked_tier, int(item.effect_value))
 			tier_unlocked.emit(unlocked_tier)
 		CatalogItem.Effect.MIRROR:
-			add_mirror(position)
+			return add_mirror(position)
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
 			decor_added.emit(d)
+			return d
+	return {}
 
 
 ## Contenance totale = un seau × nombre de seaux (la palanche en porte deux).
@@ -397,25 +413,33 @@ func _refresh_bucket() -> void:
 ## Chaque matin : une noix de coco revient sous chaque palmier qui n'en a plus, et la plage
 ## reçoit de nouveaux coquillages (on complète jusqu'à `shells_per_morning`).
 func _morning_refill() -> void:
+	# On regarde ce qui est déjà là avant de faire apparaître quoi que ce soit.
 	for spot in config.coconut_spots:
-		if not _has_pickup_at("coconut", spot):
+		if not _has_pickup_at("coconut", spot) and _spot_is_free(spot, config.coconut_radius_m, false):
 			add_pickup("coconut", spot)
 	var shells := pickups.filter(func(p): return p.kind == "shell").size()
 	for i in maxi(config.shells_per_morning - shells, 0):
-		add_pickup("shell", _random_beach_spot())
+		var spot := _random_beach_spot()
+		if spot.is_finite():
+			add_pickup("shell", spot)
 
 
-## Un coquillage tombe au centre d'une case de la plage, jamais sous un objet posé.
+## Un coquillage tombe au centre d'une case libre de la plage : ni sous un objet, ni sur une
+## caisse, ni sur un autre coquillage, ni sur le joueur. NO_SPOT si la plage est pleine.
 func _random_beach_spot() -> Vector3:
 	var blockers := _blockers_except({})
-	var spot := Vector3.ZERO
-	for attempt in 20:
+	for attempt in 40:
 		var angle := rng.randf() * TAU
 		var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
-		spot = PlacementGrid.snap(Vector3(cos(angle) * radius, 0.52, sin(angle) * radius), config.grid_cell_m)
+		var spot := PlacementGrid.snap(Vector3(cos(angle) * radius, 0.52, sin(angle) * radius), config.grid_cell_m)
 		if PlacementGrid.is_valid(spot, footprint_of("coquillage"), blockers, config.build_radius_m):
 			return spot
-	return spot
+	return NO_SPOT
+
+
+## Vrai si rien n'occupe ce cercle. `with_coconut_spots` : compter aussi les places des noix de coco.
+func _spot_is_free(pos: Vector3, radius: float, with_coconut_spots: bool = true) -> bool:
+	return PlacementGrid.is_valid(pos, radius, _blockers_except({}, with_coconut_spots), INF)
 
 
 func _has_pickup_at(kind: String, position: Vector3) -> bool:
@@ -530,9 +554,9 @@ func blockers_for(item: Dictionary) -> Array:
 	return _blockers_except(item)
 
 
-## Toutes les emprises sauf celle de `item` : objets posés, caisses au sol, obstacles fixes,
-## noix de coco au pied des palmiers.
-func _blockers_except(item: Dictionary) -> Array:
+## Toutes les emprises sauf celle de `item` : objets posés, caisses (au sol ou en vol), obstacles
+## fixes, places des noix de coco, ramassables (coquillages…), et le joueur.
+func _blockers_except(item: Dictionary, with_coconut_spots: bool = true) -> Array:
 	var out := []
 	for other in movable_items():
 		if other != item:
@@ -541,8 +565,13 @@ func _blockers_except(item: Dictionary) -> Array:
 		out.append({"position": c.position, "radius": footprint_of("caisse")})
 	for o in config.fixed_obstacles:
 		out.append({"position": Vector3(o.x, 0.0, o.y), "radius": o.z})
-	for spot in config.coconut_spots:
-		out.append({"position": spot, "radius": config.coconut_radius_m})
+	if with_coconut_spots:
+		for spot in config.coconut_spots:
+			out.append({"position": spot, "radius": config.coconut_radius_m})
+	for pk in pickups:
+		if pk != item and pk.kind != "coconut":  # les noix sont déjà comptées par leur place
+			out.append({"position": pk.position, "radius": footprint_of("coquillage")})
+	out.append({"position": player_position, "radius": config.player_radius_m})
 	return out
 
 

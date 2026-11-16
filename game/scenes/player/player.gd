@@ -81,6 +81,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	GameState.player_position = global_position
 	var cfg := GameState.config
 	var water_y := GameState.water_level_y()
 	swimming = global_position.y < water_y - cfg.swim_depth_m
