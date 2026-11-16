@@ -28,9 +28,9 @@ extends Resource
 ## Cuvette rocheuse de départ (M-36, M-37).
 @export var basin_capacity_l: float = 40.0
 @export var basin_dry_time_s: float = 45.0
-@export var basin_position: Vector3 = Vector3(-5.5, 0.5, 2.5)
+@export var basin_position: Vector3 = Vector3(-5.5, 0.5, 7)
 ## Position de départ de la palette de dépôt (on peut la déplacer ensuite).
-@export var depot_position: Vector3 = Vector3(8.5, 0.5, 4.5)
+@export var depot_position: Vector3 = Vector3(8.5, 0.5, 9)
 ## Bâche de séchage (premier achat).
 @export var tarp_capacity_l: float = 60.0
 @export var tarp_dry_time_s: float = 45.0
@@ -58,7 +58,7 @@ extends Resource
 
 @export_group("Livraison")
 ## Centre de la zone où les caisses sont larguées.
-@export var delivery_center: Vector3 = Vector3(4, 0.5, 9)
+@export var delivery_center: Vector3 = Vector3(4, 0.5, 13.5)
 ## Durée totale entre la commande et l'atterrissage de la caisse (M-51).
 @export var delivery_time_s: float = 5.0
 
@@ -94,7 +94,7 @@ extends Resource
 @export var drain_position: Vector3 = Vector3(0, -3.0, -70)
 @export var ending_reveal_drop_m: float = 2.2
 @export var ending_empty_drop_m: float = 4.0
-@export var respawn_position: Vector3 = Vector3(0, 1, 6)
+@export var respawn_position: Vector3 = Vector3(0, 1, 10.5)
 
 @export_group("Survie légère")
 ## Secondes pour que la faim (puis la soif) passe de pleine à vide (M-26, N-03).
@@ -118,22 +118,24 @@ extends Resource
 @export_group("Plage")
 ## Coquillages déposés sur la plage chaque matin (M-44), dans un anneau autour du centre.
 @export var shells_per_morning: int = 5
-@export var beach_radius_min: float = 16.5
-@export var beach_radius_max: float = 19.3
+@export var beach_radius_min: float = 21.0
+@export var beach_radius_max: float = 23.7
 
 @export_group("Placement")
 ## Taille d'une case de la grille de placement, en mètres.
 @export var grid_cell_m: float = 1.0
 ## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
-@export var build_radius_m: float = 19.5
+@export var build_radius_m: float = 24.0
 ## Hauteur du fond marin (le terrain y descend et y reste ; la bonde de la fin y est posée).
 ## Les palmiers (0.1.2) : (x, z, hauteur en m). Ils sont aussi dans `fixed_obstacles`.
 @export var palms: PackedVector3Array = PackedVector3Array([Vector3(-10, -8, 5.6), Vector3(-13, -3, 5.0), Vector3(11, -9, 6.0)])
+## Palmiers de décor hors de la zone constructible (plages, dunes, îlot) : (x, z, hauteur).
+@export var outer_palms: PackedVector3Array = PackedVector3Array([Vector3(-27, 14, 5.5), Vector3(-25, 17, 4.6), Vector3(26, 15, 5.8), Vector3(29, -6, 5.2), Vector3(-30, -12, 6.2), Vector3(4, -31, 5.4), Vector3(8, -30, 4.8), Vector3(-52, -30, 4.2), Vector3(-50, -28, 3.4)])
 ## Les rochers de la plage (0.1.2) : (x, z, largeur en m). Ils sont aussi dans `fixed_obstacles`.
-@export var rocks: PackedVector3Array = PackedVector3Array([Vector3(14, 6, 2.8), Vector3(-15, 9, 2.6)])
+@export var rocks: PackedVector3Array = PackedVector3Array([Vector3(19, 9, 2.8), Vector3(-20, 12, 2.6)])
 ## Buissons sur les dunes et bois flotté sur les plages (décor sans collision, 0.1.2).
-@export var dune_bushes: int = 46
-@export var driftwood: int = 7
+@export var dune_bushes: int = 85
+@export var driftwood: int = 12
 @export var seabed_y: float = -3.0
 ## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
 @export var footprints: Dictionary = {
@@ -148,7 +150,7 @@ extends Resource
 ## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
 @export var coconut_radius_m: float = 0.3
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
-@export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5, "moulin_pompe": 15.5}
+@export var shore_only_kinds: Dictionary = {"pompe_bras": 20.0, "moulin_pompe": 20.0}
 
 @export_group("Jalons")
 ## Jalons comparatifs (M-70), du plus petit au plus grand. Les trois premiers sont ceux de la démo.

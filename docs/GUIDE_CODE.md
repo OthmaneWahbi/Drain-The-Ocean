@@ -304,6 +304,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **`scenes/ui/catalogue.gd`** : grille de vignettes (`ProductPhoto` = un `SubViewport` avec son propre monde 3D, le modèle de `ProductModels` sur un plateau tournant, rendu seulement quand il est visible) et bon de commande.
 - **`GameState.catalogue_delivered`** : mis à vrai par l'effet `CATALOGUE` du catalogue papier ; sauvegardé ; une vieille sauvegarde qui avait le catalogue au sol est migrée.
 
+### L'île agrandie et le HUD léger (PR #25)
+
+- **`TerrainLogic`** : `coast_at()` retire `cove_depth` autour de +Z (la crique) ; `_islets()` ajoute des dômes de sable au large (`islets`, (x, z, rayon)). Les couleurs : herbe au-dessus de 1,4 m, touffes sèches sur les terrasses selon le hasard de la facette.
+- **`IslandProps`** : place aussi `GameConfig.outer_palms` (sauf s'ils tombent dans l'eau).
+- **`scenes/ui/need_gauge.gd` (`NeedGauge`)** : un `Control` dessiné à la main (`_draw`) : médaillon, liquide découpé dans le cercle avec une vague en sinus, pictogramme (pilon ou goutte). `level` est la cible, `shown` la rejoint ; sous 25 % il bat (échelle) et le bord rougit. Le HUD met à jour `level` à chaque image.
+- **`PauseMenu.island_report(gs)`** : le bilan texte du panneau « Mon île ».
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -380,3 +387,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #24 — Version 0.1.2 : cabine, dialogues, catalogue, interface
 `Models`, `IslandProps`, `DialogueLogic`, `data/dialogues.json`, `DialogueBox`, `UiTheme`, `ProductModels`, `ProductPhoto`, catalogue refait, `GameState.catalogue_delivered`, `CatalogItem.Effect.CATALOGUE`, `test_dialogue.gd`, `test_models.gd`.
+
+### PR #25 — Version 0.1.3 : île agrandie, HUD léger
+`TerrainLogic` (crique, îlots), `GameConfig.outer_palms`, camp avancé vers la plage, `NeedGauge`, panneau « Mon île », `test_hud_light.gd`.

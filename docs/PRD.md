@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.33 (0.1.2 : palmiers, cabine téléphonique, catalogue, dialogues, interface) |
+| Version du document | 0.34 (0.1.3 : île 50 % plus grande, HUD allégé) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -750,6 +750,18 @@ Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphoniqu
 - **[PROPOSÉ]** Le Grand Catalogue de l'Agence : une double page. À gauche, les produits en vitrine (photo 3D qui tourne, nom, slogan drôle, description, prix sur étiquette, tampons « PROMO », « BIENTÔT », « DÉJÀ À VOUS ») ; à droite le bon de commande (ce qu'on a, le panier, le total).
 - **[PROPOSÉ]** Dialogues : Ginette, de l'Agence, au bout du fil. Sous-titres en bas de l'écran, texte qui s'écrit lettre par lettre, réponses au clic ou avec 1 à 4, Échap pour raccrocher. Trois conversations : premier appel, offre du jour (« Montrez-moi ça ! » ouvre le catalogue), appel normal (commander, demander s'il reste de l'eau, raccrocher). Les textes sont dans `data/dialogues.json`.
 - **[PROPOSÉ]** « Driiing ! Driiing ! » au-dessus de la cabine qui tremble ; la sonnerie se tait pendant la conversation.
+
+---
+
+
+
+### 19.8 Version 0.1.3 : une île plus grande, un HUD plus léger
+
+Demande d'Othmane (2026-11-16) : « agrandir l'île d'environ 50 % et soigner le terrain ; faim et soif animées à côté de la barre d'objets ; les données inutiles seulement dans le menu ». **[DÉCIDÉ]**. Détails **[PROPOSÉ]** :
+
+- **[PROPOSÉ]** Rivage moyen à 38 m (25,5 avant), zone constructible de 24 m de rayon (19,5 avant). Une **crique** devant la plage de départ (+Z) rapproche l'eau du camp (rivage à ~30 m de ce côté), pour que la boucle seau → cuvette garde le même rythme ; le camp (cuvette, palette, cabine, largages, réapparition) avance de 4,5 m vers la plage. Un **îlot** avec deux palmiers au large. Dunes plus hautes (3,2 m), sable sur les flancs, herbe sur le haut et en touffes sur les terrasses. Neuf palmiers de décor de plus, plus de buissons et de bois flotté.
+- **[PROPOSÉ]** Pompes : « au bord de l'eau » veut dire à au moins 20 m du centre (15,5 avant).
+- **[PROPOSÉ]** HUD : seulement l'océan restant (et le chrono en option speedrun). Faim et soif en **jauges rondes animées** à gauche de la barre d'outils (liquide qui ondule, battement rouge sous 25 %). L'eau du seau s'affiche dans sa case. Le reste (heure, temps de jeu, palette, bras, seau, faim et soif en %) est dans le panneau « Mon île » du menu pause.
 
 ---
 
