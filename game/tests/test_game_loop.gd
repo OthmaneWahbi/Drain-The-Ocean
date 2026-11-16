@@ -256,3 +256,46 @@ func test_save_keeps_survival_pickups_and_stations() -> void:
 	assert_eq(other.stations[0].logic.amount, 2)
 	assert_almost(other.survival.food, gs.survival.food, 1e-6)
 	other.free()
+
+
+func test_fast_forward_moves_hunger_drying_and_condenser() -> void:
+	var basin: Dictionary = gs.zones[0]
+	basin.logic.add_water(40.0)
+	gs.advance_time(150.0)
+	assert_true(gs.survival.water < 1.0, "la soif baisse :")
+	assert_true(gs.survival.food < 1.0, "la faim baisse :")
+	assert_almost(basin.logic.water_l, 0.0, 1e-6, "la cuvette a séché :")
+
+
+func test_tier_two_is_locked_until_the_manual() -> void:
+	gs.stock = {"sel": 2000, "mineraux": 200, "mineraux_rares": 20, "coquillages": 20}
+	assert_true(gs.order(["bassin_bois"]).is_empty(), "T2 verrouillé :")
+	gs.open_crate(gs.order(["manuel"]))
+	assert_eq(gs.unlocked_tier, 2)
+	gs.open_crate(gs.order(["bassin_bois"]))
+	var basin: Dictionary = gs.zones.filter(func(z): return z.kind == "bassin_bois")[0]
+	assert_almost(basin.logic.capacity_l, 200.0)
+
+
+func test_solar_mirror_boosts_nearby_zones_only() -> void:
+	var basin: Dictionary = gs.zones[0]
+	assert_almost(gs.zone_boost(basin), 1.0)
+	gs.add_mirror(basin.position + Vector3(2, 0, 0))
+	gs.add_mirror(basin.position + Vector3(50, 0, 0))
+	assert_almost(gs.zone_boost(basin), 1.5, 1e-6, "un seul miroir assez proche :")
+	basin.logic.add_water(40.0)
+	gs.day.time_s = 12.0 / 24.0 * gs.day.day_length_s
+	gs.simulate(10.0)
+	assert_almost(basin.logic.water_l, 40.0 - 40.0 / 45.0 * 10.0 * 1.5, 1e-3)
+
+
+func test_save_keeps_tier_and_mirrors() -> void:
+	gs.unlocked_tier = 2
+	gs.add_mirror(Vector3(1, 0.5, 2))
+	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	var other: Node = GameStateScript.new()
+	other.setup(gs.config)
+	other.load_dict(data)
+	assert_eq(other.unlocked_tier, 2)
+	assert_eq(other.mirrors.size(), 1)
+	other.free()

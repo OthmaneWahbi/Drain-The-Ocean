@@ -10,6 +10,8 @@ var _cart_label: Label
 var _message: Label
 var _order_button: Button
 var _item_buttons: Dictionary = {}
+## id -> {row, desc} : pour griser les articles d'un palier pas encore débloqué.
+var _item_rows: Dictionary = {}
 
 
 func _ready() -> void:
@@ -47,6 +49,10 @@ func _build() -> void:
 	add_child(center)
 	_panel = PanelContainer.new()
 	_panel.custom_minimum_size = Vector2(760, 0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.14, 0.17, 1.0)  # opaque : le monde ne transparaît plus
+	style.set_corner_radius_all(6)
+	_panel.add_theme_stylebox_override("panel", style)
 	center.add_child(_panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:
@@ -63,6 +69,16 @@ func _build() -> void:
 	_stock_label = Label.new()
 	box.add_child(_stock_label)
 	box.add_child(HSeparator.new())
+
+	# La liste défile : le catalogue grandit à chaque palier.
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 360)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
 
 	for item in GameState.catalog.items:
 		var row := HBoxContainer.new()
@@ -87,7 +103,8 @@ func _build() -> void:
 		add.pressed.connect(_add_to_cart.bind(String(item.id)))
 		row.add_child(add)
 		_item_buttons[String(item.id)] = add
-		box.add_child(row)
+		_item_rows[String(item.id)] = {"row": row, "desc": desc}
+		list.add_child(row)
 
 	box.add_child(HSeparator.new())
 	_cart_label = Label.new()
@@ -136,6 +153,10 @@ func _refresh() -> void:
 	for id in _item_buttons:
 		var item := GameState.catalog.find(StringName(id))
 		_item_buttons[id].disabled = not GameState.can_buy(item) or (item.unique and _cart.has(id))
+		# Palier pas encore débloqué : on montre l'article en grisé (envie de la suite, PRD §7).
+		var unlocked := GameState.is_unlocked(item)
+		_item_rows[id].row.modulate = Color(1, 1, 1, 1.0 if unlocked else 0.45)
+		_item_rows[id].desc.text = tr(item.desc_key) if unlocked else tr("CAT_LOCKED")
 	if _cart.is_empty():
 		_cart_label.text = tr("CAT_EMPTY_CART")
 		_order_button.disabled = true

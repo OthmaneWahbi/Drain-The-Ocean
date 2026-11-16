@@ -19,6 +19,8 @@ func setup(p_zone: Dictionary) -> void:
 			_build_basin()
 		"bache":
 			_build_tarp()
+		"bassin_bois":
+			_build_wood_basin()
 
 
 func _build_basin() -> void:
@@ -50,6 +52,22 @@ func _build_tarp() -> void:
 	_water_max_y = 0.18
 	add_child(_water)
 	_add_pile(Vector3(1.9, 0, 0))
+
+
+func _build_wood_basin() -> void:
+	# Bassin en bois : un grand bac rectangulaire à planches.
+	var size := Vector2(4.0, 3.0)
+	add_child(Greybox.box(Vector3(size.x, 0.06, size.y), Greybox.WOOD, Vector3(0, 0.03, 0)))
+	for z in [size.y / 2.0, -size.y / 2.0]:
+		add_child(Greybox.box(Vector3(size.x, 0.4, 0.1), Greybox.WOOD, Vector3(0, 0.2, z)))
+	for x in [size.x / 2.0, -size.x / 2.0]:
+		add_child(Greybox.box(Vector3(0.1, 0.4, size.y), Greybox.WOOD, Vector3(x, 0.2, 0)))
+	add_child(Greybox.box_collision(Vector3(size.x, 0.4, size.y), Vector3(0, 0.2, 0)))
+	_water = Greybox.box(Vector3(size.x - 0.2, 0.02, size.y - 0.2), Greybox.WATER)
+	_water_min_y = 0.07
+	_water_max_y = 0.36
+	add_child(_water)
+	_add_pile(Vector3(size.x / 2.0 + 0.8, 0, 0))
 
 
 func _add_pile(offset: Vector3) -> void:

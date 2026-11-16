@@ -59,3 +59,11 @@ ITEM_RATIONS,Rations,Rations
 ITEM_RATIONS_DESC,Une caisse de 5 repas.,A crate of 5 meals.
 HUD_FOOD,Faim,Food
 HUD_WATER,Soif,Water
+ITEM_MANUAL,Manuel du bricoleur,Handyman's manual
+ITEM_MANUAL_DESC,Débloque le palier 2 : l'hydraulique manuelle.,Unlocks tier 2: manual hydraulics.
+ITEM_WOOD_BASIN,Bassin en bois,Wooden basin
+ITEM_WOOD_BASIN_DESC,Une grande zone de séchage de 200 L.,A large 200 L drying area.
+ITEM_MIRROR,Miroir solaire,Solar mirror
+ITEM_MIRROR_DESC,+50 % d'évaporation pour les zones à moins de 6 m.,+50% evaporation for areas within 6 m.
+CAT_LOCKED,Requiert le Manuel du bricoleur,Requires the Handyman's manual
+MIRROR_STATE,Miroir solaire : +%d %% d'évaporation autour,Solar mirror: +%d%% evaporation nearby

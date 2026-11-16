@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -97,6 +97,36 @@ price = {"sel": 8}
 effect = 7
 effect_param = "rations"
 
+[sub_resource type="Resource" id="manual"]
+script = ExtResource("2")
+id = &"manuel"
+name_key = "ITEM_MANUAL"
+desc_key = "ITEM_MANUAL_DESC"
+tier = 1
+price = {"coquillages": 10, "mineraux": 25, "sel": 250}
+effect = 8
+effect_value = 2.0
+unique = true
+
+[sub_resource type="Resource" id="wood_basin"]
+script = ExtResource("2")
+id = &"bassin_bois"
+name_key = "ITEM_WOOD_BASIN"
+desc_key = "ITEM_WOOD_BASIN_DESC"
+tier = 2
+price = {"mineraux": 20, "sel": 300}
+effect = 0
+effect_param = "bassin_bois"
+
+[sub_resource type="Resource" id="mirror"]
+script = ExtResource("2")
+id = &"miroir"
+name_key = "ITEM_MIRROR"
+desc_key = "ITEM_MIRROR_DESC"
+tier = 2
+price = {"mineraux_rares": 5, "sel": 200}
+effect = 9
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror")])

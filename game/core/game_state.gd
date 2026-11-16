@@ -20,6 +20,8 @@ signal pickup_removed(pickup: Dictionary)
 signal station_added(station: Dictionary)
 signal station_removed(station: Dictionary)
 signal survival_changed
+signal mirror_added(mirror: Dictionary)
+signal tier_unlocked(tier: int)
 signal game_reset
 
 const CONFIG_PATH := "res://data/game_config.tres"
@@ -59,6 +61,10 @@ var survival: SurvivalLogic
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
 var stations: Array[Dictionary] = []
+## Miroirs solaires posés : {id, position}.
+var mirrors: Array[Dictionary] = []
+## Palier débloqué : 1 au départ, 2 avec le Manuel du bricoleur (PRD §7).
+var unlocked_tier: int = 1
 var play_time_s: float = 0.0
 var current_slot: int = 1
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
@@ -109,6 +115,8 @@ func _reset_state() -> void:
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
 	pickups = []
 	stations = []
+	mirrors = []
+	unlocked_tier = 1
 	play_time_s = 0.0
 	_autosave_timer = 0.0
 	_next_id = 1
@@ -119,20 +127,47 @@ func _reset_state() -> void:
 func _process(delta: float) -> void:
 	# Chronomètre de partie : ne tourne que quand le jeu n'est pas en pause (PRD §11).
 	play_time_s += delta
-	if day.step(delta):
-		_morning_refill()
-		new_morning.emit()
-	var multiplier := day.evaporation_multiplier(config.night_evaporation_factor)
-	for zone in zones:
-		(zone.logic as DryingLogic).step(delta, multiplier, rng)
-	for st in stations:
-		(st.logic as StationLogic).step(delta)
-	survival.step(delta)
-	stamina.set_max(survival.stamina_cap())
+	simulate(delta)
 	_autosave_timer += delta
 	if _autosave_timer >= config.autosave_interval_s:
 		_autosave_timer = 0.0
 		save_game()
+
+
+## Fait avancer le monde de `delta` secondes : heure, séchage, objets à portions, faim et soif.
+## Tout ce qui « vit avec le temps » passe par ici, pour que l'avance rapide (admin) le touche aussi.
+func simulate(delta: float) -> void:
+	if day.step(delta):
+		_morning_refill()
+		new_morning.emit()
+	var base := day.evaporation_multiplier(config.night_evaporation_factor)
+	for zone in zones:
+		(zone.logic as DryingLogic).step(delta, base * zone_boost(zone), rng)
+	for st in stations:
+		(st.logic as StationLogic).step(delta)
+	survival.step(delta)
+	stamina.set_max(survival.stamina_cap())
+	survival_changed.emit()
+
+
+## Saute `seconds` secondes de temps de jeu, par petits pas (pour garder le jour/nuit juste).
+## Ne compte pas dans le temps de partie : c'est un outil de test.
+func advance_time(seconds: float, step_s: float = 5.0) -> void:
+	var left := seconds
+	while left > 0.0:
+		var d := minf(step_s, left)
+		simulate(d)
+		left -= d
+	ocean_changed.emit()
+
+
+## Bonus d'évaporation des miroirs solaires proches (+50 % chacun, PRD §7).
+func zone_boost(zone: Dictionary) -> float:
+	var n := 0
+	for m in mirrors:
+		if (m.position as Vector3).distance_to(zone.position) <= config.mirror_radius_m:
+			n += 1
+	return 1.0 + config.mirror_bonus * n
 
 
 # --- Le seau --------------------------------------------------------------------------------
@@ -219,6 +254,8 @@ func add_zone(kind: String, position: Vector3) -> Dictionary:
 			logic = DryingLogic.new(config.basin_capacity_l, config.basin_dry_time_s)
 		"bache":
 			logic = DryingLogic.new(config.tarp_capacity_l, config.tarp_dry_time_s)
+		"bassin_bois":
+			logic = DryingLogic.new(config.wood_basin_capacity_l, config.wood_basin_dry_time_s)
 		_:
 			push_error("Type de zone inconnu : %s" % kind)
 			return {}
@@ -247,8 +284,12 @@ func available_resources() -> Dictionary:
 	return Economy.sum([stock, carried])
 
 
+func is_unlocked(item: CatalogItem) -> bool:
+	return item.tier <= unlocked_tier
+
+
 func can_buy(item: CatalogItem) -> bool:
-	return not (item.unique and owned.has(String(item.id)))
+	return is_unlocked(item) and not (item.unique and owned.has(String(item.id)))
 
 
 ## Passe commande : paie avec les bras puis la palette, et crée la caisse qui sera larguée.
@@ -322,6 +363,11 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 			has_rake = true
 		CatalogItem.Effect.STATION:
 			add_station(item.effect_param, position)
+		CatalogItem.Effect.UNLOCK_TIER:
+			unlocked_tier = maxi(unlocked_tier, int(item.effect_value))
+			tier_unlocked.emit(unlocked_tier)
+		CatalogItem.Effect.MIRROR:
+			add_mirror(position)
 		CatalogItem.Effect.DECOR:
 			var d := {"kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -389,6 +435,13 @@ func take_pickup(p: Dictionary) -> bool:
 	return true
 
 
+func add_mirror(position: Vector3) -> Dictionary:
+	var m := {"id": _new_id("mirror"), "position": position}
+	mirrors.append(m)
+	mirror_added.emit(m)
+	return m
+
+
 func add_station(kind: String, position: Vector3) -> Dictionary:
 	var logic: StationLogic
 	match kind:
@@ -445,7 +498,8 @@ func to_dict() -> Dictionary:
 		"survival": survival.to_dict(),
 		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
 		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "logic": (st.logic as StationLogic).to_dict()}),
-		"upgrades": {"bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
+		"mirrors": mirrors.map(func(m): return _v2a(m.position)),
+		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 	}
@@ -461,6 +515,7 @@ func load_dict(data: Dictionary) -> void:
 	carry_capacity = maxi(int(up.get("carry_capacity", carry_capacity)), config.hand_carry_capacity)
 	speed_multiplier = maxf(float(up.get("speed_multiplier", 1.0)), 1.0)
 	has_rake = bool(up.get("has_rake", false))
+	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))
 	bucket.capacity_l = bucket_unit_l * bucket_count
@@ -493,6 +548,8 @@ func load_dict(data: Dictionary) -> void:
 		var station := add_station(String(st.get("kind", "")), _a2v(st.get("position", [])))
 		if not station.is_empty():
 			(station.logic as StationLogic).load_dict(st.get("logic", {}))
+	for m in data.get("mirrors", []):
+		add_mirror(_a2v(m))
 	owned = data.get("owned", {}).duplicate()
 	_deliveries_count = int(data.get("deliveries_count", 0))
 	play_time_s = float(data.get("play_time_s", 0.0))

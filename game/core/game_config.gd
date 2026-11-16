@@ -32,6 +32,12 @@ extends Resource
 ## Bâche de séchage (premier achat).
 @export var tarp_capacity_l: float = 60.0
 @export var tarp_dry_time_s: float = 45.0
+## Bassin en bois (T2) : grande zone de séchage.
+@export var wood_basin_capacity_l: float = 200.0
+@export var wood_basin_dry_time_s: float = 45.0
+## Miroir solaire (T2) : +50 % d'évaporation pour chaque zone à moins de `mirror_radius_m`.
+@export var mirror_bonus: float = 0.5
+@export var mirror_radius_m: float = 6.0
 
 @export_group("Ressources")
 ## Litres à évaporer pour obtenir 1 sel (réglé pour un premier achat vers 1 min 30).

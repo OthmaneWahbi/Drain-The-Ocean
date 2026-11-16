@@ -9,6 +9,7 @@ const DecorView := preload("res://scenes/world/decor_view.gd")
 const DeliveryPlane := preload("res://scenes/world/delivery_plane.gd")
 const PickupView := preload("res://scenes/world/pickup_view.gd")
 const StationView := preload("res://scenes/world/station_view.gd")
+const MirrorView := preload("res://scenes/world/mirror_view.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -39,6 +40,7 @@ func _ready() -> void:
 	GameState.decor_added.connect(_on_decor_added)
 	GameState.pickup_added.connect(_spawn_view.bind(PickupView))
 	GameState.station_added.connect(_spawn_view.bind(StationView))
+	GameState.mirror_added.connect(_spawn_view.bind(MirrorView))
 	GameState.pickup_removed.connect(_remove_view)
 	GameState.station_removed.connect(_remove_view)
 	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).

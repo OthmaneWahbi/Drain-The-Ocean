@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.14 (endurance réduite de moitié : ~10 s de course, ~30 s de nage) |
+| Version du document | 0.15 (début de T2 : manuel du bricoleur, bassin en bois, miroir solaire ; palette par ressource) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -214,6 +214,7 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
 | **T6** | Absurde | Paille géante, machine à nuages, « aspirateur d'océan », tornade en bouteille | Pure démesure comique, on voit enfin le niveau chuter à vue d'œil | ~10⁹ L/s |
 | — | Le drain | Rien à acheter : il était là depuis le début | Fin du jeu | ∞ |
 
+- **[DÉCIDÉ]** (prototype, 2026-11-16) Le **Manuel du bricoleur** (250 sel + 25 minéraux + 10 coquillages, liste M-57) débloque T2. Avant, les articles T2 sont visibles en grisé avec « Requiert le Manuel du bricoleur ». **[PROPOSÉ]** Bassin en bois : 200 L, séché en 45 s. Miroir solaire : +50 % d'évaporation pour chaque zone à moins de 6 m (plusieurs miroirs s'additionnent).
 - **[PROPOSÉ]** Chaque palier se débloque par un **achat clé** au catalogue (ex. « le manuel de la pompe » sous forme de schéma illustré), pas par un arbre de compétences abstrait.
 - **[PROPOSÉ]** Les objets d'un palier inférieur restent utiles un moment, puis deviennent décoratifs. Le joueur peut les revendre ou les garder.
 - **[PROPOSÉ]** Le catalogue montre en silhouette grisée le palier suivant pour donner envie (« Qu'est-ce que c'est que ce truc énorme ? »).
@@ -301,6 +302,7 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 - **[PROPOSÉ]** Le joueur dépose ses ressources sur une **zone de dépôt** (une palette, puis une plateforme). Lors de la commande, l'avion passe en rase-mottes et **arrache le dépôt avec un crochet** sans ralentir (gag récurrent). Plus tard, un tapis roulant alimente automatiquement la zone.
 - **[PROPOSÉ]** Le paiement se valide dès que le dépôt contient assez ; l'excédent reste sur place.
+- **[DÉCIDÉ]** La palette est **grande** et montre **chaque ressource à part** : un tas par ressource, avec sa couleur et son compteur (Othmane, 2026-11-16).
 - **[DÉCIDÉ]** On paie avec **ce qu'on porte plus la palette** (Othmane, 2026-11-16) : avec X sel dans les bras et Y sur la palette, on peut acheter un objet à X + Y. Les bras sont vidés en premier.
 - **[DÉCIDÉ]** Dans le panier, les articles identiques sont regroupés : « Bâche de séchage ×3 » (Othmane, 2026-11-16).
 

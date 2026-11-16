@@ -41,7 +41,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F1:
 			_label.visible = not _label.visible
 		KEY_F6:
-			GameState.day.step(GameState.day.day_length_s / 8.0)
+			# Fait vivre le monde 3 h d'un coup (faim, soif, séchage, matin…), pas seulement l'horloge.
+			GameState.advance_time(GameState.day.day_length_s / 8.0)
 		KEY_F9:
 			GameState.new_game()
 		KEY_F10:
