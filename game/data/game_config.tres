@@ -70,6 +70,8 @@ footprints = {
 "bateau_en_bouteille": 0.4,
 "caisse": 0.6,
 "catalogue_papier": 0.4,
+"flamant": 0.5,
+"toboggan": 1.0,
 "coquillage": 0.25,
 "condenseur": 1.1,
 "cuvette": 3.0,
@@ -110,6 +112,8 @@ inlet_radius = {
 "bassin_bois": 2.5,
 "cuvette": 1.5
 }
+slide_reach_m = 3.0
+slide_period_s = 8.0
 offer_chance_per_day = 0.7
 offer_price_factor = 0.5
 hold_music_s = 6.0

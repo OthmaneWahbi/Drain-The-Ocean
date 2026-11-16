@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.25 (téléphone : premier appel, offres du jour, crochet de l'avion) |
+| Version du document | 0.26 (toboggan à sacs, flamant payé en perle) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -710,6 +710,9 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
   - **Offres spéciales (M-54)** : chaque matin, 70 % de chances que le téléphone sonne pour une offre. Décrocher ouvre le catalogue : un article achetable est **à moitié prix** jusqu'à la fin de la journée (arrondi au-dessus, jamais gratuit). Un appel manqué, c'est une offre manquée (la sonnerie s'arrête avec la nuit).
   - **Crochet (M-50)** : l'avion de la première caisse d'une commande passe en rase-mottes et arrache le paiement de la palette avec un crochet au bout d'une corde ; le paquet (aux couleurs des ressources payées) part avec lui. Le pilote fait coucou par la vitre.
   - Les vieilles sauvegardes considèrent le premier appel comme déjà fait.
+
+- **[PROPOSÉ]** Toboggan à sacs (v0.26 ; N-09, M-28 « stock automatique après un achat ») : T2, 250 sel + 25 minéraux, se pose et se déplace comme les autres objets. E dessus : on y jette tout ce qu'on porte, ça glisse jusqu'à la palette (plus besoin d'y marcher). Toutes les 8 s, il envoie aussi à la palette les tas des zones de séchage dont le bord est à moins de 3 m de lui. Plusieurs toboggans peuvent servir plusieurs zones.
+- **[PROPOSÉ]** Objet payé en perle (v0.26 ; N-07) : le **flamant rose gonflable**, 1 perle, T1, un seul par partie, purement décoratif.
 
 ## 20. Glossaire
 

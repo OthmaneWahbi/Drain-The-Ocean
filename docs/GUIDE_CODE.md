@@ -237,6 +237,14 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `phone.gd` lit `GameState.phone` à chaque image (tremblement, « Dring ! ») ; `interact()` décroche s'il sonne, sinon ouvre le catalogue. Sur `phone_answered(OFFER)`, il ouvre le catalogue ; `catalogue.gd` affiche le prix de l'offre en jaune.
 - Crochet : `order()` met `paid` (le prix) sur la première caisse. `main.gd` relie `plane.hooked` (émis au passage bas au-dessus de la palette) à `plane.carry_bundle(couleurs)`. Le crochet est un `Node3D` dont la rotation globale est remise à zéro à chaque image : la corde reste verticale.
 
+### Toboggan à sacs et objet en perle (PR #16)
+
+- `CatalogItem.Effect.SLIDE` (ajouté en dernier : les fichiers de données stockent les effets par numéro). `apply_item()` → `add_slide(kind, position)` ; `is_placeable()` le compte, donc il arrive dans sa propre caisse et passe en mode déplacement.
+- `zones_for_slide(slide)` : zones dont le bord (centre + emprise) est à moins de `config.slide_reach_m`. Rien n'est mémorisé : déplacer le toboggan ou la zone change tout de suite qui est servi.
+- `_run_slides(delta)` (dans `simulate()`) : un minuteur par toboggan ; à `slide_period_s`, il prend les dépôts des zones servies (`take_deposit()`), les ajoute au stock et émet `slide_sent(toboggan, ressources)`. `slide_unload()` réutilise `unload_to_stock()`.
+- `slide_view.gd` écoute `slide_sent` et fait glisser des sacs (des `Tween`) le long de la goulotte.
+- Le flamant est un article `DECOR` ordinaire au prix `{"perles": 1}` : le paiement en perle n'a demandé aucun code, le troc gère déjà toutes les ressources.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -286,3 +294,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #15 — Téléphone
 `PhoneLogic`, `GameState.answer_phone` / `price_of` / `offer_candidates` / `_new_crate`, `CatalogItem.hidden`, catalogue papier, sonnerie et musique d'attente (`phone.gd`), crochet et pilote (`delivery_plane.gd`), `test_phone.gd`. Aussi : `find_free_spot` cherche sur toute l'île.
+
+### PR #16 — Toboggan à sacs, flamant payé en perle
+`Effect.SLIDE`, `GameState.slides` / `add_slide` / `zones_for_slide` / `slide_unload` / `_run_slides`, `slide_view.gd`, décor `flamant`, `test_content.gd`.

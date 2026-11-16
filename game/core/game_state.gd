@@ -25,6 +25,9 @@ signal station_added(station: Dictionary)
 signal station_removed(station: Dictionary)
 signal survival_changed
 signal mirror_added(mirror: Dictionary)
+## Toboggan à sacs (T2, N-09, M-28) posé, et sacs qu'il envoie à la palette.
+signal slide_added(slide: Dictionary)
+signal slide_sent(slide: Dictionary, items: Dictionary)
 ## Une pompe vient d'être posée.
 signal pump_added(pump: Dictionary)
 ## Le réseau de tuyaux a pu changer (objet déplacé, zone ou pompe ajoutée, tuyaux achetés).
@@ -85,6 +88,8 @@ var pickups: Array[Dictionary] = []
 var stations: Array[Dictionary] = []
 ## Miroirs solaires posés : {id, position}.
 var mirrors: Array[Dictionary] = []
+## Toboggans à sacs : {id, kind, position, rotation_deg, timer}.
+var slides: Array[Dictionary] = []
 ## Pompes posées : {id, kind: "pompe_bras", position, rotation_deg}.
 var pumps: Array[Dictionary] = []
 ## Tuyaux POSÉS par le joueur : case (Vector3i, y = niveau) -> true. Voir PipeNetwork.
@@ -156,6 +161,7 @@ func _reset_state() -> void:
 	pickups = []
 	stations = []
 	mirrors = []
+	slides = []
 	pumps = []
 	pipes = {}
 	pipe_stock = 0
@@ -194,6 +200,7 @@ func simulate(delta: float) -> void:
 	for st in stations:
 		(st.logic as StationLogic).step(delta)
 	_run_auto_pumps(delta)
+	_run_slides(delta)
 	survival.step(delta)
 	stamina.set_max(survival.stamina_cap())
 	survival_changed.emit()
@@ -515,7 +522,7 @@ func _new_crate(items: Array, delay_s: float) -> Dictionary:
 
 ## Vrai pour un article qui se pose sur l'île (il aura sa propre caisse).
 func is_placeable(item: CatalogItem) -> bool:
-	return item != null and item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP]
+	return item != null and item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP, CatalogItem.Effect.SLIDE]
 
 
 ## Ouvre plusieurs caisses d'un coup (outils admin, tests).
@@ -583,6 +590,8 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			tier_unlocked.emit(unlocked_tier)
 		CatalogItem.Effect.MIRROR:
 			return add_mirror(position)
+		CatalogItem.Effect.SLIDE:
+			return add_slide(item.effect_param, position)
 		CatalogItem.Effect.PUMP:
 			return add_pump(item.effect_param, position)
 		CatalogItem.Effect.PIPES:
@@ -788,6 +797,53 @@ func run_pump(pump: Dictionary, delta: float) -> float:
 	return poured
 
 
+# --- Toboggan à sacs (T2, N-09, M-28 : le stock devient automatique) ---------------------
+
+func add_slide(kind: String, position: Vector3) -> Dictionary:
+	var sl := {"id": _new_id("slide"), "kind": kind, "position": position, "timer": 0.0}
+	slides.append(sl)
+	slide_added.emit(sl)
+	return sl
+
+
+## Les zones dont le sel est assez près du toboggan pour y être versé tout seul.
+func zones_for_slide(slide: Dictionary) -> Array:
+	var out := []
+	var sp: Vector3 = slide.position
+	for z in zones:
+		var zp: Vector3 = z.position
+		if Vector2(zp.x - sp.x, zp.z - sp.z).length() <= footprint(z) + config.slide_reach_m:
+			out.append(z)
+	return out
+
+
+## E sur le toboggan : on y jette ce qu'on porte, ça glisse jusqu'à la palette.
+func slide_unload(slide: Dictionary) -> int:
+	var items := carried.duplicate()
+	var n := unload_to_stock()
+	if n > 0:
+		slide_sent.emit(slide, items)
+	return n
+
+
+## Toutes les `slide_period_s`, chaque toboggan envoie à la palette les dépôts des zones proches.
+func _run_slides(delta: float) -> void:
+	for sl in slides:
+		sl.timer = float(sl.get("timer", 0.0)) + delta
+		if sl.timer < config.slide_period_s:
+			continue
+		sl.timer = 0.0
+		var sent := {}
+		for z in zones_for_slide(sl):
+			var logic: DryingLogic = z.logic
+			if logic.has_deposit():
+				Economy.add(sent, logic.take_deposit())
+		if not sent.is_empty():
+			Economy.add(stock, sent)
+			stock_changed.emit()
+			slide_sent.emit(sl, sent)
+
+
 func add_mirror(position: Vector3) -> Dictionary:
 	var m := {"id": _new_id("mirror"), "kind": "miroir", "position": position}
 	mirrors.append(m)
@@ -857,6 +913,7 @@ func movable_items() -> Array[Dictionary]:
 	all.append_array(zones)
 	all.append_array(stations)
 	all.append_array(mirrors)
+	all.append_array(slides)
 	all.append_array(pumps)
 	all.append_array(decor)
 	all.append(depot)
@@ -976,6 +1033,7 @@ func to_dict() -> Dictionary:
 		"survival": survival.to_dict(),
 		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
 		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "rotation_deg": item_rotation(st), "logic": (st.logic as StationLogic).to_dict()}),
+		"slides": slides.map(func(sl): return {"kind": sl.kind, "position": _v2a(sl.position), "rotation_deg": item_rotation(sl)}),
 		"mirrors": mirrors.map(func(m): return {"position": _v2a(m.position), "rotation_deg": item_rotation(m)}),
 		"pumps": pumps.map(func(pu): return {"kind": pu.kind, "position": _v2a(pu.position), "rotation_deg": item_rotation(pu)}),
 		"pipes": pipes.keys().map(func(c: Vector3i): return [c.x, c.y, c.z]),
@@ -1041,6 +1099,8 @@ func load_dict(data: Dictionary) -> void:
 			add_mirror(_a2v(m))  # sauvegarde d'avant la rotation : juste la position
 		else:
 			_load_rotation(add_mirror(_a2v(m.get("position", []))), m)
+	for sl in data.get("slides", []):
+		_load_rotation(add_slide(String(sl.get("kind", "toboggan")), _a2v(sl.get("position", []))), sl)
 	for pu in data.get("pumps", []):
 		_load_rotation(add_pump(String(pu.get("kind", "")), _a2v(pu.get("position", []))), pu)
 	for c in data.get("pipes", []):
