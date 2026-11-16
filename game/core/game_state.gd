@@ -21,6 +21,10 @@ signal station_added(station: Dictionary)
 signal station_removed(station: Dictionary)
 signal survival_changed
 signal mirror_added(mirror: Dictionary)
+## Une pompe vient d'être posée.
+signal pump_added(pump: Dictionary)
+## Le réseau de tuyaux a pu changer (objet déplacé, zone ou pompe ajoutée, tuyaux achetés).
+signal network_changed
 signal tier_unlocked(tier: int)
 ## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
 signal item_moved(item: Dictionary)
@@ -70,6 +74,10 @@ var pickups: Array[Dictionary] = []
 var stations: Array[Dictionary] = []
 ## Miroirs solaires posés : {id, position}.
 var mirrors: Array[Dictionary] = []
+## Pompes posées : {id, kind: "pompe_bras", position, rotation_deg}.
+var pumps: Array[Dictionary] = []
+## Tronçons de tuyau possédés (chacun fait `config.pipe_segment_m` mètres).
+var pipe_segments: int = 0
 ## La palette de dépôt : {id: "depot", kind: "palette", position, rotation_deg}. Déplaçable comme le reste.
 var depot: Dictionary = {}
 ## Où se tient le joueur (mis à jour par sa vue) : rien n'apparaît ni ne se pose sur lui.
@@ -130,6 +138,8 @@ func _reset_state() -> void:
 	pickups = []
 	stations = []
 	mirrors = []
+	pumps = []
+	pipe_segments = 0
 	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
 	unlocked_tier = 1
 	play_time_s = 0.0
@@ -280,6 +290,7 @@ func add_zone(kind: String, position: Vector3) -> Dictionary:
 	var zone := {"id": _new_id("zone"), "kind": kind, "position": position, "logic": logic}
 	zones.append(zone)
 	zone_added.emit(zone)
+	network_changed.emit()
 	return zone
 
 
@@ -368,9 +379,9 @@ func open_crate(crate: Dictionary) -> void:
 ## miroir, décor), ou un dictionnaire vide pour une amélioration.
 func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
-	if item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR]:
+	if item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP]:
 		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
-		position = find_free_spot(footprint_of(kind), position)
+		position = find_free_spot(footprint_of(kind), position, min_center_radius_of(kind))
 	match item.effect:
 		CatalogItem.Effect.DRYING_ZONE:
 			return add_zone(item.effect_param, position)
@@ -394,6 +405,11 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			tier_unlocked.emit(unlocked_tier)
 		CatalogItem.Effect.MIRROR:
 			return add_mirror(position)
+		CatalogItem.Effect.PUMP:
+			return add_pump(item.effect_param, position)
+		CatalogItem.Effect.PIPES:
+			pipe_segments += maxi(int(item.effect_value), 1)
+			network_changed.emit()
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -478,6 +494,56 @@ func take_pickup(p: Dictionary) -> bool:
 	return true
 
 
+# --- Pompes et tuyaux (T2) -------------------------------------------------------------------
+
+func add_pump(kind: String, position: Vector3) -> Dictionary:
+	if not config.pump_rates_lps.has(kind):
+		push_error("Type de pompe inconnu : %s" % kind)
+		return {}
+	var p := {"id": _new_id("pump"), "kind": kind, "position": position, "rotation_deg": 0.0}
+	pumps.append(p)
+	pump_added.emit(p)
+	network_changed.emit()
+	return p
+
+
+## Toutes les liaisons du réseau : {pump, zone, segments, from, to}.
+func pipe_links() -> Array:
+	return PipeNetwork.links(pumps, zones, pipe_segments, config.pipe_segment_m, footprint)
+
+
+## Les zones reliées à une pompe, de la plus proche à la plus lointaine.
+func zones_for_pump(pump: Dictionary) -> Array:
+	return pipe_links().filter(func(l): return l.pump == pump).map(func(l): return l.zone)
+
+
+func pipe_segments_used() -> int:
+	var used := 0
+	for l in pipe_links():
+		used += int(l.segments)
+	return used
+
+
+## Actionner une pompe pendant `delta` secondes : elle aspire dans l'océan et remplit les zones
+## reliées (la plus proche d'abord). Renvoie les litres pompés (0 si rien n'est relié ou tout est plein).
+func run_pump(pump: Dictionary, delta: float) -> float:
+	var targets := zones_for_pump(pump)
+	if targets.is_empty() or delta <= 0.0:
+		return 0.0
+	var room := 0.0
+	for z in targets:
+		room += (z.logic as DryingLogic).free_space_l()
+	var wanted := minf(float(config.pump_rates_lps.get(pump.kind, 0.0)) * delta, room)
+	if wanted <= 0.0:
+		return 0.0
+	var taken := ocean.remove_water(wanted)
+	var poured := PipeNetwork.distribute(taken, targets)
+	if poured < taken:
+		ocean.return_water(taken - poured)
+	ocean_changed.emit()
+	return poured
+
+
 func add_mirror(position: Vector3) -> Dictionary:
 	var m := {"id": _new_id("mirror"), "kind": "miroir", "position": position}
 	mirrors.append(m)
@@ -544,6 +610,7 @@ func movable_items() -> Array[Dictionary]:
 	all.append_array(zones)
 	all.append_array(stations)
 	all.append_array(mirrors)
+	all.append_array(pumps)
 	all.append_array(decor)
 	all.append(depot)
 	return all
@@ -577,7 +644,7 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true) -> Arra
 
 ## La case libre la plus proche de `near` pour une emprise de rayon `radius` (cherche en carrés
 ## de plus en plus grands). Si rien n'est libre, renvoie la case de `near`.
-func find_free_spot(radius: float, near: Vector3) -> Vector3:
+func find_free_spot(radius: float, near: Vector3, min_center_radius: float = 0.0) -> Vector3:
 	var cell := config.grid_cell_m
 	var start := PlacementGrid.snap(near, cell)
 	var blockers := _blockers_except({})
@@ -587,13 +654,18 @@ func find_free_spot(radius: float, near: Vector3) -> Vector3:
 				if maxi(absi(dx), absi(dz)) != ring:
 					continue
 				var p := start + Vector3(dx * cell, 0.0, dz * cell)
-				if PlacementGrid.is_valid(p, radius, blockers, config.build_radius_m):
+				if PlacementGrid.is_valid(p, radius, blockers, config.build_radius_m, min_center_radius):
 					return p
 	return start
 
 
 func can_place(item: Dictionary, pos: Vector3) -> bool:
-	return PlacementGrid.is_valid(pos, footprint(item), blockers_for(item), config.build_radius_m)
+	return PlacementGrid.is_valid(pos, footprint(item), blockers_for(item), config.build_radius_m, min_center_radius_of(item_kind(item)))
+
+
+## Distance minimale au centre de l'île pour ce type (les pompes vont au bord de l'eau).
+func min_center_radius_of(kind: String) -> float:
+	return float(config.shore_only_kinds.get(kind, 0.0))
 
 
 ## Déplace (et tourne) un objet sur la case visée. Renvoie faux si l'emplacement n'est pas valide.
@@ -607,6 +679,7 @@ func move_item(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> boo
 	if not is_nan(rotation_deg):
 		item.rotation_deg = PlacementGrid.wrap_deg(rotation_deg)
 	item_moved.emit(item)
+	network_changed.emit()
 	return true
 
 
@@ -647,6 +720,8 @@ func to_dict() -> Dictionary:
 		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
 		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "rotation_deg": item_rotation(st), "logic": (st.logic as StationLogic).to_dict()}),
 		"mirrors": mirrors.map(func(m): return {"position": _v2a(m.position), "rotation_deg": item_rotation(m)}),
+		"pumps": pumps.map(func(pu): return {"kind": pu.kind, "position": _v2a(pu.position), "rotation_deg": item_rotation(pu)}),
+		"pipe_segments": pipe_segments,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
 		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
@@ -705,6 +780,9 @@ func load_dict(data: Dictionary) -> void:
 			add_mirror(_a2v(m))  # sauvegarde d'avant la rotation : juste la position
 		else:
 			_load_rotation(add_mirror(_a2v(m.get("position", []))), m)
+	for pu in data.get("pumps", []):
+		_load_rotation(add_pump(String(pu.get("kind", "")), _a2v(pu.get("position", []))), pu)
+	pipe_segments = maxi(int(data.get("pipe_segments", 0)), 0)
 	var dep: Dictionary = data.get("depot", {})
 	if dep.has("position"):
 		depot.position = _a2v(dep.position)
@@ -743,6 +821,7 @@ func _notification(what: int) -> void:
 # --- Outils internes -----------------------------------------------------------------------
 
 func _emit_all() -> void:
+	network_changed.emit()
 	item_moved.emit(depot)  # la palette n'est pas recréée : on la remet à sa place
 	survival_changed.emit()
 	ocean_changed.emit()

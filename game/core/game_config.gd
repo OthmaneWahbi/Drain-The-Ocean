@@ -123,12 +123,22 @@ extends Resource
 @export var footprints: Dictionary = {
 	"cuvette": 2.5, "bache": 2.5, "bassin_bois": 3.5,
 	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
-	"caisse": 0.6, "coquillage": 0.25,
+	"caisse": 0.6, "coquillage": 0.25, "pompe_bras": 0.8,
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
 ## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
 @export var coconut_radius_m: float = 0.3
+## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
+@export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5}
+
+@export_group("Pompes et tuyaux")
+## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
+@export var pump_rates_lps: Dictionary = {"pompe_bras": 20.0}
+## Longueur d'un tronçon de tuyau, en mètres.
+@export var pipe_segment_m: float = 4.0
+
+@export_group("Placement (suite)")
 ## Le joueur occupe ce rayon : on ne pose rien et rien n'apparaît sur lui.
 @export var player_radius_m: float = 0.5
 ## Angle d'un appui sur R pendant un déplacement, en degrés.

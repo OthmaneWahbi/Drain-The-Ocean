@@ -70,3 +70,10 @@ MIRROR_STATE,Miroir solaire : +%d %% d'évaporation autour,Solar mirror: +%d%% e
 PROMPT_MOVE,[G] Déplacer,[G] Move
 PROMPT_PLACE,[Clic] Poser · [R] Tourner · [G] Annuler,[Click] Place · [R] Rotate · [G] Cancel
 PROMPT_PLACE_BLOCKED,Impossible ici · [R] Tourner · [G] Annuler,Can't place here · [R] Rotate · [G] Cancel
+ITEM_HAND_PUMP,Pompe à bras,Hand pump
+ITEM_HAND_PUMP_DESC,"Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s vers les bassins reliés par des tuyaux.","Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes."
+ITEM_PIPE,Tuyau (4 m),Pipe (4 m)
+ITEM_PIPE_DESC,"Un tronçon de 4 m. Les pompes se relient toutes seules aux bassins les plus proches.","A 4 m section. Pumps link themselves to the nearest basins."
+PROMPT_PUMP,[Clic maintenu] Pomper · %d zone(s) reliée(s),[Hold click] Pump · %d zone(s) linked
+PUMP_NO_LINK,"Pompe : aucune zone reliée (il faut des tuyaux : %d / %d utilisés)","Pump: no zone linked (needs pipes: %d / %d used)"
+PUMP_FULL,Pompe : les zones reliées sont pleines,Pump: the linked zones are full

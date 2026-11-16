@@ -10,6 +10,8 @@ const DeliveryPlane := preload("res://scenes/world/delivery_plane.gd")
 const PickupView := preload("res://scenes/world/pickup_view.gd")
 const StationView := preload("res://scenes/world/station_view.gd")
 const MirrorView := preload("res://scenes/world/mirror_view.gd")
+const PumpView := preload("res://scenes/world/pump_view.gd")
+const PipesView := preload("res://scenes/world/pipes_view.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -41,9 +43,14 @@ func _ready() -> void:
 	GameState.pickup_added.connect(_spawn_view.bind(PickupView))
 	GameState.station_added.connect(_spawn_view.bind(StationView))
 	GameState.mirror_added.connect(_spawn_view.bind(MirrorView))
+	GameState.pump_added.connect(_spawn_view.bind(PumpView))
 	GameState.pickup_removed.connect(_remove_view)
 	GameState.station_removed.connect(_remove_view)
 	GameState.item_moved.connect(_on_item_moved)
+	# Les tuyaux entre pompes et zones (T2).
+	var pipes := PipesView.new()
+	pipes.name = "Pipes"
+	add_child(pipes)
 	# Le mode déplacement des objets (G, M-22).
 	var placement := PlacementController.new()
 	placement.name = "Placement"

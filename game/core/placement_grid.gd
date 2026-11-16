@@ -14,9 +14,13 @@ static func snap(pos: Vector3, cell_m: float) -> Vector3:
 
 
 ## `others` : liste de {position: Vector3, radius: float}. On ne regarde que X et Z.
-static func is_valid(pos: Vector3, radius: float, others: Array, build_radius: float) -> bool:
+## `min_center_radius` : le centre doit être au moins à cette distance du milieu de l'île
+## (une pompe se pose au bord de l'eau).
+static func is_valid(pos: Vector3, radius: float, others: Array, build_radius: float, min_center_radius: float = 0.0) -> bool:
 	var flat := Vector2(pos.x, pos.z)
 	if flat.length() + radius > build_radius:
+		return false
+	if flat.length() < min_center_radius:
 		return false
 	for o in others:
 		var op: Vector3 = o.position
