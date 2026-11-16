@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.18 (tout ce qui apparaît vérifie sa case ; mode déplacement automatique à l'ouverture d'une caisse) |
+| Version du document | 0.19 (pompe à bras et tuyaux) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -214,6 +214,10 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
 | **T6** | Absurde | Paille géante, machine à nuages, « aspirateur d'océan », tornade en bouteille | Pure démesure comique, on voit enfin le niveau chuter à vue d'œil | ~10⁹ L/s |
 | — | Le drain | Rien à acheter : il était là depuis le début | Fin du jeu | ∞ |
 
+- **[PROPOSÉ]** Pompe à bras et tuyaux (prototype, v0.19) :
+  - La **pompe à bras** (500 sel + 40 minéraux) se pose **au bord de l'eau** (sur la plage, à plus de 15,5 m du centre de l'île). On **maintient le clic** dessus pour pomper **20 L/s** (M-58 : elle reste active, pas automatique).
+  - L'eau va dans les zones de séchage **reliées par des tuyaux**. Un **tuyau** (50 sel) est un tronçon de **4 m**. Les liaisons se font **toutes seules** : chaque pompe se relie à ses zones de la plus proche à la plus lointaine, tant qu'il reste des tronçons (il en faut assez pour aller jusqu'au bord de la zone). Déplacer une zone ou une pompe refait le réseau.
+  - On remplit la zone la plus proche d'abord. Quand toutes les zones reliées sont pleines, la pompe ne prend plus rien à l'océan.
 - **[DÉCIDÉ]** (prototype, 2026-11-16) Le **Manuel du bricoleur** (250 sel + 25 minéraux + 10 coquillages, liste M-57) débloque T2. Avant, les articles T2 sont visibles en grisé avec « Requiert le Manuel du bricoleur ». **[PROPOSÉ]** Bassin en bois : 200 L, séché en 45 s. Miroir solaire : +50 % d'évaporation pour chaque zone à moins de 6 m (plusieurs miroirs s'additionnent).
 - **[PROPOSÉ]** Chaque palier se débloque par un **achat clé** au catalogue (ex. « le manuel de la pompe » sous forme de schéma illustré), pas par un arbre de compétences abstrait.
 - **[PROPOSÉ]** Les objets d'un palier inférieur restent utiles un moment, puis deviennent décoratifs. Le joueur peut les revendre ou les garder.

@@ -183,6 +183,12 @@ func _process(delta: float) -> void:
 ## Logique du seau. Priorité : l'objet visé (zone de séchage), puis la mer, puis vider le seau.
 func _handle_tool(delta: float) -> void:
 	var bucket := GameState.bucket
+	# Clic MAINTENU sur un objet qui le gère (la pompe à bras) : appelé à chaque image.
+	if target and target.has_method(&"hold_use"):
+		bucket.cancel_fill()
+		if Input.is_action_pressed(&"use_tool"):
+			target.hold_use(self, delta)
+		return
 	if target and target.has_method(&"use"):
 		bucket.cancel_fill()
 		if Input.is_action_just_pressed(&"use_tool"):

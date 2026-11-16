@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte.
-- **Documents :** PRD v0.18. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). 113 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux.
+- **Documents :** PRD v0.19. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. 129 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
-- **Prochaine étape :** retours d'Othmane, puis la fin de T2 (pompe à bras, tuyaux, moulin-pompe = fin de démo), la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
+- **Prochaine étape :** le moulin-pompe et la fin de démo, puis la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -127,6 +127,12 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - Ouvrir une caisse qui contient des objets à poser enchaîne le mode déplacement pour chacun, l'un après l'autre.
 - La position et l'orientation sont sauvegardées, et les miroirs déplacés boostent les zones de leur nouvel emplacement.
 
+### Pompes et tuyaux (T2)
+
+- La pompe à bras se pose au bord de l'eau. Clic maintenu : elle aspire 20 L/s dans l'océan, mais seulement ce que les zones reliées peuvent recevoir (jamais un litre perdu).
+- Les tuyaux sont un stock de tronçons de 4 m. Le réseau se calcule tout seul à chaque changement : pompe par pompe, on relie les zones de la plus proche à la plus lointaine tant qu'il reste assez de tronçons pour atteindre leur bord.
+- L'eau remplit la zone la plus proche d'abord. Les tuyaux sont dessinés de la pompe au bord de chaque zone reliée.
+
 ### Le temps qui passe
 
 - Une seule étape fait vivre le monde : l'heure (et le matin), le séchage, les objets à portions, la faim et la soif. L'avance rapide de l'admin (F6) passe par la même étape, découpée en pas de 5 s.
@@ -149,6 +155,16 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Pompe à bras et tuyaux (T2)
+- **Quoi :** `core/pipe_network.gd` (logique pure : liaisons, tronçons nécessaires, bord de zone, répartition), `GameState` (`pumps`, `pipe_segments`, `add_pump`, `pipe_links`, `zones_for_pump`, `run_pump`, signaux `pump_added` et `network_changed`), effets `PUMP` et `PIPES`, placement « au bord de l'eau » (`shore_only_kinds`), vues `pump_view.gd` (levier qui bouge) et `pipes_view.gd`, clic maintenu (`hold_use`) dans `player.gd`, articles « Pompe à bras » et « Tuyau », 16 tests (`test_pumps.gd`).
+- **Pourquoi :** suite de T2 (liste M-57, M-58 pompe active), première des trois releases demandées par Othmane.
+- **Impact :** PRD §7 (v0.19), `game/core/`, `game/data/`, `game/scenes/`, strings.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Pompe posée sur le repère d'eau
+- **Quoi :** dans `test_pumps.gd`, déplacer la pompe en (2,5 ; 16,5) échouait.
+- **Cause :** l'emprise touchait le repère de niveau d'eau (obstacle fixe en (3 ; 17)). Le placement avait raison, pas le test.
+- **Correction :** le test vise une case libre.
 
 ### 2026-11-16 — DÉCISION — Vérifier la place avant d'apparaître, mode G automatique
 - **Quoi :** Othmane : « Make sure que les coquillages et les autres spawnable objects prennent en compte qu'est-ce qui est où avant de spawner. When opening something from a crate that is to place like drying places, we switch to G mode automatically. […] run tests for all bug possibilities […] And make and push the next 3 releases but test in between ».

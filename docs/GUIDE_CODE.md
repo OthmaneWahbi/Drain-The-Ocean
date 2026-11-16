@@ -188,6 +188,17 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Mode G automatique** : `apply_item()` renvoie l'objet posé (ou `{}`), `open_crate()` émet `placement_requested(obj)` pour chacun. `PlacementController.request()` les met dans `_queue` ; à chaque image, s'il n'est pas déjà en train de déplacer et que la souris est capturée, `_start_next_in_queue()` prend le suivant (en sautant ceux qui ont disparu) et retrouve sa vue avec `view_for` (fourni par `main.gd`).
 - **Tas de sel** : `GameState.pile_offset(zone)` = nombre entier de cases (`config.pile_offset_cells`) le long de l'axe X local. `drying_zone_view._add_pile()` s'en sert ; le tas est un enfant de la vue, donc il tourne avec elle. Les emprises des zones l'englobent, donc il ne peut pas toucher un autre objet.
 
+### Pompes et tuyaux (T2)
+
+- `core/pipe_network.gd` (classe `PipeNetwork`, logique pure, fonctions statiques) :
+  - `links(pumps, zones, segments, segment_m, zone_radius)` : pour chaque pompe, trie les zones par distance et les relie tant qu'il reste des tronçons ; renvoie `{pump, zone, segments, from, to}` ;
+  - `segments_needed()` : `ceil((distance − rayon de la zone) / 4 m)`, au moins 1 ;
+  - `distribute(liters, zones)` : verse dans l'ordre avec `DryingLogic.add_water()` et renvoie ce qui a été accepté.
+- GameState : `pumps` (dictionnaires comme les autres objets, donc déplaçables et sauvegardés), `pipe_segments` (un entier). `pipe_links()` recalcule le réseau à chaque appel (quelques objets, c'est instantané) : pas d'état à garder synchronisé. `run_pump(pump, delta)` calcule la place libre, prend `min(débit × delta, place)` à l'océan, répartit, et rend le surplus éventuel.
+- `network_changed` est émis quand une zone ou une pompe est ajoutée, un objet déplacé, des tuyaux achetés, ou une partie chargée ; `pipes_view.gd` s'y abonne et redessine des cylindres couchés (`look_at` + quart de tour).
+- Placement « au bord de l'eau » : `PlacementGrid.is_valid(..., min_center_radius)` ; `GameState.min_center_radius_of(kind)` lit `config.shore_only_kinds`. `find_free_spot()` le prend aussi, donc une pompe sortie d'une caisse apparaît déjà sur la plage.
+- Clic maintenu : `player.gd` regarde d'abord si la cible a `hold_use(player, delta)` et l'appelle à chaque image tant que le clic est enfoncé. `pump_view.gd` s'en sert et fait bouger son levier quand de l'eau passe.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -216,3 +227,6 @@ Logiques pures (séchage, seau, économie, jour/nuit, endurance), GameState sour
 
 ### PR #8 — Vérifier la place, mode G automatique
 Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()`, `placement_requested` + file d'attente dans `PlacementController`, `test_spawning.gd` (20 cas), lanceur et CI qui échouent sur une erreur de script.
+
+### PR #9 — Pompe à bras et tuyaux
+`PipeNetwork`, `GameState.pumps` / `pipe_segments` / `run_pump` / `network_changed`, effets `PUMP` et `PIPES`, `shore_only_kinds`, `pump_view.gd`, `pipes_view.gd`, `hold_use` dans le joueur, `test_pumps.gd`.
