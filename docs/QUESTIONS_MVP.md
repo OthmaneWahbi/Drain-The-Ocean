@@ -1,6 +1,6 @@
 # Questionnaire MVP / Démo
 
-> **Statut : répondu par Othmane le 2026-11-16.** Les décisions sont reportées dans le [PRD §19.2](PRD.md#192-décisions-du-questionnaire-mvp) ; les nouvelles questions sont en [§19.3](PRD.md#193-nouvelles-questions-n-01-à-n-10).
+> **Statut : répondu par Othmane le 2026-11-16.** Les décisions sont reportées dans le [PRD §19.2](PRD.md#192-décisions-du-questionnaire-mvp) ; les questions de suite (tranchées) sont en [§19.3](PRD.md#193-décisions-des-questions-de-suite-n-01-à-n-10).
 
 > Toutes les questions à trancher avant de commencer à construire le MVP.
 > Chaque réponse sera reportée dans [`PRD.md`](PRD.md) (qui reste la source unique de vérité) et consignée dans [`HANDOFF.md`](../HANDOFF.md).

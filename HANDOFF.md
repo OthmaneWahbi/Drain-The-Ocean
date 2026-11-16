@@ -35,15 +35,27 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** conception terminée pour le MVP, à quelques questions près. Aucun code pour l'instant.
-- **Documents :** PRD v0.7 en revue (PR #1). Questionnaire MVP répondu (décisions en PRD §19.2).
-- **Prochaine étape :** Othmane répond aux 10 nouvelles questions N-01 à N-10 (PRD §19.3) ; en parallèle, jalon M0 (fondations du projet Godot) peut démarrer.
-- **Décisions clés :** 3D low-poly style *How to Fish* ; troc direct ; caméra 1re personne + bascule 3e ; survie légère (endurance, faim, soif) ; nage avec noyade ; fin secrète possible en nageant des milliers de km ; fin principale = drain, avion publicitaire, temps, générique, menu ; démo T0-T2 de 30-45 min.
-- **Questions ouvertes :** N-01 à N-10 (PRD §19.3) et les questions de long terme du PRD §18.
+- **Phase :** le MVP est entièrement spécifié. Aucun code pour l'instant.
+- **Documents :** PRD v0.8 en revue (PR #1). Décisions du MVP en PRD §19.2 et §19.3.
+- **Prochaine étape :** jalon M0 (fondations du projet Godot : structure, tests, CI), dès le feu vert d'Othmane.
+- **Décisions clés :** 3D low-poly style *How to Fish* ; troc direct ; caméra 1re personne + bascule 3e ; survie légère (endurance qui ne remonte pas dans l'eau, faim, soif, sans mort) ; noyade = retour sur la plage ; bassin immense (milliers de km), fin secrète à la nage ; fin principale = drain, avion publicitaire, temps, générique, menu ; démo T0-T2 de 30-45 min.
+- **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque le MVP.
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — PRD v0.8 : questions de suite intégrées
+- **Quoi :** §4.1 (nourriture, eau douce, endurance, faim/soif), §6.1 (perle), §8.1 (bassin immense, volume 10¹⁸-10¹⁹ L, traversée finale mise en scène), §8.2 (jauge à aiguille), §9 (offres spéciales), §10 (noyade, fin secrète), §16.3 (terrain détaillé seulement autour de l'île), §19.1 (contenu du MVP, ajouts au catalogue, tourbillon retiré), §19.3 (décisions N-01 à N-10).
+- **Pourquoi :** réponses d'Othmane aux questions de suite.
+- **Impact :** `docs/PRD.md`, `docs/QUESTIONS_MVP.md`.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Questions de suite N-01 à N-10
+- **Quoi :** N-01 pas de tourbillon lointain dans le MVP ; N-02 noix de coco + rations, eau douce par bâche de condensation ; N-03 pas de mort de faim/soif, l'endurance max baisse ; N-04 noyade = retour sur la plage sans perte ; N-05 endurance ~20 s course / ~60 s nage, ne remonte **jamais dans l'eau** ; N-06 bassin réellement immense (milliers de km), volume ~10¹⁸-10¹⁹ L ; N-07 perle ~2 % des coquillages, pour un objet spécial ; N-08 offre spéciale ~1 fois par jour ; N-09 brouette (T1) puis toboggan à sacs (T2) ; N-10 jauge à aiguille.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §4, §6, §8, §9, §10, §16, §19.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Formulaire des questions de suite (N-01 à N-10)
 - **Quoi :** les questions N-01 à N-10 sont proposées dans un second formulaire web (copie : `docs/questions-suite.html`). L'envoi du premier formulaire a été vérifié : les réponses reçues correspondent au texte collé par Othmane.

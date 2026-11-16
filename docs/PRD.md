@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.7 (réponses au questionnaire MVP intégrées) |
+| Version du document | 0.8 (questions de suite N-01 à N-10 tranchées : le MVP est entièrement spécifié) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -85,7 +85,10 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 
 - **[DÉCIDÉ]** Petite île, le joueur y est seul avec le téléphone rouge et le seau.
 - **[PROPOSÉ]** Taille de départ : ~40 m de diamètre, quelques palmiers, rochers, une petite crique. Assez petite pour que la place manque vite (voir [8.5](#85-lîle-qui-grandit)).
-- **[DÉCIDÉ]** Survie **légère** (M-26, 2026-11-16) : **endurance** (style *Zelda: Breath of the Wild*, consommée en courant et en nageant), **faim et soif légères**. Le jeu reste détendu. Détails (sources de nourriture et d'eau douce, conséquences) : *[QUESTION N-02, N-03]*.
+- **[DÉCIDÉ]** Survie **légère** (M-26, 2026-11-16) : **endurance** (style *Zelda: Breath of the Wild*, consommée en courant et en nageant), **faim et soif légères**. Le jeu reste détendu.
+  - **[DÉCIDÉ]** **Nourriture** : noix de coco sur les palmiers et rations au catalogue. **Eau douce** : bâche de condensation (achat T1) (N-02).
+  - **[DÉCIDÉ]** Faim ou soif à zéro : **pas de mort**, l'endurance maximale baisse jusqu'à ce qu'on mange ou boive (N-03).
+  - **[DÉCIDÉ]** **Endurance** : ~20 s de course ou ~60 s de nage. Elle remonte à l'arrêt **sur la terre ferme** ; **dans l'eau, elle ne remonte jamais**, même immobile. Améliorable avec la nourriture et des objets du catalogue (N-05).
 - **[DÉCIDÉ]** Cycle jour/nuit : **20 min réelles par jour**, évaporation ×0,3 la nuit (M-40). La nuit est belle et calme, pas punitive.
 
 ### 4.2 Le téléphone
@@ -156,7 +159,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 | **Coquillages** | Variable | Un peu au puisage ; surtout ramassés sur le fond marin découvert | Monnaie « de l'exploration », récompense les sorties hors de l'île |
 
 - **[PROPOSÉ]** Les ressources sont **physiques** : on voit des tas de sel, des sacs, des caisses sur l'île. Le stock devient un élément du décor (et un problème de place, voir [17](#17-problèmes-identifiés-et-propositions)).
-- **[DÉCIDÉ]** Une 5ᵉ ressource ultra-rare, la **perle**, existe et est présente dès le MVP (M-45). Sa source et son usage dans le MVP : *[QUESTION N-07]*.
+- **[DÉCIDÉ]** Une 5ᵉ ressource ultra-rare, la **perle**, existe et est présente dès le MVP (M-45). **[DÉCIDÉ]** Elle se trouve rarement dans les coquillages ramassés (~2 %) et sert à acheter un objet spécial ou cosmétique du catalogue (N-07).
 
 ### 6.2 Le troc (pas de monnaie)
 
@@ -213,11 +216,13 @@ Un vrai océan contient ~1,3 milliard de km³. Même un « petit » océan de je
 
 **[PROPOSÉ]** L'océan du jeu est un **bassin fini** :
 
-- Rayon visible ~8 km (l'horizon à hauteur d'homme est à ~5 km : le joueur ne voit jamais le bord au début).
-- Profondeur moyenne ~100 m, profondeur maximale ~300 m au centre.
-- Volume ≈ 2 × 10¹³ L *(provisoire)*.
+- **[DÉCIDÉ]** Le bassin est **réellement immense** : rayon de **plusieurs milliers de km** (N-06, 2026-11-16), pour que la fin secrète à la nage soit possible et que « l'océan est trop grand » soit vrai au pied de la lettre. L'horizon à hauteur d'homme est à ~5 km : le joueur ne voit jamais le bord.
+- **[PROPOSÉ]** Rayon ~3 000 km, profondeur moyenne ~100 m près de l'île, plus profond au large.
+- **[PROPOSÉ]** Volume ≈ **10¹⁸ à 10¹⁹ L** *(provisoire, à fixer par le simulateur)*. Remplace les ~2 × 10¹³ L de la v0.6 (M-63).
+- **[PROPOSÉ]** Seule la zone autour de l'île (quelques km) a un fond modélisé ; le drain reste au centre de cette zone détaillée. Le reste est un plan d'eau vide.
+- **[PROPOSÉ]** La traversée finale « à pied à travers l'océan asséché » ne peut pas durer des milliers de km en temps réel : elle sera mise en scène (marche, puis fondu ou accélération) avant le passage de l'avion publicitaire.
 
-Ordre de grandeur : avec un débit final de ~10⁹ L/s, la dernière phase dure ~1 h. Avec un seau à 1 L/s, il faudrait 600 000 ans. **L'écart entre les deux est toute la progression du jeu.**
+Ordre de grandeur (à recalculer avec le nouveau volume) : pour une dernière phase d'environ 1 h, le débit final devra atteindre ~10¹⁴ à 10¹⁵ L/s. Avec un seau à 1 L/s, il faudrait des dizaines de milliards d'années. **L'écart entre les deux est toute la progression du jeu.**
 
 ### 8.2 Rendre le progrès visible malgré l'échelle
 
@@ -228,7 +233,7 @@ Ordre de grandeur : avec un débit final de ~10⁹ L/s, la dernière phase dure 
 3. **Pourcentage restant** avec beaucoup de décimales au début (99,99999 %), ce qui est drôle en soi.
 4. **Le niveau réel** de l'eau, honnête, qui commence à bouger visiblement au palier T3/T4.
 5. **Le fond marin conçu pour révéler beaucoup tôt** : un plateau peu profond autour de l'île (voir 8.4) fait que les premiers centimètres dévoilent beaucoup de sable.
-6. **[DÉCIDÉ]** Dès la démo, un **repère de niveau d'eau** doit montrer que le niveau bouge, même d'un tout petit peu (M-62). **[PROPOSÉ]** Une **jauge à aiguille** plantée près de la plage (comme un comparateur d'atelier) : les chiffres restent honnêtes, mais l'aiguille amplifie des dixièmes de millimètre pour que le mouvement se voie. *[QUESTION N-10]*
+6. **[DÉCIDÉ]** Dès la démo, un **repère de niveau d'eau** doit montrer que le niveau bouge, même d'un tout petit peu (M-62). Une **jauge à aiguille** plantée près de la plage (comme un comparateur d'atelier) : les chiffres restent honnêtes, mais l'aiguille amplifie des dixièmes de millimètre pour que le mouvement se voie. **[DÉCIDÉ]** (N-10)
 
 ### 8.3 Le niveau de l'eau
 
@@ -288,6 +293,7 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 - **[DÉCIDÉ]** Livraison par avion, rapide et comique, sans attendre le joueur.
 - **[DÉCIDÉ]** Délai : **5 secondes** (M-51).
+- **[DÉCIDÉ]** **Offres spéciales** : environ une fois par jour de jeu, le téléphone sonne ; on décroche pour voir un article à prix réduit pendant une journée (M-54, N-08).
 - **[PROPOSÉ]** La caisse est larguée en parachute **à peu près** au bon endroit. Au début elle tombe parfois à l'eau près du rivage et flotte jusqu'à la plage (gag sans pénalité).
 - **[PROPOSÉ]** Les avions grossissent avec les paliers : petit hydravion → avion cargo → escadrille → avion absurde qui largue une machine géante entière.
 - **[PROPOSÉ]** Les achats ne peuvent jamais être perdus : un objet qui tombe mal finit toujours par revenir sur la plage.
@@ -310,8 +316,8 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** En plus, une **vue de dessus** (mode « construction ») pour placer les machines sur l'île, activée quand on pose un objet.
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
-- **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). Conséquence de la noyade : *[QUESTION N-04]*.
-- **[DÉCIDÉ]** Pas de mur invisible ni de « réveil sur l'île » pour limiter l'exploration (M-25) : le joueur peut aller **vraiment loin**, mais il n'y trouve rien. S'il est assez malin pour parcourir **des milliers de kilomètres** sans se noyer ni épuiser son endurance, il **termine le jeu** tout simplement (fin secrète). La distance nécessaire doit être immense, et cette liberté ne doit pas coûter de performances. Conséquences sur la taille du monde et la technique : *[QUESTION N-06]* et [16.3](#163-performances).
+- **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).
+- **[DÉCIDÉ]** Pas de mur invisible ni de « réveil sur l'île » pour limiter l'exploration (M-25) : le joueur peut aller **vraiment loin**, mais il n'y trouve rien. S'il est assez malin pour parcourir **des milliers de kilomètres** sans se noyer ni épuiser son endurance, il **termine le jeu** tout simplement (fin secrète). La distance nécessaire doit être immense, et cette liberté ne doit pas coûter de performances. **[DÉCIDÉ]** Pour que ce soit cohérent, le bassin à vider est **réellement immense** (rayon de plusieurs milliers de km) ; seule la zone autour de l'île est détaillée, le reste est un plan d'eau vide (N-06). Voir [8.1](#81-le-problème-déchelle) et [16.3](#163-performances).
 - **[PROPOSÉ]** Le personnage ne parle pas, ne pense pas en bulles. Ses émotions passent par l'animation.
 
 ---
@@ -443,7 +449,7 @@ Une vraie simulation de fluide d'un océan est **impossible** en temps réel et 
 
 **[PROPOSÉ]** Points d'attention :
 
-- **Fond marin** : grand terrain (~16 km de côté) → maillage découpé en morceaux avec niveaux de détail (LOD), ou plugin de terrain (ex. Terrain3D). Brouillard pour cacher l'horizon.
+- **Fond marin** : terrain détaillé seulement autour de l'île (quelques km) → maillage découpé en morceaux avec niveaux de détail (LOD), ou plugin de terrain (ex. Terrain3D). Brouillard pour cacher l'horizon.
 - **Nombre de machines** : des centaines au palier T4 → **MultiMeshInstance3D** pour les objets répétés, animations simples, production calculée en lot.
 - **Ressources physiques** : afficher les tas de sel par paliers (petit tas, gros tas, montagne) plutôt qu'un objet par unité.
 - **Grands nombres** : `float` de Godot (64 bits) suffit jusqu'à ~10³⁰⁸ ; pas besoin d'une bibliothèque de grands nombres si le volume reste ≤ 10¹⁸ L. À surveiller : précision des petits ajouts sur un gros total (on stocke le volume **retiré**, pas le volume restant, pour éviter les erreurs d'arrondi).
@@ -536,7 +542,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 **Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain · Q-26 → « plop » à sec, succès décidés en fin de projet · via le questionnaire MVP : Q-03 (pas de progression hors ligne sur PC), Q-04 (perle : oui), Q-05 (survie légère), Q-06 (jour/nuit avec effet), Q-11 (catalogue mixte), Q-12 (maquettes : oui), Q-19 (PC d'Othmane comme référence), Q-21 (« Drain the Ocean ») (toutes le 2026-11-16).
 
-**Nouvelles questions issues des réponses au questionnaire : N-01 à N-10, voir [19.3](#193-nouvelles-questions-n-01-à-n-10).**
+**Questions de suite N-01 à N-10 : tranchées, voir [19.3](#193-décisions-des-questions-de-suite-n-01-à-n-10).**
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
@@ -563,19 +569,19 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 **Dans le MVP :**
 
-- **Monde :** l'île de départ (~40 m) avec téléphone, seau, cuvette rocheuse, palmiers, palette de dépôt ; océan shader ; fond marin seulement autour de l'île ; cycle jour/nuit ; nuages ; mouettes, poissons, un crabe ; le petit tourbillon lointain (*voir N-01*) ; un repère de niveau d'eau.
-- **Personnage :** caméra 1re personne + bascule 3e personne ; marcher, courir, sauter, nager ; endurance, faim et soif légères ; noyade ; barre d'outils de 5 cases.
-- **Seau :** puiser (maintenir le clic dans l'eau), verser, petit ralentissement, eau qui se renverse un peu.
+- **Monde :** l'île de départ (~40 m) avec téléphone, seau, cuvette rocheuse, palmiers, palette de dépôt ; océan shader ; fond marin seulement autour de l'île ; cycle jour/nuit ; nuages ; mouettes, poissons, un crabe ; une jauge à aiguille pour le niveau d'eau ; noix de coco sur les palmiers.
+- **Personnage :** caméra 1re personne + bascule 3e personne ; marcher, courir, sauter, nager ; endurance (ne remonte pas dans l'eau), faim et soif légères ; noyade avec retour sur la plage ; barre d'outils de 5 cases.
+- **Seau :** puiser (maintenir le clic dans l'eau), verser, aucun ralentissement, quelques gouttes purement visuelles.
 - **Séchage :** zones avec surface et capacité, évaporation selon le soleil, récolte manuelle puis au râteau.
 - **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin), perle ; transport à la main au début, stock automatique après un achat.
-- **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 10-20 s, ouverture des caisses, pose avec aperçu fantôme.
-- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique.
+- **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 5 s, offres spéciales environ une fois par jour, ouverture des caisses, pose avec aperçu fantôme.
+- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
 - **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
 - **Fin de démo :** teaser des machines T3, puis écran de fin de démo. La vraie fin (drain, avion publicitaire, temps, générique) est construite mais accessible seulement par une touche de debug.
 - **Système :** menu principal, 3 emplacements, sauvegarde automatique, chronomètre, options de base, FR + EN.
-- **Clins d'œil :** le tourbillon lointain, les traits sur le palmier, le pilote qui fait coucou.
+- **Clins d'œil :** les traits sur le palmier, le pilote qui fait coucou. Le tourbillon lointain est **hors MVP** (N-01).
 
-**Hors MVP :** clicker, énergie, paliers T3-T6, fond marin complet, île qui grandit, pluie, manette, vue de dessus, succès, fin secrète à la nage (l'architecture la prévoit).
+**Hors MVP :** tourbillon lointain, clicker, énergie, paliers T3-T6, fond marin complet, île qui grandit, pluie, manette, vue de dessus, succès, fin secrète à la nage (l'architecture la prévoit).
 
 **Critère de réussite :** 30 à 45 minutes de jeu qu'un testeur extérieur trouve amusantes, sans explication.
 
@@ -601,7 +607,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont
 
 **Catalogue.** M-57 liste validée telle quelle · M-58 pompe à bras active · M-59 rythme : premier achat < 3 min, T1 ~15 min, T2 ~20 min, moulin-pompe ~40 min.
 
-**Monde.** M-60 île ~40 m · M-61 contenu de départ validé · M-62 niveau honnête, *mais il doit bouger un tout petit peu dans la démo, avec un repère de niveau d'eau* · M-63 ~2 × 10¹³ L (*à revoir avec N-06*) · M-64 fond modélisé autour de l'île seulement · M-65 nuages, pas de pluie · M-66 mouettes, poissons, un crabe · M-67 **pas de tourbillon lointain** (*contradiction avec M-84, voir N-01*).
+**Monde.** M-60 île ~40 m · M-61 contenu de départ validé · M-62 niveau honnête, *mais il doit bouger un tout petit peu dans la démo, avec un repère de niveau d'eau* · M-63 ~2 × 10¹³ L (*remplacé par N-06 : 10¹⁸-10¹⁹ L*) · M-64 fond modélisé autour de l'île seulement · M-65 nuages, pas de pluie · M-66 mouettes, poissons, un crabe · M-67 **pas de tourbillon lointain** (*confirmé par N-01*).
 
 **Interface.** M-68 HUD *petit, simple et comique* · M-69 tutoriel muet par icônes · M-70 3 premiers jalons · M-71 menu avec 3 emplacements · M-72 options complètes · M-73 chronomètre caché, option speedrun · M-74 pas de pause dans le catalogue.
 
@@ -609,24 +615,24 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont
 
 **Sauvegarde.** M-77 auto toutes les 2 min, après achat, en quittant · M-78 **sauvegarde manuelle en plus, qui remplace la dernière sauvegarde auto** · M-79 pas de progression hors ligne.
 
-**Hors MVP.** M-80 clicker · M-81 énergie · M-82 pluie · M-83 fond complet, T3-T6, île qui grandit · M-84 clins d'œil du MVP : tourbillon lointain, traits sur le palmier, pilote qui fait coucou · M-85 nom : « Drain the Ocean ».
+**Hors MVP.** M-80 clicker · M-81 énergie · M-82 pluie · M-83 fond complet, T3-T6, île qui grandit · M-84 clins d'œil du MVP : traits sur le palmier, pilote qui fait coucou (*tourbillon retiré par N-01*) · M-85 nom : « Drain the Ocean ».
 
-### 19.3 Nouvelles questions (N-01 à N-10)
+### 19.3 Décisions des questions de suite (N-01 à N-10)
 
-Questions ouvertes par les réponses au questionnaire. Formulaire : voir HANDOFF.
+Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane.
 
-| ID | Question | Recommandation | Bloque le MVP ? |
-|---|---|---|---|
-| N-01 | M-67 dit « pas de tourbillon lointain », M-84 le garde dans les clins d'œil du MVP. Lequel ? | Le garder (il ne coûte presque rien) | Non |
-| N-02 | D'où viennent la nourriture et l'eau douce ? | Noix de coco sur les palmiers + rations au catalogue ; eau douce par une bâche de condensation (achat T1) | Oui |
-| N-03 | Que se passe-t-il quand la faim ou la soif est à zéro ? | Pas de mort : l'endurance maximale baisse jusqu'à ce qu'on mange/boive | Oui |
-| N-04 | Que se passe-t-il quand on se noie ? | Écran noir, on revient sur la plage de l'île, sans perte de ressources | Oui |
-| N-05 | L'endurance : combien, comment elle remonte, peut-on l'améliorer ? | ~20 s de course ou ~60 s de nage ; remonte à l'arrêt ou au sol ; améliorable par la nourriture et des objets du catalogue | Oui |
-| N-06 | Fin secrète à la nage : comment accorder « des milliers de km » avec un océan fini à vider ? | Le bassin est réellement immense (rayon de plusieurs milliers de km) ; seule la zone autour de l'île est détaillée ; volume ~10¹⁸-10¹⁹ L | Non pour le MVP, oui pour l'architecture |
-| N-07 | La perle dans le MVP : d'où vient-elle et à quoi sert-elle ? | Rare dans les coquillages ramassés (~2 %) ; sert à un objet spécial ou cosmétique du catalogue | Oui |
-| N-08 | Les offres spéciales au téléphone : quoi et à quelle fréquence ? | Environ une fois par jour de jeu : un article à prix réduit pendant une journée ; on décroche pour voir l'offre | Oui |
-| N-09 | Quel achat automatise le transport des ressources dans le MVP (M-28) ? | Ajouter une **brouette** en T1 (porte beaucoup à la fois) puis un **toboggan à sacs** jusqu'à la palette en T2 ; le vrai tapis roulant reste en T3 | Oui |
-| N-10 | Le repère de niveau d'eau : une jauge à aiguille qui amplifie les dixièmes de millimètre ? | Oui | Non |
+| ID | Décision |
+|---|---|
+| N-01 | Le tourbillon lointain n'est **pas** dans le MVP |
+| N-02 | Nourriture : noix de coco + rations au catalogue ; eau douce : bâche de condensation (T1) |
+| N-03 | Faim/soif à zéro : pas de mort, l'endurance maximale baisse |
+| N-04 | Noyade : écran noir, retour sur la plage, sans perte |
+| N-05 | Endurance ~20 s de course / ~60 s de nage ; remonte à l'arrêt sur terre, **jamais dans l'eau** ; améliorable |
+| N-06 | Bassin réellement immense (milliers de km de rayon), seule la zone de l'île détaillée, volume ~10¹⁸-10¹⁹ L |
+| N-07 | Perle : ~2 % des coquillages ramassés, sert à un objet spécial ou cosmétique |
+| N-08 | Offres spéciales : le téléphone sonne ~1 fois par jour de jeu, un article à prix réduit pendant une journée |
+| N-09 | Brouette (T1), toboggan à sacs jusqu'à la palette (T2), tapis roulant en T3 |
+| N-10 | Repère de niveau : jauge à aiguille qui amplifie les dixièmes de millimètre |
 
 ### 19.4 Feuille de route
 
