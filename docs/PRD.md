@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.5 (sauvegarde finie rouverte avant le drain ; vidage manuel possible mais fastidieux) |
+| Version du document | 0.6 (périmètre du MVP détaillé ; questionnaire MVP ; « plop » à sec) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -320,7 +320,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** Mécanique : sous un certain seuil (ex. les dernières flaques, quelques milliers de litres *(provisoire)*), l'eau est trop peu profonde et trop éparpillée pour les machines. Les pompes aspirent de l'air (gag sonore), les évaporateurs n'ont plus rien à traiter, et ils s'arrêtent d'eux-mêmes. Il ne reste que des flaques au fond, et le seau.
   - **[PROPOSÉ]** Le seau de départ (cosmétiquement usé, voir [12](#12-clins-dœil-lore-uniquement-visuel)) redevient l'outil du moment : boucle de fin qui fait écho au tout début du jeu.
   - **[PROPOSÉ]** Si le joueur vide tout à la main, le drain est à sec. Il l'ouvre quand même (ou marche simplement vers le bord) et la fin se déroule normalement (traversée à pied, avion publicitaire, temps, générique). Le temps affiché sera bien sûr plus long.
-  - **[QUESTION Q-26]** Finir au seau mérite-t-il une petite récompense ou un détail différent dans la fin (succès secret, le drain fait juste un petit « plop » à sec, le pilote applaudit) ? Recommandation : **succès secret + « plop » à sec**, sans changer le reste de la fin.
+  - **[DÉCIDÉ]** Si le drain est ouvert à sec, il fait juste un petit **« plop »** (Q-26, 2026-11-16). Les **succès** (secrets ou non) seront décidés **en fin de projet**.
 - **[PROPOSÉ]** Déroulé :
   1. À ≤ 5 %, l'eau restante est assez basse et claire pour révéler, au centre, un **énorme drain** (style bonde de baignoire) avec sa **chaîne**.
   2. Le joueur marche jusqu'au centre sur le fond découvert (trajet long et solennel, musique qui monte).
@@ -528,7 +528,9 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 
 Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée dans HANDOFF.md + mise à jour de ce document.
 
-**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain (toutes le 2026-11-16).
+> **Les questions détaillées pour construire le MVP (M-01 à M-85) sont dans [`QUESTIONS_MVP.md`](QUESTIONS_MVP.md).** Plusieurs reprennent des questions ci-dessous (Q-03, Q-04, Q-05, Q-06, Q-08 à Q-12, Q-19, Q-21, Q-22) : y répondre là-bas les tranche aussi ici.
+
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain · Q-26 → « plop » à sec, succès décidés en fin de projet (toutes le 2026-11-16).
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
@@ -544,7 +546,6 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
 | **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
-| **Q-26** | Finir l'océan au seau (sans le drain) change-t-il quelque chose dans la fin ? | Rien / Succès secret / Détail de mise en scène | **Succès secret + « plop » à sec** |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |
@@ -556,7 +557,31 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 ## 19. Périmètre MVP et feuille de route
 
-**[PROPOSÉ]**
+### 19.1 Le MVP / la démo
+
+**[PROPOSÉ]** En attente des réponses au [questionnaire MVP](QUESTIONS_MVP.md). En attendant, le prototype suit les recommandations du questionnaire.
+
+**But :** vérifier que la boucle *puiser → sécher → commander → s'équiper* est amusante, puis s'en servir comme démo publique.
+
+**Dans le MVP :**
+
+- **Monde :** l'île de départ (~40 m) avec téléphone, seau, cuvette rocheuse, palmiers, palette de dépôt ; océan shader ; fond marin seulement autour de l'île ; cycle jour/nuit ; nuages ; mouettes, poissons, un crabe ; le petit tourbillon lointain.
+- **Personnage :** caméra 1re personne + bascule 3e personne ; marcher, courir, sauter, nager ; gag du réveil sur l'île ; barre d'outils de 5 cases.
+- **Seau :** puiser (maintenir le clic dans l'eau), verser, petit ralentissement, eau qui se renverse un peu.
+- **Séchage :** zones avec surface et capacité, évaporation selon le soleil, récolte manuelle puis au râteau.
+- **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin) ; stock global + tas visibles.
+- **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 10-20 s, ouverture des caisses, pose avec aperçu fantôme.
+- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique.
+- **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
+- **Fin de démo :** teaser des machines T3, puis écran de fin de démo. La vraie fin (drain, avion publicitaire, temps, générique) est construite mais accessible seulement par une touche de debug.
+- **Système :** menu principal, 3 emplacements, sauvegarde automatique, chronomètre, options de base, FR + EN.
+- **Clins d'œil :** le tourbillon lointain, les traits sur le palmier, le pilote qui fait coucou.
+
+**Hors MVP :** clicker, énergie, paliers T3-T6, fond marin complet, île qui grandit, pluie, perle, manette, vue de dessus, succès.
+
+**Critère de réussite :** 30 à 45 minutes de jeu qu'un testeur extérieur trouve amusantes, sans explication.
+
+### 19.2 Feuille de route
 
 | Jalon | Contenu | Critère de réussite |
 |---|---|---|

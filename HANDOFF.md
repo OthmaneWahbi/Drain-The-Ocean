@@ -36,14 +36,32 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.5 en revue (PR #1).
-- **Prochaine étape :** Othmane répond aux questions ouvertes du PRD (section 18), puis jalon M0 (fondations du projet Godot).
+- **Documents :** PRD v0.6 en revue (PR #1) ; questionnaire MVP (`docs/QUESTIONS_MVP.md`) en attente de réponses.
+- **Prochaine étape :** Othmane répond au questionnaire MVP (M-01 à M-85), puis jalon M0 (fondations du projet Godot).
 - **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport, puis temps de partie, générique et retour au menu ; texte sobre autorisé dans les textures ; sauvegarde finie rouverte juste avant le drain ; vidage sans drain possible, mais les derniers litres seulement au seau.
-- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont la nouvelle Q-26 (finir au seau change-t-il quelque chose dans la fin).
+- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), plus les 85 questions du questionnaire MVP.
 
 ---
 
 ## Journal
+
+### 2026-11-16 — QUESTION — Questionnaire MVP (M-01 à M-85)
+- **Quoi :** création de `docs/QUESTIONS_MVP.md` : 85 questions regroupées par thème (périmètre, technique, contrôles, personnage, seau, séchage, ressources, téléphone, contenu du catalogue, monde, interface, audio, sauvegarde, hors MVP), chacune avec une recommandation. Tant qu'une question n'est pas tranchée, le prototype suit la recommandation.
+- **Pourquoi :** Othmane veut tout décortiquer avant de construire le MVP/la démo.
+- **Impact :** `docs/QUESTIONS_MVP.md`, PRD §18 et §19.
+- **Par :** Claude
+
+### 2026-11-16 — MODIF — PRD v0.6 : périmètre du MVP
+- **Quoi :** §19.1 décrit le contenu du MVP/de la démo (T0-T2, île de départ, fin accessible en debug seulement, critère de réussite), et ce qui en est exclu ; Q-26 tranchée.
+- **Pourquoi :** préparer la construction du MVP.
+- **Impact :** PRD §11, §18, §19.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — « Plop » à sec ; succès décidés en fin de projet (Q-26)
+- **Quoi :** si le joueur ouvre le drain après avoir tout vidé au seau, le drain fait juste un petit « plop ». Les succès (secrets ou non) seront décidés en fin de projet.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §11.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — PRD v0.5 : reprise des sauvegardes finies et vidage manuel
 - **Quoi :** §11 complétée (drain facultatif, derniers litres au seau ou par le drain, point de reprise avant le drain) ; ajout du problème P-18 et de la question Q-26 ; Q-25 retirée.
