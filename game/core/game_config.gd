@@ -134,6 +134,16 @@ extends Resource
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5, "moulin_pompe": 15.5}
 
+@export_group("Jalons")
+## Jalons comparatifs (M-70), du plus petit au plus grand. Les trois premiers sont ceux de la démo.
+## `icon` : le pictogramme dessiné par l'interface (baignoire, piscine gonflable, piscine…).
+@export var milestones: Array = [
+	{"id": "baignoire", "icon": "baignoire", "liters": 150.0, "reward": {"sel": 10}},
+	{"id": "piscine_gonflable", "icon": "piscine_gonflable", "liters": 2000.0, "reward": {"perles": 1}},
+	{"id": "piscine", "icon": "piscine", "liters": 30000.0, "reward": {"mineraux_rares": 5}},
+	{"id": "piscine_olympique", "icon": "piscine_olympique", "liters": 2500000.0, "reward": {"perles": 3}},
+]
+
 @export_group("Toboggan à sacs")
 ## Une zone dont le bord est à moins de cette distance du toboggan y verse son sel toute seule.
 @export var slide_reach_m: float = 3.0
