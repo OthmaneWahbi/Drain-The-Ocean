@@ -45,6 +45,12 @@
 
 ## Journal
 
+### 2026-11-16 — MODIF — Questionnaire MVP en formulaire interactif
+- **Quoi :** les 85 questions de `docs/QUESTIONS_MVP.md` sont aussi disponibles en formulaire web (recommandations pré-cochées, commentaires, enregistrement automatique, export texte). Copie de la page dans `docs/questionnaire-mvp.html`.
+- **Pourquoi :** Othmane ne pouvait pas répondre facilement au format Markdown.
+- **Impact :** `docs/questionnaire-mvp.html`.
+- **Par :** Claude
+
 ### 2026-11-16 — QUESTION — Questionnaire MVP (M-01 à M-85)
 - **Quoi :** création de `docs/QUESTIONS_MVP.md` : 85 questions regroupées par thème (périmètre, technique, contrôles, personnage, seau, séchage, ressources, téléphone, contenu du catalogue, monde, interface, audio, sauvegarde, hors MVP), chacune avec une recommandation. Tant qu'une question n'est pas tranchée, le prototype suit la recommandation.
 - **Pourquoi :** Othmane veut tout décortiquer avant de construire le MVP/la démo.
