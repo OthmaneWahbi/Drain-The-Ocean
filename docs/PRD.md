@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.9 (jalon M0 : Godot 4.7.2, lanceur de tests maison) |
+| Version du document | 0.10 (jalon M2 : règle de séchage proposée, catalogue de départ) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -177,6 +177,13 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
   - La vitesse d'évaporation dépend de la **surface** et de l'**ensoleillement** (jour/nuit, et plus tard miroirs, chauffage). C'est le premier goulot d'étranglement du jeu : vider plus vite demande plus de surface, donc plus de place, donc plus d'île.
   - Une fois l'eau évaporée, il reste un dépôt à **récolter** (manuellement au début, automatiquement ensuite).
   - Rendement *(provisoire)* : 1 L d'eau de mer ≈ 35 g de sel en vrai. En jeu : **1 seau (10 L) = 1 unité de sel**, avec une probabilité de minéraux. Les outils de raffinage augmentent la part de minéraux et minéraux rares.
+- **[PROPOSÉ]** Lecture de M-37 retenue pour le prototype M2 (à valider par Othmane) :
+  - Une zone **pleine** sèche entièrement en **45 s** de jour. L'évaporation est donc un débit fixe par zone, `capacité ÷ 45 s` (la cuvette de 40 L évapore environ 0,9 L/s), qu'elle soit pleine ou presque vide. Plus de surface = plus de débit, conformément à la règle ci-dessus.
+  - La nuit, ce débit est multiplié par 0,3 (M-40).
+  - Chaque tranche de **10 L évaporés** donne 1 sel, plus un tirage de minéral (10 %) et de minéral rare (0,5 %).
+  - Puiser donne 3 % de chance de coquillage par seau, et chaque coquillage 2 % de chance de perle.
+  - Conséquence : le premier achat (bâche, 15 sel) arrive vers 3 minutes, ce qui respecte M-01.
+  - L'autre lecture (« chaque seau versé sèche en 45 s, indépendamment ») rendrait la surface inutile ; elle a été écartée pour cette raison.
 
 ### 6.4 Équilibrage
 
@@ -638,9 +645,9 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane.
 
 | Jalon | Contenu | Critère de réussite |
 |---|---|---|
-| **M0 — Fondations** | Projet Godot, structure du dépôt, CI, tests, sauvegarde, scène greybox jouable | Les tests passent en CI ; on se promène sur l'île greybox en 1re/3e personne. **En cours (2026-11-16)** |
+| **M0 — Fondations** | Projet Godot, structure du dépôt, CI, tests, sauvegarde, scène greybox jouable | Les tests passent en CI ; on se promène sur l'île greybox en 1re/3e personne. **Fait (PR #2, 2026-11-16)** |
 | **M1 — Prototype de l'eau** | Île grise, plan d'eau shader, terrain de fond, variable volume → hauteur, perf mesurée | 60 i/s avec le terrain complet ; on peut faire baisser l'eau avec une touche de debug |
-| **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet |
+| **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet. **Prototype livré en PR (2026-11-16)** : seau, cuvette, bâche, grand seau, bateau en bouteille, palette de dépôt, téléphone et catalogue, avion et caisse en parachute, cycle jour/nuit. |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
 | **M4 — Contenu** | T3 à T6, fond marin complet, toutes les zones | On peut finir le jeu (avec debug d'accélération) |
 | **M5 — La fin** | Drain, tourbillon, traversée à pied, avion publicitaire, écran du temps de partie, générique, retour au menu | La scène fait rire un testeur |

@@ -35,15 +35,94 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** jalon **M0** (fondations) en PR. Le projet Godot existe dans `game/`.
-- **Documents :** PRD v0.9. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** île greybox, océan (plan d'eau simple), joueur 1re/3e personne (V), marcher, courir, sauter ; HUD (% d'océan restant, temps) ; modèle d'océan, sauvegardes JSON, contrôles en touches physiques ; 17 tests ; CI GitHub Actions.
-- **Prochaine étape :** fusion de la PR M0, puis M1 (prototype de l'eau) et M2 (boucle de base : seau, séchage, téléphone).
+- **Phase :** M0 fusionné. Jalon **M2** (boucle de base) en PR. M1 (eau qui baisse visuellement) reste à faire.
+- **Documents :** PRD v0.10. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Catalogue de départ : bâche (15 sel), grand seau (40 sel, unique), bateau en bouteille (999 sel, décor). Cycle jour/nuit de 20 min. Sauvegarde de toute la partie. 43 tests.
+- **À valider par Othmane :** la règle de séchage proposée (PRD §6.3) ; elle fixe le rythme du premier achat (~3 min).
+- **Prochaine étape :** retours d'Othmane sur M2, puis M1 (niveau de l'eau visible) et la suite de T0/T1 (râteau, brouette, palanche).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
 
+## Architecture et logique (à tenir à jour)
+
+> Cette section décrit **comment le jeu est construit et comment il raisonne**, sans détail de code. Elle est mise à jour à chaque étape qui change l'architecture ou une règle.
+
+### Les quatre couches
+
+1. **Les données** (`game/data/`) : tous les chiffres d'équilibrage (volume de l'océan, capacités, temps de séchage, probabilités, prix) et le catalogue de l'agence. On règle le jeu en modifiant ces fichiers, jamais le code.
+2. **La logique pure** (`game/core/`) : de petits objets qui ne savent rien de la 3D ni de l'écran. Chacun gère une seule règle : l'océan, le seau, une zone de séchage, le cycle jour/nuit, le calcul des ressources. On peut les tester seuls, sans lancer de scène.
+3. **L'état de la partie** (`GameState`, chargé en permanence) : la **source unique de vérité**. Il possède l'océan, le seau, le stock, ce que le joueur porte, les zones de séchage, les caisses, les décors, les objets achetés, l'heure et le temps de jeu. Toute action du jeu passe par lui. Quand quelque chose change, il l'annonce (« le stock a changé », « une caisse est arrivée »…).
+4. **Les vues** (`game/scenes/`) : la 3D et l'interface. Elles **affichent** l'état et **demandent** des actions à GameState, mais ne décident jamais d'une règle. Par exemple, la cuvette 3D ne calcule pas l'évaporation : elle lit le niveau d'eau de sa zone et ajuste la hauteur de son eau.
+
+Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seul endroit à lire ; on pourra remplacer les formes grises par de vrais modèles sans toucher aux règles ; et le futur mini-jeu clicker pourra réutiliser la même logique.
+
+### La boucle de base (M2)
+
+- **Puiser :** le joueur, debout dans l'eau, maintient le clic environ 1 s ; le seau se remplit (10 L, ou 20 L avec le grand seau). Ces litres sont **retirés de l'océan** à ce moment. Chaque seau a une petite chance de remonter un coquillage, et un coquillage une petite chance d'être une perle.
+- **Verser :** visée sur une zone de séchage + clic. La zone n'accepte que la place libre ; le reste reste dans le seau. Vider le seau ailleurs (sable, mer) **rend l'eau à l'océan** (M-33, M-34).
+- **Sécher :** chaque zone évapore à débit fixe (`capacité ÷ 45 s` de jour, ×0,3 la nuit). Tous les 10 L évaporés, elle ajoute 1 sel à son dépôt, plus un tirage de minéral et de minéral rare. Le séchage continue partout, même loin du joueur (M-42).
+- **Récolter et porter :** clic sur une zone sans eau à verser : son dépôt passe dans les mains du joueur, 10 unités au maximum. Ce qui ne rentre pas reste dans la zone.
+- **Déposer :** E sur la palette de dépôt : tout ce qui est porté passe dans le **stock**. Seul le stock de la palette sert à payer (troc).
+- **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier ; « Commander » vérifie qu'on peut payer, retire le prix du stock, marque les objets uniques comme possédés et crée une **caisse**.
+- **Livrer :** un avion traverse le ciel, passe au-dessus de la palette, largue la caisse qui descend en parachute (5 s au total). Les caisses successives tombent en spirale autour du point de livraison pour ne pas s'empiler.
+- **Ouvrir :** E sur la caisse posée : chaque objet est appliqué (nouvelle zone de séchage posée à côté, seau agrandi, décor posé), puis la caisse disparaît.
+
+### Le temps
+
+- Une journée dure 20 min réelles, de 6 h à 20 h de jour ; la partie commence à 7 h. Le soleil tourne et la lumière baisse la nuit. L'évaporation de nuit est à 30 %.
+- Le temps de partie compte tout le temps de jeu, et il est sauvegardé.
+
+### La sauvegarde
+
+- Toute la partie est décrite par GameState sous forme d'un dictionnaire (océan, seau, stock, mains, zones avec leur eau et leur dépôt, caisses non ouvertes, décors, objets possédés, heure, jour, temps de partie), écrit en JSON.
+- Sauvegarde automatique toutes les 2 min et en quittant. Au chargement, l'ancienne scène est vidée, puis chaque zone, caisse et décor est recréé par sa vue, sans réanimer l'avion.
+- En attendant le menu principal, le jeu reprend automatiquement l'emplacement 1 (ou commence une partie neuve s'il est vide).
+
+### Le joueur et les interactions
+
+- Un rayon part du centre de la caméra (portée 3 m, allongée en 3e personne). L'objet visé affiche une invite au centre de l'écran.
+- Le clic gauche utilise l'**outil** (le seau), avec un ordre de priorité : agir sur l'objet visé (verser, récolter) ; sinon puiser si on est dans l'eau ; sinon vider le seau. La touche E sert aux **interactions** (téléphone, palette, caisse).
+
+### Touches de debug (provisoires)
+
+- **F5** sauvegarde, **F8** maintenu accélère le temps ×10, **F9** nouvelle partie, **F10** ajoute 50 sel et 5 minéraux.
+
+### Tests
+
+- Chaque règle de la logique pure a ses tests. Un test « boucle complète » joue toute la partie de M2 sans écran, sur un petit océan et sans hasard : puiser, verser, sécher, récolter, déposer, commander, ouvrir, puis sauvegarder et recharger.
+
+---
+
 ## Journal
+
+### 2026-11-16 — MODIF — Jalon M2 : boucle de base jouable en greybox
+- **Quoi :**
+  - Logique pure : séchage, seau, économie (troc), cycle jour/nuit, catalogue piloté par fichier de données.
+  - GameState réécrit en source unique de vérité : zones de séchage, mains (10 max), stock de la palette, commandes, caisses, décors, objets possédés, sauvegarde de tout.
+  - Vues greybox : cuvette rocheuse et bâche (niveau d'eau et tas de sel visibles), téléphone, palette (le tas grandit avec le stock), avion de livraison, caisse en parachute, bateau en bouteille.
+  - Interface : catalogue au téléphone (panier, total, commander), HUD enrichi (litres retirés, heure, stock, mains, seau, invite, barre de remplissage).
+  - Cycle jour/nuit et soleil. Touches de debug F5, F8, F9, F10.
+  - 26 nouveaux tests (43 au total), dont la boucle complète et l'aller-retour de sauvegarde.
+- **Pourquoi :** demande d'Othmane de continuer l'implémentation après validation de M0.
+- **Impact :** `game/core/`, `game/data/`, `game/scenes/`, `game/localization/strings.csv`, `game/tests/`, PRD §6.3 et §19.4 (v0.10), section « Architecture et logique » ci-dessus.
+- **Par :** Claude
+
+### 2026-11-16 — NOTE — Règle de séchage proposée (à valider)
+- **Quoi :** M-37 (« 45 s ») est lu comme : une zone pleine sèche en 45 s, donc un débit d'évaporation fixe par zone proportionnel à sa capacité. 10 L évaporés = 1 sel. Détail en PRD §6.3, marqué **[PROPOSÉ]**.
+- **Pourquoi :** c'est la seule lecture où la surface compte, et elle donne le premier achat vers 3 min (M-01).
+- **Impact :** `game/core/drying_logic.gd`, `game/data/game_config.tres`.
+- **Par :** Claude
+
+### 2026-11-16 — NOTE — Reprise automatique de l'emplacement 1 et touches de debug
+- **Quoi :** tant qu'il n'y a pas de menu principal, le jeu charge l'emplacement 1 au démarrage. F9 recommence une partie. F5, F8, F10 servent à tester vite. Ces touches seront retirées ou cachées avant la démo.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Expliquer le code, et tenir l'architecture dans HANDOFF
+- **Quoi :** Othmane veut qu'on lui explique comment le jeu est codé (la logique, pas le détail du code), et que l'architecture et la logique soient décrites dans ce fichier, tenues à jour à chaque étape.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** nouvelle section « Architecture et logique » ; règle ajoutée dans `CLAUDE.md`.
+- **Par :** Othmane
 
 ### 2026-11-16 — NOTE — Rendu des captures d'écran en environnement sans carte graphique
 - **Quoi :** les captures prises par Claude passent par le moteur de rendu « Compatibility » (OpenGL logiciel, llvmpipe), qui éclaire plus fort que Forward+ : le sable y paraît presque blanc. Sur un vrai PC (Forward+), le rendu sera différent. Lumière et matériaux greybox ont été atténués (lumière ambiante en couleur fixe, spéculaire bas).

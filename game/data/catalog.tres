@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
+[ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
+
+[sub_resource type="Resource" id="tarp"]
+script = ExtResource("2")
+id = &"bache"
+name_key = "ITEM_TARP"
+desc_key = "ITEM_TARP_DESC"
+tier = 1
+price = {"sel": 15}
+effect = 0
+effect_param = "bache"
+
+[sub_resource type="Resource" id="big_bucket"]
+script = ExtResource("2")
+id = &"grand_seau"
+name_key = "ITEM_BIG_BUCKET"
+desc_key = "ITEM_BIG_BUCKET_DESC"
+tier = 1
+price = {"sel": 40}
+effect = 1
+effect_value = 20.0
+unique = true
+
+[sub_resource type="Resource" id="boat"]
+script = ExtResource("2")
+id = &"bateau"
+name_key = "ITEM_BOAT"
+desc_key = "ITEM_BOAT_DESC"
+tier = 1
+price = {"sel": 999}
+effect = 2
+effect_param = "bateau_en_bouteille"
+
+[resource]
+script = ExtResource("1")
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("boat")])
