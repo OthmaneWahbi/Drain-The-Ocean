@@ -9,7 +9,12 @@ var _blades: Node3D
 var _phase: float = 0.0
 ## Vrai pendant les images où le joueur pompe (le levier bouge).
 var _working: bool = false
+var _crank_frames: int = 0
 var _last_ocean_removed: float = 0.0
+## Le débit affiché au-dessus de la pompe quand on s'approche (L/s, lissé pour ne pas clignoter).
+var _rate_label: Label3D
+var _shown_lps: float = 0.0
+const SHOW_RATE_WITHIN_M := 7.0
 
 
 func setup(p: Dictionary) -> void:
@@ -19,6 +24,14 @@ func setup(p: Dictionary) -> void:
 		_build_windmill()
 	else:
 		_build_hand_pump()
+	_rate_label = Label3D.new()
+	_rate_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_rate_label.font_size = 48
+	_rate_label.pixel_size = 0.005
+	_rate_label.outline_size = 10
+	_rate_label.position = Vector3(0, 5.2 if GameState.is_auto_pump(pump) else 1.9, 0)
+	_rate_label.visible = false
+	add_child(_rate_label)
 
 
 func _build_hand_pump() -> void:
@@ -53,6 +66,7 @@ func _build_windmill() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_rate_label(delta)
 	if _blades:
 		# Les pales tournent quand de l'eau passe (le compteur des pompes automatiques monte).
 		var turning := GameState.auto_pumped_l > _last_ocean_removed
@@ -62,21 +76,45 @@ func _process(delta: float) -> void:
 	if _working:
 		_phase += delta * 6.0
 	_lever.rotation.x = sin(_phase) * 0.35
-	_working = false
+	# On garde « en marche » une image de plus : le joueur agit avant ou après cette vue selon l'ordre.
+	_crank_frames -= 1
+	if _crank_frames <= 0:
+		_working = false
+
+
+## Débit réel en L/s : la pompe à bras ne débite que pendant qu'on l'actionne.
+func current_lps() -> float:
+	if not GameState.is_auto_pump(pump) and not _working:
+		return 0.0
+	return float(pump.get("last_lps", 0.0))
+
+
+func _update_rate_label(delta: float) -> void:
+	_shown_lps = lerpf(_shown_lps, current_lps(), clampf(delta * 6.0, 0.0, 1.0))
+	if _shown_lps < 0.05:
+		_shown_lps = 0.0
+	var near := GameState.player_position.distance_to(global_position) <= SHOW_RATE_WITHIN_M
+	_rate_label.visible = near
+	_rate_label.text = tr("PUMP_RATE") % [pump_name(), roundi(_shown_lps)]
+	_rate_label.modulate = Color(0.6, 0.85, 1.0) if _shown_lps > 0.0 else Color(0.85, 0.85, 0.85)
+
+
+func pump_name() -> String:
+	return tr("PUMP_NAME_" + String(pump.kind).to_upper())
 
 
 func get_prompt(_player: Node) -> String:
 	var targets := GameState.zones_for_pump(pump)
 	if targets.is_empty():
-		return tr("PUMP_NO_LINK") % [GameState.pipe_segments_used(), GameState.pipe_segments]
+		return tr("PUMP_NO_LINK") % pump_name()
 	var room := 0.0
 	for z in targets:
 		room += (z.logic as DryingLogic).free_space_l()
 	if room <= 0.0:
 		return tr("PUMP_FULL")
 	if GameState.is_auto_pump(pump):
-		return tr("WINDMILL_STATE") % targets.size()
-	return tr("PROMPT_PUMP") % targets.size()
+		return "%s · %s" % [tr("WINDMILL_STATE") % targets.size(), tr("PUMP_RATE") % [pump_name(), roundi(_shown_lps)]]
+	return "%s · %s" % [tr("PROMPT_PUMP") % targets.size(), tr("PUMP_RATE") % [pump_name(), roundi(_shown_lps)]]
 
 
 ## Clic maintenu (voir player.gd) : on pompe pendant `delta` secondes. Le moulin, lui, n'en a pas besoin.
@@ -85,6 +123,7 @@ func hold_use(_player: Node, delta: float) -> void:
 		return
 	if GameState.run_pump(pump, delta) > 0.0:
 		_working = true
+		_crank_frames = 2
 
 
 func get_movable() -> Dictionary:

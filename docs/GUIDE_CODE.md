@@ -118,8 +118,8 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 - `scenes/world/phone.gd` : `interact()` appelle `open_catalogue` sur le groupe `"catalogue"`. Un groupe est une étiquette sur des nœuds : on peut les appeler sans connaître leur chemin dans la scène.
 - `scenes/ui/catalogue.gd` (un `CanvasLayer`) : construit le panneau en code (une ligne par `CatalogItem`). Ouvert, il met `GameState.ui_open = true` (le joueur ignore alors ses touches) et libère la souris. Le panier est une liste d'ids ; `CatalogueFormat.format_cart()` les regroupe en « Nom ×N ».
-- « Commander » → `GameState.order(panier)` : paie, marque les objets uniques comme possédés, crée une caisse `{id, position, items}` à `next_drop_position()` (une spirale autour du point de livraison, pour ne pas empiler), et émet `crate_added(caisse, true)`.
-- `main.gd` reçoit ce signal et crée une `CrateView` cachée et un `DeliveryPlane`. L'avion suit une trajectoire animée (`Tween`) : il passe au-dessus de la palette puis du point de largage, et émet `dropped`. Alors la caisse apparaît et descend en parachute (`drop_from`, un autre `Tween`).
+- « Commander » → `GameState.order(panier)` : paie, marque les objets uniques comme possédés, puis crée **une caisse par objet à poser** (`is_placeable()` : zone, station, miroir, décor, pompe) et une seule caisse pour tout le reste (améliorations, tuyaux). Chaque caisse `{id, position, items, delay_s}` prend une case libre avec `next_drop_position()` ; `delay_s` = rang × `config.crate_stagger_s`. `order()` renvoie la liste (vide si la commande est refusée) et émet `crate_added(caisse, true)` pour chacune.
+- `main.gd` reçoit ce signal, attend `delay_s` (les avions passent l'un après l'autre) et crée une `CrateView` cachée et un `DeliveryPlane`. L'avion suit une trajectoire animée (`Tween`) : il passe au-dessus de la palette puis du point de largage, et émet `dropped`. Alors la caisse apparaît et descend en parachute (`drop_from`, un autre `Tween`) jusqu'à `rest_position()` : 5 rayons tirés vers le bas (centre et 4 coins), on garde le point le plus haut, donc une caisse qui tombe sur un objet reste posée dessus.
 - E sur la caisse posée → `GameState.open_crate()` → `apply_item()` pour chaque objet, selon son `effect` :
   - `DRYING_ZONE` : `add_zone("bache", position)` ;
   - `BUCKET_CAPACITY` (grand seau), `BUCKET_COUNT` (palanche), `CARRY_CAPACITY` (brouette), `WALK_SPEED` (tongs), `RAKE` (râteau) : changent une caractéristique de GameState ;
@@ -190,12 +190,19 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 ### Pompes et tuyaux (T2)
 
+- **Tuyaux posés à la main (PR #12).** Chaque pièce est une case 3D : `Vector3i(x, niveau, z)`, `x`/`z` = case de la grille au sol, `niveau` = 0 (au sol) à `config.pipe_max_level`. GameState garde `pipes` (dictionnaire case → vrai, un ensemble) et `pipe_stock` (pièces pas encore posées, +5 par lot acheté).
 - `core/pipe_network.gd` (classe `PipeNetwork`, logique pure, fonctions statiques) :
-  - `links(pumps, zones, segments, segment_m, zone_radius)` : pour chaque pompe, trie les zones par distance et les relie tant qu'il reste des tronçons ; renvoie `{pump, zone, segments, from, to}` ;
-  - `segments_needed()` : `ceil((distance − rayon de la zone) / 4 m)`, au moins 1 ;
-  - `distribute(liters, zones)` : verse dans l'ordre avec `DryingLogic.add_water()` et renvoie ce qui a été accepté.
-- GameState : `pumps` (dictionnaires comme les autres objets, donc déplaçables et sauvegardés), `pipe_segments` (un entier). `pipe_links()` recalcule le réseau à chaque appel (quelques objets, c'est instantané) : pas d'état à garder synchronisé. `run_pump(pump, delta)` calcule la place libre, prend `min(débit × delta, place)` à l'océan, répartit, et rend le surplus éventuel.
-- `network_changed` est émis quand une zone ou une pompe est ajoutée, un objet déplacé, des tuyaux achetés, ou une partie chargée ; `pipes_view.gd` s'y abonne et redessine des cylindres couchés (`look_at` + quart de tour).
+  - `cell_of(pos)` / `cell_center(cell, cell_m, ground_y)` : passage case ↔ position 3D ;
+  - `neighbors(cell, cells)` : les pièces voisines parmi les 6 directions (`DIRS`) ;
+  - `pump_ports(pump_cell)` : les 4 cases autour de la pompe et celle au-dessus, là où l'eau entre ;
+  - `reach(pump_cell, cells)` : parcours en largeur depuis les ports, renvoie case → distance (le nombre de pièces à traverser) ;
+  - `feeds(cell, zone_pos, rayon)` : une pièce verse dans une zone si son centre est à moins de `config.inlet_radius[type]` du centre de la zone, à plat (la hauteur ne compte pas : un tuyau au-dessus d'un bassin y verse) ;
+  - `zones_reached(...)` : les zones touchées, triées par distance de tuyau ; `distribute(liters, zones)` verse dans cet ordre.
+- GameState : `can_place_pipe(cell)` (case libre, dans l'île, au sol rien d'autre que des zones dessous, en hauteur une pièce voisine ou une pompe juste dessous), `place_pipe()` / `remove_pipe()` (stock ±1, `network_changed`), `zones_for_pump(pump)`, `wet_pipes()` (les pièces atteintes par une pompe, pour les colorer). Rien n'est mis en cache : `run_pump()` recalcule le parcours à chaque appel. C'est pour ça qu'un déplacement ne peut rien casser : il n'y a aucun lien stocké qui pourrait devenir faux.
+- Au sol, les pièces s'ajoutent aux obstacles de `_blockers_except()` (rayon `config.pipe_radius_m` = 0,2 m, sauf pour les zones). `can_place_pipe()` fait le même calcul dans l'autre sens (rayon de l'objet + rayon du tuyau), donc une pompe peut toucher une pièce dans la case voisine.
+- `scenes/world/pipe_builder.gd` (`PipeBuilder`) : actif quand l'outil tenu est « tuyaux ». Il lance un rayon de 6 m, calcule la case avec `cell_for_hit()` (sur une pièce : la case voisine du côté de la face visée ; ailleurs : la case juste devant la surface touchée), affiche un cube fantôme vert ou rouge et pose au clic.
+- `scenes/world/pipes_view.gd` se redessine sur `network_changed`, `item_moved` et `game_reset`. Chaque pièce est un `PipePiece` (`StaticBody3D`, champ `cell`) : un moyeu carré plus un bras vers chaque voisin, chaque pompe qui la touche et chaque zone où elle verse. Bleu si mouillée, gris sinon. `PipePiece.interact()` reprend la pièce quand on tient l'outil.
+- `run_pump()` note `pump.last_lps` (litres réellement pompés ÷ delta). `pump_view.gd` lisse ce chiffre dans une étiquette `Label3D` (toujours face caméra) visible à moins de 7 m de `GameState.player_position` ; pour la pompe à bras, il vaut 0 sauf pendant les 2 images qui suivent un `hold_use()`.
 - Placement « au bord de l'eau » : `PlacementGrid.is_valid(..., min_center_radius)` ; `GameState.min_center_radius_of(kind)` lit `config.shore_only_kinds`. `find_free_spot()` le prend aussi, donc une pompe sortie d'une caisse apparaît déjà sur la plage.
 - Moulin-pompe : c'est une pompe comme une autre (`kind = "moulin_pompe"`), mais listée dans `config.auto_pump_kinds`. `simulate()` appelle `_run_auto_pumps(delta)`, qui fait `run_pump()` pour chaque pompe automatique et additionne dans `auto_pumped_l`. Au seuil (`demo_end_auto_pumped_l`), `demo_done` passe à vrai et `demo_finished` est émis une seule fois.
 - `scenes/ui/demo_end.gd` (créé par `main.gd`) écoute `demo_finished` : il fait passer un gros avion sombre (des boîtes noires) avec un `Tween`, puis au bout de 6 s affiche le panneau (bilan avec `Hud.format_time`, `format_liters`, `WaterGauge.format_drop_mm`), met `ui_open` et libère la souris. Le bouton referme tout.
@@ -246,3 +253,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #11 — Barre d'outils
 `ToolbarLogic`, `GameState.toolbar` / `current_tool` / `select_tool` / `cycle_tool` / `tool_changed`, entrées 1-5 et molette, râteau tenu, barre du HUD, `test_toolbar.gd`.
+
+### PR #12 — Tuyaux à la main, débit des pompes, plusieurs caisses
+`PipeNetwork` réécrit (cases 3D, parcours en largeur), `GameState.pipes` / `pipe_stock` / `place_pipe` / `remove_pipe` / `can_place_pipe`, `PipeBuilder`, `PipePiece`, étiquette de débit (`last_lps`), `GameState.order()` qui renvoie une liste de caisses (`delay_s`), `open_crates()`, `crate_view.rest_position()` (5 rayons vers le bas : la caisse se pose sur ce qu'elle touche), `test_pumps.gd` réécrit (~30 tests).

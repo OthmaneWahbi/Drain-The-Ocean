@@ -95,8 +95,8 @@ func test_coconut_respawns_when_its_spot_is_free() -> void:
 
 func test_crate_in_flight_blocks_placement_and_other_crates() -> void:
 	_rich()
-	var c1: Dictionary = gs.order(["bache"])
-	var c2: Dictionary = gs.order(["bache"])
+	var c1: Dictionary = gs.order(["bache"])[0]
+	var c2: Dictionary = gs.order(["bache"])[0]
 	assert_false(c1.is_empty())
 	assert_true(c1.position.distance_to(c2.position) >= 2.0 * gs.footprint_of("caisse") - 1e-6, "deux caisses pas au même endroit")
 	var basin: Dictionary = gs.zones[0]
@@ -108,16 +108,36 @@ func test_crate_avoids_object_on_drop_spot() -> void:
 	_rich()
 	var wanted: Vector3 = gs.config.delivery_center
 	gs.add_mirror(PlacementGrid.snap(wanted, 1.0))
-	var c: Dictionary = gs.order(["tongs"])
+	gs.order(["tongs"])
 	_assert_nothing_overlaps("caisse sur miroir")
+
+
+func test_one_crate_per_placeable_object() -> void:
+	_rich()
+	var list: Array = gs.order(["bache", "tongs", "miroir", "bache", "grand_seau"])
+	assert_eq(list.size(), 4, "3 objets à poser + 1 caisse pour les tongs et le grand seau")
+	assert_eq(list[0].items, ["bache"])
+	assert_eq(list[1].items, ["miroir"])
+	assert_eq(list[3].items, ["tongs", "grand_seau"])
+	assert_true(float(list[3].delay_s) > float(list[0].delay_s), "les avions passent l'un après l'autre")
+	_assert_nothing_overlaps("4 caisses")
+
+
+func test_upgrades_only_make_a_single_crate() -> void:
+	_rich()
+	assert_eq(gs.order(["tongs", "grand_seau", "tuyau"]).size(), 1)
+
+
+func test_refused_order_makes_no_crate() -> void:
+	assert_eq(gs.order(["bache", "bache", "bache", "bache"]).size(), 0)
+	assert_eq(gs.crates.size(), 0)
 
 
 func test_opening_crate_requests_placement_for_each_placed_object_only() -> void:
 	_rich()
 	var requested := []
 	gs.placement_requested.connect(func(it): requested.append(it))
-	var c: Dictionary = gs.order(["bache", "tongs", "miroir", "bache"])
-	gs.open_crate(c)
+	gs.open_crates(gs.order(["bache", "tongs", "miroir", "bache"]))
 	assert_eq(requested.size(), 3, "2 bâches + 1 miroir ; les tongs ne se posent pas :")
 	assert_eq(gs.item_kind(requested[0]), "bache")
 	assert_eq(gs.item_kind(requested[1]), "miroir")
@@ -129,7 +149,7 @@ func test_opening_crate_with_only_upgrades_requests_nothing() -> void:
 	_rich()
 	var requested := []
 	gs.placement_requested.connect(func(it): requested.append(it))
-	gs.open_crate(gs.order(["tongs", "grand_seau"]))
+	gs.open_crates(gs.order(["tongs", "grand_seau"]))
 	assert_eq(requested.size(), 0)
 
 
@@ -137,7 +157,7 @@ func test_opening_the_same_crate_twice_does_nothing() -> void:
 	_rich()
 	var requested := []
 	gs.placement_requested.connect(func(it): requested.append(it))
-	var c: Dictionary = gs.order(["bache"])
+	var c: Dictionary = gs.order(["bache"])[0]
 	gs.open_crate(c)
 	gs.open_crate(c)
 	assert_eq(requested.size(), 1)
@@ -150,14 +170,14 @@ func test_big_crate_full_of_basins_never_overlaps() -> void:
 	for i in 6:
 		ids.append("bassin_bois")
 	ids.append_array(["condenseur", "rations", "miroir", "miroir", "bateau"])
-	gs.open_crate(gs.order(ids))
+	gs.open_crates(gs.order(ids))
 	_assert_nothing_overlaps("grosse caisse")
 
 
 func test_nothing_spawns_or_lands_on_the_player() -> void:
 	_rich()
 	gs.player_position = gs.config.delivery_center
-	var c: Dictionary = gs.order(["bache"])
+	var c: Dictionary = gs.order(["bache"])[0]
 	gs.player_position = c.position  # le joueur se tient sur la caisse pour l'ouvrir
 	gs.open_crate(c)
 	var tarp: Dictionary = gs.zones[gs.zones.size() - 1]

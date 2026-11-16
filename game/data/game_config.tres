@@ -74,7 +74,7 @@ footprints = {
 "cuvette": 2.5,
 "miroir": 0.7,
 "palette": 2.0,
-"moulin_pompe": 1.5,
+"moulin_pompe": 0.8,
 "pompe_bras": 0.8,
 "rations": 0.5
 }
@@ -95,7 +95,15 @@ pump_rates_lps = {
 }
 auto_pump_kinds = PackedStringArray("moulin_pompe")
 demo_end_auto_pumped_l = 200.0
-pipe_segment_m = 4.0
-toolbar_slots = PackedStringArray("seau", "mains", "rateau", "", "")
+crate_stagger_s = 1.2
+ground_y = 0.5
+pipe_max_level = 4
+pipe_radius_m = 0.2
+inlet_radius = {
+"bache": 1.5,
+"bassin_bois": 2.5,
+"cuvette": 1.5
+}
+toolbar_slots = PackedStringArray("seau", "mains", "rateau", "tuyaux", "")
 rotation_step_deg = 90.0
 fixed_obstacles = PackedVector3Array(5, -3, 0.8, -10, -8, 0.6, -13, -3, 0.6, 11, -9, 0.6, 3, 17, 0.6, 14, 6, 1.6, -15, 9, 1.6)

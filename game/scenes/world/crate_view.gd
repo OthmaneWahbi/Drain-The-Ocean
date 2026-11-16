@@ -18,14 +18,39 @@ func setup(p_crate: Dictionary) -> void:
 func land_now() -> void:
 	position = crate.position
 	_land()
+	# Au chargement, le monde physique n'est pas encore prêt : on vérifie l'appui juste après.
+	call_deferred(&"_settle")
 
 
-## Largage : la caisse descend depuis `height` mètres en `duration` secondes.
+## Largage : la caisse descend depuis `height` mètres en `duration` secondes, et s'arrête
+## SUR ce qu'il y a dessous (un tuyau en hauteur, un objet…), jamais dedans.
 func drop_from(height: float, duration: float) -> void:
 	position = crate.position + Vector3(0, height, 0)
 	var t := create_tween()
-	t.tween_property(self, "position", crate.position, duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	t.tween_property(self, "position", rest_position(), duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
 	t.tween_callback(_land)
+
+
+## Où la caisse repose : le point le plus haut sous elle (rayons aux 4 coins et au centre),
+## ou le sable si rien n'est dessous.
+func rest_position() -> Vector3:
+	var base: Vector3 = crate.position
+	if not is_inside_tree():
+		return base
+	var space := get_world_3d().direct_space_state
+	var top := base.y
+	for off in [Vector3.ZERO, Vector3(0.4, 0, 0.4), Vector3(-0.4, 0, 0.4), Vector3(0.4, 0, -0.4), Vector3(-0.4, 0, -0.4)]:
+		var q := PhysicsRayQueryParameters3D.create(base + off + Vector3(0, 30, 0), base + off + Vector3(0, -0.5, 0))
+		q.exclude = [get_rid()]
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			top = maxf(top, (hit.position as Vector3).y)
+	return Vector3(base.x, top, base.z)
+
+
+func _settle() -> void:
+	if is_inside_tree():
+		position = rest_position()
 
 
 func _land() -> void:

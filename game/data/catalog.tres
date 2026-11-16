@@ -145,7 +145,7 @@ desc_key = "ITEM_PIPE_DESC"
 tier = 2
 price = {"sel": 50}
 effect = 11
-effect_value = 1.0
+effect_value = 5.0
 
 [sub_resource type="Resource" id="windmill_pump"]
 script = ExtResource("2")

@@ -52,6 +52,10 @@ func _ready() -> void:
 	var pipes := PipesView.new()
 	pipes.name = "Pipes"
 	add_child(pipes)
+	# Poser les tuyaux à la main (case « tuyaux » de la barre).
+	var builder := PipeBuilder.new()
+	builder.name = "PipeBuilder"
+	add_child(builder)
 	# La fin de la démo (M-05), déclenchée par le moulin-pompe.
 	var demo_end := DemoEnd.new()
 	demo_end.name = "DemoEnd"
@@ -175,6 +179,12 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 		view.land_now()
 		return
 	view.visible = false
+	# Plusieurs caisses dans une commande : les avions passent l'un après l'autre.
+	var delay := float(crate.get("delay_s", 0.0))
+	if delay > 0.0:
+		await get_tree().create_timer(delay).timeout
+		if not is_instance_valid(view):
+			return
 	var plane := DeliveryPlane.new()
 	_views.add_child(plane)
 	var drop_at := maxf(GameState.config.delivery_time_s - CHUTE_TIME_S, 0.5)

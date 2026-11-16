@@ -61,7 +61,7 @@ func test_full_loop_to_first_purchase() -> void:
 		_harvest_all(basin)
 		gs.unload_to_stock()
 	assert_eq(int(gs.stock["sel"]), 20)
-	var crate: Dictionary = gs.order(["bache"])
+	var crate: Dictionary = gs.order(["bache"])[0]
 	assert_false(crate.is_empty(), "commande acceptée :")
 	assert_eq(int(gs.stock["sel"]), 5)
 	gs.open_crate(crate)
@@ -111,7 +111,7 @@ func test_hand_carry_limit_leaves_rest_in_zone() -> void:
 
 func test_rake_harvests_everything_at_once() -> void:
 	gs.stock = {"sel": 60, "mineraux": 5}
-	gs.open_crate(gs.order(["rateau"]))
+	gs.open_crates(gs.order(["rateau"]))
 	var basin: Dictionary = gs.zones[0]
 	basin.logic.deposit = {"sel": 8}
 	gs.harvest(basin)
@@ -125,16 +125,16 @@ func test_rake_harvests_everything_at_once() -> void:
 
 func test_wheelbarrow_carries_more() -> void:
 	gs.stock["sel"] = 30
-	gs.open_crate(gs.order(["brouette"]))
+	gs.open_crates(gs.order(["brouette"]))
 	assert_eq(gs.carry_capacity, 40)
 	assert_eq(gs.carry_space(), 40)
 
 
 func test_yoke_doubles_buckets_and_stacks_with_big_bucket() -> void:
 	gs.stock = {"sel": 200, "mineraux": 10}
-	gs.open_crate(gs.order(["palanche"]))
+	gs.open_crates(gs.order(["palanche"]))
 	assert_almost(gs.bucket.capacity_l, 20.0, 1e-6, "2 × 10 L :")
-	gs.open_crate(gs.order(["grand_seau"]))
+	gs.open_crates(gs.order(["grand_seau"]))
 	assert_almost(gs.bucket.capacity_l, 40.0, 1e-6, "2 × 20 L :")
 
 
@@ -142,7 +142,7 @@ func test_flip_flops_need_shells() -> void:
 	gs.stock["sel"] = 25
 	assert_true(gs.order(["tongs"]).is_empty(), "il manque 2 coquillages :")
 	gs.stock["coquillages"] = 2
-	gs.open_crate(gs.order(["tongs"]))
+	gs.open_crates(gs.order(["tongs"]))
 	assert_almost(gs.speed_multiplier, 1.2)
 
 
@@ -154,7 +154,7 @@ func test_water_level_drops_with_removed_volume() -> void:
 
 func test_big_bucket_is_unique_and_upgrades() -> void:
 	gs.stock["sel"] = 100
-	var crate: Dictionary = gs.order(["grand_seau"])
+	var crate: Dictionary = gs.order(["grand_seau"])[0]
 	gs.open_crate(crate)
 	assert_almost(gs.bucket.capacity_l, 20.0)
 	assert_true(gs.order(["grand_seau"]).is_empty(), "achat unique :")
@@ -162,15 +162,15 @@ func test_big_bucket_is_unique_and_upgrades() -> void:
 
 func test_boat_arrives_in_a_bottle() -> void:
 	gs.stock["sel"] = 999
-	gs.open_crate(gs.order(["bateau"]))
+	gs.open_crates(gs.order(["bateau"]))
 	assert_eq(gs.decor.size(), 1)
 	assert_eq(gs.decor[0].kind, "bateau_en_bouteille")
 
 
 func test_save_round_trip_keeps_everything() -> void:
 	gs.stock["sel"] = 200
-	gs.open_crate(gs.order(["bache"]))
-	var pending: Dictionary = gs.order(["grand_seau"])
+	gs.open_crates(gs.order(["bache"]))
+	var pending: Dictionary = gs.order(["grand_seau"])[0]
 	gs.fill_bucket()
 	gs.pour_bucket_into(gs.zones[1])
 	gs.carried = {"coquillages": 2}
@@ -190,7 +190,7 @@ func test_save_round_trip_keeps_everything() -> void:
 
 func test_save_keeps_upgrades() -> void:
 	gs.stock = {"sel": 300, "mineraux": 20, "coquillages": 2}
-	gs.open_crate(gs.order(["palanche", "grand_seau", "brouette", "rateau", "tongs"]))
+	gs.open_crates(gs.order(["palanche", "grand_seau", "brouette", "rateau", "tongs"]))
 	var data: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
 	var other: Node = GameStateScript.new()
 	other.setup(gs.config)
@@ -230,7 +230,7 @@ func test_shells_go_to_hands_and_come_back_each_morning() -> void:
 
 func test_condenser_and_rations_from_catalogue() -> void:
 	gs.stock["sel"] = 28
-	gs.open_crate(gs.order(["condenseur", "rations"]))
+	gs.open_crates(gs.order(["condenseur", "rations"]))
 	assert_eq(gs.stations.size(), 2)
 	var condenser: Dictionary = gs.stations.filter(func(st): return st.kind == "condenseur")[0]
 	var rations: Dictionary = gs.stations.filter(func(st): return st.kind == "rations")[0]
@@ -247,7 +247,7 @@ func test_condenser_and_rations_from_catalogue() -> void:
 func test_save_keeps_survival_pickups_and_stations() -> void:
 	gs.survival.food = 0.3
 	gs.stock["sel"] = 20
-	gs.open_crate(gs.order(["condenseur"]))
+	gs.open_crates(gs.order(["condenseur"]))
 	gs.stations[0].logic.amount = 2
 	gs.take_pickup(gs.pickups[0])
 	var n: int = gs.pickups.size()
@@ -274,9 +274,9 @@ func test_fast_forward_moves_hunger_drying_and_condenser() -> void:
 func test_tier_two_is_locked_until_the_manual() -> void:
 	gs.stock = {"sel": 2000, "mineraux": 200, "mineraux_rares": 20, "coquillages": 20}
 	assert_true(gs.order(["bassin_bois"]).is_empty(), "T2 verrouillé :")
-	gs.open_crate(gs.order(["manuel"]))
+	gs.open_crates(gs.order(["manuel"]))
 	assert_eq(gs.unlocked_tier, 2)
-	gs.open_crate(gs.order(["bassin_bois"]))
+	gs.open_crates(gs.order(["bassin_bois"]))
 	var basin: Dictionary = gs.zones.filter(func(z): return z.kind == "bassin_bois")[0]
 	assert_almost(basin.logic.capacity_l, 200.0)
 

@@ -82,8 +82,10 @@ var stations: Array[Dictionary] = []
 var mirrors: Array[Dictionary] = []
 ## Pompes posées : {id, kind: "pompe_bras", position, rotation_deg}.
 var pumps: Array[Dictionary] = []
-## Tronçons de tuyau possédés (chacun fait `config.pipe_segment_m` mètres).
-var pipe_segments: int = 0
+## Tuyaux POSÉS par le joueur : case (Vector3i, y = niveau) -> true. Voir PipeNetwork.
+var pipes: Dictionary = {}
+## Pièces de tuyau en stock, pas encore posées.
+var pipe_stock: int = 0
 ## Litres pompés par les pompes AUTOMATIQUES (le moulin-pompe), et fin de démo déjà vue.
 var auto_pumped_l: float = 0.0
 var demo_done: bool = false
@@ -149,7 +151,8 @@ func _reset_state() -> void:
 	stations = []
 	mirrors = []
 	pumps = []
-	pipe_segments = 0
+	pipes = {}
+	pipe_stock = 0
 	auto_pumped_l = 0.0
 	demo_done = false
 	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
@@ -288,6 +291,8 @@ func owns_tool(tool: String) -> bool:
 			return true
 		"rateau":
 			return has_rake
+		"tuyaux":
+			return pipe_stock > 0 or not pipes.is_empty()
 	return false
 
 
@@ -366,17 +371,21 @@ func can_buy(item: CatalogItem) -> bool:
 
 ## Passe commande : paie avec les bras puis la palette, et crée la caisse qui sera larguée.
 ## Renvoie la caisse, ou un dictionnaire vide si le stock ne suffit pas.
-func order(item_ids: Array) -> Dictionary:
+## Commande : paie, puis l'avion largue les caisses. Chaque objet À POSER (zone, pompe, miroir…)
+## a sa propre caisse ; tout le reste (améliorations, tuyaux…) partage une caisse.
+## Renvoie la liste des caisses (vide si la commande est refusée).
+func order(item_ids: Array) -> Array[Dictionary]:
+	var none: Array[Dictionary] = []
 	if item_ids.is_empty():
-		return {}
+		return none
 	for id in item_ids:
 		var item := catalog.find(StringName(id))
 		if item == null or not can_buy(item):
-			return {}
+			return none
 	# On paie avec ce qu'on porte d'abord, puis avec la palette (retour d'Othmane).
 	var price := cart_price(item_ids)
 	if not Economy.pay_from([carried, stock], price):
-		return {}
+		return none
 	for k in carried.keys():
 		if int(carried[k]) <= 0:
 			carried.erase(k)
@@ -385,12 +394,36 @@ func order(item_ids: Array) -> Dictionary:
 		var item := catalog.find(StringName(id))
 		if item.unique:
 			owned[String(item.id)] = true
-	var crate := {"id": _new_id("crate"), "position": next_drop_position(), "items": item_ids.map(func(i): return String(i))}
-	crates.append(crate)
-	_deliveries_count += 1
+	var groups: Array = []
+	var others: Array = []
+	for id in item_ids:
+		if is_placeable(catalog.find(StringName(id))):
+			groups.append([String(id)])
+		else:
+			others.append(String(id))
+	if not others.is_empty():
+		groups.append(others)
+	var made: Array[Dictionary] = []
+	for g in groups:
+		var crate := {"id": _new_id("crate"), "position": next_drop_position(), "items": g, "delay_s": made.size() * config.crate_stagger_s}
+		crates.append(crate)
+		_deliveries_count += 1
+		made.append(crate)
 	stock_changed.emit()
-	crate_added.emit(crate, true)
-	return crate
+	for crate in made:
+		crate_added.emit(crate, true)
+	return made
+
+
+## Vrai pour un article qui se pose sur l'île (il aura sa propre caisse).
+func is_placeable(item: CatalogItem) -> bool:
+	return item != null and item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP]
+
+
+## Ouvre plusieurs caisses d'un coup (outils admin, tests).
+func open_crates(list: Array) -> void:
+	for crate in list:
+		open_crate(crate)
 
 
 ## Points de largage en spirale autour du centre, pour que les caisses (et les bâches posées
@@ -425,7 +458,7 @@ func open_crate(crate: Dictionary) -> void:
 ## miroir, décor), ou un dictionnaire vide pour une amélioration.
 func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
-	if item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP]:
+	if is_placeable(item):
 		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
 		position = find_free_spot(footprint_of(kind), position, min_center_radius_of(kind))
 	match item.effect:
@@ -455,8 +488,9 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 		CatalogItem.Effect.PUMP:
 			return add_pump(item.effect_param, position)
 		CatalogItem.Effect.PIPES:
-			pipe_segments += maxi(int(item.effect_value), 1)
+			pipe_stock += maxi(int(item.effect_value), 1)
 			network_changed.emit()
+			tool_changed.emit()  # la case « tuyaux » de la barre s'allume
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -568,26 +602,76 @@ func _run_auto_pumps(delta: float) -> void:
 		demo_finished.emit()
 
 
-## Toutes les liaisons du réseau : {pump, zone, segments, from, to}.
-func pipe_links() -> Array:
-	return PipeNetwork.links(pumps, zones, pipe_segments, config.pipe_segment_m, footprint)
-
-
-## Les zones reliées à une pompe, de la plus proche à la plus lointaine.
+## Les zones reliées à une pompe par les tuyaux posés, de la plus proche à la plus lointaine.
+## Recalculé à chaque appel : il n'y a pas de réseau mémorisé qui pourrait se désynchroniser.
 func zones_for_pump(pump: Dictionary) -> Array:
-	return pipe_links().filter(func(l): return l.pump == pump).map(func(l): return l.zone)
+	return PipeNetwork.zones_reached(pump.position, pipes, zones, inlet_radius, config.grid_cell_m)
 
 
-func pipe_segments_used() -> int:
-	var used := 0
-	for l in pipe_links():
-		used += int(l.segments)
-	return used
+## Rayon dans lequel une pièce de tuyau verse dans la zone (le bac, sans le tas de sel).
+func inlet_radius(zone: Dictionary) -> float:
+	return float(config.inlet_radius.get(String(zone.kind), 1.0))
+
+
+## Les pièces où passe l'eau d'au moins une pompe (pour les colorer).
+func wet_pipes() -> Dictionary:
+	var out := {}
+	for pump in pumps:
+		out.merge(PipeNetwork.reach(PipeNetwork.cell_of(pump.position, config.grid_cell_m), pipes))
+	return out
+
+
+# --- Poser les tuyaux à la main ---------------------------------------------------------------
+
+## Une pièce peut-elle aller dans cette case ?
+## - case libre, niveau entre 0 et `pipe_max_level`, sur l'île ;
+## - au sol : pas dans un objet (sauf une zone de séchage, où le tuyau verse), ni sur un élément fixe ;
+## - en hauteur : il faut une pièce voisine ou une pompe juste en dessous (pas de tuyau qui flotte seul).
+func can_place_pipe(cell: Vector3i) -> bool:
+	if pipes.has(cell) or cell.y < 0 or cell.y > config.pipe_max_level:
+		return false
+	var center := PipeNetwork.cell_center(cell, config.grid_cell_m, 0.0)
+	var flat := Vector2(center.x, center.z)
+	if flat.length() + 0.5 > config.build_radius_m:
+		return false
+	if cell.y == 0:
+		for b in _blockers_except({}, true, false, false):
+			var bp: Vector3 = b.position
+			if flat.distance_to(Vector2(bp.x, bp.z)) < float(b.radius) + config.pipe_radius_m - 1e-6:
+				return false
+		return true
+	if not PipeNetwork.neighbors(cell, pipes).is_empty():
+		return true
+	for pump in pumps:
+		if PipeNetwork.cell_of(pump.position, config.grid_cell_m) + Vector3i(0, 1, 0) == cell:
+			return true
+	return false
+
+
+## Poser une pièce (prise dans le stock).
+func place_pipe(cell: Vector3i) -> bool:
+	if pipe_stock <= 0 or not can_place_pipe(cell):
+		return false
+	pipes[cell] = true
+	pipe_stock -= 1
+	network_changed.emit()
+	return true
+
+
+## Reprendre une pièce (elle retourne dans le stock).
+func remove_pipe(cell: Vector3i) -> bool:
+	if not pipes.has(cell):
+		return false
+	pipes.erase(cell)
+	pipe_stock += 1
+	network_changed.emit()
+	return true
 
 
 ## Actionner une pompe pendant `delta` secondes : elle aspire dans l'océan et remplit les zones
 ## reliées (la plus proche d'abord). Renvoie les litres pompés (0 si rien n'est relié ou tout est plein).
 func run_pump(pump: Dictionary, delta: float) -> float:
+	pump.last_lps = 0.0
 	var targets := zones_for_pump(pump)
 	if targets.is_empty() or delta <= 0.0:
 		return 0.0
@@ -601,6 +685,7 @@ func run_pump(pump: Dictionary, delta: float) -> float:
 	var poured := PipeNetwork.distribute(taken, targets)
 	if poured < taken:
 		ocean.return_water(taken - poured)
+	pump.last_lps = poured / delta
 	ocean_changed.emit()
 	return poured
 
@@ -684,9 +769,11 @@ func blockers_for(item: Dictionary) -> Array:
 
 ## Toutes les emprises sauf celle de `item` : objets posés, caisses (au sol ou en vol), obstacles
 ## fixes, places des noix de coco, ramassables (coquillages…), et le joueur.
-func _blockers_except(item: Dictionary, with_coconut_spots: bool = true) -> Array:
+func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pipes: bool = true, with_zones: bool = true) -> Array:
 	var out := []
 	for other in movable_items():
+		if not with_zones and zones.has(other):
+			continue
 		if other != item:
 			out.append({"position": other.position, "radius": footprint(other)})
 	for c in crates:
@@ -700,6 +787,11 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true) -> Arra
 		if pk != item and pk.kind != "coconut":  # les noix sont déjà comptées par leur place
 			out.append({"position": pk.position, "radius": footprint_of("coquillage")})
 	out.append({"position": player_position, "radius": config.player_radius_m})
+	# Les tuyaux au sol gênent tout, sauf les zones de séchage (on peut poser un bac sous un tuyau).
+	if with_pipes and not zones.has(item):
+		for c in pipes:
+			if c.y == 0:
+				out.append({"position": PipeNetwork.cell_center(c, config.grid_cell_m, 0.0), "radius": config.pipe_radius_m})
 	return out
 
 
@@ -782,7 +874,8 @@ func to_dict() -> Dictionary:
 		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "rotation_deg": item_rotation(st), "logic": (st.logic as StationLogic).to_dict()}),
 		"mirrors": mirrors.map(func(m): return {"position": _v2a(m.position), "rotation_deg": item_rotation(m)}),
 		"pumps": pumps.map(func(pu): return {"kind": pu.kind, "position": _v2a(pu.position), "rotation_deg": item_rotation(pu)}),
-		"pipe_segments": pipe_segments,
+		"pipes": pipes.keys().map(func(c: Vector3i): return [c.x, c.y, c.z]),
+		"pipe_stock": pipe_stock,
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
@@ -847,7 +940,11 @@ func load_dict(data: Dictionary) -> void:
 			_load_rotation(add_mirror(_a2v(m.get("position", []))), m)
 	for pu in data.get("pumps", []):
 		_load_rotation(add_pump(String(pu.get("kind", "")), _a2v(pu.get("position", []))), pu)
-	pipe_segments = maxi(int(data.get("pipe_segments", 0)), 0)
+	for c in data.get("pipes", []):
+		if c is Array and c.size() == 3:
+			pipes[Vector3i(int(c[0]), int(c[1]), int(c[2]))] = true
+	# Anciennes sauvegardes : des tronçons de 4 m deviennent 4 pièces en stock.
+	pipe_stock = maxi(int(data.get("pipe_stock", int(data.get("pipe_segments", 0)) * 4)), 0)
 	auto_pumped_l = maxf(float(data.get("auto_pumped_l", 0.0)), 0.0)
 	demo_done = bool(data.get("demo_done", false))
 	var dep: Dictionary = data.get("depot", {})
