@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.24 (monde vivant : vagues, sous l'eau, fond marin, nuages, animaux) |
+| Version du document | 0.25 (téléphone : premier appel, offres du jour, crochet de l'avion) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -704,6 +704,12 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 
 - **[DÉCIDÉ]** Sous l'eau, l'image prend un **filtre bleu** (Othmane, 2026-11-16). **[PROPOSÉ]** Filtre bleu-vert qui ondule, bords assombris et brouillard bleu épais quand les yeux sont sous la surface ; la surface se voit d'en dessous.
 - **[PROPOSÉ]** Monde vivant (v0.24) : océan à vagues (trois vagues de Gerstner, 20 cm environ), turquoise sur le sable et bleu profond au large selon l'épaisseur d'eau, écume au bord du rivage ; fond marin (rochers, algues, coraux) seulement autour de l'île, de 28 à 110 m ; nuages en boules qui dérivent avec le vent ; 5 mouettes qui tournent au-dessus de l'île ; 3 bancs de poissons qui suivent l'eau quand elle baisse (et disparaissent quand il n'y en a plus assez) ; un crabe qui trottine de côté au bord de la plage. Rien de tout cela n'a d'effet sur le jeu.
+
+- **[PROPOSÉ]** Téléphone (v0.25) :
+  - **Premier appel (M-48)** : en nouvelle partie, le téléphone sonne (il tremble, « Dring ! »). E décroche : 6 s de musique d'attente, puis une caisse tombe avec le **catalogue papier** (un décor qu'on peut déplacer, inutile : tout se commande au téléphone). Ensuite, E sur le téléphone ouvre le catalogue.
+  - **Offres spéciales (M-54)** : chaque matin, 70 % de chances que le téléphone sonne pour une offre. Décrocher ouvre le catalogue : un article achetable est **à moitié prix** jusqu'à la fin de la journée (arrondi au-dessus, jamais gratuit). Un appel manqué, c'est une offre manquée (la sonnerie s'arrête avec la nuit).
+  - **Crochet (M-50)** : l'avion de la première caisse d'une commande passe en rase-mottes et arrache le paiement de la palette avec un crochet au bout d'une corde ; le paquet (aux couleurs des ressources payées) part avec lui. Le pilote fait coucou par la vitre.
+  - Les vieilles sauvegardes considèrent le premier appel comme déjà fait.
 
 ## 20. Glossaire
 

@@ -15,6 +15,10 @@ func setup(p_decor: Dictionary) -> void:
 			add_child(bottle)
 			add_child(Greybox.box(Vector3(0.25, 0.05, 0.08), Greybox.WOOD, Vector3(0, 0.1, 0)))
 			add_child(Greybox.box(Vector3(0.01, 0.12, 0.06), Color.WHITE, Vector3(0, 0.18, 0)))
+		"catalogue_papier":
+			# Le catalogue papier du premier appel : un gros livret rouge et blanc.
+			add_child(Greybox.box(Vector3(0.42, 0.06, 0.3), Color(0.95, 0.95, 0.9), Vector3(0, 0.03, 0)))
+			add_child(Greybox.box(Vector3(0.43, 0.012, 0.31), Greybox.PHONE_RED, Vector3(0, 0.066, 0)))
 	add_child(Greybox.box_collision(Vector3(0.6, 0.3, 0.3), Vector3(0, 0.12, 0)))
 
 

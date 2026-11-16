@@ -12,6 +12,8 @@ var _order_button: Button
 var _item_buttons: Dictionary = {}
 ## id -> {row, desc} : pour griser les articles d'un palier pas encore débloqué.
 var _item_rows: Dictionary = {}
+## id -> Label du prix (il change quand l'article est l'offre du jour).
+var _price_labels: Dictionary = {}
 
 
 func _ready() -> void:
@@ -81,6 +83,8 @@ func _build() -> void:
 	scroll.add_child(list)
 
 	for item in GameState.catalog.items:
+		if item.hidden:
+			continue
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
 		var text := VBoxContainer.new()
@@ -98,6 +102,7 @@ func _build() -> void:
 		var price := Label.new()
 		price.text = format_items(item.price)
 		row.add_child(price)
+		_price_labels[String(item.id)] = price
 		var add := Button.new()
 		add.text = tr("CAT_ADD")
 		add.pressed.connect(_add_to_cart.bind(String(item.id)))
@@ -157,6 +162,10 @@ func _refresh() -> void:
 		var unlocked := GameState.is_unlocked(item)
 		_item_rows[id].row.modulate = Color(1, 1, 1, 1.0 if unlocked else 0.45)
 		_item_rows[id].desc.text = tr(item.desc_key) if unlocked else tr("CAT_LOCKED")
+		# L'offre du jour (décrochée au téléphone) : prix barré à côté du nouveau prix.
+		var offer := GameState.phone.has_offer(id, GameState.day.day_index)
+		_price_labels[id].text = (tr("CAT_OFFER") % [format_items(GameState.price_of(item)), format_items(item.price)]) if offer else format_items(item.price)
+		_price_labels[id].modulate = Color(1.0, 0.85, 0.3) if offer else Color.WHITE
 	if _cart.is_empty():
 		_cart_label.text = tr("CAT_EMPTY_CART")
 		_order_button.disabled = true

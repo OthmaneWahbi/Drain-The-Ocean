@@ -18,3 +18,5 @@ enum Effect { DRYING_ZONE, BUCKET_CAPACITY, DECOR, BUCKET_COUNT, CARRY_CAPACITY,
 @export var effect_value: float = 0.0
 ## Une seule fois par partie (ex. le grand seau).
 @export var unique: bool = false
+## Absent du catalogue (ex. le catalogue papier du premier appel, livré gratuitement).
+@export var hidden: bool = false

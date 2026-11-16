@@ -101,3 +101,9 @@ PROMPT_NO_SLOT,Plus de case libre pour : %s · [Tab] Ranger la barre,No free slo
 TOOL_EMPTY,Mains,Hands
 TOOLBAR_MENU_TITLE,Ranger la barre,Arrange the bar
 TOOLBAR_MENU_HINT,Clique une case puis une autre pour les échanger. [Tab] ou [Échap] pour fermer.,Click a slot then another to swap them. [Tab] or [Esc] to close.
+PHONE_RING,Dring !,Ring!
+PROMPT_PHONE_ANSWER,[E] Décrocher,[E] Answer
+PHONE_HOLD_MUSIC,♪ Musique d'attente… ♪,♪ Hold music… ♪
+CAT_OFFER,Offre du jour : %s (au lieu de %s),Today's offer: %s (instead of %s)
+ITEM_PAPER_CATALOGUE,Catalogue papier,Paper catalogue
+ITEM_PAPER_CATALOGUE_DESC,Le catalogue de l'agence. Il ne sert à rien : tout se commande au téléphone.,The agency's catalogue. Useless: everything is ordered by phone.
