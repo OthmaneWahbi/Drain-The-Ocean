@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** M0, M2 et les retours de test fusionnés (PR #2, #3, #4). Survie légère et plage vivante en PR #5.
-- **Documents :** PRD v0.14. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Sauvegarde de toute la partie. 76 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane.
+- **Documents :** PRD v0.15. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. 81 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel).
-- **Prochaine étape :** retours d'Othmane, puis la barre d'outils (M-27), le manuel du bricoleur et T2 (bassin en bois, pompe à bras, tuyaux, miroir solaire, moulin-pompe), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
+- **Prochaine étape :** retours d'Othmane, puis la fin de T2 (pompe à bras, tuyaux, moulin-pompe = fin de démo), la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -62,6 +62,7 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - **Puiser :** le joueur, debout dans l'eau, maintient le clic environ 1 s ; le seau se remplit (10 L, ou 20 L avec le grand seau). Ces litres sont **retirés de l'océan** à ce moment. Chaque seau a une petite chance de remonter un coquillage, et un coquillage une petite chance d'être une perle.
 - **Verser :** visée sur une zone de séchage + clic. La zone n'accepte que la place libre ; le reste reste dans le seau. Vider le seau ailleurs (sable, mer) **rend l'eau à l'océan** (M-33, M-34).
 - **Sécher :** chaque zone évapore à débit fixe (`capacité ÷ 45 s` de jour, ×0,3 la nuit). Tous les 4 L évaporés (réglage `liters_per_salt`), elle ajoute 1 sel à son dépôt, plus un tirage de minéral et de minéral rare. Le séchage continue partout, même loin du joueur (M-42).
+- **La palette** a un emplacement par ressource : chaque tas a sa couleur, sa hauteur (qui grandit vite au début puis ralentit) et son compteur.
 - **Récolter et porter :** le dépôt d'une zone s'affiche comme un **tas à côté d'elle**, qui grossit avec la quantité. E sur le tas : 3 unités passent dans les mains (les plus rares d'abord), ou tout le tas avec le râteau. Le clic sur la zone ne sert qu'à verser. On porte 10 unités au maximum (40 avec la brouette). Ce qui ne rentre pas reste dans la zone.
 - **Déposer :** E sur la palette de dépôt : tout ce qui est porté passe dans le **stock**. Seul le stock de la palette sert à payer (troc).
 - **Commander :** E sur le téléphone : le catalogue s'ouvre (le jeu ignore alors les touches du joueur). On remplit un panier (articles identiques regroupés « ×N ») ; « Commander » vérifie qu'on peut payer avec les bras + la palette, retire le prix des bras d'abord puis de la palette, marque les objets uniques comme possédés et crée une **caisse**.
@@ -109,6 +110,15 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - Les outils de triche vivent **tous** dans un module à part, `game/admin/`, chargé au démarrage. Pour les retirer : supprimer ce dossier et sa ligne dans la liste des modules chargés au démarrage (`project.godot`). Rien d'autre n'en dépend. Ils se coupent seuls dans une version exportée « release ».
 - Touches : **F1** affiche la liste, **F6** +3 h, **F7** maintenu vide l'océan, **F8** maintenu temps ×10, **F9** nouvelle partie, **F10** +50 sel +5 minéraux, **F11** +10 000 de chaque ressource, **F12** ouvre toutes les caisses tout de suite.
 
+### Les paliers
+
+- Le catalogue montre tous les articles. Ceux d'un palier pas encore débloqué sont grisés (« Requiert le Manuel du bricoleur ») et ne peuvent pas être commandés.
+- Le Manuel du bricoleur débloque T2. Premiers articles T2 : le bassin en bois (grande zone de 200 L) et le miroir solaire, qui accélère de 50 % l'évaporation des zones à moins de 6 m (les miroirs s'additionnent).
+
+### Le temps qui passe
+
+- Une seule étape fait vivre le monde : l'heure (et le matin), le séchage, les objets à portions, la faim et la soif. L'avance rapide de l'admin (F6) passe par la même étape, découpée en pas de 5 s.
+
 ### La survie légère et la plage
 
 - **Faim et soif** baissent doucement (vides en 15 et 10 min). À zéro, pas de mort : une pénalité grandit et abaisse le plafond de l'endurance (jusqu'à −30 % par besoin). Manger ou boire l'efface aussitôt.
@@ -127,6 +137,27 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — F6 corrigé, palette par ressource, début de T2
+- **Quoi :**
+  - Une seule fonction fait vivre le monde (heure, séchage, objets à portions, faim, soif) ; le jeu et l'avance rapide F6 l'appellent tous les deux.
+  - Palette agrandie (3,6 × 1,6 m), un tas coloré et un compteur par ressource, le nom peint devant.
+  - Manuel du bricoleur (débloque T2, articles T2 grisés avant), bassin en bois (200 L), miroir solaire (+50 % à moins de 6 m).
+  - Catalogue : panneau opaque, liste qui défile.
+  - 5 nouveaux tests (81 au total).
+- **Pourquoi :** retours d'Othmane, et « fais la prochaine release ».
+- **Impact :** `game/core/game_state.gd`, `game_config.gd`, `catalog_item.gd`, `game/data/`, `game/admin/admin_tools.gd`, `game/scenes/` (depot, drying_zone_view, mirror_view, main, ui/catalogue), `game/localization/strings.csv`, `game/tests/`, `docs/GUIDE_CODE.md`, PRD v0.15 (§7, §9.2).
+- **Par :** Claude
+
+### 2026-11-16 — TEST ÉCHOUÉ — F6 n'avançait que l'horloge (test manuel d'Othmane)
+- **Quoi :** avec F6, la faim et la soif ne baissaient pas.
+- **Cause :** F6 faisait avancer seulement le cycle jour/nuit ; la faim, la soif, le séchage et la condensation n'avancent que dans la boucle par image.
+- **Correction :** la boucle par image appelle désormais une fonction unique « faire vivre le monde de N secondes », et F6 l'appelle aussi. Test `test_fast_forward_moves_hunger_drying_and_condenser`.
+- **Par :** Claude (trouvé par Othmane)
+
+### 2026-11-16 — DÉCISION — Palette lisible, release suivante fusionnée directement
+- **Quoi :** la palette doit être plus grande et montrer chaque ressource à part. Faire la release suivante avec les correctifs et la fusionner directement dans main pour qu'il teste.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Endurance réduite de moitié
 - **Quoi :** `stamina_run_s` 20 → 10 s, `stamina_swim_s` 60 → 30 s dans les données. PRD v0.14.

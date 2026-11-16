@@ -100,7 +100,9 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 - `core/drying_logic.gd` : une zone a `capacity_l`, `dry_time_s`, `water_l` et un `deposit` (dictionnaire `{"sel": 4, ...}`).
 - `step()` : évapore `capacité ÷ temps × multiplicateur × delta` litres, les ajoute à un compteur, et chaque fois que le compteur dépasse `liters_per_salt` (4 L), ajoute 1 sel et tire au sort minéraux et minéraux rares.
-- `GameState._process` appelle `step()` sur **toutes** les zones à chaque image, avec le multiplicateur jour/nuit. C'est pour ça que le séchage continue même loin du joueur.
+- `GameState._process` appelle `simulate(delta)`, qui fait avancer **tout ce qui vit avec le temps** : l'heure (et le matin), toutes les zones de séchage, les objets à portions, la faim et la soif. C'est pour ça que le séchage continue même loin du joueur.
+- `advance_time(secondes)` appelle `simulate()` par pas de 5 s : l'avance rapide (F6) fait donc vivre tout le monde, pas seulement l'horloge.
+- Le multiplicateur d'une zone = jour/nuit × `zone_boost(zone)`. `zone_boost` compte les miroirs solaires à moins de 6 m (+50 % chacun).
 - Une zone dans GameState = `{id, kind, position, logic}`. `add_zone()` la crée et émet `zone_added(zone)`.
 - `scenes/world/drying_zone_view.gd` : `main.gd` reçoit `zone_added` et crée cette vue. Elle construit la cuvette ou la bâche, et à chaque image règle la hauteur de son disque d'eau selon `logic.fill_ratio()`.
 - Le **tas de sel** est une classe interne `SaltPile` (un `StaticBody3D` à côté de la zone). Il grossit avec le dépôt, désactive sa collision quand il est vide, et son `interact()` appelle `GameState.harvest(zone)`.
@@ -109,7 +111,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 - `GameState.carried` (les bras) et `GameState.stock` (la palette) sont deux dictionnaires de ressources. `core/economy.gd` regroupe les opérations : `add`, `count`, `can_afford`, `pay_from`.
 - `harvest(zone)` prend 3 unités du dépôt (`take_some`, les plus rares d'abord), ou tout avec le râteau, dans la limite de `carry_space()`. Ce qui ne rentre pas retourne dans le dépôt.
-- `scenes/world/depot.gd` (la palette) : `interact()` appelle `unload_to_stock()`, qui vide les bras dans le stock. Son tas grossit selon `stock`.
+- `scenes/world/depot.gd` (la palette) : `interact()` appelle `unload_to_stock()`, qui vide les bras dans le stock. La palette a un emplacement par ressource (boucle sur `Economy.RESOURCES`) : un tas coloré dont la hauteur suit `pile_height()` (logarithme, plafonnée à 1,5 m), le nombre au-dessus (un `Label3D` toujours tourné vers la caméra) et le nom peint devant. Le tout se rafraîchit sur `stock_changed`.
 - `order(ids)` : `Economy.pay_from([carried, stock], prix)` vérifie d'abord la **somme** des deux, puis retire des bras, puis de la palette.
 
 ### Le téléphone, le catalogue, la livraison
@@ -141,6 +143,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `scenes/ui/hud.tscn` + `hud.gd` : des `Label` en haut à gauche, rafraîchis par signaux (`ocean_changed`, `stock_changed`…), et l'invite au centre, lue sur `player.prompt` à chaque image.
 - `format_liters()` écrit les gros nombres (k, M, Md, T).
 
+### Les paliers (T2)
+
+- Chaque `CatalogItem` a un `tier`. `GameState.unlocked_tier` vaut 1 ; l'effet `UNLOCK_TIER` du Manuel du bricoleur le passe à 2.
+- `is_unlocked(item)` = `item.tier <= unlocked_tier`, et `can_buy()` l'exige. Le catalogue garde chaque ligne en mémoire (`_item_rows`) et grise celles d'un palier verrouillé, en remplaçant la description par « Requiert le Manuel du bricoleur ».
+- Bassin en bois : une zone de séchage de plus (`kind = "bassin_bois"`) ; `add_zone()` lui donne 200 L, et `drying_zone_view.gd` la dessine.
+- Miroir solaire : l'effet `MIRROR` appelle `add_mirror(position)`, qui l'ajoute à `mirrors` et émet `mirror_added` ; `main.gd` crée `mirror_view.gd`. Le miroir n'a aucune logique propre : c'est `zone_boost()` qui le compte.
+
 ### La survie légère et la plage
 
 - `core/survival_logic.gd` (classe `SurvivalLogic`) : `food` et `water` de 1 à 0. `step()` les fait baisser ; seul le temps passé **à zéro** fait grandir une pénalité. `stamina_cap()` = 1 − pénalités. `eat()` / `drink()` remontent le besoin et effacent sa pénalité.
@@ -156,7 +165,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 ### Les outils admin
 
-- `admin/admin_tools.gd` est un autoload indépendant : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
+- `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
 
 ---
 
@@ -173,3 +182,6 @@ Logiques pures (séchage, seau, économie, jour/nuit, endurance), GameState sour
 
 ### PR #5 — Survie légère et plage vivante
 `SurvivalLogic` (faim, soif, plafond d'endurance), `StationLogic` (bâche de condensation, rations), ramassables (`pickups` : noix de coco, coquillages du matin), vues `pickup_view.gd` et `station_view.gd`, effet `STATION` du catalogue, jauges dans le HUD, ce guide.
+
+### PR #6 — Correctifs et début de T2
+`GameState.simulate()` / `advance_time()` (F6 fait vivre le monde), palette à un tas par ressource, `unlocked_tier` + catalogue grisé, Manuel du bricoleur, bassin en bois, miroir solaire (`mirrors`, `zone_boost`), panneau du catalogue opaque et défilant.
