@@ -222,6 +222,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `hud.gd` : `slot_text(entrée)` (statique, réutilisé par le menu) écrit « Seau », « Sel ×3 » ou « Mains » ; la barre se redessine sur `tool_changed` et `carried_changed`. `player.gd` : 1-5 et molette, seau et râteau visibles selon la case tenue.
 - Les tas : `drying_zone_view.gd` crée un `SaltPile` par entrée de `config.pile_slots` (sel 0, minéraux +1, minéraux rares −1 case), placé à `GameState.pile_offset(zone, matériau)`, avec sa couleur. Chaque tas affiche et ramasse seulement son matériau.
 
+### Le monde vivant (PR #14)
+
+- **Océan** (`scenes/world/ocean_view.gd`, `shaders/ocean.gdshader`) : la technique classique des **vagues de Gerstner** (GPU Gems 1, chapitre 1). Chaque vague déplace les sommets en cercle (x, z suivent `cos`, y suit `sin`) ; on additionne trois vagues et on calcule la normale avec les dérivées (tangente × binormale). Elles sont calculées en coordonnées du monde, donc le maillage peut suivre la caméra (aligné sur 1 m pour que rien ne glisse). Un carré de 160 m très découpé porte les vagues ; un plan de 12 km, 2 cm plus bas, va jusqu'à l'horizon (les vagues s'éteignent avec la distance).
+- **Couleur selon la profondeur** : le fragment lit le tampon de profondeur (`hint_depth_texture`), reconstruit la distance de la scène derrière l'eau (`INV_PROJECTION_MATRIX`) et la compare à celle de la surface : peu d'eau = turquoise et écume, beaucoup = bleu profond. Une ligne `#if CURRENT_RENDERER == RENDERER_COMPATIBILITY` gère les deux moteurs de rendu. `FRONT_FACING` faux = on voit la surface d'en dessous.
+- **Sous l'eau** (`scenes/ui/underwater_overlay.gd`, `shaders/underwater.gdshader`) : un `ColorRect` plein écran lit l'image (`hint_screen_texture`), la fait onduler, la teinte et assombrit les bords ; en même temps, le brouillard de l'`Environment` passe au bleu épais (et revient à l'ancien en sortant). `is_camera_under(y caméra, niveau)` est statique et testée.
+- **Vie** : `core/ambient_motion.gd` (pur : cercle, tangente, profondeur permise aux poissons, point dans un anneau, retour de l'autre côté, battement d'ailes). `fauna.gd` contient trois petites classes (`Seagull`, `Fish`, `Crab`) faites de boîtes ; `clouds.gd` déplace 16 nuages avec le vent ; `seabed_decor.gd` pose rochers, algues et coraux avec une graine fixe. Aucun n'a de collision ni de règle : `main.gd` les crée et on peut retirer chacun sans rien casser.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -265,3 +272,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #13 — Un tas par matériau, matériaux dans la barre, menu pour la ranger
 `ToolbarLogic` (`put`, `clear`, `swap`, cases vides utilisables), `GameState._sync_toolbar` / `has_slot_for` / `can_carry` / `swap_slots`, `harvest(zone, resource)`, `DryingLogic.take_some(n, only)`, `config.pile_slots`, emprises des zones agrandies, `toolbar_menu.gd`, `Hud.slot_text`, `test_toolbar.gd` réécrit (21 tests).
+
+### PR #14 — Monde vivant
+`OceanView` + shader de Gerstner et de profondeur, `UnderwaterOverlay` + shader plein écran, `SeabedDecor`, `Clouds`, `Fauna`, `AmbientMotion`, `test_ambient.gd`.

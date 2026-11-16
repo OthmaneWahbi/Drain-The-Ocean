@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="2"]
@@ -52,16 +52,6 @@ albedo_color = Color(0.45, 0.33, 0.22, 1)
 
 [sub_resource type="StandardMaterial3D" id="mat_leaves"]
 albedo_color = Color(0.25, 0.55, 0.25, 1)
-
-[sub_resource type="StandardMaterial3D" id="mat_water"]
-transparency = 1
-albedo_color = Color(0.05, 0.35, 0.55, 0.85)
-metallic_specular = 0.4
-roughness = 0.35
-
-[sub_resource type="PlaneMesh" id="ocean_mesh"]
-material = SubResource("mat_water")
-size = Vector2(12000, 12000)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("3")
@@ -157,9 +147,6 @@ script = ExtResource("4")
 [node name="Depot" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0.5, 4.5)
 script = ExtResource("5")
-
-[node name="Ocean" type="MeshInstance3D" parent="."]
-mesh = SubResource("ocean_mesh")
 
 [node name="Player" parent="." instance=ExtResource("1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 6)

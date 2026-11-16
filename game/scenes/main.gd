@@ -1,6 +1,6 @@
 extends Node3D
 ## Chef d'orchestre de la scène : crée une vue 3D pour chaque élément de GameState
-## (zones, caisses, décors), anime le soleil, place la surface de l'océan à sa vraie hauteur,
+## (zones, caisses, décors), anime le soleil, crée l'océan et la vie autour de l'île,
 ## et gère la sauvegarde manuelle (F5).
 
 const DryingZoneView := preload("res://scenes/world/drying_zone_view.gd")
@@ -21,7 +21,6 @@ const CHUTE_TIME_S := 1.5
 @onready var sun: DirectionalLight3D = $Sun
 @onready var depot: Node3D = $Depot
 @onready var world_env: WorldEnvironment = $WorldEnvironment
-@onready var ocean_mesh: Node3D = $Ocean
 
 var _views: Node3D
 ## La lune : une lumière bleutée très faible et un disque blanc dessiné loin dans le ciel,
@@ -37,6 +36,17 @@ func _ready() -> void:
 	_views.name = "Views"
 	add_child(_views)
 	_build_moon()
+	# Le monde vivant : océan à vagues, filtre sous l'eau, fond marin, nuages, animaux.
+	# Chaque morceau est indépendant ; on peut en retirer un sans toucher aux autres.
+	var ocean := OceanView.new()
+	ocean.name = "Ocean"
+	add_child(ocean)
+	var underwater := UnderwaterOverlay.new()
+	underwater.name = "Underwater"
+	underwater.environment = world_env.environment
+	add_child(underwater)
+	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
+		add_child(extra)
 	GameState.game_reset.connect(_clear_views)
 	GameState.zone_added.connect(_on_zone_added)
 	GameState.crate_added.connect(_on_crate_added)
@@ -80,13 +90,6 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_sun()
-	# Le plan d'eau suit la hauteur honnête calculée depuis le volume retiré (M1),
-	# et suit le joueur à l'horizontale pour qu'on n'en voie jamais le bord.
-	ocean_mesh.position.y = GameState.water_level_y()
-	var cam := get_viewport().get_camera_3d()
-	if cam:
-		ocean_mesh.position.x = snappedf(cam.global_position.x, 100.0)
-		ocean_mesh.position.z = snappedf(cam.global_position.z, 100.0)
 
 
 func _build_moon() -> void:
