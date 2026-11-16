@@ -1,0 +1,223 @@
+<title>Questions de suite MVP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout : colonne unique de cartes, en-tête collant avec progression et export */
+:root{
+  --bg:#eef4f6; --surface:#ffffff; --fg:#13262e; --muted:#5a7079; --line:#d3e0e5;
+  --accent:#0b6e8a; --accent-soft:#dcf0f5; --salt:#f7fafb; --rec:#b4561b; --rec-soft:#fbeadf; --ok:#2c7a4b;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c171c; --surface:#13232a; --fg:#e3eef1; --muted:#93aab3; --line:#24404a;
+  --accent:#4cc0dc; --accent-soft:#163a45; --salt:#0f1e24; --rec:#f0a06c; --rec-soft:#3a2416; --ok:#6fcf97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c171c; --surface:#13232a; --fg:#e3eef1; --muted:#93aab3; --line:#24404a;
+  --accent:#4cc0dc; --accent-soft:#163a45; --salt:#0f1e24; --rec:#f0a06c; --rec-soft:#3a2416; --ok:#6fcf97; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px}
+.brand{font-family:var(--display);font-weight:700;font-size:17px;flex:1 1 220px;min-width:0}
+.prog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{width:110px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.status{font-size:13px;color:var(--muted)}
+.status.ok{color:var(--ok)}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--surface);padding:7px 14px;border-radius:8px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:focus-visible,label.opt:focus-within,textarea:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.intro{padding-block:28px 8px}
+h1{font-family:var(--display);font-size:clamp(24px,4vw,32px);line-height:1.15;margin:0 0 10px;text-wrap:balance}
+.intro p{margin:0 0 8px;color:var(--muted);max-width:65ch}
+.legend{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+nav.themes{display:flex;flex-wrap:wrap;gap:6px;padding-block:14px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 11px;font-size:13px;text-decoration:none}
+.chip b{color:var(--muted);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums}
+section.theme{padding-block:18px 6px}
+section.theme h2{font-family:var(--display);font-size:20px;margin:0 0 12px;scroll-margin-top:80px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;display:grid;gap:10px}
+.q.changed{border-color:var(--accent)}
+.qhead{display:flex;gap:10px;align-items:baseline}
+.qid{font-family:var(--display);font-size:13px;color:var(--accent);font-weight:700;flex:none}
+.qtext{font-weight:600;min-width:0}
+.qnote{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.opts{display:grid;gap:6px}
+label.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--salt);cursor:pointer}
+label.opt input{margin-top:3px;accent-color:var(--accent);flex:none}
+label.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+label.opt span{min-width:0}
+.rec{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--rec);background:var(--rec-soft);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+textarea{font:inherit;font-size:14px;width:100%;box-sizing:border-box;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--salt);color:var(--fg);resize:vertical}
+table.cat{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+table.cat td,table.cat th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.cat th{color:var(--muted);font-weight:500}
+.scroll{overflow-x:auto}
+footer{padding-block:24px 48px;display:grid;gap:12px}
+footer textarea{min-height:160px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="brand">Drain the Ocean · Questions de suite</div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><span id="progtxt">0 / 10 modifiées</span></div>
+  <span class="status" id="status">Chargement…</span>
+  <button class="btn" id="saveBtn" type="button">Envoyer mes réponses</button>
+</div></header>
+
+<main class="wrap">
+  <div class="intro">
+    <h1>10 dernières questions avant de coder</h1>
+    <p>Tes réponses au premier questionnaire en ont ouvert quelques nouvelles. Chaque question a déjà ma recommandation cochée (<span class="legend"><span class="rec">recommandé</span></span>). Tu n'as qu'à changer ce qui ne te va pas, et ajouter un commentaire si tu veux.</p>
+    <p>Tes réponses s'enregistrent automatiquement. Quand tu as fini, clique sur « Envoyer mes réponses » : je pourrai les lire directement, sans copier-coller.</p>
+  </div>
+  <nav class="themes" id="themes" aria-label="Thèmes"></nav>
+  <div id="list"></div>
+  <footer>
+    <div class="row">
+      <button class="btn" id="saveBtn2" type="button">Envoyer mes réponses</button>
+      <button class="btn ghost" id="copyBtn" type="button">Copier en texte</button>
+      <button class="btn ghost" id="resetBtn" type="button">Tout remettre aux recommandations</button>
+      <span class="status" id="status2"></span>
+    </div>
+    <label for="export" class="qnote">Si l'envoi ne marche pas, copie ce texte et colle-le dans le chat :</label>
+    <textarea id="export" readonly></textarea>
+  </footer>
+</main>
+
+<script>
+const T = {S:"Survie et nage",W:"Monde et fin secrète",E:"Économie et téléphone",V:"Visuel"};
+const Q = [
+["N-01","V","Le petit tourbillon lointain (indice du drain) : tu as dit « non » pour le MVP (M-67), mais tu l'as gardé dans les clins d'œil du MVP (M-84). On le garde ?",["Oui, on le garde dans le MVP","Non, pas dans le MVP"],0,"Il ne coûte presque rien et récompense les joueurs attentifs."],
+["N-02","S","D'où viennent la nourriture et l'eau douce ?",["Noix de coco sur les palmiers + rations au catalogue ; eau douce avec une bâche de condensation (achat T1)","Uniquement le catalogue (nourriture et bouteilles d'eau)","Pêche + noix de coco + eau de condensation","Autre (en commentaire)"],0],
+["N-03","S","Que se passe-t-il quand la faim ou la soif tombe à zéro ?",["Pas de mort : l'endurance maximale baisse jusqu'à ce qu'on mange ou boive","On s'évanouit et on se réveille sur la plage, sans perte","On meurt et on recharge la dernière sauvegarde"],0,"Le jeu reste détendu : la survie doit gêner un peu, pas punir."],
+["N-04","S","Que se passe-t-il quand on se noie ?",["Écran noir, on revient sur la plage de l'île, sans perte de ressources","On revient sur la plage et on perd ce qu'on portait","On recharge la dernière sauvegarde"],0],
+["N-05","S","L'endurance : combien, comment elle remonte ?",["~20 s de course ou ~60 s de nage ; elle remonte à l'arrêt ou sur la terre ferme ; améliorable avec la nourriture et des objets du catalogue","Plus longue (~40 s de course, ~2 min de nage)","Plus courte"],0],
+["N-06","W","Fin secrète à la nage : comment accorder « des milliers de km » avec un océan qu'on doit pouvoir vider ?",["Le bassin est réellement immense (rayon de plusieurs milliers de km) : seule la zone autour de l'île est détaillée, le reste est un plan d'eau vide ; le volume devient ~10¹⁸-10¹⁹ L","Le bassin à vider reste petit (~8 km), mais au-delà de son bord il y a l'océan « du monde », qu'on peut traverser à la nage","Autre (en commentaire)"],0,"La première option garde la blague « l'océan est trop grand » au pied de la lettre. Ça ne change rien pour le MVP, mais ça compte pour l'architecture."],
+["N-07","E","La perle dans le MVP : d'où vient-elle et à quoi sert-elle ?",["Rare dans les coquillages ramassés (~2 %) ; sert à un objet spécial ou cosmétique du catalogue","Rare au puisage seulement","Ne sert à rien pour l'instant, c'est une collection"],0],
+["N-08","E","Les offres spéciales au téléphone : quoi et à quelle fréquence ?",["Environ une fois par jour de jeu, le téléphone sonne : un article à prix réduit pendant une journée ; on décroche pour voir l'offre","Plus rarement, avec des objets exclusifs","Autre (en commentaire)"],0],
+["N-09","E","Quel achat automatise le transport des ressources dans le MVP ?",["Une brouette en T1 (porte beaucoup à la fois), puis un toboggan à sacs jusqu'à la palette en T2 ; le vrai tapis roulant reste en T3","Seulement la brouette","Directement un tapis roulant en T2"],0,"Tu avais validé la liste du catalogue telle quelle, mais elle ne contenait pas d'objet de transport."],
+["N-10","V","Le repère de niveau d'eau dans la démo ?",["Une jauge à aiguille plantée près de la plage : les chiffres restent honnêtes, mais l'aiguille amplifie les dixièmes de millimètre","Une simple règle graduée avec une ligne mouillée","Autre (en commentaire)"],0,"En 45 min, le niveau réel ne baisse que d'une fraction de millimètre : il faut un instrument qui l'amplifie."]
+];
+const CATALOG = [["T0","Seau 10 L","De départ","—"],["T0","Cuvette rocheuse","Zone de séchage de départ","—"],["T1","Bâche de séchage","Zone de séchage à poser","15 sel"],["T1","Grand seau 20 L","×2 par trajet","40 sel"],["T1","Tongs","+20 % de vitesse de marche","25 sel + 2 coquillages"],["T1","Râteau à sel","Récolte une zone d'un coup","60 sel + 5 minéraux"],["T1","Palanche","Porter deux seaux","120 sel + 10 minéraux"],["T1","Bateau (gag)","Livre un bateau en bouteille","999 sel"],["T1→T2","Manuel du bricoleur","Débloque T2","250 sel + 25 minéraux + 10 coquillages"],["T2","Bassin en bois","Grande zone de séchage","300 sel + 20 minéraux"],["T2","Pompe à bras","×10 en tournant la manivelle","500 sel + 40 minéraux"],["T2","Tuyaux","Relient la pompe aux bassins","50 sel / tronçon"],["T2","Miroir solaire","+50 % d'évaporation autour","200 sel + 5 minéraux rares"],["T2","Moulin-pompe","Première machine automatique, fin de la démo","1 500 sel + 100 minéraux + 10 minéraux rares"]];
+
+const state = {}; // id -> {c: index|null, t: commentaire}
+function defaults(){ for(const q of Q) state[q[0]] = {c: q[4] >= 0 ? q[4] : null, t: ""}; }
+defaults();
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const list = $("#list"); list.innerHTML = "";
+  const nav = $("#themes"); nav.innerHTML = "";
+  for(const k of Object.keys(T)){
+    const qs = Q.filter(q => q[1] === k);
+    const a = document.createElement("a"); a.className = "chip"; a.href = "#t-" + k;
+    a.textContent = T[k]; const b = document.createElement("b"); b.textContent = qs.length; a.appendChild(b); nav.appendChild(a);
+    const sec = document.createElement("section"); sec.className = "theme";
+    sec.innerHTML = `<h2 id="t-${k}">${esc(T[k])}</h2>`;
+    for(const q of qs){
+      const [id,,text,opts,rec,note] = q;
+      const card = document.createElement("div"); card.className = "q"; card.id = "card-" + id;
+      let html = `<div class="qhead"><span class="qid">${id}</span><span class="qtext">${esc(text)}</span></div>`;
+      if(note && note !== "CATALOG") html += `<p class="qnote">${esc(note)}</p>`;
+      if(note === "CATALOG") html += `<div class="scroll"><table class="cat"><thead><tr><th>Palier</th><th>Objet</th><th>Rôle</th><th>Prix indicatif</th></tr></thead><tbody>${CATALOG.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      if(opts.length){
+        html += `<div class="opts" role="radiogroup" aria-label="${esc(id)}">` + opts.map((o,i) =>
+          `<label class="opt"><input type="radio" name="${id}" id="${id}-${i}" value="${i}"><span>${esc(o)}${i===rec?'<span class="rec">recommandé</span>':''}</span></label>`).join("") + `</div>`;
+      }
+      html += `<textarea id="${id}-t" placeholder="${opts.length ? "Commentaire (facultatif)" : "Ta réponse"}" rows="${opts.length?1:2}"></textarea>`;
+      card.innerHTML = html; sec.appendChild(card);
+    }
+    list.appendChild(sec);
+  }
+  list.addEventListener("change", onInput); list.addEventListener("input", onInput);
+}
+function syncDom(){
+  for(const q of Q){
+    const s = state[q[0]];
+    q[3].forEach((_,i) => { const el = document.getElementById(q[0]+"-"+i); if(el) el.checked = s.c === i; });
+    const t = document.getElementById(q[0]+"-t"); if(t && t.value !== s.t) t.value = s.t;
+  }
+  refresh();
+}
+function onInput(e){
+  const el = e.target; if(!el.id) return;
+  const id = el.id.replace(/-(t|\d+)$/,""); if(!state[id]) return;
+  if(el.type === "radio") state[id].c = +el.value; else if(el.tagName === "TEXTAREA") state[id].t = el.value;
+  refresh(); scheduleSave();
+}
+function isChanged(q){ const s = state[q[0]]; return (q[4] >= 0 && s.c !== q[4]) || s.t.trim() !== ""; }
+function refresh(){
+  let n = 0;
+  for(const q of Q){ const c = isChanged(q); if(c) n++; const card = document.getElementById("card-"+q[0]); if(card) card.classList.toggle("changed", c); }
+  $("#progtxt").textContent = `${n} / ${Q.length} modifiées`;
+  $("#barfill").style.width = (n / Q.length * 100) + "%";
+  $("#export").value = exportText();
+  try { localStorage.setItem("dto-mvp-2", JSON.stringify(state)); } catch(e) {}
+}
+function exportText(){
+  const lines = ["Réponses aux questions de suite"];
+  for(const q of Q){
+    const s = state[q[0]]; const [id,,,opts,rec] = q;
+    let a = opts.length ? (s.c === null ? "(sans réponse)" : `${String.fromCharCode(65+s.c)}. ${opts[s.c]}${s.c===rec?" [recommandé]":" [CHANGÉ]"}`) : (s.t.trim() || "(sans réponse)");
+    if(opts.length && s.t.trim()) a += ` — ${s.t.trim()}`;
+    lines.push(`${id} : ${a}`);
+  }
+  return lines.join("\n");
+}
+
+// Enregistrement partagé (lisible par Claude)
+let db = null, timer = null;
+function setStatus(t, ok){ for(const s of ["#status","#status2"]){ const el=$(s); el.textContent=t; el.classList.toggle("ok", !!ok); } }
+function payload(submitted){
+  const answers = {};
+  for(const q of Q){ const s = state[q[0]]; answers[q[0]] = {choix: s.c, libelle: (q[3].length && s.c !== null) ? q[3][s.c] : null, recommande: q[4] >= 0 ? s.c === q[4] : null, commentaire: s.t}; }
+  return {answers, updatedAt: new Date().toISOString(), ...(submitted ? {submittedAt: new Date().toISOString()} : {})};
+}
+function scheduleSave(){ clearTimeout(timer); timer = setTimeout(() => save(false), 1200); setStatus("Modifications non enregistrées…"); }
+async function save(submitted){
+  clearTimeout(timer);
+  if(!db){ setStatus(submitted ? "Envoi impossible ici : utilise « Copier en texte »." : "Enregistré dans ce navigateur"); return; }
+  try { await (submitted ? db.doc("reponses/othmane-suite").set(payload(true)) : db.doc("reponses/othmane-suite").update(payload(false))); setStatus(submitted ? "Réponses envoyées ✓" : "Enregistré", true); }
+  catch(e){
+    try { if(!submitted){ await db.doc("reponses/othmane-suite").set(payload(false)); setStatus("Enregistré", true); return; } } catch(e2){}
+    setStatus("Échec de l'enregistrement : utilise « Copier en texte ».");
+  }
+}
+$("#saveBtn").onclick = $("#saveBtn2").onclick = () => save(true);
+$("#copyBtn").onclick = async () => {
+  const t = exportText();
+  try { await navigator.clipboard.writeText(t); setStatus("Texte copié", true); }
+  catch(e){ const ta = $("#export"); ta.focus(); ta.select(); setStatus("Texte sélectionné : fais Ctrl+C"); }
+};
+let resetArmed = false;
+$("#resetBtn").onclick = () => {
+  if(!resetArmed){ resetArmed = true; $("#resetBtn").textContent = "Cliquer encore pour confirmer"; setTimeout(()=>{resetArmed=false;$("#resetBtn").textContent="Tout remettre aux recommandations";}, 4000); return; }
+  resetArmed = false; $("#resetBtn").textContent = "Tout remettre aux recommandations";
+  defaults(); syncDom(); scheduleSave();
+};
+
+render();
+try { const saved = JSON.parse(localStorage.getItem("dto-mvp-2") || "null"); if(saved) for(const k in saved) if(state[k]) state[k] = saved[k]; } catch(e) {}
+syncDom();
+setStatus("Enregistré dans ce navigateur");
+
+(async () => {
+  try {
+    db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+    if(!db){ setStatus("Enregistré dans ce navigateur"); return; }
+    const loadTimer = setTimeout(() => setStatus("Connexion lente…"), 10000);
+    const snap = await db.doc("reponses/othmane-suite").get();
+    clearTimeout(loadTimer);
+    if(snap.exists){
+      const a = (snap.data() || {}).answers || {};
+      for(const id in a) if(state[id]) state[id] = {c: a[id].choix ?? state[id].c, t: a[id].commentaire || ""};
+      syncDom(); setStatus("Réponses récupérées", true);
+    } else setStatus("Prêt");
+  } catch(e){ db = null; setStatus("Enregistré dans ce navigateur"); }
+})();
+</script>

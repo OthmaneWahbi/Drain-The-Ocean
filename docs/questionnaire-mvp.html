@@ -1,0 +1,300 @@
+<title>Questionnaire MVP Drain the Ocean</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout : colonne unique de cartes, en-tête collant avec progression et export */
+:root{
+  --bg:#eef4f6; --surface:#ffffff; --fg:#13262e; --muted:#5a7079; --line:#d3e0e5;
+  --accent:#0b6e8a; --accent-soft:#dcf0f5; --salt:#f7fafb; --rec:#b4561b; --rec-soft:#fbeadf; --ok:#2c7a4b;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c171c; --surface:#13232a; --fg:#e3eef1; --muted:#93aab3; --line:#24404a;
+  --accent:#4cc0dc; --accent-soft:#163a45; --salt:#0f1e24; --rec:#f0a06c; --rec-soft:#3a2416; --ok:#6fcf97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c171c; --surface:#13232a; --fg:#e3eef1; --muted:#93aab3; --line:#24404a;
+  --accent:#4cc0dc; --accent-soft:#163a45; --salt:#0f1e24; --rec:#f0a06c; --rec-soft:#3a2416; --ok:#6fcf97; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding-block:10px}
+.brand{font-family:var(--display);font-weight:700;font-size:17px;flex:1 1 220px;min-width:0}
+.prog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{width:110px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.status{font-size:13px;color:var(--muted)}
+.status.ok{color:var(--ok)}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--surface);padding:7px 14px;border-radius:8px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:focus-visible,label.opt:focus-within,textarea:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.intro{padding-block:28px 8px}
+h1{font-family:var(--display);font-size:clamp(24px,4vw,32px);line-height:1.15;margin:0 0 10px;text-wrap:balance}
+.intro p{margin:0 0 8px;color:var(--muted);max-width:65ch}
+.legend{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+nav.themes{display:flex;flex-wrap:wrap;gap:6px;padding-block:14px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 11px;font-size:13px;text-decoration:none}
+.chip b{color:var(--muted);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums}
+section.theme{padding-block:18px 6px}
+section.theme h2{font-family:var(--display);font-size:20px;margin:0 0 12px;scroll-margin-top:80px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;display:grid;gap:10px}
+.q.changed{border-color:var(--accent)}
+.qhead{display:flex;gap:10px;align-items:baseline}
+.qid{font-family:var(--display);font-size:13px;color:var(--accent);font-weight:700;flex:none}
+.qtext{font-weight:600;min-width:0}
+.qnote{font-size:13px;color:var(--muted);margin:-4px 0 0}
+.opts{display:grid;gap:6px}
+label.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--salt);cursor:pointer}
+label.opt input{margin-top:3px;accent-color:var(--accent);flex:none}
+label.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+label.opt span{min-width:0}
+.rec{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--rec);background:var(--rec-soft);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+textarea{font:inherit;font-size:14px;width:100%;box-sizing:border-box;min-height:40px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--salt);color:var(--fg);resize:vertical}
+table.cat{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+table.cat td,table.cat th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.cat th{color:var(--muted);font-weight:500}
+.scroll{overflow-x:auto}
+footer{padding-block:24px 48px;display:grid;gap:12px}
+footer textarea{min-height:160px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="brand">Drain the Ocean · Questionnaire MVP</div>
+  <div class="prog"><div class="bar"><i id="barfill"></i></div><span id="progtxt">0 / 85 modifiées</span></div>
+  <span class="status" id="status">Chargement…</span>
+  <button class="btn" id="saveBtn" type="button">Envoyer mes réponses</button>
+</div></header>
+
+<main class="wrap">
+  <div class="intro">
+    <h1>85 questions pour construire la démo</h1>
+    <p>Chaque question a déjà ma recommandation cochée (<span class="legend"><span class="rec">recommandé</span></span>). Tu n'as qu'à changer ce qui ne te va pas, et ajouter un commentaire si tu veux.</p>
+    <p>Tes réponses s'enregistrent automatiquement. Quand tu as fini, clique sur « Envoyer mes réponses » : je pourrai les lire directement, sans copier-coller.</p>
+  </div>
+  <nav class="themes" id="themes" aria-label="Thèmes"></nav>
+  <div id="list"></div>
+  <footer>
+    <div class="row">
+      <button class="btn" id="saveBtn2" type="button">Envoyer mes réponses</button>
+      <button class="btn ghost" id="copyBtn" type="button">Copier en texte</button>
+      <button class="btn ghost" id="resetBtn" type="button">Tout remettre aux recommandations</button>
+      <span class="status" id="status2"></span>
+    </div>
+    <label for="export" class="qnote">Si l'envoi ne marche pas, copie ce texte et colle-le dans le chat :</label>
+    <textarea id="export" readonly></textarea>
+  </footer>
+</main>
+
+<script>
+const T = {
+A:"Objectif et périmètre du MVP",B:"Technique",C:"Contrôles et caméra",D:"Personnage",E:"Le seau et le puisage",F:"Le séchage",G:"Les ressources",H:"Téléphone, catalogue et livraisons",I:"Contenu du catalogue du MVP",J:"L'île, l'océan et le monde",K:"Interface et prise en main",L:"Audio",M:"Sauvegarde",N:"Hors MVP"};
+// [id, thème, question, options, index recommandé (-1 = réponse libre), note]
+const Q = [
+["M-01","A","À quoi sert le MVP ?",["Prototype interne pour vérifier que c'est amusant","Démo publique (itch.io, Steam Next Fest)","Les deux : prototype interne d'abord, qui devient la démo"],2],
+["M-02","A","Durée de jeu de la démo ?",["15-20 min","30-45 min","60 min et plus"],1],
+["M-03","A","Paliers inclus dans le MVP ?",["T0-T1 (seau, bricolage)","T0-T2 (seau → bricolage → hydraulique manuelle, jusqu'à la première machine automatique)","T0-T3 (jusqu'aux moteurs)"],1],
+["M-04","A","La vraie fin (drain, avion publicitaire) dans le MVP ?",["Non, pas construite","Construite et testable via une touche de debug, mais pas montrée dans la démo","Jouable dans la démo avec un « mini-océan »"],1,"La fin est la chute du jeu complet : la montrer dans la démo la gâcherait."],
+["M-05","A","Comment se termine la démo ?",["Écran « Merci d'avoir joué »","Teaser : le catalogue montre en silhouette les machines T3, un gros avion passe, puis écran de fin de démo","Pas de fin, on peut continuer"],1],
+["M-06","A","Niveau graphique du MVP ?",["Formes grises (greybox) seulement","Greybox d'abord, puis packs low-poly gratuits (CC0) pour la démo","Graphismes finaux directement"],1],
+["M-07","A","Qui produit les modèles 3D, textures et sons ?",["Toi","Packs d'assets (gratuits ou payants)","Un artiste, plus tard","Mélange : packs pour le MVP, remplacés ensuite par du sur-mesure"],3],
+["M-08","A","Langues du MVP ?",["Français seul","Français + anglais, système de traduction en place dès le début","Plus de langues"],1],
+["M-09","B","Version de Godot ?",["Dernière 4.x stable, figée ensuite","Une version précise que j'utilise déjà (précise-la en commentaire)"],0],
+["M-10","B","Langage de programmation ?",["GDScript typé","C#"],0,"C# complique le portage mobile."],
+["M-11","B","Quel est ton PC (carte graphique, processeur, RAM) ?",[],-1,"Il sert de référence pour les performances."],
+["M-12","B","Git LFS pour les gros fichiers (modèles, textures, sons) ?",["Oui","Non"],0,"Le quota gratuit de GitHub est limité, on le surveillera."],
+["M-13","B","Intégration continue (GitHub Actions) ?",["Rien","Tests automatiques sur chaque PR","Tests + export Windows téléchargeable sur chaque PR"],1],
+["M-14","B","Résolution et affichage ?",["1080p de référence, fenêtré + plein écran, 16:9 et ultra-large supportés","Autre (précise en commentaire)"],0],
+["M-15","C","Disposition du clavier ?",["ZQSD fixe","WASD fixe","Détection automatique de la disposition + touches réassignables"],2],
+["M-16","C","Manette dans le MVP ?",["Oui","Non, plus tard (le code des contrôles est prévu pour)"],1],
+["M-17","C","Sauter ? Courir ?",["Courir et sauter (petit saut, pas de parkour)","Courir seulement","Ni l'un ni l'autre"],0],
+["M-18","C","Boutons d'action ?",["Clic gauche = utiliser l'outil (puiser, verser, récolter) · E = interagir (téléphone, caisse) · molette ou 1-5 = changer d'outil","Autre (précise en commentaire)"],0],
+["M-19","C","Caméra en troisième personne ?",["Au-dessus de l'épaule, orbite à la souris","Fixe derrière le personnage","Caméra libre"],0],
+["M-20","C","Touche de bascule 1re / 3e personne ?",["V","F5","Autre (précise en commentaire)"],0],
+["M-21","C","Options de confort ?",["Curseur de champ de vision (FOV), balancement de tête désactivable, sensibilité souris","Rien pour le MVP"],0],
+["M-22","C","Comment placer un objet acheté ?",["En première personne, avec un aperçu fantôme qu'on tourne à la molette (vue de dessus plus tard)","Vue de dessus dédiée dès le MVP","Placement sur une grille"],0],
+["M-23","D","Apparence du personnage ?",["Fixe et neutre pour le MVP, à concevoir plus tard","Choix du personnage au début","Personnalisable"],0],
+["M-24","D","Nager dans le MVP ?",["Oui, nage simple","Non, l'eau profonde est infranchissable"],0],
+["M-25","D","Si on nage trop loin ?",["Gag : l'écran s'assombrit et on se réveille sur l'île","Mur invisible","Un courant nous ramène"],0],
+["M-26","D","Endurance, fatigue, faim, soif ?",["Aucune","Légères"],0],
+["M-27","D","Combien d'objets tenus à la fois ?",["Un seul, on change dans un menu","Barre d'outils de 5 cases","Inventaire complet"],1],
+["M-28","D","Que deviennent les ressources récoltées ?",["On porte chaque sac à la main jusqu'à la zone de dépôt","Elles vont dans un stock global (compteur), avec des tas visibles près du dépôt","À la main au début, stock automatique après un achat (brouette, tapis)"],1,"Porter chaque sac devient vite pénible."],
+["M-29","E","Comment remplit-on le seau ?",["Un clic face à l'eau (instantané)","Entrer dans l'eau peu profonde et maintenir le clic (~1 s)","Animation automatique"],1],
+["M-30","E","Capacité du seau de départ ?",["5 L","10 L","20 L"],1],
+["M-31","E","Un seau plein ralentit le joueur ?",["Non","Un peu (-15 %)","Beaucoup"],1],
+["M-32","E","L'eau se renverse si on court ou saute ?",["Un peu (gag), on retire si c'est agaçant en test","Non"],0],
+["M-33","E","Verser ailleurs qu'une zone de séchage ?",["Sur le sable l'eau s'infiltre (perdue), dans la mer elle retourne à l'océan","Impossible"],0],
+["M-34","E","Quand l'eau compte-t-elle comme retirée de l'océan ?",["Dès qu'elle est puisée (la remettre dans la mer la rend)","Seulement une fois évaporée"],0,"Le compteur réagit tout de suite, c'est plus gratifiant."],
+["M-35","E","Améliorations du seau dans le MVP ?",["Grand seau (20 L) + palanche (2 seaux)","Ajouter d'autres idées (en commentaire)"],0],
+["M-36","F","Première zone de séchage ?",["Creuser un trou dans le sable","Une cuvette rocheuse naturelle déjà sur l'île (la bâche devient le premier achat)","Une bâche livrée au premier appel"],1],
+["M-37","F","Temps pour sécher un seau dans la cuvette, en plein soleil ?",["20 s","45 s","2 min"],1],
+["M-38","F","Une zone de séchage a-t-elle une capacité maximale ?",["Oui, elle refuse l'eau quand elle est pleine","Non"],0,"C'est ce qui pousse à acheter plus de surface."],
+["M-39","F","Récolte ?",["Clic sur le dépôt de sel, puis un râteau récolte toute une zone d'un coup","Automatique dès le début"],0],
+["M-40","F","Cycle jour/nuit dans le MVP ?",["Oui : 20 min réelles par jour, évaporation ×0,3 la nuit","Oui, mais seulement décoratif","Non"],0],
+["M-41","F","Où poser les zones de séchage achetées ?",["N'importe où sur du sable plat","Emplacements prédéfinis","Sur une grille"],0],
+["M-42","F","Le séchage s'arrête-t-il quand le joueur s'éloigne ?",["Non, tout continue tant que le jeu tourne","Oui, seulement à proximité"],0],
+["M-43","G","Rendements de départ par seau évaporé (provisoires) ?",["Sel : 1 garanti · Minéraux : 10 % · Minéraux rares : 0,5 % · Coquillage : 3 % au puisage","À revoir (précise en commentaire)"],0],
+["M-44","G","Coquillages sur la plage ?",["Quelques-uns réapparaissent chaque matin (une raison de faire le tour de l'île)","Seulement au puisage"],0],
+["M-45","G","La perle (5ᵉ ressource) dans le MVP ?",["Oui","Non, on décide pour le jeu complet"],1],
+["M-46","G","Limite de stockage ?",["Aucune dans le MVP","Entrepôts à acheter"],0],
+["M-47","H","Interface du catalogue ?",["Tout dans le monde (on feuillette un catalogue 3D)","Menu classique","Mixte : on décroche en 3D, puis un menu illustré façon catalogue papier"],2],
+["M-48","H","Le premier appel ?",["Tutoriel muet : on décroche, musique d'attente, une caisse tombe avec le catalogue","Le catalogue est déjà là"],0],
+["M-49","H","Commander ?",["Un article à la fois","Un panier, plusieurs articles par commande"],1],
+["M-50","H","Paiement ?",["Les ressources partent du stock vers une palette visible, que l'avion arrache au crochet en rase-mottes","Le joueur porte tout jusqu'à la palette"],0],
+["M-51","H","Délai de livraison ?",["5 s","10-20 s","1 min"],1],
+["M-52","H","Ouvrir une caisse ?",["Interagir (E) : la caisse s'ouvre, l'objet apparaît prêt à poser","Automatique"],0],
+["M-53","H","Gag du bateau (on reçoit un bateau en bouteille) dans le MVP ?",["Oui","Non"],0,"C'est la première question que se posent les joueurs."],
+["M-54","H","Le téléphone sonne-t-il parfois pendant la partie ?",["Jamais","Oui, pour des offres spéciales"],0],
+["M-55","H","Musique d'attente du téléphone ?",["Oui, un thème court et entêtant qui devient le thème du jeu","Non"],0],
+["M-56","H","Revendre ou rembourser un achat ?",["Oui","Non dans le MVP"],1],
+["M-57","I","La liste d'objets du catalogue (tableau ci-dessous) te convient-elle ?",["Oui, telle quelle","Oui, avec des modifications (en commentaire)","Non, à refaire"],0,"CATALOG"],
+["M-58","I","La pompe à bras est-elle active (il faut tourner la manivelle) ?",["Oui : T2 reste actif, l'automatisation arrive avec le moulin-pompe","Non, automatique"],0],
+["M-59","I","Rythme visé ?",["Premier achat < 3 min · T1 fini ~15 min · T2 débloqué ~20 min · moulin-pompe ~40 min","Plus lent","Plus rapide"],0],
+["M-60","J","Taille de l'île de départ ?",["20 m","~40 m de diamètre","80 m"],1],
+["M-61","J","Contenu de l'île au départ ?",["Téléphone, seau, cuvette rocheuse, 2-3 palmiers, rochers, une petite crique, une palette de dépôt","Plus de choses (en commentaire)"],0],
+["M-62","J","Le niveau de l'eau dans la démo ?",["Honnête : il ne bouge quasiment pas (c'est la blague), le progrès se lit dans les compteurs et les jalons","Truqué pour bouger un peu"],0],
+["M-63","J","Volume de l'océan (provisoire) ?",["~2 × 10¹³ L (bassin de ~8 km de rayon), ajusté par le simulateur","Autre (en commentaire)"],0],
+["M-64","J","Fond marin modélisé dans le MVP ?",["Seulement autour de l'île (plage et plateau), le reste en grand plan simple","Tout le fond"],0],
+["M-65","J","Météo ?",["Nuages qui passent, pas de pluie","Météo variable"],0],
+["M-66","J","Faune dans le MVP ?",["Mouettes, quelques poissons près du bord, un crabe","Rien"],0],
+["M-67","J","Le petit tourbillon lointain (indice du drain) dans le MVP ?",["Oui","Non"],0],
+["M-68","K","Ce qui s'affiche à l'écran pendant le jeu ?",["Stock en haut à gauche, % d'océan restant en haut au centre, barre d'outils en bas, avec option pour masquer","Rien à l'écran, tout dans le monde"],0],
+["M-69","K","Tutoriel ?",["Muet : icônes contextuelles (ex. icône de clic au-dessus de l'eau)","Textes d'aide","Aucun"],0],
+["M-70","K","Jalons comparatifs (baignoire, piscine…) dans le MVP ?",["Oui, les 3 premiers","Non"],0],
+["M-71","K","Menu principal ?",["Continuer · Nouvelle partie · Options · Quitter, avec 3 emplacements de sauvegarde","Un seul emplacement"],0],
+["M-72","K","Options du MVP ?",["Volumes (musique, effets, ambiance), sensibilité, FOV, résolution, plein écran, langue, touches","Moins (en commentaire)"],0],
+["M-73","K","Le chronomètre de partie pendant le jeu ?",["Toujours visible","Caché, avec une option pour l'afficher (speedrun)","Jamais visible"],1],
+["M-74","K","La partie se met-elle en pause dans le catalogue ?",["Oui","Non : le séchage continue pendant qu'on fait ses courses (pause avec Échap)"],1],
+["M-75","L","Musique pendant le jeu ?",["Musique continue","Surtout l'ambiance (vagues, vent, mouettes), avec de courts morceaux à certains moments","Silence"],1],
+["M-76","L","Source des sons du MVP ?",["Banques de sons libres (CC0)","Créés sur mesure"],0],
+["M-77","M","Fréquence de sauvegarde ?",["Automatique : toutes les 2 min, après chaque achat et en quittant","Manuelle"],0],
+["M-78","M","Sauvegarde manuelle en plus ?",["Oui","Non, une seule sauvegarde auto par emplacement"],1],
+["M-79","M","Progression quand le jeu est fermé ?",["Oui","Non sur PC"],1],
+["M-80","N","Le mini-jeu clicker reste hors MVP ?",["Oui, hors MVP","Non, je le veux dans le MVP"],0],
+["M-81","N","La gestion de l'énergie (arrive avec T3) reste hors MVP ?",["Oui","Non"],0],
+["M-82","N","La pluie visuelle reste hors MVP ?",["Oui","Non"],0],
+["M-83","N","Fond marin complet, paliers T3-T6 et île qui grandit restent hors MVP ?",["Oui","Non"],0],
+["M-84","N","Clins d'œil dans le MVP ?",["Le tourbillon lointain, les traits gravés sur le palmier, le pilote qui fait coucou","D'autres (en commentaire)"],0],
+["M-85","N","Nom du jeu pour la démo ?",["« Drain the Ocean »","Autre (en commentaire)"],0]
+];
+const CATALOG = [["T0","Seau 10 L","De départ","—"],["T0","Cuvette rocheuse","Zone de séchage de départ","—"],["T1","Bâche de séchage","Zone de séchage à poser","15 sel"],["T1","Grand seau 20 L","×2 par trajet","40 sel"],["T1","Tongs","+20 % de vitesse de marche","25 sel + 2 coquillages"],["T1","Râteau à sel","Récolte une zone d'un coup","60 sel + 5 minéraux"],["T1","Palanche","Porter deux seaux","120 sel + 10 minéraux"],["T1","Bateau (gag)","Livre un bateau en bouteille","999 sel"],["T1→T2","Manuel du bricoleur","Débloque T2","250 sel + 25 minéraux + 10 coquillages"],["T2","Bassin en bois","Grande zone de séchage","300 sel + 20 minéraux"],["T2","Pompe à bras","×10 en tournant la manivelle","500 sel + 40 minéraux"],["T2","Tuyaux","Relient la pompe aux bassins","50 sel / tronçon"],["T2","Miroir solaire","+50 % d'évaporation autour","200 sel + 5 minéraux rares"],["T2","Moulin-pompe","Première machine automatique, fin de la démo","1 500 sel + 100 minéraux + 10 minéraux rares"]];
+
+const state = {}; // id -> {c: index|null, t: commentaire}
+function defaults(){ for(const q of Q) state[q[0]] = {c: q[4] >= 0 ? q[4] : null, t: ""}; }
+defaults();
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const list = $("#list"); list.innerHTML = "";
+  const nav = $("#themes"); nav.innerHTML = "";
+  for(const k of Object.keys(T)){
+    const qs = Q.filter(q => q[1] === k);
+    const a = document.createElement("a"); a.className = "chip"; a.href = "#t-" + k;
+    a.textContent = T[k]; const b = document.createElement("b"); b.textContent = qs.length; a.appendChild(b); nav.appendChild(a);
+    const sec = document.createElement("section"); sec.className = "theme";
+    sec.innerHTML = `<h2 id="t-${k}">${esc(T[k])}</h2>`;
+    for(const q of qs){
+      const [id,,text,opts,rec,note] = q;
+      const card = document.createElement("div"); card.className = "q"; card.id = "card-" + id;
+      let html = `<div class="qhead"><span class="qid">${id}</span><span class="qtext">${esc(text)}</span></div>`;
+      if(note && note !== "CATALOG") html += `<p class="qnote">${esc(note)}</p>`;
+      if(note === "CATALOG") html += `<div class="scroll"><table class="cat"><thead><tr><th>Palier</th><th>Objet</th><th>Rôle</th><th>Prix indicatif</th></tr></thead><tbody>${CATALOG.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      if(opts.length){
+        html += `<div class="opts" role="radiogroup" aria-label="${esc(id)}">` + opts.map((o,i) =>
+          `<label class="opt"><input type="radio" name="${id}" id="${id}-${i}" value="${i}"><span>${esc(o)}${i===rec?'<span class="rec">recommandé</span>':''}</span></label>`).join("") + `</div>`;
+      }
+      html += `<textarea id="${id}-t" placeholder="${opts.length ? "Commentaire (facultatif)" : "Ta réponse"}" rows="${opts.length?1:2}"></textarea>`;
+      card.innerHTML = html; sec.appendChild(card);
+    }
+    list.appendChild(sec);
+  }
+  list.addEventListener("change", onInput); list.addEventListener("input", onInput);
+}
+function syncDom(){
+  for(const q of Q){
+    const s = state[q[0]];
+    q[3].forEach((_,i) => { const el = document.getElementById(q[0]+"-"+i); if(el) el.checked = s.c === i; });
+    const t = document.getElementById(q[0]+"-t"); if(t && t.value !== s.t) t.value = s.t;
+  }
+  refresh();
+}
+function onInput(e){
+  const el = e.target; if(!el.id) return;
+  const id = el.id.replace(/-(t|\d+)$/,""); if(!state[id]) return;
+  if(el.type === "radio") state[id].c = +el.value; else if(el.tagName === "TEXTAREA") state[id].t = el.value;
+  refresh(); scheduleSave();
+}
+function isChanged(q){ const s = state[q[0]]; return (q[4] >= 0 && s.c !== q[4]) || s.t.trim() !== ""; }
+function refresh(){
+  let n = 0;
+  for(const q of Q){ const c = isChanged(q); if(c) n++; const card = document.getElementById("card-"+q[0]); if(card) card.classList.toggle("changed", c); }
+  $("#progtxt").textContent = `${n} / ${Q.length} modifiées`;
+  $("#barfill").style.width = (n / Q.length * 100) + "%";
+  $("#export").value = exportText();
+  try { localStorage.setItem("dto-mvp", JSON.stringify(state)); } catch(e) {}
+}
+function exportText(){
+  const lines = ["Réponses au questionnaire MVP"];
+  for(const q of Q){
+    const s = state[q[0]]; const [id,,,opts,rec] = q;
+    let a = opts.length ? (s.c === null ? "(sans réponse)" : `${String.fromCharCode(65+s.c)}. ${opts[s.c]}${s.c===rec?" [recommandé]":" [CHANGÉ]"}`) : (s.t.trim() || "(sans réponse)");
+    if(opts.length && s.t.trim()) a += ` — ${s.t.trim()}`;
+    lines.push(`${id} : ${a}`);
+  }
+  return lines.join("\n");
+}
+
+// Enregistrement partagé (lisible par Claude)
+let db = null, timer = null;
+function setStatus(t, ok){ for(const s of ["#status","#status2"]){ const el=$(s); el.textContent=t; el.classList.toggle("ok", !!ok); } }
+function payload(submitted){
+  const answers = {};
+  for(const q of Q){ const s = state[q[0]]; answers[q[0]] = {choix: s.c, libelle: (q[3].length && s.c !== null) ? q[3][s.c] : null, recommande: q[4] >= 0 ? s.c === q[4] : null, commentaire: s.t}; }
+  return {answers, updatedAt: new Date().toISOString(), ...(submitted ? {submittedAt: new Date().toISOString()} : {})};
+}
+function scheduleSave(){ clearTimeout(timer); timer = setTimeout(() => save(false), 1200); setStatus("Modifications non enregistrées…"); }
+async function save(submitted){
+  clearTimeout(timer);
+  if(!db){ setStatus(submitted ? "Envoi impossible ici : utilise « Copier en texte »." : "Enregistré dans ce navigateur"); return; }
+  try { await (submitted ? db.doc("reponses/othmane").set(payload(true)) : db.doc("reponses/othmane").update(payload(false))); setStatus(submitted ? "Réponses envoyées ✓" : "Enregistré", true); }
+  catch(e){
+    try { if(!submitted){ await db.doc("reponses/othmane").set(payload(false)); setStatus("Enregistré", true); return; } } catch(e2){}
+    setStatus("Échec de l'enregistrement : utilise « Copier en texte ».");
+  }
+}
+$("#saveBtn").onclick = $("#saveBtn2").onclick = () => save(true);
+$("#copyBtn").onclick = async () => {
+  const t = exportText();
+  try { await navigator.clipboard.writeText(t); setStatus("Texte copié", true); }
+  catch(e){ const ta = $("#export"); ta.focus(); ta.select(); setStatus("Texte sélectionné : fais Ctrl+C"); }
+};
+let resetArmed = false;
+$("#resetBtn").onclick = () => {
+  if(!resetArmed){ resetArmed = true; $("#resetBtn").textContent = "Cliquer encore pour confirmer"; setTimeout(()=>{resetArmed=false;$("#resetBtn").textContent="Tout remettre aux recommandations";}, 4000); return; }
+  resetArmed = false; $("#resetBtn").textContent = "Tout remettre aux recommandations";
+  defaults(); syncDom(); scheduleSave();
+};
+
+render();
+try { const saved = JSON.parse(localStorage.getItem("dto-mvp") || "null"); if(saved) for(const k in saved) if(state[k]) state[k] = saved[k]; } catch(e) {}
+syncDom();
+setStatus("Enregistré dans ce navigateur");
+
+(async () => {
+  try {
+    db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+    if(!db){ setStatus("Enregistré dans ce navigateur"); return; }
+    const loadTimer = setTimeout(() => setStatus("Connexion lente…"), 10000);
+    const snap = await db.doc("reponses/othmane").get();
+    clearTimeout(loadTimer);
+    if(snap.exists){
+      const a = (snap.data() || {}).answers || {};
+      for(const id in a) if(state[id]) state[id] = {c: a[id].choix ?? state[id].c, t: a[id].commentaire || ""};
+      syncDom(); setStatus("Réponses récupérées", true);
+    } else setStatus("Prêt");
+  } catch(e){ db = null; setStatus("Enregistré dans ce navigateur"); }
+})();
+</script>
