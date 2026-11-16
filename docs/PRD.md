@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.1 (brouillon initial) |
+| Version du document | 0.2 (Q-01, Q-07, Q-13 tranchées ; Q-16 reformulée) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -31,7 +31,7 @@
 8. [L'océan : échelle, niveau, fond marin, destination de l'eau](#8-locéan--échelle-niveau-fond-marin-destination-de-leau)
 9. [Le téléphone et l'agence de livraison](#9-le-téléphone-et-lagence-de-livraison)
 10. [Le personnage, la caméra et les contrôles](#10-le-personnage-la-caméra-et-les-contrôles)
-11. [La fin : la bonde](#11-la-fin--la-bonde)
+11. [La fin : le drain](#11-la-fin--le-drain)
 12. [Clins d'œil (lore uniquement visuel)](#12-clins-dœil-lore-uniquement-visuel)
 13. [Mini-jeu clicker (dans la version PC)](#13-mini-jeu-clicker-dans-la-version-pc)
 14. [Version mobile (future)](#14-version-mobile-future)
@@ -50,9 +50,9 @@
 
 Le seau sert à puiser l'eau et à la déposer ailleurs pour qu'elle sèche. En séchant, l'eau laisse des **ressources** (sel, minéraux, minéraux rares, coquillages) qui servent de monnaie. Le téléphone ne joint qu'**une agence de livraison** qui ne livre que des objets (jamais des personnes). On échange nos ressources contre des outils et des machines, livrés par avion de façon comiquement rapide, sans que personne ne descende. Chaque achat permet de vider plus vite, jusqu'aux machines gigantesques.
 
-Quand il reste **5 % d'eau ou moins**, une **bonde** devient visible au fond de l'océan. Le joueur n'a qu'à la tirer pour vider tout le reste. C'est la chute comique du jeu.
+Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante, comme au fond d'une baignoire) devient visible au fond de l'océan. Le joueur n'a qu'à l'ouvrir pour vider tout le reste. C'est la chute comique du jeu.
 
-**Une phrase :** un jeu incrémental en 3D (*[QUESTION Q-01]*) où l'on passe d'un seau à des machines absurdes pour vider un océan… qui avait une bonde depuis le début.
+**Une phrase :** un jeu incrémental en 3D low-poly où l'on passe d'un seau à des machines absurdes pour vider un océan… qui avait un drain depuis le début.
 
 ---
 
@@ -60,7 +60,7 @@ Quand il reste **5 % d'eau ou moins**, une **bonde** devient visible au fond de 
 
 **[PROPOSÉ]** Les piliers servent à trancher les débats futurs : une fonctionnalité qui n'en sert aucun est coupée.
 
-1. **L'absurde pris au sérieux.** Le jeu ne fait jamais de clin d'œil appuyé. Le personnage vide l'océan avec application ; l'humour naît du décalage (avion qui ne s'arrête pas, chiffres démesurés, bonde finale).
+1. **L'absurde pris au sérieux.** Le jeu ne fait jamais de clin d'œil appuyé. Le personnage vide l'océan avec application ; l'humour naît du décalage (avion qui ne s'arrête pas, chiffres démesurés, drain final).
 2. **Toujours voir le progrès.** Même quand le niveau de l'océan ne bouge pas, le joueur voit quelque chose grandir : son stock, ses machines, son île, ses records.
 3. **Montrer, ne pas raconter.** Aucun texte de lore, aucun livre, aucun dialogue. Tout se comprend à l'œil (voir [section 12](#12-clins-dœil-lore-uniquement-visuel)).
 4. **Simple à prendre, profond à optimiser.** Peu de ressources (4), peu de règles, mais des choix d'agencement et d'investissement qui comptent.
@@ -127,7 +127,7 @@ Quand il reste **5 % d'eau ou moins**, une **bonde** devient visible au fond de 
 
 1. Débloquer des paliers technologiques (seau → pompes → machines → mégastructures).
 2. Voir l'océan baisser, découvrir le fond marin (nouvelles zones, nouvelles ressources, clins d'œil).
-3. Atteindre ≤ 5 % : trouver la bonde, la tirer, fin.
+3. Atteindre ≤ 5 % : trouver le drain, l'ouvrir, fin.
 
 ### 5.4 Durée cible
 
@@ -158,12 +158,13 @@ Quand il reste **5 % d'eau ou moins**, une **bonde** devient visible au fond de 
 - **[PROPOSÉ]** Les ressources sont **physiques** : on voit des tas de sel, des sacs, des caisses sur l'île. Le stock devient un élément du décor (et un problème de place, voir [17](#17-problèmes-identifiés-et-propositions)).
 - **[QUESTION Q-04]** Ajouter une 5ᵉ ressource ultra-rare (ex. **perle**, trouvée dans certains coquillages) pour les achats de fin et le contenu caché ?
 
-### 6.2 Monnaie : troc ou crédits ?
+### 6.2 Le troc (pas de monnaie)
 
-**[QUESTION Q-07]** Deux options :
+**[DÉCIDÉ]** **Troc direct** (Q-07, 2026-11-16).
 
-- **A. Troc direct (recommandé)** : chaque article du catalogue a un prix en ressources (ex. « Pompe manuelle = 300 sel + 20 minéraux + 5 coquillages »). Chaque ressource garde de la valeur toute la partie, c'est plus lisible et plus « naufragé ».
-- **B. Crédits** : on vend les ressources à l'agence contre une monnaie unique, puis on achète. Plus simple à équilibrer, mais le sel perd vite tout intérêt et l'économie devient abstraite.
+Concrètement : il n'existe **aucune monnaie** (pas de pièces, pas de crédits). Chaque article du catalogue a un prix exprimé **directement en ressources**. Exemple : « Pompe manuelle = 300 sel + 20 minéraux + 5 coquillages ». On pose ces ressources sur la zone de dépôt, l'avion les emporte, et la livraison arrive.
+
+L'alternative écartée était de *vendre* d'abord ses ressources à l'agence contre une monnaie unique, puis d'acheter avec cette monnaie. Le troc a été retenu parce que chaque ressource garde sa valeur toute la partie et que c'est plus lisible et plus « naufragé ».
 
 ### 6.3 Le séchage
 
@@ -196,7 +197,7 @@ Quand il reste **5 % d'eau ou moins**, une **bonde** devient visible au fond de 
 | **T4** | Industriel | Évaporateurs thermiques, raffinerie de minéraux, plateformes flottantes, drones de récolte | L'île devient une usine, extension sur le fond découvert | ~10⁵ L/s |
 | **T5** | Colossal | Pompes géantes, tours d'évaporation, barges-éponges | Machines visibles de très loin, transforment l'horizon | ~10⁷ L/s |
 | **T6** | Absurde | Paille géante, machine à nuages, « aspirateur d'océan », tornade en bouteille | Pure démesure comique, on voit enfin le niveau chuter à vue d'œil | ~10⁹ L/s |
-| — | La bonde | Rien à acheter : elle était là depuis le début | Fin du jeu | ∞ |
+| — | Le drain | Rien à acheter : il était là depuis le début | Fin du jeu | ∞ |
 
 - **[PROPOSÉ]** Chaque palier se débloque par un **achat clé** au catalogue (ex. « le manuel de la pompe » sous forme de schéma illustré), pas par un arbre de compétences abstrait.
 - **[PROPOSÉ]** Les objets d'un palier inférieur restent utiles un moment, puis deviennent décoratifs. Le joueur peut les revendre ou les garder.
@@ -243,7 +244,7 @@ Ordre de grandeur : avec un débit final de ~10⁹ L/s, la dernière phase dure 
 | Plage étendue | 0 – 2 m | T2-T3 | Coquillages, place pour les premières machines |
 | Plateau | 2 – 20 m | T3-T4 | Rochers, épaves légères, coquillages en masse |
 | Talus | 20 – 100 m | T4-T5 | Falaises sous-marines, épaves, minéraux rares affleurants |
-| Abysse central | 100 – 300 m | T5-T6 | Géants clins d'œil, et finalement la bonde |
+| Abysse central | 100 – 300 m | T5-T6 | Géants clins d'œil, et finalement le drain |
 
 - **[PROPOSÉ]** Le joueur peut **marcher** sur le fond découvert. Explorer devient une activité à part entière (coquillages, minéraux rares, clins d'œil).
 - **[PROPOSÉ]** Le sable découvert est d'abord mouillé et sombre, puis sèche et s'éclaircit (shader), pour que la baisse se lise même de près.
@@ -260,13 +261,13 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 1. **Évaporation** (T0 à T4) : l'eau s'évapore et forme des nuages qui **s'éloignent toujours vers l'horizon**. Il ne pleut jamais sur l'île. On ne l'explique pas. (Clin d'œil possible : on aperçoit très loin de la pluie tomber… en dehors du bassin.)
 2. **Machines** (T5-T6) : les machines géantes rejettent la vapeur en colonnes ou « expédient » l'eau de façon absurde (machine à nuages qui envoie les nuages ailleurs, tuyau qui monte vers le ciel et disparaît).
-3. **La bonde** : la seule vraie réponse, à la fin. L'eau part par le trou.
+3. **Le drain** : la seule vraie réponse, à la fin. L'eau part par le trou.
 
 **[QUESTION Q-09]** Ajouter un « gag de la pluie » (une averse rare qui fait remonter le niveau d'un chouïa) ? C'est drôle une fois, frustrant si ça coûte du progrès. Recommandation : purement visuel, sans effet sur le niveau.
 
 ### 8.7 La vie marine
 
-**[QUESTION Q-10]** Que deviennent les poissons ? Vider un océan, c'est aussi tuer ce qu'il y a dedans, et le ton doit rester léger. Proposition : les poissons **reculent** toujours vers le centre (on les voit de plus en plus serrés, comique), et à la fin ils partent **par la bonde** dans le tourbillon, en faisant coucou. Aucun poisson mort à l'écran.
+**[QUESTION Q-10]** Que deviennent les poissons ? Vider un océan, c'est aussi tuer ce qu'il y a dedans, et le ton doit rester léger. Proposition : les poissons **reculent** toujours vers le centre (on les voit de plus en plus serrés, comique), et à la fin ils partent **par le drain** dans le tourbillon, en faisant coucou. Aucun poisson mort à l'écran.
 
 ---
 
@@ -301,29 +302,34 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 ## 10. Le personnage, la caméra et les contrôles
 
-- **[QUESTION Q-01]** 3D ou 2D/2,5D pour le jeu principal ? Recommandation : **3D stylisée low-poly** (l'échelle de l'océan et la baisse du niveau n'ont d'impact qu'en 3D).
-- **[QUESTION Q-13]** Vue à la première ou à la troisième personne ? Recommandation : **troisième personne** (on voit le personnage avec son seau, plus lisible et plus drôle) avec possibilité de zoomer en vue de dessus pour gérer l'île (mode « construction »).
+- **[DÉCIDÉ]** Jeu principal en **3D low-poly**, dans le même esprit visuel que *How to Fish* (Q-01, 2026-11-16). Voir [15](#15-direction-artistique-et-audio).
+- **[DÉCIDÉ]** Caméra **à la première personne** par défaut, avec la possibilité de **basculer en troisième personne** à tout moment (une touche) (Q-13, 2026-11-16).
+  - Conséquences : le seau, les mains et les objets tenus doivent être soignés en vue subjective (modèle « bras + objet ») **et** le personnage complet doit exister et être animé pour la vue à la troisième personne.
+  - **[PROPOSÉ]** En plus, une **vue de dessus** (mode « construction ») pour placer les machines sur l'île, activée quand on pose un objet.
+  - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[PROPOSÉ]** Le personnage peut nager. S'il s'éloigne trop, l'écran s'assombrit et il **se réveille sur l'île**, comme au début (gag, et clin d'œil sur des réveils précédents). Aucune pénalité.
 - **[PROPOSÉ]** Le personnage ne parle pas, ne pense pas en bulles. Ses émotions passent par l'animation.
 
 ---
 
-## 11. La fin : la bonde
+## 11. La fin : le drain
 
-- **[DÉCIDÉ]** Quand il reste **5 % d'eau ou moins**, une bonde est visible au fond de l'océan. Le joueur peut simplement l'ouvrir pour vider le reste. C'est censé être drôle.
+- **[DÉCIDÉ]** Quand il reste **5 % d'eau ou moins**, un drain est visible au fond de l'océan. Le joueur peut simplement l'ouvrir pour vider le reste. C'est censé être drôle.
 - **[PROPOSÉ]** Déroulé :
-  1. À ≤ 5 %, l'eau restante est assez basse et claire pour révéler, au centre, une **énorme bonde** (style baignoire) avec sa **chaîne**.
+  1. À ≤ 5 %, l'eau restante est assez basse et claire pour révéler, au centre, un **énorme drain** (style bonde de baignoire) avec sa **chaîne**.
   2. Le joueur marche jusqu'au centre sur le fond découvert (trajet long et solennel, musique qui monte).
   3. Il tire la chaîne. Petit « plop ». Silence. Puis **un énorme glouglou de baignoire** : tourbillon géant, l'eau, les poissons et les objets flottants disparaissent dans le trou en quelques secondes.
   4. Le joueur reste au milieu du fond à sec, avec son seau, devant toutes ses machines désormais inutiles.
-- **[PROPOSÉ]** Indice dès le début : un **minuscule tourbillon** permanent à la surface, très loin, à l'emplacement de la bonde. Visible pour les joueurs attentifs. Il grossit très légèrement à mesure que le niveau baisse.
-- **[PROPOSÉ]** Peut-on atteindre la bonde avant 5 % (scaphandre, plongée) ? Non : avant 5 %, l'eau est trop profonde et trouble pour la voir, et aucun objet du catalogue ne permet de plonger aussi bas. *[QUESTION Q-15]*
-- **[QUESTION Q-16]** Que se passe-t-il après ? Options :
-  - **A.** Générique, puis le joueur peut se promener librement sur le fond asséché pour trouver tous les clins d'œil (recommandé).
-  - **B.** Révélation finale : la caméra s'élève et laisse deviner que tout était une gigantesque baignoire… sans jamais le montrer clairement (recommandé en complément de A).
-  - **C.** « Nouvelle partie + » : après le générique, on entend un robinet s'ouvrir quelque part…
-  - **D.** Le joueur « passe » vraiment : il marche jusqu'au bord du bassin et sort. Que trouve-t-il ? (à définir)
+- **[PROPOSÉ]** Indice dès le début : un **minuscule tourbillon** permanent à la surface, très loin, à l'emplacement du drain. Visible pour les joueurs attentifs. Il grossit très légèrement à mesure que le niveau baisse.
+- **[PROPOSÉ]** Peut-on atteindre le drain avant 5 % (scaphandre, plongée) ? Non : avant 5 %, l'eau est trop profonde et trouble pour le voir, et aucun objet du catalogue ne permet de plonger aussi bas. *[QUESTION Q-15]*
+- **[QUESTION Q-16]** **Que se passe-t-il juste après l'ouverture du drain ?** Le drain lui-même est décidé ; la question porte sur *ce que voit et fait le joueur une fois l'océan vidé*, c'est-à-dire la toute fin du jeu. Options concrètes :
+  - **A. Générique direct.** Le tourbillon finit, plan sur le personnage seul avec son seau, générique. Retour au menu. Simple et efficace.
+  - **B. Générique + exploration libre (recommandé).** Après le générique, le joueur reprend la main sur le fond de l'océan entièrement à sec : il peut marcher partout, trouver les clins d'œil manqués, visiter les épaves. Pas de nouvel objectif.
+  - **C. Épilogue comique.** Après le drain, un dernier gag avant le générique. Exemples : le téléphone sonne pour la première fois de la partie (c'est l'agence qui vient livrer… un bouchon) ; ou la caméra s'élève très haut et laisse deviner que l'océan était une gigantesque baignoire, sans jamais le montrer clairement.
+  - **D. Le joueur part vraiment.** Il marche jusqu'au bord du bassin asséché et le franchit. Ce qu'il trouve de l'autre côté est à inventer (et doit rester un clin d'œil, sans texte).
+  - **E. Mode infini / Nouvelle partie +.** Après le générique, on entend un robinet s'ouvrir : l'océan se remplit, on recommence avec un bonus (machines conservées, objectifs de vitesse, succès).
+  - Les options se combinent. Recommandation : **C + B** (un gag final court, puis exploration libre), avec **E** en option débloquée après la première fin.
 
 ---
 
@@ -341,16 +347,16 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 | Thème | Clin d'œil | Où / quand |
 |---|---|---|
-| La bonde | Le petit tourbillon visible dès le début | Surface, toute la partie |
+| Le drain | Le petit tourbillon visible dès le début | Surface, toute la partie |
 | La baignoire | Le fond de l'abysse est carrelé ; un gigantesque canard en caoutchouc échoué ; un rocher en forme de savon ; le trou de trop-plein dans une falaise | Abysse, T5-T6 |
-| Le téléphone | Le câble du téléphone court sur le fond marin… jusqu'à un autre téléphone, ou jusqu'à la bonde | Fond découvert |
+| Le téléphone | Le câble du téléphone court sur le fond marin… jusqu'à un autre téléphone, ou jusqu'au drain | Fond découvert |
 | Les naufragés d'avant | D'autres petites îles découvertes avec un téléphone d'une autre couleur, rouillé, et un seau abandonné ; un squelette assis tenant un seau | Plateau, talus |
 | Les réveils | Des traits gravés sur un palmier (comme un calendrier de prisonnier) qui augmentent à chaque fois que le joueur « se noie » et se réveille | Île de départ |
 | L'agence | Le pilote vieillit au fil de la partie (barbe qui pousse, puis cheveux blancs) | Chaque livraison |
-| L'agence | Le logo de l'agence ressemble de près à… une bonde | Caisses, avions |
+| L'agence | Le logo de l'agence ressemble de près à… un drain | Caisses, avions |
 | Le temps | Le seau de départ s'abîme, se rapièce, se décolore | Toute la partie |
 | Bouteille à la mer | Une bouteille contenant un dessin (pas de texte) : quelqu'un qui tire une chaîne | Plateau |
-| Le catalogue | Une page du catalogue montre une bonde barrée, ou en rupture de stock | Catalogue, tardif |
+| Le catalogue | Une page du catalogue montre un drain barré, ou en rupture de stock | Catalogue, tardif |
 
 ---
 
@@ -358,7 +364,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 - **[DÉCIDÉ]** Le jeu PC contient un mini-jeu : même concept, en clicker, pixel art très simple.
 - **[PROPOSÉ]** Accès diégétique : on achète au catalogue une **console portable** (design original, pas une copie d'une vraie console). Le personnage s'assoit et joue ; l'écran de la console prend tout l'écran.
-- **[PROPOSÉ]** Contenu : cliquer pour puiser, achats d'améliorations, automatisation, et une bonde à la fin. Durée 20 à 40 minutes.
+- **[PROPOSÉ]** Contenu : cliquer pour puiser, achats d'améliorations, automatisation, et un drain à la fin. Durée 20 à 40 minutes.
 - **[QUESTION Q-17]** Le clicker influence-t-il le jeu principal ? Recommandation : **seulement des récompenses cosmétiques** (chapeau, couleur de seau) ou une petite aide unique, pour ne pas inciter à « farmer » le mini-jeu.
 - **[PROPOSÉ]** Le clicker est codé dès le départ comme un **module autonome** (sa propre scène, ses propres données) pour être réutilisé tel quel sur mobile.
 - **[PROPOSÉ]** Clin d'œil : dans le clicker, le personnage pixel art a lui aussi… une console portable.
@@ -378,10 +384,11 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 ## 15. Direction artistique et audio
 
-- **[PROPOSÉ]** Jeu principal : 3D low-poly stylisée, couleurs vives, eau très soignée (c'est le personnage principal du jeu). Ciel et lumière qui changent avec le jour.
+- **[DÉCIDÉ]** Jeu principal : 3D low-poly, dans le même esprit visuel que *How to Fish* (Q-01).
+- **[PROPOSÉ]** Couleurs vives, eau très soignée (c'est le personnage principal du jeu). Ciel et lumière qui changent avec le jour.
 - **[PROPOSÉ]** Mini-jeu et mobile : pixel art très simple, palette restreinte (ex. 16 couleurs).
-- **[PROPOSÉ]** Audio : vagues, vent, mouettes au début, puis bruits de machines de plus en plus présents. Musique d'attente du téléphone qui devient un thème récurrent (et peut-être la musique du générique). Le son de la bonde est le moment sonore le plus important du jeu.
-- **[PROPOSÉ]** Contraste voulu : l'île est paisible au début et devient une usine bruyante. Le silence après la bonde doit frapper.
+- **[PROPOSÉ]** Audio : vagues, vent, mouettes au début, puis bruits de machines de plus en plus présents. Musique d'attente du téléphone qui devient un thème récurrent (et peut-être la musique du générique). Le son du drain est le moment sonore le plus important du jeu.
+- **[PROPOSÉ]** Contraste voulu : l'île est paisible au début et devient une usine bruyante. Le silence après le drain doit frapper.
 
 ---
 
@@ -469,14 +476,14 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 | P-01 | **L'échelle** : un seau ne fait rien à un océan, le niveau ne bouge pas pendant des heures | Haute | Bassin fini calibré, compteurs, jalons comparatifs, plateau peu profond qui révèle beaucoup tôt | 8.1, 8.2 |
 | P-02 | **L'ennui du début** : porter un seau est répétitif | Haute | Premier achat < 3 min, T1 < 15 min, le seau ne reste pas longtemps la seule action | 5.4 |
 | P-03 | **L'ennui du milieu** : quand tout est automatisé, il n'y a plus rien à faire | Haute | Exploration du fond découvert, réagencement de l'île, chaque palier change la façon de jouer | 5.5, 7, 8.4 |
-| P-04 | **Où va l'eau ?** L'évaporation devrait faire pleuvoir | Moyenne | Les nuages partent toujours au loin ; machines absurdes ; la bonde comme vraie réponse | 8.6 |
+| P-04 | **Où va l'eau ?** L'évaporation devrait faire pleuvoir | Moyenne | Les nuages partent toujours au loin ; machines absurdes ; le drain comme vraie réponse | 8.6 |
 | P-05 | **Pourquoi ne pas commander un bateau ?** | Haute (casse le concept) | L'agence livre des maquettes | 9.4 |
 | P-06 | **Pourquoi ne pas nager ?** | Moyenne | Trop loin = on se réveille sur l'île | 10 |
 | P-07 | **La fin peut frustrer** : « J'ai tout fait pour rien ? » | Moyenne | C'est le but, mais on adoucit : indices visibles depuis le début, récompense post-générique, exploration libre | 11 |
-| P-08 | **La bonde atteignable trop tôt** (plongée, exploit) | Moyenne | Invisible et inaccessible avant 5 % | 11 |
+| P-08 | **Le drain atteignable trop tôt** (plongée, exploit) | Moyenne | Invisible et inaccessible avant 5 % | 11 |
 | P-09 | **La place sur l'île** : trop de machines, trop de stock | Moyenne | L'île grandit avec la baisse ; stock affiché par paliers ; entrepôts au catalogue | 8.5, 16.3 |
 | P-10 | **Économie à une seule ressource utile** : le sel perd sa valeur | Moyenne | Troc direct et chaque palier exige une ressource plus rare | 6.2 |
-| P-11 | **La vie marine** : ton morbide si les poissons meurent | Moyenne | Les poissons reculent et partent par la bonde | 8.7 |
+| P-11 | **La vie marine** : ton morbide si les poissons meurent | Moyenne | Les poissons reculent et partent par le drain | 8.7 |
 | P-12 | **Lacs résiduels** dans les creux du fond | Moyenne | Fond modelé sans cuvettes ; flaques seulement décoratives | 8.3 |
 | P-13 | **Le lore « uniquement visuel »** peut passer inaperçu | Basse | Plusieurs niveaux de lecture, un clin d'œil évident (canard géant) et des subtils | 12 |
 | P-14 | **Le mini-jeu clicker** peut devenir une meilleure source de ressources que le jeu | Basse | Récompenses cosmétiques seulement | 13 |
@@ -505,24 +512,23 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 
 Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée dans HANDOFF.md + mise à jour de ce document.
 
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne (toutes le 2026-11-16).
+
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
-| **Q-01** | Jeu principal en 3D ou en 2D/2,5D ? | 3D low-poly / 2,5D isométrique / 2D | **3D low-poly** |
 | **Q-02** | Durée de jeu visée ? | 3-5 h / 6-10 h / 15 h+ | **6-10 h** |
 | **Q-03** | Progression hors ligne (quand le jeu est fermé) ? | Oui / Non / Seulement sur mobile | **Non sur PC, oui sur mobile** |
 | **Q-04** | Une 5ᵉ ressource ultra-rare (perle) ? | Oui / Non | **Oui**, pour le contenu caché |
 | **Q-05** | Mécaniques de survie (faim, soif) ? | Aucune / Légères / Complètes | **Aucune** |
 | **Q-06** | Cycle jour/nuit ? | Oui avec effet sur l'évaporation / Oui décoratif / Non | **Oui avec effet** (léger) |
-| **Q-07** | Économie : troc ou crédits ? | Troc direct / Crédits | **Troc direct** |
 | **Q-08** | Gérer l'énergie à partir de T3 (éoliennes, panneaux) ? | Oui (couche logistique) / Non (machines autonomes) | **Oui, mais simple** (une jauge globale, pas de câbles) |
 | **Q-09** | Pluie qui fait remonter le niveau ? | Effet réel / Purement visuel / Pas de pluie | **Purement visuel** |
-| **Q-10** | Les poissons ? | Partent par la bonde / Absents / Autre | **Partent par la bonde** |
+| **Q-10** | Les poissons ? | Partent par le drain / Absents / Autre | **Partent par le drain** |
 | **Q-11** | Interface du catalogue : diégétique (dans le monde) ou menu classique ? | Diégétique / Menu / Mixte | **Mixte** : on décroche en jeu, puis menu illustré |
 | **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
-| **Q-13** | Caméra ? | Première personne / Troisième personne | **Troisième personne** + vue de dessus pour construire |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
-| **Q-15** | La bonde peut-elle être atteinte avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on la *voit* tôt) |
-| **Q-16** | Après la bonde ? | Exploration libre / Révélation baignoire / NG+ / Sortie du bassin | **Exploration libre + révélation suggérée** |
+| **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
+| **Q-16** | Que voit et fait le joueur juste après avoir ouvert le drain (fin du jeu) ? | Générique direct / Exploration libre / Épilogue comique / Partir vraiment / Mode infini (voir §11) | **Épilogue comique + exploration libre** |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |
@@ -543,8 +549,8 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
 | **M4 — Contenu** | T3 à T6, fond marin complet, toutes les zones | On peut finir le jeu (avec debug d'accélération) |
-| **M5 — La fin** | Bonde, tourbillon, générique, post-fin | La scène fait rire un testeur |
-| **M6 — Clicker** | Mini-jeu pixel art complet dans la console portable | Jouable du début à la bonde |
+| **M5 — La fin** | Drain, tourbillon, générique, post-fin | La scène fait rire un testeur |
+| **M6 — Clicker** | Mini-jeu pixel art complet dans la console portable | Jouable du début au drain |
 | **M7 — Finition** | Équilibrage, polish, options, langues, succès | Version 1.0 PC |
 | **M8 — Mobile** | Portage du clicker | Plus tard |
 
@@ -554,7 +560,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 | Terme | Définition |
 |---|---|
-| **Bonde** | Le bouchon/trou d'évacuation au fond de l'océan, découvert à ≤ 5 % |
+| **Drain** | Le bouchon/trou d'évacuation au fond de l'océan, découvert à ≤ 5 % |
 | **Zone de séchage** | Tout endroit où l'eau s'évapore pour laisser des ressources (trou, bâche, bassin, évaporateur) |
 | **Zone de dépôt** | L'endroit où l'on pose le paiement que l'avion vient récupérer |
 | **Palier (T0–T6)** | Niveau technologique qui change la façon de jouer |

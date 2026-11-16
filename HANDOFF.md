@@ -36,13 +36,38 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.1 en revue.
+- **Documents :** PRD v0.2 en revue (PR #1).
 - **Prochaine étape :** Othmane répond aux questions ouvertes du PRD (section 18), puis jalon M0 (fondations du projet Godot).
-- **Questions ouvertes :** Q-01 à Q-22 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)). Les plus structurantes : Q-01 (3D ou 2D), Q-07 (troc ou crédits), Q-13 (caméra), Q-16 (après la bonde).
+- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne.
+- **Questions ouvertes :** 19 restantes (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)). La plus structurante : Q-16 (que se passe-t-il juste après l'ouverture du drain).
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — PRD v0.2 : intégration des décisions et vocabulaire « drain »
+- **Quoi :** PRD passé en v0.2. Q-01, Q-07 et Q-13 passées en **[DÉCIDÉ]** et retirées de la liste des questions. Le mot « bonde » est remplacé par « **drain** » partout (terme d'Othmane), la §6.2 explique concrètement le troc, et Q-16 est reformulée avec des options concrètes (générique direct, exploration libre, épilogue comique, partir vraiment, mode infini).
+- **Pourquoi :** réponses d'Othmane ; la question « après la bonde » n'était pas claire.
+- **Impact :** PRD §1, §6.2, §10, §11, §15, §18.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Caméra : première personne avec bascule en troisième personne (Q-13)
+- **Quoi :** la caméra principale est à la première personne ; le joueur peut basculer en troisième personne à tout moment.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §10. Il faut à la fois des bras/objets en vue subjective et un personnage complet animé.
+- **Par :** Othmane
+
+### 2026-11-16 — DÉCISION — Économie en troc direct (Q-07)
+- **Quoi :** pas de monnaie ; chaque article du catalogue se paie directement en ressources (sel, minéraux, minéraux rares, coquillages).
+- **Pourquoi :** choix d'Othmane, sur recommandation (chaque ressource garde sa valeur, plus lisible).
+- **Impact :** PRD §6.2.
+- **Par :** Othmane
+
+### 2026-11-16 — DÉCISION — Jeu principal en 3D low-poly, style *How to Fish* (Q-01)
+- **Quoi :** le jeu PC est en 3D low-poly, dans le même esprit visuel que *How to Fish*.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §1, §10, §15.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Création du dépôt et des documents fondateurs
 - **Quoi :** commit initial (`README.md`) sur `main`, puis création de `docs/PRD.md` (v0.1), `HANDOFF.md`, `CLAUDE.md` et `.gitignore` (Godot 4) sur une branche dédiée, proposés en pull request.
@@ -64,7 +89,7 @@
   - **Ressources :** le séchage donne des items qui servent de monnaie. Peu d'items : sel, quelques minéraux, minéraux rares, coquillages.
   - **Échanges :** on commerce via le téléphone ; l'agence vient prendre le dépôt et dépose la livraison par avion, rapidement et de façon comique, sans attendre le joueur.
   - **Progression :** les achats permettent de vider plus vite grâce à des technologies de plus en plus poussées, jusqu'à de grandes machines.
-  - **Fin :** quand il reste 5 % d'eau ou moins, une bonde est visible au fond de l'océan ; le joueur peut simplement l'ouvrir pour vider le reste. C'est censé être drôle.
+  - **Fin :** quand il reste 5 % d'eau ou moins, un drain est visible au fond de l'océan ; le joueur peut simplement l'ouvrir pour vider le reste. C'est censé être drôle.
   - **Lore :** pas d'histoire à proprement parler. Uniquement des clins d'œil pour les joueurs attentifs, compréhensibles à l'œil. Pas de livres ni de textes à lire.
   - **Plateformes :** la version principale est sur PC (Windows). Elle contient un mini-jeu du même concept en clicker, pixel art très simple. Ce clicker sera ensuite porté sur téléphone, beaucoup plus tard.
   - **Moteur :** Godot.
