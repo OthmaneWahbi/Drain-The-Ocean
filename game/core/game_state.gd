@@ -25,6 +25,8 @@ signal mirror_added(mirror: Dictionary)
 signal pump_added(pump: Dictionary)
 ## Le réseau de tuyaux a pu changer (objet déplacé, zone ou pompe ajoutée, tuyaux achetés).
 signal network_changed
+## Le moulin-pompe a assez pompé tout seul : c'est la fin de la démo (M-05). Une seule fois.
+signal demo_finished
 signal tier_unlocked(tier: int)
 ## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
 signal item_moved(item: Dictionary)
@@ -78,6 +80,9 @@ var mirrors: Array[Dictionary] = []
 var pumps: Array[Dictionary] = []
 ## Tronçons de tuyau possédés (chacun fait `config.pipe_segment_m` mètres).
 var pipe_segments: int = 0
+## Litres pompés par les pompes AUTOMATIQUES (le moulin-pompe), et fin de démo déjà vue.
+var auto_pumped_l: float = 0.0
+var demo_done: bool = false
 ## La palette de dépôt : {id: "depot", kind: "palette", position, rotation_deg}. Déplaçable comme le reste.
 var depot: Dictionary = {}
 ## Où se tient le joueur (mis à jour par sa vue) : rien n'apparaît ni ne se pose sur lui.
@@ -140,6 +145,8 @@ func _reset_state() -> void:
 	mirrors = []
 	pumps = []
 	pipe_segments = 0
+	auto_pumped_l = 0.0
+	demo_done = false
 	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
 	unlocked_tier = 1
 	play_time_s = 0.0
@@ -170,6 +177,7 @@ func simulate(delta: float) -> void:
 		(zone.logic as DryingLogic).step(delta, base * zone_boost(zone), rng)
 	for st in stations:
 		(st.logic as StationLogic).step(delta)
+	_run_auto_pumps(delta)
 	survival.step(delta)
 	stamina.set_max(survival.stamina_cap())
 	survival_changed.emit()
@@ -507,6 +515,20 @@ func add_pump(kind: String, position: Vector3) -> Dictionary:
 	return p
 
 
+func is_auto_pump(pump: Dictionary) -> bool:
+	return config.auto_pump_kinds.has(String(pump.kind))
+
+
+## Les pompes automatiques (moulin-pompe) tournent seules, avec le temps.
+func _run_auto_pumps(delta: float) -> void:
+	for pump in pumps:
+		if is_auto_pump(pump):
+			auto_pumped_l += run_pump(pump, delta)
+	if not demo_done and auto_pumped_l >= config.demo_end_auto_pumped_l:
+		demo_done = true
+		demo_finished.emit()
+
+
 ## Toutes les liaisons du réseau : {pump, zone, segments, from, to}.
 func pipe_links() -> Array:
 	return PipeNetwork.links(pumps, zones, pipe_segments, config.pipe_segment_m, footprint)
@@ -722,6 +744,8 @@ func to_dict() -> Dictionary:
 		"mirrors": mirrors.map(func(m): return {"position": _v2a(m.position), "rotation_deg": item_rotation(m)}),
 		"pumps": pumps.map(func(pu): return {"kind": pu.kind, "position": _v2a(pu.position), "rotation_deg": item_rotation(pu)}),
 		"pipe_segments": pipe_segments,
+		"auto_pumped_l": auto_pumped_l,
+		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
 		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
@@ -783,6 +807,8 @@ func load_dict(data: Dictionary) -> void:
 	for pu in data.get("pumps", []):
 		_load_rotation(add_pump(String(pu.get("kind", "")), _a2v(pu.get("position", []))), pu)
 	pipe_segments = maxi(int(data.get("pipe_segments", 0)), 0)
+	auto_pumped_l = maxf(float(data.get("auto_pumped_l", 0.0)), 0.0)
+	demo_done = bool(data.get("demo_done", false))
 	var dep: Dictionary = data.get("depot", {})
 	if dep.has("position"):
 		depot.position = _a2v(dep.position)

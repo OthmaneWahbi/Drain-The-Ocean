@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -147,6 +147,17 @@ price = {"sel": 50}
 effect = 11
 effect_value = 1.0
 
+[sub_resource type="Resource" id="windmill_pump"]
+script = ExtResource("2")
+id = &"moulin_pompe"
+name_key = "ITEM_WINDMILL_PUMP"
+desc_key = "ITEM_WINDMILL_PUMP_DESC"
+tier = 2
+price = {"mineraux": 100, "mineraux_rares": 10, "sel": 1500}
+effect = 10
+effect_param = "moulin_pompe"
+unique = true
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump")])

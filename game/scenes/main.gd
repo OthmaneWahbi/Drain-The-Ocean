@@ -12,6 +12,7 @@ const StationView := preload("res://scenes/world/station_view.gd")
 const MirrorView := preload("res://scenes/world/mirror_view.gd")
 const PumpView := preload("res://scenes/world/pump_view.gd")
 const PipesView := preload("res://scenes/world/pipes_view.gd")
+const DemoEnd := preload("res://scenes/ui/demo_end.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -51,6 +52,10 @@ func _ready() -> void:
 	var pipes := PipesView.new()
 	pipes.name = "Pipes"
 	add_child(pipes)
+	# La fin de la démo (M-05), déclenchée par le moulin-pompe.
+	var demo_end := DemoEnd.new()
+	demo_end.name = "DemoEnd"
+	add_child(demo_end)
 	# Le mode déplacement des objets (G, M-22).
 	var placement := PlacementController.new()
 	placement.name = "Placement"

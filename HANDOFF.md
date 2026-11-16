@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux.
-- **Documents :** PRD v0.19. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. 129 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo.
+- **Documents :** PRD v0.20. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. 136 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
-- **Prochaine étape :** le moulin-pompe et la fin de démo, puis la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
+- **Prochaine étape :** la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -132,6 +132,7 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - La pompe à bras se pose au bord de l'eau. Clic maintenu : elle aspire 20 L/s dans l'océan, mais seulement ce que les zones reliées peuvent recevoir (jamais un litre perdu).
 - Les tuyaux sont un stock de tronçons de 4 m. Le réseau se calcule tout seul à chaque changement : pompe par pompe, on relie les zones de la plus proche à la plus lointaine tant qu'il reste assez de tronçons pour atteindre leur bord.
 - L'eau remplit la zone la plus proche d'abord. Les tuyaux sont dessinés de la pompe au bord de chaque zone reliée.
+- Le moulin-pompe est une pompe « automatique » : la même étape qui fait vivre le monde le fait pomper (10 L/s), sans le joueur. On compte ce qu'il a pompé ; à 200 L, c'est la fin de la démo (une seule fois, mémorisée dans la sauvegarde).
 
 ### Le temps qui passe
 
@@ -155,6 +156,16 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Moulin-pompe et fin de la démo
+- **Quoi :** type de pompe `moulin_pompe` (automatique, 10 L/s, au bord de l'eau, unique), `GameState._run_auto_pumps()` dans `simulate()`, `auto_pumped_l`, `demo_done`, signal `demo_finished` ; vue du moulin (tour, pales qui tournent quand l'eau passe) ; `scenes/ui/demo_end.gd` (gros avion teaser avec silhouettes T3, puis écran de fin avec bilan et « Continuer à jouer ») ; 7 tests (`test_windmill.gd`).
+- **Pourquoi :** fin de T2 et fin de la démo (M-05, M-57), deuxième des trois releases demandées.
+- **Impact :** PRD §7 (v0.20), `game/core/`, `game/data/`, `game/scenes/`, strings.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Le moulin « perdait » de l'eau
+- **Quoi :** après 2 s, la cuvette contenait 19,1 L au lieu de 20 L.
+- **Cause :** la cuvette s'évapore pendant qu'elle se remplit ; le test mesurait la mauvaise chose.
+- **Correction :** le test vérifie ce qui est sorti de l'océan (20 L pile).
 
 ### 2026-11-16 — MODIF — Pompe à bras et tuyaux (T2)
 - **Quoi :** `core/pipe_network.gd` (logique pure : liaisons, tronçons nécessaires, bord de zone, répartition), `GameState` (`pumps`, `pipe_segments`, `add_pump`, `pipe_links`, `zones_for_pump`, `run_pump`, signaux `pump_added` et `network_changed`), effets `PUMP` et `PIPES`, placement « au bord de l'eau » (`shore_only_kinds`), vues `pump_view.gd` (levier qui bouge) et `pipes_view.gd`, clic maintenu (`hold_use`) dans `player.gd`, articles « Pompe à bras » et « Tuyau », 16 tests (`test_pumps.gd`).

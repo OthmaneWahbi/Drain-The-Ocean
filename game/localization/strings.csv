@@ -77,3 +77,10 @@ ITEM_PIPE_DESC,"Un tronçon de 4 m. Les pompes se relient toutes seules aux bass
 PROMPT_PUMP,[Clic maintenu] Pomper · %d zone(s) reliée(s),[Hold click] Pump · %d zone(s) linked
 PUMP_NO_LINK,"Pompe : aucune zone reliée (il faut des tuyaux : %d / %d utilisés)","Pump: no zone linked (needs pipes: %d / %d used)"
 PUMP_FULL,Pompe : les zones reliées sont pleines,Pump: the linked zones are full
+ITEM_WINDMILL_PUMP,Moulin-pompe,Windmill pump
+ITEM_WINDMILL_PUMP_DESC,"La première machine : se pose au bord de l'eau et pompe 10 L/s TOUTE SEULE vers les zones reliées.","The first machine: goes at the water's edge and pumps 10 L/s ON ITS OWN into linked zones."
+WINDMILL_STATE,Moulin-pompe : pompe tout seul · %d zone(s) reliée(s),Windmill pump: pumps on its own · %d zone(s) linked
+DEMO_END_TITLE,Fin de la démo,End of the demo
+DEMO_END_TEXT,"Ton île pompe toute seule. L'océan, lui, n'a presque pas bougé.\nTemps de jeu : %s · Eau retirée : %s L · Baisse : %s","Your island pumps on its own. The ocean has barely moved.\nPlay time: %s · Water removed: %s L · Drop: %s"
+DEMO_END_TEASER,"Bientôt (T3) : pompe motorisée, éolienne, panneaux solaires, collecteur de sel automatique, tapis roulant…","Coming soon (T3): motor pump, wind turbine, solar panels, automatic salt collector, conveyor belt…"
+DEMO_END_CONTINUE,Continuer à jouer,Keep playing
