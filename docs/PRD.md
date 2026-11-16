@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.8 (questions de suite N-01 à N-10 tranchées : le MVP est entièrement spécifié) |
+| Version du document | 0.9 (jalon M0 : Godot 4.7.2, lanceur de tests maison) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -422,15 +422,15 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 | Sujet | Choix | Statut |
 |---|---|---|
-| Moteur | **Godot 4** (dernière version stable 4.x au démarrage, puis figée ; montée de version = décision consignée) | Moteur **[DÉCIDÉ]**, version **[PROPOSÉ]** |
+| Moteur | **Godot 4.7.2** stable (dernière stable au démarrage, figée ; montée de version = décision consignée) | **[DÉCIDÉ]** (M-09) |
 | Langage | **GDScript** typé statiquement. C# écarté : plus lourd pour l'export mobile et inutile ici | **[PROPOSÉ]** |
 | Rendu PC | Moteur de rendu **Forward+** | **[PROPOSÉ]** |
 | Rendu clicker / mobile | **Compatibility** (OpenGL) ou **Mobile** | **[PROPOSÉ]** |
 | Plateforme cible | Windows 10/11 64 bits, export `.exe` | **[DÉCIDÉ]** |
 | Distribution | Steam ? itch.io ? *[QUESTION Q-18]* | Ouvert |
 | Versionnage | Git + GitHub. **Git LFS** pour les gros fichiers (modèles 3D, textures, sons) | **[PROPOSÉ]** |
-| Tests | **GUT** ou **gdUnit4** pour les tests unitaires de la logique (économie, niveau d'eau, sauvegarde) | **[PROPOSÉ]** |
-| CI | GitHub Actions : lancer les tests et produire un export Windows à chaque PR | **[PROPOSÉ]** |
+| Tests | **Lanceur de tests maison** (`game/tests/run_tests.gd`, sans dépendance) pour la logique (océan, sauvegarde, contrôles) ; GUT ou gdUnit4 restent possibles si les besoins grandissent | **[PROPOSÉ]** |
+| CI | GitHub Actions : tests + lancement de la scène principale à chaque PR ; export Windows plus tard | **[DÉCIDÉ]** (M-13) |
 | Sauvegarde | Fichier JSON versionné dans `user://`, sauvegarde automatique régulière | **[PROPOSÉ]** |
 | Langues | Interface en français et anglais (peu de texte dans le monde, mais les textures avec texte devront exister en plusieurs langues ou rester en une langue neutre) | **[PROPOSÉ]** |
 
@@ -638,7 +638,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane.
 
 | Jalon | Contenu | Critère de réussite |
 |---|---|---|
-| **M0 — Fondations** | Projet Godot, structure du dépôt, CI, tests, sauvegarde vide | Un export Windows vide se construit en CI |
+| **M0 — Fondations** | Projet Godot, structure du dépôt, CI, tests, sauvegarde, scène greybox jouable | Les tests passent en CI ; on se promène sur l'île greybox en 1re/3e personne. **En cours (2026-11-16)** |
 | **M1 — Prototype de l'eau** | Île grise, plan d'eau shader, terrain de fond, variable volume → hauteur, perf mesurée | 60 i/s avec le terrain complet ; on peut faire baisser l'eau avec une touche de debug |
 | **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
