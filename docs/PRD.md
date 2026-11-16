@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.29 (anti-blocage) |
+| Version du document | 0.30 (vraie fin, traits du palmier, Nouvelle partie) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -719,6 +719,10 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 - **[PROPOSÉ]** Menus et options (v0.28 ; M-21, M-71, M-72, M-73, M-77) : au lancement, un **menu principal** avec 3 emplacements de sauvegarde (temps de jeu, litres retirés, date), Jouer / Effacer, Options, Quitter ; le jeu est en pause derrière et rien n'est sauvegardé tant qu'aucun emplacement n'est choisi. **Échap** ouvre le menu pause (vraie pause : le chronomètre s'arrête) : Reprendre, Sauvegarder, Options, Menu principal, Quitter ; il ne s'ouvre pas par-dessus le catalogue (M-74). **Options** (à part des parties, `user://settings.json`) : champ de vision 60-110, sensibilité, volume, balancement de la tête, plein écran, langue FR/EN, chronomètre speedrun. Le chronomètre de partie est **caché** par défaut (le HUD montre l'heure du jeu) ; l'option speedrun l'affiche au centième. Sauvegarde automatique aussi **après chaque achat**.
 
 - **[DÉCIDÉ]** Anti-blocage (v0.29, demande d'Othmane, 2026-11-16 : « Make sure no softlocking is possible ») : on ne doit jamais pouvoir rester coincé. (1) Les **petits objets se traversent** : tas de matériaux, tuyaux, coquillages, noix de coco ; on les vise toujours (E, clic) mais on ne s'y cogne pas. (2) **Détection automatique** : si l'on essaie d'avancer sans bouger pendant 1 s et qu'aucune des 8 directions ne laisse partir de 80 cm, le personnage se pose sur la place libre la plus proche (avec du sol, cercles de 50 cm jusqu'à 4 m). (3) **Filet de sécurité** : bouton « Me débloquer » dans le menu pause, qui ramène sur la plage (à côté si un objet bloque le point de retour). Valeurs dans `GameConfig` (`unstuck_*`).
+
+- **[PROPOSÉ]** Vraie fin construite (v0.30 ; M-04, Q-24, Q-25) : touche de debug **F4** seulement. Phases minutées (données : `GameConfig.ending_durations`) : la **bonde** et sa chaîne se découvrent quand l'eau descend · **glouglou** (tourbillon, l'océan disparaît) · **traversée** à pied du fond à sec, plan large en 3e personne · **avion publicitaire** de l'agence (même pilote qui fait coucou) avec sa banderole « maintenant aussi transporteur : de n'importe où à n'importe où » · écran du **temps de partie** (chronomètre arrêté au début de la fin) · **générique** · retour au menu principal. Clic : passer le temps ou le générique. Le meilleur temps est gardé et affiché (★) dans le menu ; une partie finie se rouvre **juste avant de tirer la chaîne**.
+- **[PROPOSÉ]** Traits sur le palmier (v0.30 ; M-84) : un trait gravé par réveil après une noyade, par paquets de 5 (4 debout, le 5e en travers), sur le palmier le plus proche de la plage ; sauvegardé avec la partie.
+- **[DÉCIDÉ]** « Nouvelle partie » dans le menu (v0.30, Othmane, 2026-11-16) : gros bouton « Nouvelle partie » (premier emplacement vide, sinon le plus ancien), et pour chaque emplacement Continuer / Nouvelle / Effacer. Écraser ou effacer une partie demande toujours confirmation. Le menu pause a aussi « Nouvelle partie » (sauvegarde, puis menu principal).
 
 ## 20. Glossaire
 

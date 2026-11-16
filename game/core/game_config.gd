@@ -87,6 +87,13 @@ extends Resource
 @export var stamina_exhausted_ratio: float = 0.25
 ## Noyade (N-04) : durée du fondu au noir, puis retour sur la plage.
 @export var drown_fade_s: float = 0.8
+
+## La vraie fin (M-04, touche de debug F4) : durée de chaque phase (EndingLogic), en secondes,
+## où est la bonde, et de combien l'eau descend (bonde visible, puis océan vidé).
+@export var ending_durations: Dictionary = {"drain": 4.0, "gurgle": 5.0, "walk": 6.0, "plane": 8.0, "time": 5.0, "credits": 12.0}
+@export var drain_position: Vector3 = Vector3(0, -3.0, -70)
+@export var ending_reveal_drop_m: float = 2.2
+@export var ending_empty_drop_m: float = 4.0
 @export var respawn_position: Vector3 = Vector3(0, 1, 6)
 
 @export_group("Survie légère")

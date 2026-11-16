@@ -267,6 +267,14 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - Dans `player.gd` : `is_trapped()` appelle `test_move()` (méthode de `CharacterBody3D` qui simule un déplacement sans le faire) dans les 8 directions ; `find_free_spot()` essaie chaque place avec `intersect_shape` (la capsule du joueur y tient-elle ?) puis un rayon vers le bas (y a-t-il du sol ?). `rescue()` sert au bouton du menu pause.
 - `tests/scenarios/softlock.gd` : un script `SceneTree` qui charge la vraie scène, appuie sur les touches (`Input.action_press`) et vérifie les positions : c'est un test d'intégration, à côté des tests unitaires.
 
+### La vraie fin, les traits du palmier et « Nouvelle partie » (PR #20)
+
+- `core/ending_logic.gd` (`EndingLogic`, pur) : `enum Phase`, `step(delta)` (peut traverser plusieurs phases), `progress()`, `skip()` (temps et générique seulement), et `tally_marks(n)` qui place les traits par paquets de 5.
+- GameState : `start_ending()` crée l'EndingLogic, bloque le joueur (`ui_open`) et mémorise l'eau retirée. Pendant la fin, `_process` n'avance que la fin (chronomètre arrêté) et règle `ending_drop_m`, que `water_level_y()` soustrait : l'océan, le filtre sous l'eau et le joueur voient tous la même eau. À l'entrée de WALK l'océan est vidé ; à DONE, `finish_run()` garde le meilleur temps, sauvegarde et émet `run_finished` (main.gd ouvre alors le menu).
+- `scenes/world/ending_director.gd` (`EndingDirector`) écoute `ending_started` / `ending_phase_changed` et construit tout dans un nœud `_scene` effacé à la fin : sa propre `Camera3D`, la bonde, les anneaux du tourbillon, le marcheur, l'avion (réutilise `delivery_plane.gd`, crochet caché) avec une banderole `Label3D` (`double_sided = false` pour une face par côté), et l'écran du temps / le générique dans un `CanvasLayer`.
+- `scenes/world/palm_marks.gd` (`PalmMarks`) redessine les traits à chaque `wakeups_changed`. La noyade appelle `rescue()` puis `GameState.register_wakeup()`.
+- Menu principal : `new_game(slot)` lance tout de suite sur un emplacement vide, sinon `ask()` affiche une question Oui / Annuler à la place du menu ; `pick_new_game_slot()` choisit le premier vide ou le plus ancien ; `GameState.new_game_in_slot()` écrit la partie neuve.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -328,3 +336,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #19 — Anti-blocage
 `PhysicsLayers`, `UnstuckLogic`, `player.is_trapped` / `find_free_spot` / `rescue`, bouton « Me débloquer », `test_unstuck.gd`, `tests/scenarios/softlock.gd`.
+
+### PR #20 — Vraie fin, traits du palmier, Nouvelle partie
+`EndingLogic`, `GameState.start_ending` / `finish_run` / `register_wakeup` / `new_game_in_slot`, `EndingDirector`, `PalmMarks`, F4, menu Nouvelle partie avec confirmation, `test_ending.gd`.

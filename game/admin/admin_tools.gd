@@ -5,12 +5,13 @@ extends CanvasLayer
 ## [autoload] de `game/project.godot`. Rien d'autre dans le jeu n'en dépend.
 ## Ils sont aussi coupés automatiquement dans une version exportée « release ».
 ##
-## F1  afficher / cacher cette liste      F6  avancer de 3 heures
+## F1  afficher / cacher cette liste      F4  jouer la vraie fin (M-04)
+## F6  avancer de 3 heures
 ## F7  (maintenu) vider l'océan très vite F8  (maintenu) temps ×10
 ## F9  nouvelle partie                    F10 +50 sel, +5 minéraux
 ## F11 +10 000 de chaque ressource        F12 ouvrir toutes les caisses tout de suite
 
-const HELP := "ADMIN  ·  F1 aide  ·  F6 +3 h  ·  F7 vider l'océan  ·  F8 temps ×10\nF9 nouvelle partie  ·  F10 +50 sel  ·  F11 +10 000 de tout  ·  F12 ouvrir les caisses"
+const HELP := "ADMIN  ·  F1 aide  ·  F4 vraie fin  ·  F6 +3 h  ·  F7 vider l'océan  ·  F8 temps ×10\nF9 nouvelle partie  ·  F10 +50 sel  ·  F11 +10 000 de tout  ·  F12 ouvrir les caisses"
 
 var _label: Label
 
@@ -40,6 +41,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	match event.physical_keycode:
 		KEY_F1:
 			_label.visible = not _label.visible
+		KEY_F4:
+			# La vraie fin n'est accessible que par cette touche pour le MVP (M-04).
+			GameState.start_ending()
 		KEY_F6:
 			# Fait vivre le monde 3 h d'un coup (faim, soif, séchage, matin…), pas seulement l'horloge.
 			GameState.advance_time(GameState.day.day_length_s / 8.0)

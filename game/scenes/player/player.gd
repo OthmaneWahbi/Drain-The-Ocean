@@ -175,9 +175,9 @@ func _drown() -> void:
 	var tween := create_tween()
 	tween.tween_property(_fade, "color:a", 1.0, cfg.drown_fade_s)
 	tween.tween_callback(func():
-		global_position = cfg.respawn_position
-		velocity = Vector3.ZERO
-		GameState.stamina.refill())
+		rescue()  # sur la plage, à côté si quelque chose bloque le point de retour
+		GameState.stamina.refill()
+		GameState.register_wakeup())  # un trait de plus sur le palmier
 	tween.tween_interval(0.6)
 	tween.tween_property(_fade, "color:a", 0.0, cfg.drown_fade_s)
 	tween.tween_callback(func(): _drowning = false)

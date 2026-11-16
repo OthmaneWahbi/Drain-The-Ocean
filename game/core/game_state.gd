@@ -44,6 +44,12 @@ signal item_moved(item: Dictionary)
 ## Un objet vient de sortir d'une caisse : le jeu passe tout de suite en mode déplacement.
 signal placement_requested(item: Dictionary)
 signal game_reset
+## La vraie fin (M-04) : commence (touche de debug), change de phase, se termine (retour au menu).
+signal ending_started
+signal ending_phase_changed(phase: int)
+signal run_finished
+## Un réveil de plus après une noyade : un trait de plus sur le palmier (M-84).
+signal wakeups_changed
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -114,6 +120,19 @@ var current_slot: int = 1
 ## Faux tant qu'aucun emplacement n'est choisi (menu principal) : rien n'est écrit sur le disque,
 ## ni toutes les 2 min, ni en quittant. Sinon on écraserait l'emplacement 1 avec une partie vide.
 var autosave_enabled: bool = false
+## La vraie fin en cours (EndingLogic), ou null.
+var ending: EndingLogic = null
+## De combien l'eau descend en plus pendant la fin (la bonde, puis le glouglou).
+var ending_drop_m: float = 0.0
+## Réveils après une noyade (traits sur le palmier).
+var wakeups: int = 0
+## Meilleur temps d'une partie finie (0 = jamais finie). Une partie finie se rouvre juste avant
+## le drain (Q-25).
+var best_time_s: float = 0.0
+## L'eau retirée au moment de tirer la chaîne : une partie finie se rouvre là.
+var pre_ending_removed_l: float = 0.0
+## Combien de fois cette partie a été finie.
+var finished_runs: int = 0
 ## Dossier des sauvegardes (les tests en utilisent un autre).
 var save_dir: String = SaveSystem.DEFAULT_DIR
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
@@ -179,6 +198,12 @@ func _reset_state() -> void:
 	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
 	unlocked_tier = 1
 	play_time_s = 0.0
+	ending = null
+	ending_drop_m = 0.0
+	wakeups = 0
+	best_time_s = 0.0
+	pre_ending_removed_l = 0.0
+	finished_runs = 0
 	_autosave_timer = 0.0
 	_next_id = 1
 	_deliveries_count = 0
@@ -186,6 +211,9 @@ func _reset_state() -> void:
 
 
 func _process(delta: float) -> void:
+	if ending != null:
+		_step_ending(delta)  # le chronomètre est arrêté : la partie est finie
+		return
 	# Chronomètre de partie : ne tourne que quand le jeu n'est pas en pause (PRD §11).
 	play_time_s += delta
 	simulate(delta)
@@ -1035,7 +1063,70 @@ func _load_rotation(item: Dictionary, src: Dictionary) -> void:
 
 ## Hauteur réelle (honnête) de la surface de l'océan, en mètres.
 func water_level_y() -> float:
-	return config.sea_level_y - ocean.level_drop_m(config.ocean_surface_m2)
+	return config.sea_level_y - ocean.level_drop_m(config.ocean_surface_m2) - ending_drop_m
+
+
+# --- La vraie fin et les réveils -----------------------------------------------------------
+
+## Lance la vraie fin (M-04 : seulement par la touche de debug pour le MVP).
+func start_ending() -> void:
+	if ending != null:
+		return
+	ending = EndingLogic.new(config.ending_durations)
+	ending_drop_m = 0.0
+	pre_ending_removed_l = ocean.removed_l
+	ui_open = true
+	ending_started.emit()
+	ending_phase_changed.emit(ending.phase)
+
+
+## Clic pendant l'écran du temps ou le générique : on passe.
+func skip_ending_screen() -> void:
+	if ending != null:
+		var before := ending.phase
+		ending.skip()
+		if ending.phase != before:
+			_on_ending_phase(ending.phase)
+
+
+func _step_ending(delta: float) -> void:
+	if ending.step(delta):
+		_on_ending_phase(ending.phase)
+		if ending == null:
+			return  # la run est finie
+	# L'eau suit la mise en scène : on découvre la bonde, puis tout part dans le trou.
+	match ending.phase:
+		EndingLogic.Phase.DRAIN:
+			ending_drop_m = config.ending_reveal_drop_m * ease(ending.progress(), 0.5)
+		EndingLogic.Phase.GURGLE:
+			ending_drop_m = lerpf(config.ending_reveal_drop_m, config.ending_empty_drop_m, ease(ending.progress(), 2.0))
+		_:
+			ending_drop_m = config.ending_empty_drop_m
+
+
+func _on_ending_phase(phase: int) -> void:
+	if phase == EndingLogic.Phase.WALK:
+		ocean.remove_water(ocean.remaining_l())  # l'océan est vide
+		ocean_changed.emit()
+	ending_phase_changed.emit(phase)
+	if phase == EndingLogic.Phase.DONE:
+		finish_run()
+
+
+## Fin de la run (Q-24) : on garde le meilleur temps, on sauvegarde, et on rend la main au menu.
+func finish_run() -> void:
+	best_time_s = play_time_s if finished_runs == 0 else minf(best_time_s, play_time_s)
+	finished_runs += 1
+	ending = null
+	ui_open = false
+	autosave()
+	run_finished.emit()
+
+
+## Réveil après une noyade : un trait de plus sur le palmier.
+func register_wakeup() -> void:
+	wakeups += 1
+	wakeups_changed.emit()
 
 
 # --- Sauvegarde ----------------------------------------------------------------------------
@@ -1067,6 +1158,10 @@ func to_dict() -> Dictionary:
 		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
+		"wakeups": wakeups,
+		"best_time_s": best_time_s,
+		"pre_ending_removed_l": pre_ending_removed_l,
+		"finished_runs": finished_runs,
 	}
 
 
@@ -1145,6 +1240,13 @@ func load_dict(data: Dictionary) -> void:
 	owned = data.get("owned", {}).duplicate()
 	_deliveries_count = int(data.get("deliveries_count", 0))
 	play_time_s = float(data.get("play_time_s", 0.0))
+	wakeups = maxi(int(data.get("wakeups", 0)), 0)
+	best_time_s = maxf(float(data.get("best_time_s", 0.0)), 0.0)
+	pre_ending_removed_l = maxf(float(data.get("pre_ending_removed_l", 0.0)), 0.0)
+	# Une partie finie se rouvre juste avant le drain (Q-25) : l'eau d'avant la chaîne revient.
+	finished_runs = maxi(int(data.get("finished_runs", 0)), 0)
+	if finished_runs > 0:
+		ocean.removed_l = minf(ocean.removed_l, pre_ending_removed_l)
 	# La barre en dernier : elle dépend des outils, des tuyaux et de ce qu'on porte.
 	var saved_slots = up.get("toolbar", [])
 	if saved_slots is Array and saved_slots.size() == toolbar.slots.size():
@@ -1185,6 +1287,14 @@ func play_slot(slot: int) -> void:
 	save_game()
 
 
+## « Nouvelle partie » dans un emplacement : remplace ce qui s'y trouvait (le menu a demandé).
+func new_game_in_slot(slot: int) -> void:
+	current_slot = slot
+	new_game()
+	autosave_enabled = true
+	save_game()
+
+
 ## Sauvegarde automatique (M-77) : seulement quand une partie a été choisie.
 func autosave() -> void:
 	if autosave_enabled:
@@ -1211,6 +1321,7 @@ func _emit_all() -> void:
 	item_moved.emit(depot)  # la palette n'est pas recréée : on la remet à sa place
 	survival_changed.emit()
 	ocean_changed.emit()
+	wakeups_changed.emit()
 	stock_changed.emit()
 	carried_changed.emit()
 	bucket_changed.emit()

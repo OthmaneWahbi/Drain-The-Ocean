@@ -35,8 +35,8 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils. PR #12 : tuyaux posés à la main, débit des pompes, une caisse par objet. PR #13 : un tas par matériau, matériaux dans la barre, menu pour la ranger. Puis les releases qui finissent la démo (PRD §19.5) : PR #14 monde vivant, PR #15 téléphone, PR #16 toboggan et flamant, PR #17 jalons, PR #18 menus et options, PR #19 anti-blocage.
-- **Documents :** PRD v0.29. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils. PR #12 : tuyaux posés à la main, débit des pompes, une caisse par objet. PR #13 : un tas par matériau, matériaux dans la barre, menu pour la ranger. Puis les releases qui finissent la démo (PRD §19.5) : PR #14 monde vivant, PR #15 téléphone, PR #16 toboggan et flamant, PR #17 jalons, PR #18 menus et options, PR #19 anti-blocage, PR #20 vraie fin et Nouvelle partie.
+- **Documents :** PRD v0.30. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
 - **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel (un par matériau) à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux posés à la main pièce par pièce, au sol ou en hauteur, avec le débit affiché au-dessus des pompes. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. Barre de 5 cases où vont les outils et les matériaux portés (un par case), menu Tab pour la ranger. Un tas par matériau à côté des zones. Une caisse par objet à poser. 173 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
 - **Prochaine étape :** retours d'Othmane sur les tuyaux à la main et la barre. Ce qui reste pour la démo (PRD §19.1) : monde (shader d'eau, fond marin autour de l'île, nuages, mouettes/poissons/crabe) ; téléphone (premier appel tutoriel, offres spéciales, palette arrachée au crochet) ; contenu (toboggan à sacs N-09, objet payé en perle, stock automatique après un achat M-28) ; 3 premiers jalons comparatifs ; menu principal à 3 emplacements et options ; vraie fin derrière une touche de debug ; clins d'œil (traits sur le palmier, pilote qui salue) ; sons de base ; mesure de perf ; test de 30-45 min par un testeur extérieur.
@@ -162,6 +162,19 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — DÉCISION — Bouton « Nouvelle partie » dans le menu
+- **Quoi :** Othmane veut pouvoir lancer une nouvelle partie depuis le menu.
+- **Impact :** PRD v0.30 ; menu principal et menu pause.
+
+### 2026-11-16 — MODIF — Vraie fin, traits du palmier, Nouvelle partie
+- **Quoi :** `core/ending_logic.gd` (phases minutées, saut, disposition des traits) ; GameState : `start_ending()`, `ending_drop_m` (l'eau descend pour la mise en scène), `finish_run()`, `best_time_s`, `finished_runs`, `pre_ending_removed_l` (une partie finie se rouvre avant la chaîne), `wakeups` / `register_wakeup()`, `new_game_in_slot()` ; `scenes/world/ending_director.gd` (bonde, tourbillon, marcheur, avion publicitaire avec banderole Label3D, écran du temps, générique) ; `scenes/world/palm_marks.gd` ; F4 dans les outils admin ; HUD et jalons cachés pendant la fin ; noyade : retour par `rescue()` + un trait ; menu principal : Nouvelle partie, Continuer, confirmation ; 10 tests (`test_ending.gd`, `test_settings.gd`).
+- **Pourquoi :** PRD §19.1 (vraie fin derrière une touche de debug, clins d'œil) et demande d'Othmane.
+- **Impact :** PRD v0.30, `game/core/`, `game/scenes/`, `game/admin/`, traductions, tests, guide du code.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Fin de run et partie finie en 0 s
+- **Cause :** (1) `_step_ending` lisait `ending.phase` après que `finish_run()` l'avait remis à null ; (2) « partie finie » était déduit de `best_time_s > 0`, faux pour une partie finie à 0 s (test).
+- **Correction :** sortie immédiate après la fin ; compteur `finished_runs` à part.
 
 ### 2026-11-16 — DÉCISION — Aucun blocage possible
 - **Quoi :** Othmane s'est retrouvé coincé dans un petit espace entre un tuyau et un tas de sel ; il demande qu'aucun blocage ne soit possible.

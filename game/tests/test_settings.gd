@@ -141,3 +141,29 @@ func test_purchase_triggers_an_autosave() -> void:
 	assert_eq(gs.order(["bache"]).size(), 1)
 	var data := SaveSystem.read(1, DIR)
 	assert_true(int(data.stock.get("sel", 0)) < 1000, "la sauvegarde contient l'achat (M-77)")
+
+
+func test_new_game_in_a_slot_replaces_the_old_game() -> void:
+	gs.play_slot(2)
+	gs.stock = {"sel": 77}
+	gs.play_time_s = 500.0
+	gs.save_game()
+	gs.new_game_in_slot(2)
+	assert_eq(gs.current_slot, 2)
+	assert_true(gs.autosave_enabled)
+	var data := SaveSystem.read(2, DIR)
+	assert_almost(float(data.play_time_s), 0.0, 0.01, "partie neuve écrite")
+	assert_eq(int(data.stock.get("sel", 0)), 0)
+
+
+func test_new_game_button_takes_first_empty_slot_then_the_oldest() -> void:
+	assert_eq(MainMenu.pick_new_game_slot(DIR), 1)
+	SaveSystem.write(1, {"play_time_s": 1.0}, DIR)
+	assert_eq(MainMenu.pick_new_game_slot(DIR), 2)
+	SaveSystem.write(2, {}, DIR)
+	SaveSystem.write(3, {}, DIR)
+	# Tous pris : le plus ancien. On vieillit l'emplacement 2 à la main.
+	var f := FileAccess.open(SaveSystem.slot_path(2, DIR), FileAccess.WRITE)
+	f.store_string(JSON.stringify({"saved_at_unix": 1000.0}))
+	f.close()
+	assert_eq(MainMenu.pick_new_game_slot(DIR), 2)

@@ -99,6 +99,18 @@ func _ready() -> void:
 	main_menu.name = "MainMenu"
 	add_child(main_menu)
 	pause_menu.main_menu_requested.connect(main_menu.open_menu)
+	# La vraie fin (touche de debug F4), puis retour au menu principal (Q-24).
+	var ending := EndingDirector.new()
+	ending.name = "Ending"
+	add_child(ending)
+	GameState.run_finished.connect(main_menu.open_menu)
+	# Les traits des réveils, sur le palmier le plus proche de la plage (M-84).
+	var marks := PalmMarks.new()
+	marks.name = "PalmMarks"
+	var palm := Vector3(-13, 1.7, -3)
+	var to_center := Vector3(-palm.x, 0, -palm.z).normalized()
+	add_child(marks)
+	marks.look_at_from_position(palm + to_center * 0.215, palm - to_center)
 	# La partie en mémoire a été créée avant la scène : on rejoue son contenu.
 	# DTO_SKIP_MENU=1 (captures d'écran, essais) saute le menu et reprend l'emplacement 1.
 	if OS.get_environment("DTO_SKIP_MENU") != "":
