@@ -275,6 +275,12 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `scenes/world/palm_marks.gd` (`PalmMarks`) redessine les traits à chaque `wakeups_changed`. La noyade appelle `rescue()` puis `GameState.register_wakeup()`.
 - Menu principal : `new_game(slot)` lance tout de suite sur un emplacement vide, sinon `ask()` affiche une question Oui / Annuler à la place du menu ; `pick_new_game_slot()` choisit le premier vide ou le plus ancien ; `GameState.new_game_in_slot()` écrit la partie neuve.
 
+### Les sons de base (PR #21)
+
+- `core/sound_synth.gd` (`SoundSynth`, pur) : chaque son est une recette qui remplit un tableau d'échantillons (-1..1) à 22 050 Hz. Briques : bruit blanc passé dans un filtre passe-bas à un pôle (`y += a·(x − y)`), sinusoïde dont la fréquence glisse (le « plop »), tons alternés (le téléphone), notes qui se superposent (l'arpège), dent de scie avec effet Doppler (l'avion). Le bruit utilise une graine fixe (`hash(nom)`) : le son est identique à chaque lancement, donc testable. Les boucles (vagues, glouglou) commencent et finissent à zéro pour ne pas claquer. `stream(nom)` emballe le tout dans un `AudioStreamWAV` 16 bits.
+- `scenes/audio/sound_board.gd` (`SoundBoard`) : fabrique les 9 sons une fois au démarrage, garde une petite réserve de 6 `AudioStreamPlayer` (pour jouer plusieurs sons à la fois), et **observe** GameState : il compare l'eau du seau d'une image à l'autre (plus = puiser, moins = verser), regarde `phone.is_ringing()`, et écoute quelques signaux (`milestone_reached`, `pickup_removed`, `crate_added`, `ending_phase_changed`). GameState ne sait rien des sons.
+- `tests/scenarios/perf.gd` : relève `Performance.get_monitor(...)` (temps de calcul, appels de dessin, primitives, nœuds, mémoire) sur l'île de départ puis sur une île remplie.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -339,3 +345,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #20 — Vraie fin, traits du palmier, Nouvelle partie
 `EndingLogic`, `GameState.start_ending` / `finish_run` / `register_wakeup` / `new_game_in_slot`, `EndingDirector`, `PalmMarks`, F4, menu Nouvelle partie avec confirmation, `test_ending.gd`.
+
+### PR #21 — Sons et perf
+`SoundSynth`, `SoundBoard`, `test_sound.gd`, `tests/scenarios/perf.gd`.

@@ -104,6 +104,10 @@ func _ready() -> void:
 	ending.name = "Ending"
 	add_child(ending)
 	GameState.run_finished.connect(main_menu.open_menu)
+	# Les sons, fabriqués par calcul (SoundSynth), qui écoutent GameState.
+	var sounds := SoundBoard.new()
+	sounds.name = "Sounds"
+	add_child(sounds)
 	# Les traits des réveils, sur le palmier le plus proche de la plage (M-84).
 	var marks := PalmMarks.new()
 	marks.name = "PalmMarks"

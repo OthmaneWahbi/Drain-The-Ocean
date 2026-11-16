@@ -36,6 +36,12 @@ jobs:
       - name: Scénario anti-blocage (vrai moteur physique)
         run: ./godot --headless --path game -s res://tests/scenarios/softlock.gd
 
+      - name: Scénario de perf (rapport, et pas d'erreur de script)
+        run: |
+          set -o pipefail
+          ./godot --headless --path game -s res://tests/scenarios/perf.gd 2>&1 | tee perf.log
+          ! grep -q "SCRIPT ERROR" perf.log
+
       - name: Lancer la scène principale (fumée)
         run: |
           set -o pipefail
