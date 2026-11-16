@@ -35,15 +35,33 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.6 en revue (PR #1) ; questionnaire MVP (`docs/QUESTIONS_MVP.md`) en attente de réponses.
-- **Prochaine étape :** Othmane répond au questionnaire MVP (M-01 à M-85), puis jalon M0 (fondations du projet Godot).
-- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport, puis temps de partie, générique et retour au menu ; texte sobre autorisé dans les textures ; sauvegarde finie rouverte juste avant le drain ; vidage sans drain possible, mais les derniers litres seulement au seau.
-- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), plus les 85 questions du questionnaire MVP.
+- **Phase :** conception terminée pour le MVP, à quelques questions près. Aucun code pour l'instant.
+- **Documents :** PRD v0.7 en revue (PR #1). Questionnaire MVP répondu (décisions en PRD §19.2).
+- **Prochaine étape :** Othmane répond aux 10 nouvelles questions N-01 à N-10 (PRD §19.3) ; en parallèle, jalon M0 (fondations du projet Godot) peut démarrer.
+- **Décisions clés :** 3D low-poly style *How to Fish* ; troc direct ; caméra 1re personne + bascule 3e ; survie légère (endurance, faim, soif) ; nage avec noyade ; fin secrète possible en nageant des milliers de km ; fin principale = drain, avion publicitaire, temps, générique, menu ; démo T0-T2 de 30-45 min.
+- **Questions ouvertes :** N-01 à N-10 (PRD §19.3) et les questions de long terme du PRD §18.
 
 ---
 
 ## Journal
+
+### 2026-11-16 — QUESTION — 10 nouvelles questions issues du questionnaire (N-01 à N-10)
+- **Quoi :** incohérence M-67/M-84 (tourbillon lointain), nourriture et eau douce, conséquences de la faim/soif, noyade, endurance, taille du monde pour la fin secrète à la nage, perle, offres spéciales du téléphone, achat qui automatise le transport, jauge de niveau d'eau.
+- **Pourquoi :** les réponses d'Othmane ajoutent la survie légère, la noyade, la fin à la nage, la perle et les offres spéciales, qui demandent des précisions.
+- **Impact :** PRD §19.3.
+- **Par :** Claude
+
+### 2026-11-16 — MODIF — PRD v0.7 : réponses au questionnaire MVP
+- **Quoi :** les 85 réponses sont listées en PRD §19.2 et reportées dans les sections concernées (§4.1 survie et jour/nuit, §5.5, §6.1 perle, §8.2 repère de niveau, §9 catalogue, délai de 5 s, maquettes, §10 nage et fin secrète, §16.3 machine de référence et origine flottante, §18 questions tranchées, §19.1 périmètre).
+- **Pourquoi :** Othmane a répondu au questionnaire.
+- **Impact :** `docs/PRD.md`, `docs/QUESTIONS_MVP.md`.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Réponses au questionnaire MVP (M-01 à M-85)
+- **Quoi :** recommandations acceptées partout sauf : M-24 nage avec endurance et noyade ; M-25 pas de limite artificielle, fin secrète si on nage des milliers de km ; M-26 survie légère (endurance façon BotW, faim, soif) ; M-28 transport à la main puis automatisé par un achat ; M-31 pas de ralentissement avec le seau ; M-32 gouttes purement visuelles ; M-33/M-34 l'eau reversée sur le sable compte aussi comme rendue à l'océan ; M-45 perle dans le MVP ; M-51 livraison en 5 s ; M-54 offres spéciales au téléphone ; M-62 le niveau doit bouger un tout petit peu dans la démo avec un repère ; M-67 pas de tourbillon lointain ; M-68 HUD petit et comique ; M-78 sauvegarde manuelle qui remplace la dernière auto. Machine de référence (M-11) : i9, RTX 4 Go VRAM, ~12 Go RAM. Assets sur-mesure faits sous Blender plus tard (M-07). Détail complet : PRD §19.2.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §4, §6, §8, §9, §10, §16, §18, §19.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Questionnaire MVP en formulaire interactif
 - **Quoi :** les 85 questions de `docs/QUESTIONS_MVP.md` sont aussi disponibles en formulaire web (recommandations pré-cochées, commentaires, enregistrement automatique, export texte). Copie de la page dans `docs/questionnaire-mvp.html`.

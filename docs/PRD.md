@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.6 (périmètre du MVP détaillé ; questionnaire MVP ; « plop » à sec) |
+| Version du document | 0.7 (réponses au questionnaire MVP intégrées) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -85,8 +85,8 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 
 - **[DÉCIDÉ]** Petite île, le joueur y est seul avec le téléphone rouge et le seau.
 - **[PROPOSÉ]** Taille de départ : ~40 m de diamètre, quelques palmiers, rochers, une petite crique. Assez petite pour que la place manque vite (voir [8.5](#85-lîle-qui-grandit)).
-- **[PROPOSÉ]** Pas de survie (ni faim, ni soif, ni santé). Le jeu reste détendu. *[QUESTION Q-05]*
-- **[PROPOSÉ]** Cycle jour/nuit lent (ex. 20 min réelles par jour). Le soleil influence l'évaporation (voir [6.3](#63-le-séchage)). La nuit est belle et calme, pas punitive. *[QUESTION Q-06]*
+- **[DÉCIDÉ]** Survie **légère** (M-26, 2026-11-16) : **endurance** (style *Zelda: Breath of the Wild*, consommée en courant et en nageant), **faim et soif légères**. Le jeu reste détendu. Détails (sources de nourriture et d'eau douce, conséquences) : *[QUESTION N-02, N-03]*.
+- **[DÉCIDÉ]** Cycle jour/nuit : **20 min réelles par jour**, évaporation ×0,3 la nuit (M-40). La nuit est belle et calme, pas punitive.
 
 ### 4.2 Le téléphone
 
@@ -137,7 +137,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 ### 5.5 Actif contre inactif (idle)
 
 - **[PROPOSÉ]** Début de partie très **actif** (le joueur porte le seau lui-même), puis de plus en plus **automatisé** : le joueur devient gestionnaire et architecte de son île.
-- **[QUESTION Q-03]** Le jeu progresse-t-il quand il est fermé (progression hors ligne) ? Recommandation : **non** pour le PC (c'est un jeu à vivre, pas une appli à laisser tourner), **oui** pour le mobile.
+- **[DÉCIDÉ]** Pas de progression quand le jeu est fermé sur PC (M-79). Le mobile sera décidé au moment du portage.
 
 ---
 
@@ -156,7 +156,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 | **Coquillages** | Variable | Un peu au puisage ; surtout ramassés sur le fond marin découvert | Monnaie « de l'exploration », récompense les sorties hors de l'île |
 
 - **[PROPOSÉ]** Les ressources sont **physiques** : on voit des tas de sel, des sacs, des caisses sur l'île. Le stock devient un élément du décor (et un problème de place, voir [17](#17-problèmes-identifiés-et-propositions)).
-- **[QUESTION Q-04]** Ajouter une 5ᵉ ressource ultra-rare (ex. **perle**, trouvée dans certains coquillages) pour les achats de fin et le contenu caché ?
+- **[DÉCIDÉ]** Une 5ᵉ ressource ultra-rare, la **perle**, existe et est présente dès le MVP (M-45). Sa source et son usage dans le MVP : *[QUESTION N-07]*.
 
 ### 6.2 Le troc (pas de monnaie)
 
@@ -228,6 +228,7 @@ Ordre de grandeur : avec un débit final de ~10⁹ L/s, la dernière phase dure 
 3. **Pourcentage restant** avec beaucoup de décimales au début (99,99999 %), ce qui est drôle en soi.
 4. **Le niveau réel** de l'eau, honnête, qui commence à bouger visiblement au palier T3/T4.
 5. **Le fond marin conçu pour révéler beaucoup tôt** : un plateau peu profond autour de l'île (voir 8.4) fait que les premiers centimètres dévoilent beaucoup de sable.
+6. **[DÉCIDÉ]** Dès la démo, un **repère de niveau d'eau** doit montrer que le niveau bouge, même d'un tout petit peu (M-62). **[PROPOSÉ]** Une **jauge à aiguille** plantée près de la plage (comme un comparateur d'atelier) : les chiffres restent honnêtes, mais l'aiguille amplifie des dixièmes de millimètre pour que le mouvement se voie. *[QUESTION N-10]*
 
 ### 8.3 Le niveau de l'eau
 
@@ -275,7 +276,7 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 ### 9.1 Passer commande
 
-- **[PROPOSÉ]** Décrocher le téléphone ouvre le **catalogue** : des pages illustrées, avec des pictogrammes et des prix en icônes de ressources. Interface en jeu (diégétique) qui reste lisible. *[QUESTION Q-11]*
+- **[PROPOSÉ]** Décrocher le téléphone ouvre le **catalogue** : des pages illustrées, avec des pictogrammes et des prix en icônes de ressources. **[DÉCIDÉ]** Mixte : on décroche en 3D, puis un menu illustré façon catalogue papier (M-47).
 - **[PROPOSÉ]** Le premier appel est un tutoriel muet : on décroche, on entend une musique d'attente, une caisse tombe du ciel avec le catalogue papier dedans.
 
 ### 9.2 Payer
@@ -286,7 +287,8 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 ### 9.3 Recevoir
 
 - **[DÉCIDÉ]** Livraison par avion, rapide et comique, sans attendre le joueur.
-- **[PROPOSÉ]** Délai : 5 à 20 secondes. La caisse est larguée en parachute **à peu près** au bon endroit. Au début elle tombe parfois à l'eau près du rivage et flotte jusqu'à la plage (gag sans pénalité).
+- **[DÉCIDÉ]** Délai : **5 secondes** (M-51).
+- **[PROPOSÉ]** La caisse est larguée en parachute **à peu près** au bon endroit. Au début elle tombe parfois à l'eau près du rivage et flotte jusqu'à la plage (gag sans pénalité).
 - **[PROPOSÉ]** Les avions grossissent avec les paliers : petit hydravion → avion cargo → escadrille → avion absurde qui largue une machine géante entière.
 - **[PROPOSÉ]** Les achats ne peuvent jamais être perdus : un objet qui tombe mal finit toujours par revenir sur la plage.
 
@@ -294,7 +296,7 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 Gros trou logique : « Si l'agence livre des objets, pourquoi ne pas commander un bateau ? »
 
-**[PROPOSÉ]** Le catalogue contient bien un **bateau**, un **hélicoptère** et un **avion**… à un prix ridicule. On les achète, et on reçoit… **une maquette** (bateau en bouteille, hélico en plastique, avion en papier). Gag visuel, et ça ferme la question sans un mot. *[QUESTION Q-12]*
+**[PROPOSÉ]** Le catalogue contient bien un **bateau**, un **hélicoptère** et un **avion**… à un prix ridicule. On les achète, et on reçoit… **une maquette** (bateau en bouteille, hélico en plastique, avion en papier). Gag visuel, et ça ferme la question sans un mot. **[DÉCIDÉ]** au moins le bateau dès le MVP (M-53).
 
 Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), radio (ne capte que la musique d'attente de l'agence), fusée de détresse (feu d'artifice qui dessine le logo de l'agence).
 
@@ -308,7 +310,8 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** En plus, une **vue de dessus** (mode « construction ») pour placer les machines sur l'île, activée quand on pose un objet.
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
-- **[PROPOSÉ]** Le personnage peut nager. S'il s'éloigne trop, l'écran s'assombrit et il **se réveille sur l'île**, comme au début (gag, et clin d'œil sur des réveils précédents). Aucune pénalité.
+- **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). Conséquence de la noyade : *[QUESTION N-04]*.
+- **[DÉCIDÉ]** Pas de mur invisible ni de « réveil sur l'île » pour limiter l'exploration (M-25) : le joueur peut aller **vraiment loin**, mais il n'y trouve rien. S'il est assez malin pour parcourir **des milliers de kilomètres** sans se noyer ni épuiser son endurance, il **termine le jeu** tout simplement (fin secrète). La distance nécessaire doit être immense, et cette liberté ne doit pas coûter de performances. Conséquences sur la taille du monde et la technique : *[QUESTION N-06]* et [16.3](#163-performances).
 - **[PROPOSÉ]** Le personnage ne parle pas, ne pense pas en bulles. Ses émotions passent par l'animation.
 
 ---
@@ -444,7 +447,8 @@ Une vraie simulation de fluide d'un océan est **impossible** en temps réel et 
 - **Nombre de machines** : des centaines au palier T4 → **MultiMeshInstance3D** pour les objets répétés, animations simples, production calculée en lot.
 - **Ressources physiques** : afficher les tas de sel par paliers (petit tas, gros tas, montagne) plutôt qu'un objet par unité.
 - **Grands nombres** : `float` de Godot (64 bits) suffit jusqu'à ~10³⁰⁸ ; pas besoin d'une bibliothèque de grands nombres si le volume reste ≤ 10¹⁸ L. À surveiller : précision des petits ajouts sur un gros total (on stocke le volume **retiré**, pas le volume restant, pour éviter les erreurs d'arrondi).
-- **Cible** : 60 i/s en 1080p sur une carte graphique milieu de gamme de 2020 (*[QUESTION Q-19]* : configuration minimale visée ?).
+- **[DÉCIDÉ]** **Machine de référence** : le PC d'Othmane (processeur i9, carte RTX avec **4 Go de mémoire vidéo**, ~12 Go de RAM) (M-11). Cible : 60 i/s en 1080p sur cette machine. Les 4 Go de VRAM imposent des textures sobres (le low-poly aide).
+- **[PROPOSÉ]** **Distances immenses** (fin secrète à la nage, voir [10](#10-le-personnage-la-caméra-et-les-contrôles)) : les nombres à virgule de Godot perdent en précision au-delà de quelques dizaines de km. Solution : **origine flottante** (le monde est recentré sur le joueur régulièrement) ; loin du bassin, l'océan n'est qu'un plan d'eau qui suit le joueur, sans contenu, donc sans coût.
 
 ### 16.4 Données du jeu pilotées par fichiers
 
@@ -530,28 +534,22 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 > **Les questions détaillées pour construire le MVP (M-01 à M-85) sont dans [`QUESTIONS_MVP.md`](QUESTIONS_MVP.md).** Plusieurs reprennent des questions ci-dessous (Q-03, Q-04, Q-05, Q-06, Q-08 à Q-12, Q-19, Q-21, Q-22) : y répondre là-bas les tranche aussi ici.
 
-**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain · Q-26 → « plop » à sec, succès décidés en fin de projet (toutes le 2026-11-16).
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu · Q-25 → une sauvegarde finie se rouvre juste avant le drain · Q-26 → « plop » à sec, succès décidés en fin de projet · via le questionnaire MVP : Q-03 (pas de progression hors ligne sur PC), Q-04 (perle : oui), Q-05 (survie légère), Q-06 (jour/nuit avec effet), Q-11 (catalogue mixte), Q-12 (maquettes : oui), Q-19 (PC d'Othmane comme référence), Q-21 (« Drain the Ocean ») (toutes le 2026-11-16).
+
+**Nouvelles questions issues des réponses au questionnaire : N-01 à N-10, voir [19.3](#193-nouvelles-questions-n-01-à-n-10).**
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
 | **Q-02** | Durée de jeu visée ? | 3-5 h / 6-10 h / 15 h+ | **6-10 h** |
-| **Q-03** | Progression hors ligne (quand le jeu est fermé) ? | Oui / Non / Seulement sur mobile | **Non sur PC, oui sur mobile** |
-| **Q-04** | Une 5ᵉ ressource ultra-rare (perle) ? | Oui / Non | **Oui**, pour le contenu caché |
-| **Q-05** | Mécaniques de survie (faim, soif) ? | Aucune / Légères / Complètes | **Aucune** |
-| **Q-06** | Cycle jour/nuit ? | Oui avec effet sur l'évaporation / Oui décoratif / Non | **Oui avec effet** (léger) |
 | **Q-08** | Gérer l'énergie à partir de T3 (éoliennes, panneaux) ? | Oui (couche logistique) / Non (machines autonomes) | **Oui, mais simple** (une jauge globale, pas de câbles) |
 | **Q-09** | Pluie qui fait remonter le niveau ? | Effet réel / Purement visuel / Pas de pluie | **Purement visuel** |
 | **Q-10** | Les poissons ? | Partent par le drain / Absents / Autre | **Partent par le drain** |
-| **Q-11** | Interface du catalogue : diégétique (dans le monde) ou menu classique ? | Diégétique / Menu / Mixte | **Mixte** : on décroche en jeu, puis menu illustré |
-| **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
 | **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
-| **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |
 | **Q-20** | Mobile : même projet Godot ou projet séparé ? | Même projet / Séparé | **Même projet**, à revoir au portage |
-| **Q-21** | Nom définitif du jeu ? | « Drain the Ocean » / autre | À confirmer |
-| **Q-22** | Le personnage : apparence, genre, personnalisable ? | Fixe / Personnalisable | À décider |
+| **Q-22** | Le personnage : apparence, genre, personnalisable ? | Fixe / Personnalisable | Fixe et neutre pour le MVP (M-23), à concevoir plus tard |
 
 ---
 
@@ -559,17 +557,17 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 
 ### 19.1 Le MVP / la démo
 
-**[PROPOSÉ]** En attente des réponses au [questionnaire MVP](QUESTIONS_MVP.md). En attendant, le prototype suit les recommandations du questionnaire.
+**[DÉCIDÉ]** Le [questionnaire MVP](QUESTIONS_MVP.md) a reçu ses réponses le 2026-11-16 ; elles sont listées en [19.2](#192-décisions-du-questionnaire-mvp) et priment sur la liste ci-dessous en cas de différence.
 
 **But :** vérifier que la boucle *puiser → sécher → commander → s'équiper* est amusante, puis s'en servir comme démo publique.
 
 **Dans le MVP :**
 
-- **Monde :** l'île de départ (~40 m) avec téléphone, seau, cuvette rocheuse, palmiers, palette de dépôt ; océan shader ; fond marin seulement autour de l'île ; cycle jour/nuit ; nuages ; mouettes, poissons, un crabe ; le petit tourbillon lointain.
-- **Personnage :** caméra 1re personne + bascule 3e personne ; marcher, courir, sauter, nager ; gag du réveil sur l'île ; barre d'outils de 5 cases.
+- **Monde :** l'île de départ (~40 m) avec téléphone, seau, cuvette rocheuse, palmiers, palette de dépôt ; océan shader ; fond marin seulement autour de l'île ; cycle jour/nuit ; nuages ; mouettes, poissons, un crabe ; le petit tourbillon lointain (*voir N-01*) ; un repère de niveau d'eau.
+- **Personnage :** caméra 1re personne + bascule 3e personne ; marcher, courir, sauter, nager ; endurance, faim et soif légères ; noyade ; barre d'outils de 5 cases.
 - **Seau :** puiser (maintenir le clic dans l'eau), verser, petit ralentissement, eau qui se renverse un peu.
 - **Séchage :** zones avec surface et capacité, évaporation selon le soleil, récolte manuelle puis au râteau.
-- **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin) ; stock global + tas visibles.
+- **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin), perle ; transport à la main au début, stock automatique après un achat.
 - **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 10-20 s, ouverture des caisses, pose avec aperçu fantôme.
 - **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique.
 - **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
@@ -577,11 +575,60 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 - **Système :** menu principal, 3 emplacements, sauvegarde automatique, chronomètre, options de base, FR + EN.
 - **Clins d'œil :** le tourbillon lointain, les traits sur le palmier, le pilote qui fait coucou.
 
-**Hors MVP :** clicker, énergie, paliers T3-T6, fond marin complet, île qui grandit, pluie, perle, manette, vue de dessus, succès.
+**Hors MVP :** clicker, énergie, paliers T3-T6, fond marin complet, île qui grandit, pluie, manette, vue de dessus, succès, fin secrète à la nage (l'architecture la prévoit).
 
 **Critère de réussite :** 30 à 45 minutes de jeu qu'un testeur extérieur trouve amusantes, sans explication.
 
-### 19.2 Feuille de route
+### 19.2 Décisions du questionnaire MVP
+
+Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont repris en italique.
+
+**Périmètre.** M-01 prototype interne qui devient la démo · M-02 30-45 min · M-03 paliers T0-T2 · M-04 vraie fin construite, accessible par touche de debug seulement · M-05 fin de démo en teaser (silhouettes T3, gros avion, écran de fin) · M-06 greybox puis packs low-poly CC0 · M-07 packs pour le MVP, *sur-mesure fait par nous sous Blender, plus tard* · M-08 FR + EN, traduction en place dès le début.
+
+**Technique.** M-09 dernière Godot 4.x stable, figée · M-10 GDScript typé · M-11 référence : i9, RTX 4 Go VRAM, ~12 Go RAM · M-12 Git LFS (*quota à surveiller*) · M-13 tests automatiques sur chaque PR · M-14 1080p de référence, fenêtré + plein écran, 16:9 et ultra-large.
+
+**Contrôles.** M-15 disposition du clavier détectée + touches réassignables · M-16 manette plus tard · M-17 courir + petit saut · M-18 clic gauche = outil, E = interagir, molette/1-5 = outils · M-19 3e personne au-dessus de l'épaule, orbite souris · M-20 bascule avec V · M-21 FOV, balancement de tête désactivable, sensibilité · M-22 placement en 1re personne avec aperçu fantôme.
+
+**Personnage.** M-23 fixe et neutre pour le MVP · M-24 nage avec **endurance** (aussi pour courir), noyade si on part loin sans plan · M-25 pas de limite artificielle : *on peut aller très loin sans rien trouver ; des milliers de km sans se noyer = fin du jeu* · M-26 **survie légère : endurance façon BotW, faim et soif légères** · M-27 barre de 5 cases · M-28 **ressources portées à la main au début, stock automatique après un achat** (brouette, tapis).
+
+**Seau.** M-29 maintenir le clic dans l'eau ~1 s, *temps améliorable* · M-30 10 L · M-31 **aucun ralentissement** · M-32 *quelques gouttes purement visuelles, sans effet sur la quantité* · M-33/M-34 l'eau compte comme retirée dès qu'elle est puisée ; **la reverser dans la mer ou sur le sable la rend à l'océan** (*sur le sable, elle finit par y retourner*) · M-35 grand seau 20 L + palanche.
+
+**Séchage.** M-36 cuvette rocheuse de départ, bâche en premier achat · M-37 45 s, *améliorable plus tard* · M-38 capacité maximale · M-39 récolte au clic puis au râteau · M-40 jour de 20 min, ×0,3 la nuit · M-41 pose libre sur sable plat · M-42 le séchage continue partout.
+
+**Ressources.** M-43 sel 1 garanti, minéraux 10 %, rares 0,5 %, coquillage 3 % au puisage · M-44 coquillages qui réapparaissent chaque matin · M-45 **perle dans le MVP** · M-46 pas de limite de stockage.
+
+**Téléphone.** M-47 catalogue mixte · M-48 premier appel en tutoriel muet · M-49 panier · M-50 palette arrachée au crochet · M-51 **livraison en 5 s** · M-52 caisse ouverte avec E · M-53 gag du bateau · M-54 **le téléphone sonne parfois pour des offres spéciales** · M-55 musique d'attente devenue thème · M-56 pas de revente.
+
+**Catalogue.** M-57 liste validée telle quelle · M-58 pompe à bras active · M-59 rythme : premier achat < 3 min, T1 ~15 min, T2 ~20 min, moulin-pompe ~40 min.
+
+**Monde.** M-60 île ~40 m · M-61 contenu de départ validé · M-62 niveau honnête, *mais il doit bouger un tout petit peu dans la démo, avec un repère de niveau d'eau* · M-63 ~2 × 10¹³ L (*à revoir avec N-06*) · M-64 fond modélisé autour de l'île seulement · M-65 nuages, pas de pluie · M-66 mouettes, poissons, un crabe · M-67 **pas de tourbillon lointain** (*contradiction avec M-84, voir N-01*).
+
+**Interface.** M-68 HUD *petit, simple et comique* · M-69 tutoriel muet par icônes · M-70 3 premiers jalons · M-71 menu avec 3 emplacements · M-72 options complètes · M-73 chronomètre caché, option speedrun · M-74 pas de pause dans le catalogue.
+
+**Audio.** M-75 ambiance + courts morceaux · M-76 banques CC0.
+
+**Sauvegarde.** M-77 auto toutes les 2 min, après achat, en quittant · M-78 **sauvegarde manuelle en plus, qui remplace la dernière sauvegarde auto** · M-79 pas de progression hors ligne.
+
+**Hors MVP.** M-80 clicker · M-81 énergie · M-82 pluie · M-83 fond complet, T3-T6, île qui grandit · M-84 clins d'œil du MVP : tourbillon lointain, traits sur le palmier, pilote qui fait coucou · M-85 nom : « Drain the Ocean ».
+
+### 19.3 Nouvelles questions (N-01 à N-10)
+
+Questions ouvertes par les réponses au questionnaire. Formulaire : voir HANDOFF.
+
+| ID | Question | Recommandation | Bloque le MVP ? |
+|---|---|---|---|
+| N-01 | M-67 dit « pas de tourbillon lointain », M-84 le garde dans les clins d'œil du MVP. Lequel ? | Le garder (il ne coûte presque rien) | Non |
+| N-02 | D'où viennent la nourriture et l'eau douce ? | Noix de coco sur les palmiers + rations au catalogue ; eau douce par une bâche de condensation (achat T1) | Oui |
+| N-03 | Que se passe-t-il quand la faim ou la soif est à zéro ? | Pas de mort : l'endurance maximale baisse jusqu'à ce qu'on mange/boive | Oui |
+| N-04 | Que se passe-t-il quand on se noie ? | Écran noir, on revient sur la plage de l'île, sans perte de ressources | Oui |
+| N-05 | L'endurance : combien, comment elle remonte, peut-on l'améliorer ? | ~20 s de course ou ~60 s de nage ; remonte à l'arrêt ou au sol ; améliorable par la nourriture et des objets du catalogue | Oui |
+| N-06 | Fin secrète à la nage : comment accorder « des milliers de km » avec un océan fini à vider ? | Le bassin est réellement immense (rayon de plusieurs milliers de km) ; seule la zone autour de l'île est détaillée ; volume ~10¹⁸-10¹⁹ L | Non pour le MVP, oui pour l'architecture |
+| N-07 | La perle dans le MVP : d'où vient-elle et à quoi sert-elle ? | Rare dans les coquillages ramassés (~2 %) ; sert à un objet spécial ou cosmétique du catalogue | Oui |
+| N-08 | Les offres spéciales au téléphone : quoi et à quelle fréquence ? | Environ une fois par jour de jeu : un article à prix réduit pendant une journée ; on décroche pour voir l'offre | Oui |
+| N-09 | Quel achat automatise le transport des ressources dans le MVP (M-28) ? | Ajouter une **brouette** en T1 (porte beaucoup à la fois) puis un **toboggan à sacs** jusqu'à la palette en T2 ; le vrai tapis roulant reste en T3 | Oui |
+| N-10 | Le repère de niveau d'eau : une jauge à aiguille qui amplifie les dixièmes de millimètre ? | Oui | Non |
+
+### 19.4 Feuille de route
 
 | Jalon | Contenu | Critère de réussite |
 |---|---|---|
