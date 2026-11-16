@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.3 (fin du jeu décidée : l'avion publicitaire) |
+| Version du document | 0.4 (texte sobre autorisé dans les textures ; écran du temps de partie ; retour au menu) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -62,7 +62,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 
 1. **L'absurde pris au sérieux.** Le jeu ne fait jamais de clin d'œil appuyé. Le personnage vide l'océan avec application ; l'humour naît du décalage (avion qui ne s'arrête pas, chiffres démesurés, drain final).
 2. **Toujours voir le progrès.** Même quand le niveau de l'océan ne bouge pas, le joueur voit quelque chose grandir : son stock, ses machines, son île, ses records.
-3. **Montrer, ne pas raconter.** Aucun texte de lore, aucun livre, aucun dialogue. Tout se comprend à l'œil (voir [section 12](#12-clins-dœil-lore-uniquement-visuel)).
+3. **Montrer, ne pas raconter.** Aucun texte de lore, aucun livre, aucun dialogue. Le texte dans le décor existe mais reste rare et sobre. Tout se comprend à l'œil (voir [section 12](#12-clins-dœil-lore-uniquement-visuel)).
 4. **Simple à prendre, profond à optimiser.** Peu de ressources (4), peu de règles, mais des choix d'agencement et d'investissement qui comptent.
 5. **Un rythme qui s'accélère.** Chaque palier technologique change *la façon* de jouer, pas seulement la vitesse.
 
@@ -103,7 +103,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 
 - **[DÉCIDÉ]** Elle livre uniquement des objets, jamais des personnes, et ne permet de contacter personne d'autre.
 - **[DÉCIDÉ]** Les livraisons arrivent par avion, rapidement et de façon comique, sans attendre le joueur.
-- **[PROPOSÉ]** L'agence n'a pas de visage. On ne voit que ses avions, son logo (pictogramme sans texte) et ses caisses. Le pilote fait un signe de la main à chaque passage.
+- **[PROPOSÉ]** L'agence n'a pas de visage. On ne voit que ses avions, son logo (pictogramme, éventuellement avec le nom de l'agence) et ses caisses. Le pilote fait un signe de la main à chaque passage.
 
 ---
 
@@ -332,12 +332,13 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - La caméra peut passer brièvement en troisième personne (plan large : petit personnage avec son seau, immense fond asséché, avion au-dessus), puis rester sur l'avion qui s'éloigne.
   - Le pilote est celui de toutes les livraisons (avec sa barbe blanchie, voir [12](#12-clins-dœil-lore-uniquement-visuel)), et fait son petit signe de la main.
   - Le téléphone rouge, resté sur l'île au loin, peut sonner une seule fois au même moment (optionnel).
-- **[QUESTION Q-23]** La banderole est la seule exception possible à la règle « pas de texte dans le monde ». Options :
-  - **A. Pictogrammes seulement** : logo de l'agence + un personnage dans l'avion + une flèche entre deux points. Cohérent avec la règle, compris par tout le monde sans traduction.
-  - **B. Un vrai slogan écrit** (traduit dans chaque langue). Plus direct et plus drôle à lire, mais c'est le seul texte du jeu.
-  - **C. Les deux** : un slogan court + les pictogrammes.
-  - Recommandation : **C**, avec un slogan très court. Le fait que ce soit le seul texte du jeu rend la chute encore plus forte.
-- **[QUESTION Q-24]** Après le générique : retour au menu, ou possibilité de reprendre la partie pour explorer le fond asséché et trouver les clins d'œil manqués ? Recommandation : **reprise possible**, sans nouvel objectif.
+- **[DÉCIDÉ]** La banderole porte un **vrai slogan écrit** (court, traduit). Ce n'est pas le seul texte du jeu : le texte dans les textures est permis mais reste sobre (voir [12](#12-clins-dœil-lore-uniquement-visuel)) (Q-23, 2026-11-16).
+- **[DÉCIDÉ]** **Fin de la run** (Q-24, 2026-11-16) :
+  1. Dès que l'avion publicitaire s'éloigne, **avant le générique**, un écran affiche le **temps de partie** du joueur.
+  2. Générique.
+  3. **Retour au menu principal.** La run est terminée ; il n'y a pas d'exploration après la fin.
+- **[PROPOSÉ]** Le temps affiché est le **temps de jeu réel** (chronomètre qui ne tourne que quand la partie est ouverte et non en pause), enregistré dans la sauvegarde. La sauvegarde terminée est marquée « finie » et le meilleur temps est conservé dans le menu.
+- **[QUESTION Q-25]** Une sauvegarde finie peut-elle être rechargée (par exemple pour revoir la fin), ou est-elle verrouillée ? Recommandation : verrouillée, avec seulement le temps affiché dans le menu.
 
 ---
 
@@ -347,7 +348,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 
 **[PROPOSÉ]** Règles :
 
-- Aucun texte lisible dans le monde (les seuls « textes » sont des pictogrammes, des chiffres et le logo de l'agence).
+- **[DÉCIDÉ]** Pas de texte *de lore* (rien à lire pour comprendre une histoire). Du texte peut apparaître dans les textures quand c'est nécessaire (logo et nom de l'agence, caisses, banderole finale…), mais il reste **rare et sobre** (2026-11-16).
 - Aucun clin d'œil n'est obligatoire pour finir le jeu.
 - Chaque clin d'œil se comprend en une image.
 
@@ -416,7 +417,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
 | Tests | **GUT** ou **gdUnit4** pour les tests unitaires de la logique (économie, niveau d'eau, sauvegarde) | **[PROPOSÉ]** |
 | CI | GitHub Actions : lancer les tests et produire un export Windows à chaque PR | **[PROPOSÉ]** |
 | Sauvegarde | Fichier JSON versionné dans `user://`, sauvegarde automatique régulière | **[PROPOSÉ]** |
-| Langues | Interface en français et anglais (le monde n'a pas de texte, donc peu à traduire) | **[PROPOSÉ]** |
+| Langues | Interface en français et anglais (peu de texte dans le monde, mais les textures avec texte devront exister en plusieurs langues ou rester en une langue neutre) | **[PROPOSÉ]** |
 
 ### 16.2 Simulation de l'eau (le point technique critique)
 
@@ -496,7 +497,7 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 | P-13 | **Le lore « uniquement visuel »** peut passer inaperçu | Basse | Plusieurs niveaux de lecture, un clin d'œil évident (canard géant) et des subtils | 12 |
 | P-14 | **Le mini-jeu clicker** peut devenir une meilleure source de ressources que le jeu | Basse | Récompenses cosmétiques seulement | 13 |
 | P-15 | **Une livraison qui tombe à l'eau** fait perdre l'achat | Basse | Les objets reviennent toujours sur la plage | 9.3 |
-| P-16 | **Pas de texte** dans le monde, mais l'UI doit être claire | Moyenne | Pictogrammes dans le monde ; UI de menu avec texte traduit | 9.1, 16.1 |
+| P-16 | **Peu de texte** dans le monde, mais l'UI doit être claire ; les textures avec texte doivent être traduites | Moyenne | Pictogrammes en priorité ; textes de texture rares, regroupés dans une liste pour la traduction ; UI de menu traduite | 9.1, 16.1 |
 | P-17 | **Ressemblance involontaire** avec un jeu existant (incrémental insulaire, console portable) | Moyenne | Design original des objets, de la console, de l'agence ; pas de référence directe à une marque | 13 |
 
 ### 17.2 Technique
@@ -520,7 +521,7 @@ Liste exhaustive des risques repérés en décortiquant l'idée. Chaque ligne re
 
 Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée dans HANDOFF.md + mise à jour de ce document.
 
-**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire (toutes le 2026-11-16).
+**Déjà tranchées :** Q-01 → 3D low-poly style *How to Fish* · Q-07 → troc direct · Q-13 → première personne avec bascule en troisième personne · Q-16 → gag final de l'avion publicitaire · Q-23 → slogan écrit, texte sobre autorisé dans les textures · Q-24 → temps de partie affiché avant le générique, puis retour au menu (toutes le 2026-11-16).
 
 | ID | Question | Options | Recommandation |
 |---|---|---|---|
@@ -536,8 +537,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Q-12** | Gag des maquettes (bateau, hélico, avion) ? | Oui / Non / Autre gag | **Oui** |
 | **Q-14** | Mobile : modèle économique et plateformes ? | Payant / Gratuit / Gratuit + pub ; Android / Android + iOS | À décider plus tard |
 | **Q-15** | Le drain peut-il être atteint avant 5 % ? | Jamais / Secret pour speedrunners | **Jamais** (peut-être un succès secret si on le *voit* tôt) |
-| **Q-23** | La banderole de l'avion publicitaire final : texte ou pictogrammes ? | Pictogrammes / Slogan écrit / Les deux | **Les deux** (slogan très court) |
-| **Q-24** | Après le générique final : retour au menu ou exploration libre ? | Menu / Exploration libre | **Exploration libre** |
+| **Q-25** | Une sauvegarde finie peut-elle être rechargée ? | Oui / Non, verrouillée | **Verrouillée**, temps affiché dans le menu |
 | **Q-17** | Le clicker donne-t-il des bonus au jeu principal ? | Cosmétiques / Petits bonus / Rien | **Cosmétiques** |
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-19** | Configuration PC minimale visée ? | Bas de gamme / Milieu de gamme | **Milieu de gamme 2020** |
@@ -558,7 +558,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **M2 — Boucle de base** | Personnage, seau, bassin de séchage, ressources, téléphone, une livraison | On peut puiser → sécher → payer → recevoir un objet |
 | **M3 — Tranche verticale** | T0 à T2 complets, simulateur d'économie, 3 clins d'œil, sons de base | 45 min de jeu amusantes testées par quelqu'un d'autre |
 | **M4 — Contenu** | T3 à T6, fond marin complet, toutes les zones | On peut finir le jeu (avec debug d'accélération) |
-| **M5 — La fin** | Drain, tourbillon, traversée à pied, avion publicitaire, générique | La scène fait rire un testeur |
+| **M5 — La fin** | Drain, tourbillon, traversée à pied, avion publicitaire, écran du temps de partie, générique, retour au menu | La scène fait rire un testeur |
 | **M6 — Clicker** | Mini-jeu pixel art complet dans la console portable | Jouable du début au drain |
 | **M7 — Finition** | Équilibrage, polish, options, langues, succès | Version 1.0 PC |
 | **M8 — Mobile** | Portage du clicker | Plus tard |
@@ -575,4 +575,4 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Palier (T0–T6)** | Niveau technologique qui change la façon de jouer |
 | **Débit** | Litres retirés de l'océan par seconde |
 | **Volume retiré** | La variable de vérité de la progression ; le niveau d'eau en découle |
-| **Clin d'œil** | Détail visuel de lore, sans texte, jamais obligatoire |
+| **Clin d'œil** | Détail visuel de lore, sans texte à lire, jamais obligatoire |

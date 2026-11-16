@@ -36,14 +36,32 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** conception. Aucun code pour l'instant.
-- **Documents :** PRD v0.3 en revue (PR #1).
+- **Documents :** PRD v0.4 en revue (PR #1).
 - **Prochaine étape :** Othmane répond aux questions ouvertes du PRD (section 18), puis jalon M0 (fondations du projet Godot).
-- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport.
-- **Questions ouvertes :** 20 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont Q-23 (texte ou pictogrammes sur la banderole finale) et Q-24 (après le générique).
+- **Décisions récentes :** 3D low-poly style *How to Fish* ; troc direct ; caméra première personne avec bascule en troisième personne ; fin = avion publicitaire de l'agence devenue société de transport, puis temps de partie, générique et retour au menu ; texte sobre autorisé dans les textures.
+- **Questions ouvertes :** 19 (voir [PRD §18](docs/PRD.md#18-questions-ouvertes)), dont la nouvelle Q-25 (une sauvegarde finie peut-elle être rechargée).
 
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — PRD v0.4 : texte dans les textures et fin de la run
+- **Quoi :** §11 (banderole, écran du temps, retour au menu), §12 (règle du texte assouplie), §2, §4.4, §16.1, P-16, §18 (Q-23 et Q-24 retirées, ajout de Q-25), §19 mis à jour. Ajout d'un chronomètre de temps de jeu réel dans la sauvegarde **[PROPOSÉ]**.
+- **Pourquoi :** décisions d'Othmane sur Q-23 et Q-24.
+- **Impact :** PRD §2, §4.4, §11, §12, §16.1, §17, §18, §19, §20.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Fin de la run : temps affiché, générique, retour au menu (Q-24)
+- **Quoi :** à la fin, le temps pris par le joueur s'affiche **avant** le générique ; après le générique, retour au menu et la run est terminée. Pas d'exploration après la fin.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §11.
+- **Par :** Othmane
+
+### 2026-11-16 — DÉCISION — Le texte dans les textures est permis, mais sobre (Q-23)
+- **Quoi :** la banderole de l'avion final porte un slogan écrit. Ce n'est pas le seul texte : plusieurs textures auront besoin de texte, mais il doit rester rare et sobre. La règle « pas de lore à lire » (pas de livres, pas de notes) reste valable.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PRD §11, §12. Remplace la proposition « aucun texte lisible dans le monde » de la v0.1.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — PRD v0.3 : la fin du jeu
 - **Quoi :** §11 réécrite avec la fin décidée ; Q-16 retirée ; ajout de Q-23 (banderole : texte ou pictogrammes, car le jeu n'a sinon aucun texte dans le monde) et Q-24 (retour au menu ou exploration libre après le générique) ; jalon M5 mis à jour.
