@@ -107,3 +107,9 @@ PHONE_HOLD_MUSIC,♪ Musique d'attente… ♪,♪ Hold music… ♪
 CAT_OFFER,Offre du jour : %s (au lieu de %s),Today's offer: %s (instead of %s)
 ITEM_PAPER_CATALOGUE,Catalogue papier,Paper catalogue
 ITEM_PAPER_CATALOGUE_DESC,Le catalogue de l'agence. Il ne sert à rien : tout se commande au téléphone.,The agency's catalogue. Useless: everything is ordered by phone.
+ITEM_SLIDE,Toboggan à sacs,Bag slide
+ITEM_SLIDE_DESC,"On y jette ce qu'on porte et ça glisse jusqu'à la palette. Posé près d'une zone de séchage, il y envoie son sel tout seul.","Throw what you carry in and it slides to the pallet. Next to a drying zone, it sends its salt by itself."
+ITEM_FLAMINGO,Flamant rose gonflable,Inflatable flamingo
+ITEM_FLAMINGO_DESC,Ne sert absolument à rien. Payé en perle.,Absolutely useless. Paid with a pearl.
+PROMPT_SLIDE,[E] Jeter dans le toboggan (%d),[E] Throw in the slide (%d)
+SLIDE_STATE,Toboggan : %d zone(s) branchée(s),Slide: %d zone(s) hooked up

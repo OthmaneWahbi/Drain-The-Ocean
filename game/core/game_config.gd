@@ -123,7 +123,7 @@ extends Resource
 @export var footprints: Dictionary = {
 	"cuvette": 3.0, "bache": 3.0, "bassin_bois": 4.0,
 	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
-	"caisse": 0.6, "catalogue_papier": 0.4, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 0.8,
+	"caisse": 0.6, "catalogue_papier": 0.4, "toboggan": 1.0, "flamant": 0.5, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 0.8,
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -133,6 +133,12 @@ extends Resource
 @export var coconut_radius_m: float = 0.3
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 15.5, "moulin_pompe": 15.5}
+
+@export_group("Toboggan à sacs")
+## Une zone dont le bord est à moins de cette distance du toboggan y verse son sel toute seule.
+@export var slide_reach_m: float = 3.0
+## Intervalle entre deux envois automatiques à la palette (s).
+@export var slide_period_s: float = 8.0
 
 @export_group("Téléphone")
 ## Chance, chaque matin, que le téléphone sonne pour une offre spéciale (M-54).
