@@ -131,6 +131,7 @@ class SaltPile extends StaticBody3D:
 		add_child(_mesh)
 		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
 		add_child(_shape)
+		PhysicsLayers.make_walk_through(self)  # on le vise, on ne s'y coince pas
 
 	func count() -> int:
 		return int((zone.logic as DryingLogic).deposit.get(resource, 0))

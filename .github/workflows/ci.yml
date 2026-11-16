@@ -33,6 +33,9 @@ jobs:
           ./godot --headless --path game -s res://tests/run_tests.gd 2>&1 | tee tests.log
           ! grep -q "SCRIPT ERROR" tests.log
 
+      - name: Scénario anti-blocage (vrai moteur physique)
+        run: ./godot --headless --path game -s res://tests/scenarios/softlock.gd
+
       - name: Lancer la scène principale (fumée)
         run: |
           set -o pipefail

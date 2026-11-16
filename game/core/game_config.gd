@@ -186,6 +186,11 @@ extends Resource
 @export_group("Placement (suite)")
 ## Le joueur occupe ce rayon : on ne pose rien et rien n'apparaît sur lui.
 @export var player_radius_m: float = 0.5
+## Anti-blocage : après combien de secondes immobile (en voulant avancer) on vérifie si on est
+## coincé, et jusqu'où on cherche une place libre (au-delà : retour sur la plage).
+@export var unstuck_check_after_s: float = 1.0
+@export var unstuck_step_m: float = 0.5
+@export var unstuck_search_m: float = 4.0
 ## Angle d'un appui sur R pendant un déplacement, en degrés.
 @export var rotation_step_deg: float = 90.0
 ## Obstacles fixes : (x, z, rayon) — téléphone, palmiers, jauge, rochers.

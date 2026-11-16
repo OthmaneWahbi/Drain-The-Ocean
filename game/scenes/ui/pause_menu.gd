@@ -56,6 +56,14 @@ func save_now() -> void:
 	_saved_label.text = "PAUSE_SAVED"
 
 
+## « Me débloquer » : retour sur la plage, puis on reprend (filet de sécurité anti-blocage).
+func unstuck() -> void:
+	var player := get_tree().get_first_node_in_group(&"player")
+	if player and player.has_method(&"rescue"):
+		player.rescue()
+	resume()
+
+
 ## Sauvegarde, puis rend la main au menu principal.
 func to_main_menu() -> void:
 	GameState.autosave()
@@ -88,7 +96,7 @@ func _build() -> void:
 	box.add_theme_constant_override("separation", 10)
 	_main_box.add_child(box)
 	box.add_child(MenuStyle.title("PAUSE_TITLE", 34))
-	for entry in [["PAUSE_RESUME", resume], ["PAUSE_SAVE", save_now], ["MENU_OPTIONS", _show_options.bind(true)], ["PAUSE_MAIN_MENU", to_main_menu], ["MENU_QUIT", _quit]]:
+	for entry in [["PAUSE_RESUME", resume], ["PAUSE_SAVE", save_now], ["MENU_OPTIONS", _show_options.bind(true)], ["PAUSE_UNSTUCK", unstuck], ["PAUSE_MAIN_MENU", to_main_menu], ["MENU_QUIT", _quit]]:
 		var b := Button.new()
 		b.text = entry[0]
 		b.pressed.connect(entry[1])

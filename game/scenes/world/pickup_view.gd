@@ -7,6 +7,7 @@ var pickup: Dictionary
 
 func setup(p: Dictionary) -> void:
 	pickup = p
+	PhysicsLayers.make_walk_through(self)  # petits objets : on passe à travers
 	position = p.position
 	match p.kind:
 		"coconut":
