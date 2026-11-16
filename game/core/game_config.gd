@@ -15,3 +15,68 @@ extends Resource
 @export var starting_bucket_capacity_l: float = 10.0
 ## Nombre d'emplacements de sauvegarde (M-71).
 @export var save_slot_count: int = 3
+## Temps pour remplir le seau en le maintenant dans l'eau, en secondes (M-29, améliorable).
+@export var bucket_fill_time_s: float = 1.0
+## Niveau de la mer (hauteur du plan d'eau), en mètres.
+@export var sea_level_y: float = 0.0
+## Multiplicateur d'évaporation la nuit (M-40).
+@export var night_evaporation_factor: float = 0.3
+## Heure de départ d'une nouvelle partie.
+@export var start_hour: float = 7.0
+
+@export_group("Zones de séchage")
+## Cuvette rocheuse de départ (M-36, M-37).
+@export var basin_capacity_l: float = 40.0
+@export var basin_dry_time_s: float = 45.0
+@export var basin_position: Vector3 = Vector3(-6, 0.5, 2)
+## Bâche de séchage (premier achat).
+@export var tarp_capacity_l: float = 60.0
+@export var tarp_dry_time_s: float = 45.0
+
+@export_group("Ressources")
+## Litres à évaporer pour obtenir 1 sel (réglé pour un premier achat vers 1 min 30).
+@export var liters_per_salt: float = 4.0
+## Unités ramassées par clic sans râteau (M-39 : récolte au clic, puis râteau).
+@export var manual_harvest_per_click: int = 3
+## Chances de tirage à chaque sel produit (M-43).
+@export var mineral_chance: float = 0.10
+@export var rare_mineral_chance: float = 0.005
+## Chance de remonter un coquillage à chaque puisage (M-43).
+@export var shell_chance_per_scoop: float = 0.03
+## Chance qu'un coquillage contienne une perle (N-07).
+@export var pearl_chance_per_shell: float = 0.02
+## Nombre d'objets portés à la main au maximum (M-28 : à la main au début).
+@export var hand_carry_capacity: int = 10
+
+@export_group("Livraison")
+## Centre de la zone où les caisses sont larguées.
+@export var delivery_center: Vector3 = Vector3(4, 0.5, 9)
+## Durée totale entre la commande et l'atterrissage de la caisse (M-51).
+@export var delivery_time_s: float = 5.0
+
+@export_group("Océan visible")
+## Surface du bassin, en m² : sert à convertir le volume retiré en baisse du niveau (PRD §8.3).
+## Rayon ~3 000 km (N-06) : π × (3 × 10⁶)² ≈ 2,8 × 10¹³ m², soit ~100 m de profondeur moyenne.
+@export var ocean_surface_m2: float = 2.83e13
+## Debug (F7 maintenu) : part du volume retirée par seconde, pour voir l'eau baisser (M1).
+@export var debug_drain_ratio_per_s: float = 0.002
+
+@export_group("Personnage")
+@export var walk_speed: float = 4.5
+@export var sprint_speed: float = 7.0
+@export var swim_speed: float = 2.6
+## Profondeur des pieds sous la surface à partir de laquelle on nage (au lieu de marcher).
+@export var swim_depth_m: float = 1.2
+## Profondeur des pieds quand on flotte : la tête dépasse de l'eau.
+@export var float_depth_m: float = 1.35
+## Vitesse de montée pour se hisser sur le rivage depuis l'eau.
+@export var swim_climb_velocity: float = 4.0
+## Endurance (N-05) : secondes de course, secondes de nage, temps pour remonter à fond à l'arrêt sur terre.
+@export var stamina_run_s: float = 20.0
+@export var stamina_swim_s: float = 60.0
+@export var stamina_regen_s: float = 5.0
+## Après épuisement, on ne peut plus courir avant d'être remonté à cette part (style BotW).
+@export var stamina_exhausted_ratio: float = 0.25
+## Noyade (N-04) : durée du fondu au noir, puis retour sur la plage.
+@export var drown_fade_s: float = 0.8
+@export var respawn_position: Vector3 = Vector3(0, 1, 6)

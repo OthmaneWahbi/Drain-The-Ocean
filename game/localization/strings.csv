@@ -1,4 +1,49 @@
 keys,fr,en
 HUD_OCEAN_REMAINING,Océan restant,Ocean remaining
+HUD_REMOVED,retiré,removed
 HUD_PLAY_TIME,Temps,Time
+HUD_STOCK,Palette,Pallet
+HUD_CARRIED,Dans les bras,Carrying
+HUD_BUCKET,Seau : %.0f / %.0f L,Bucket: %.0f / %.0f L
 HUD_HINT_CAPTURE,Clic pour jouer · Échap pour libérer la souris · V pour changer de vue,Click to play · Esc to release the mouse · V to switch view
+RES_SEL,sel,salt
+RES_MINERAUX,minéraux,minerals
+RES_MINERAUX_RARES,minéraux rares,rare minerals
+RES_COQUILLAGES,coquillages,shells
+RES_PERLES,perles,pearls
+PROMPT_FILL,[Clic maintenu] Puiser,[Hold click] Scoop water
+PROMPT_POUR,[Clic] Verser,[Click] Pour
+PROMPT_POUR_OUT,[Clic] Vider le seau,[Click] Empty the bucket
+PROMPT_HARVEST,[Clic] Récolter,[Click] Harvest
+PROMPT_PHONE,[E] Décrocher,[E] Pick up
+PROMPT_DEPOT,[E] Déposer (%d),[E] Drop off (%d)
+PROMPT_CRATE,[E] Ouvrir la caisse,[E] Open the crate
+DEPOT_STATE,Palette : %d,Pallet: %d
+ZONE_STATE,%.0f / %.0f L,%.0f / %.0f L
+ZONE_FULL,Plein,Full
+CAT_TITLE,Agence de livraison,Delivery agency
+CAT_ON_PALLET,Sur la palette,On the pallet
+CAT_ADD,Ajouter,Add
+CAT_CART,Panier,Cart
+CAT_TOTAL,Total,Total
+CAT_EMPTY_CART,Panier vide,Empty cart
+CAT_ORDER,Commander,Order
+CAT_CLEAR,Vider le panier,Clear cart
+CAT_HANG_UP,Raccrocher,Hang up
+CAT_NOT_ENOUGH,Pas assez de ressources sur la palette.,Not enough resources on the pallet.
+ITEM_TARP,Bâche de séchage,Drying tarp
+ITEM_TARP_DESC,"Une zone de séchage de 60 L, posée là où tombe la caisse.","A 60 L drying area, placed where the crate lands."
+ITEM_BIG_BUCKET,Grand seau,Big bucket
+ITEM_BIG_BUCKET_DESC,20 L par trajet au lieu de 10.,20 L per trip instead of 10.
+ITEM_BOAT,Bateau,Boat
+ITEM_BOAT_DESC,Pour quitter l'île. Livraison garantie.,To leave the island. Delivery guaranteed.
+ITEM_WHEELBARROW,Brouette,Wheelbarrow
+ITEM_WHEELBARROW_DESC,Porter 40 unités au lieu de 10.,Carry 40 units instead of 10.
+ITEM_TONGS,Tongs,Flip-flops
+ITEM_TONGS_DESC,+20 % de vitesse de marche.,+20% walking speed.
+ITEM_RAKE,Râteau à sel,Salt rake
+ITEM_RAKE_DESC,Récolte toute une zone d'un coup.,Harvests a whole area at once.
+ITEM_YOKE,Palanche,Yoke
+ITEM_YOKE_DESC,Deux seaux à la fois.,Two buckets at once.
+HUD_STAMINA,Endurance,Stamina
+GAUGE_TITLE,Niveau de l'océan,Ocean level

@@ -45,6 +45,14 @@ func return_water(liters: float) -> void:
 	removed_l = maxf(removed_l - liters, 0.0)
 
 
+## Baisse du niveau en mètres, pour une surface donnée (bassin à bords droits pour l'instant ;
+## plus tard une table hauteur = f(volume) tirée de la forme du fond, PRD §8.3).
+func level_drop_m(surface_m2: float) -> float:
+	if surface_m2 <= 0.0:
+		return 0.0
+	return (removed_l / 1000.0) / surface_m2
+
+
 func is_drain_visible() -> bool:
 	return remaining_ratio() <= drain_threshold_ratio
 

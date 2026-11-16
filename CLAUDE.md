@@ -17,7 +17,7 @@ Ces règles s'appliquent à toute session (Claude ou autre assistant) qui travai
 - toute **question ouverte** nouvelle → `QUESTION` ;
 - toute information utile pour la session suivante → `NOTE`.
 
-Puis mets à jour la section « État actuel » si elle a changé. La mise à jour de `HANDOFF.md` se fait **dans le même commit** que la modification qu'elle décrit.
+Puis mets à jour la section « État actuel » si elle a changé, et la section « Architecture et logique » si l'architecture ou une règle du jeu a changé (logique uniquement, sans détail de code). La mise à jour de `HANDOFF.md` se fait **dans le même commit** que la modification qu'elle décrit.
 
 Ne supprime ni ne réécris jamais une entrée existante : ajoute une nouvelle entrée qui la remplace.
 
