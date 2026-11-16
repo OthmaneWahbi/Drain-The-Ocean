@@ -45,6 +45,12 @@
 
 ## Journal
 
+### 2026-11-16 — MODIF — Formulaire des questions de suite (N-01 à N-10)
+- **Quoi :** les questions N-01 à N-10 sont proposées dans un second formulaire web (copie : `docs/questions-suite.html`). L'envoi du premier formulaire a été vérifié : les réponses reçues correspondent au texte collé par Othmane.
+- **Pourquoi :** même format que le questionnaire MVP, plus simple pour répondre.
+- **Impact :** `docs/questions-suite.html`.
+- **Par :** Claude
+
 ### 2026-11-16 — QUESTION — 10 nouvelles questions issues du questionnaire (N-01 à N-10)
 - **Quoi :** incohérence M-67/M-84 (tourbillon lointain), nourriture et eau douce, conséquences de la faim/soif, noyade, endurance, taille du monde pour la fin secrète à la nage, perle, offres spéciales du téléphone, achat qui automatise le transport, jauge de niveau d'eau.
 - **Pourquoi :** les réponses d'Othmane ajoutent la survie légère, la noyade, la fin à la nage, la perle et les offres spéciales, qui demandent des précisions.
