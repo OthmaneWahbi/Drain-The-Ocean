@@ -35,15 +35,50 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** le MVP est entièrement spécifié. Aucun code pour l'instant.
-- **Documents :** PRD v0.8 en revue (PR #1). Décisions du MVP en PRD §19.2 et §19.3.
-- **Prochaine étape :** jalon M0 (fondations du projet Godot : structure, tests, CI), dès le feu vert d'Othmane.
-- **Décisions clés :** 3D low-poly style *How to Fish* ; troc direct ; caméra 1re personne + bascule 3e ; survie légère (endurance qui ne remonte pas dans l'eau, faim, soif, sans mort) ; noyade = retour sur la plage ; bassin immense (milliers de km), fin secrète à la nage ; fin principale = drain, avion publicitaire, temps, générique, menu ; démo T0-T2 de 30-45 min.
-- **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque le MVP.
+- **Phase :** jalon **M0** (fondations) en PR. Le projet Godot existe dans `game/`.
+- **Documents :** PRD v0.9. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** île greybox, océan (plan d'eau simple), joueur 1re/3e personne (V), marcher, courir, sauter ; HUD (% d'océan restant, temps) ; modèle d'océan, sauvegardes JSON, contrôles en touches physiques ; 17 tests ; CI GitHub Actions.
+- **Prochaine étape :** fusion de la PR M0, puis M1 (prototype de l'eau) et M2 (boucle de base : seau, séchage, téléphone).
+- **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
 
 ## Journal
+
+### 2026-11-16 — NOTE — Rendu des captures d'écran en environnement sans carte graphique
+- **Quoi :** les captures prises par Claude passent par le moteur de rendu « Compatibility » (OpenGL logiciel, llvmpipe), qui éclaire plus fort que Forward+ : le sable y paraît presque blanc. Sur un vrai PC (Forward+), le rendu sera différent. Lumière et matériaux greybox ont été atténués (lumière ambiante en couleur fixe, spéculaire bas).
+- **Impact :** `game/scenes/main.tscn`.
+- **Par :** Claude
+
+### 2026-11-16 — NOTE — Erreurs normales au tout premier import
+- **Quoi :** au premier `--import` d'un clone neuf, Godot affiche « Cannot open file res://localization/strings.*.translation » : les traductions ne sont générées qu'à la fin de cet import. Les lancements suivants n'ont plus l'erreur. Les fichiers `.translation` sont ignorés par Git.
+- **Par :** Claude
+
+### 2026-11-16 — TEST ÉCHOUÉ — Précision d'un seau sur un océan de 10¹⁸ L
+- **Quoi :** `test_small_bucket_counts_on_huge_ocean` échouait : après avoir retiré 10 L sur 2,8 × 10¹⁸ L, `remaining_ratio()` vaut encore exactement 1.0 (10 L sont sous la précision d'un nombre à virgule 64 bits).
+- **Cause :** limite des flottants, attendue. Le volume retiré, lui, est bien compté.
+- **Correction :** ajout de `OceanModel.removed_ratio()`, calculé depuis le volume retiré, et le test vérifie celui-ci. Conséquence de conception : le pourcentage restant affiché restera à 100,0000000000 % très longtemps (c'est la blague), d'où l'importance des compteurs en litres et de la jauge à aiguille (N-10).
+- **Impact :** `game/core/ocean_model.gd`, `game/tests/test_ocean_model.gd`.
+- **Par :** Claude
+
+### 2026-11-16 — MODIF — Jalon M0 : projet Godot, greybox, tests et CI
+- **Quoi :**
+  - Projet Godot 4.7.2 dans `game/` (Forward+, 1080p, FR/EN par CSV).
+  - Logique de base : `GameConfig` (valeurs dans `data/game_config.tres`), `OceanModel` (volume retiré comme variable de vérité, drain à 5 %), `SaveSystem` (JSON versionné, écriture atomique, migration, 3 emplacements ; la sauvegarde manuelle écrase l'automatique), `GameState` (autoload : océan, stock des 5 ressources, chronomètre, sauvegarde auto toutes les 2 min et en quittant), `InputSetup` (actions en touches physiques : ZQSD sur AZERTY sans réglage).
+  - Scène greybox `scenes/main.tscn` : île en CSG, rivage peu profond, fond plat, téléphone rouge, seau, cuvette rocheuse, palette de dépôt, 3 palmiers, rochers, océan, ciel et brouillard.
+  - Joueur : marcher, courir (Maj), sauter (Espace), souris, 1re personne avec bascule 3e personne (V), Échap libère la souris.
+  - HUD : % d'océan restant (10 décimales) et temps de partie.
+  - Tests : lanceur maison `tests/run_tests.gd` + 17 tests (océan, sauvegarde, contrôles, HUD). CI GitHub Actions : import, tests, lancement de la scène.
+  - `.gitattributes` : fichiers binaires (modèles, images, sons, polices) suivis par Git LFS.
+- **Pourquoi :** feu vert d'Othmane pour M0, greybox uniquement.
+- **Impact :** `game/`, `.github/workflows/ci.yml`, `.gitattributes`, `CLAUDE.md`, `README.md`, PRD §16.1 et §19.4.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Lancement du jalon M0 en greybox
+- **Quoi :** Othmane demande de fusionner la PR des docs (fusionnée par Claude à sa demande) et de lancer le projet Godot. Pour les débuts : uniquement des greyboxes.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** PR #1 fusionnée ; jalon M0.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — PRD v0.8 : questions de suite intégrées
 - **Quoi :** §4.1 (nourriture, eau douce, endurance, faim/soif), §6.1 (perle), §8.1 (bassin immense, volume 10¹⁸-10¹⁹ L, traversée finale mise en scène), §8.2 (jauge à aiguille), §9 (offres spéciales), §10 (noyade, fin secrète), §16.3 (terrain détaillé seulement autour de l'île), §19.1 (contenu du MVP, ajouts au catalogue, tourbillon retiré), §19.3 (décisions N-01 à N-10).

@@ -26,6 +26,14 @@ Ne supprime ni ne réécris jamais une entrée existante : ajoute une nouvelle e
 - Quand une décision change une fonctionnalité, mets à jour le PRD (passer **[PROPOSÉ]** → **[DÉCIDÉ]**, retirer la question de la §18, etc.) et incrémente sa version.
 - Seul Othmane prend les décisions. Une proposition d'IA reste **[PROPOSÉ]** tant qu'il ne l'a pas validée.
 
+## Développement
+
+- Projet Godot dans `game/` (Godot **4.7.2** stable, figée ; montée de version = décision consignée).
+- Premier import (génère `.godot/` et les traductions) : `godot --headless --path game --import`
+- Tests : `godot --headless --path game -s res://tests/run_tests.gd` (fichiers `game/tests/test_*.gd`, méthodes `test_*`, classe de base `TestCase`). La CI GitHub Actions lance les tests et un test de fumée sur chaque PR.
+- Lancer le jeu : ouvrir `game/project.godot` dans l'éditeur, ou `godot --path game`.
+- Phase greybox : formes simples (CSG, maillages primitifs) uniquement, pas d'assets.
+
 ## Conventions
 
 - Langue de la documentation et des messages de commit : **français**.

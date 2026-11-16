@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: "4.7.2"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Télécharger Godot ${{ env.GODOT_VERSION }}
+        run: |
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          ./godot --headless --version
+
+      - name: Importer le projet
+        # Premier import : génère .godot/ (classes globales, traductions).
+        run: ./godot --headless --path game --import
+
+      - name: Lancer les tests
+        run: ./godot --headless --path game -s res://tests/run_tests.gd
+
+      - name: Lancer la scène principale (fumée)
+        run: ./godot --headless --path game --quit-after 120
