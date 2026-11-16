@@ -68,7 +68,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 ---
 
-## 3. Chaque idée, côté code (M0 → PR #4)
+## 3. Chaque idée, côté code (M0 → PR #7)
 
 ### Le monde greybox
 
@@ -163,6 +163,29 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `main.gd` crée les vues `scenes/world/pickup_view.gd` et `station_view.gd` sur ces signaux, et les retient par id pour les supprimer. Les deux vues n'ont que `get_prompt()` et `interact()` (E).
 - Le HUD affiche « Faim : ▮▮▮▯▯ · Soif : ▮▯▯▯▯ », en rouge quand un besoin est vide.
 
+### Déplacer les objets (grille)
+
+- `core/placement_grid.gd` (classe `PlacementGrid`, logique pure, deux fonctions statiques) :
+  - `snap(pos, cell)` ramène un point au **centre** de sa case (`snappedf` décalé d'une demi-case) ;
+  - `is_valid(pos, radius, others, build_radius)` : en 2D (X, Z), l'emprise doit tenir dans le cercle constructible et ne toucher aucun cercle de `others` (distance < somme des rayons = chevauchement).
+- Données (`GameConfig`, groupe « Placement ») : `grid_cell_m`, `build_radius_m`, `footprints` (type → rayon), `fixed_obstacles` (un `PackedVector3Array` où chaque élément est `(x, z, rayon)`).
+- Dans GameState :
+  - `movable_items()` = zones + stations + miroirs + décors : tous des dictionnaires `{id, kind, position…}`. Les décors ont maintenant un `id`, les miroirs un `kind = "miroir"`, pour être traités pareil.
+  - `blockers_for(item)` : les emprises de tous les AUTRES objets + les obstacles fixes. `can_place(item, pos)` appelle `PlacementGrid.is_valid`.
+  - `move_item(item, pos)` : aligne, garde la hauteur d'origine, vérifie, écrit `item.position` et émet `item_moved`. Comme la position vit dans le dictionnaire, la sauvegarde et `zone_boost()` (miroirs) suivent sans code en plus.
+  - `placing` : vrai pendant le mode déplacement ; `player.gd` s'arrête alors au début de `_process` (pas de seau, pas de E).
+- Les vues déplaçables (`drying_zone_view`, `station_view`, `mirror_view`, `decor_view`) exposent `get_movable()` (duck typing, comme `get_prompt` / `interact`). `player.gd` ajoute « [G] Déplacer » à l'invite de tout objet visé qui l'a.
+- `scenes/world/placement_controller.gd` (classe `PlacementController`, créé par `main.gd`) :
+  - G sur un objet visé → `start(view)` : retient la vue et son dictionnaire, met `placing` à vrai.
+  - Chaque image, `_follow_aim()` tire un rayon depuis la caméra (14 m) en excluant le joueur ET la vue déplacée (sinon le rayon toucherait l'objet lui-même), aligne le point touché, demande `can_place`, déplace la vue (elle sert d'aperçu), colore le disque d'emprise (`CylinderMesh`) et redessine la grille avec un `ImmediateMesh` en lignes.
+  - Clic → `confirm()` → `GameState.move_item`. G ou souris libérée (Échap) → `cancel()` : la vue reprend `item.position`.
+  - Il est ajouté à la scène après le joueur, donc traité après lui dans la même image : le clic qui pose l'objet ne vide pas aussi le seau.
+- `main.gd` retient aussi les zones et décors par id (`_spawn_view`) et, sur `item_moved`, recale la vue : position ET `rotation_degrees.y` (utile au chargement et si un autre code que le contrôleur déplace un objet).
+- **Rotation** : chaque dictionnaire déplaçable peut avoir `rotation_deg`. `move_item(item, pos, rotation_deg = NAN)` : NAN veut dire « garder l'orientation ». Dans le contrôleur, R ajoute `config.rotation_step_deg` à l'angle d'aperçu ; `confirm()` le passe à `move_item`. Les emprises sont des cercles : tourner ne change donc jamais la validité.
+- **Palette** : `GameState.depot = {id: "depot", kind: "palette", position, rotation_deg}`, dans `movable_items()`. Sa vue reste le nœud `Depot` de `main.tscn` (`depot.gd` a `get_movable()`), et `_on_item_moved` la reconnaît à son id. `_emit_all()` émet `item_moved(depot)` pour la remettre en place après une nouvelle partie ou un chargement.
+- **Tout ce qui apparaît prend une case** : `find_free_spot(radius, near)` part de la case de `near` et teste des carrés de plus en plus grands avec `PlacementGrid.is_valid` contre `_blockers_except({})` (objets, caisses au sol, obstacles fixes, noix de coco). Appelé par `next_drop_position()` (caisses), `apply_item()` (objets posés) et `new_game()` (cuvette). `_random_beach_spot()` aligne le coquillage et retire au sort s'il tombe sur quelque chose.
+- **Tas de sel** : `GameState.pile_offset(zone)` = nombre entier de cases (`config.pile_offset_cells`) le long de l'axe X local. `drying_zone_view._add_pile()` s'en sert ; le tas est un enfant de la vue, donc il tourne avec elle. Les emprises des zones l'englobent, donc il ne peut pas toucher un autre objet.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -185,3 +208,6 @@ Logiques pures (séchage, seau, économie, jour/nuit, endurance), GameState sour
 
 ### PR #6 — Correctifs et début de T2
 `GameState.simulate()` / `advance_time()` (F6 fait vivre le monde), palette à un tas par ressource, `unlocked_tier` + catalogue grisé, Manuel du bricoleur, bassin en bois, miroir solaire (`mirrors`, `zone_boost`), panneau du catalogue opaque et défilant.
+
+### PR #7 — Déplacer les objets sur une grille
+`PlacementGrid` (aligner, valider), `GameState.move_item` / `can_place` / `item_moved` / `placing`, emprises et obstacles fixes dans `GameConfig`, `get_movable()` sur les vues, `PlacementController` (touche G, aperçu, disque vert/rouge, grille en `ImmediateMesh`), `test_placement.gd`. Puis : rotation (R, `rotation_deg`), palette déplaçable (`GameState.depot`), `find_free_spot()` pour caisses, objets livrés et coquillages, tas de sel dans sa propre case (`pile_offset`).

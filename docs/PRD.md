@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.15 (début de T2 : manuel du bricoleur, bassin en bois, miroir solaire ; palette par ressource) |
+| Version du document | 0.17 (grille : rotation, palette déplaçable, tout ce qui apparaît prend une case libre) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -332,6 +332,13 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - Conséquences : le seau, les mains et les objets tenus doivent être soignés en vue subjective (modèle « bras + objet ») **et** le personnage complet doit exister et être animé pour la vue à la troisième personne.
   - **[PROPOSÉ]** En plus, une **vue de dessus** (mode « construction ») pour placer les machines sur l'île, activée quand on pose un objet.
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
+- **[DÉCIDÉ]** On peut **déplacer les objets posés sur l'île**, avec une **grille** (Othmane, 2026-11-16, « Maybe a grid system would be good ? »).
+  - **[PROPOSÉ]** Détails du prototype : l'île est découpée en cases de **1 m**. On vise un objet et on appuie sur **G** : l'objet suit le regard case par case, la grille s'affiche autour, et un disque montre son **emprise** (vert = possible, rouge = impossible). **Clic** pour poser, **G** ou Échap pour annuler (l'objet revient à sa place).
+  - **[PROPOSÉ]** Un emplacement est valide si l'emprise (un cercle autour de l'objet) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
+  - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
+  - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
+  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** Le tas de sel d'une zone occupe sa propre case, à 2 ou 3 cases du centre, dans l'emprise de la zone (il tourne avec elle) ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
+  - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
 - **[PROPOSÉ]** Contrôles : clavier/souris et manette (pour le Steam Deck).
 - **[DÉCIDÉ]** Le personnage **nage**, avec une **limite d'endurance** (la même que pour courir) : s'il part loin sans plan, il **se noie** (M-24). **[DÉCIDÉ]** Noyade : écran noir, on revient sur la plage de l'île, **sans perte de ressources** (N-04).
 - **[PROPOSÉ]** Détails de la nage (prototype) : on nage quand les pieds sont à plus de 1,2 m sous la surface ; on flotte la tête hors de l'eau ; Espace fait monter ; avancer contre le rivage fait se hisser hors de l'eau. L'endurance baisse dans l'eau profonde même immobile (on fait du sur-place), reste stable en marchant sur terre, et ne remonte qu'à l'arrêt sur terre. À zéro dans l'eau : noyade. Course impossible tant qu'on n'est pas remonté à 25 % après épuisement.
@@ -613,7 +620,7 @@ Toutes **[DÉCIDÉ]** le 2026-11-16 par Othmane. Les commentaires d'Othmane sont
 
 **Technique.** M-09 dernière Godot 4.x stable, figée · M-10 GDScript typé · M-11 référence : i9, RTX 4 Go VRAM, ~12 Go RAM · M-12 Git LFS (*quota à surveiller*) · M-13 tests automatiques sur chaque PR · M-14 1080p de référence, fenêtré + plein écran, 16:9 et ultra-large.
 
-**Contrôles.** M-15 disposition du clavier détectée + touches réassignables · M-16 manette plus tard · M-17 courir + petit saut · M-18 clic gauche = outil, E = interagir, molette/1-5 = outils · M-19 3e personne au-dessus de l'épaule, orbite souris · M-20 bascule avec V · M-21 FOV, balancement de tête désactivable, sensibilité · M-22 placement en 1re personne avec aperçu fantôme. **[DÉCIDÉ]** On pourra **déplacer les objets déjà posés sur l'île** (zones de séchage, palette, décors…), à implémenter plus tard (Othmane, 2026-11-16).
+**Contrôles.** M-15 disposition du clavier détectée + touches réassignables · M-16 manette plus tard · M-17 courir + petit saut · M-18 clic gauche = outil, E = interagir, molette/1-5 = outils · M-19 3e personne au-dessus de l'épaule, orbite souris · M-20 bascule avec V · M-21 FOV, balancement de tête désactivable, sensibilité · M-22 placement en 1re personne avec aperçu fantôme. **[DÉCIDÉ]** On pourra **déplacer les objets déjà posés sur l'île** (zones de séchage, palette, décors…), à implémenter plus tard (Othmane, 2026-11-16). **[DÉCIDÉ]** Implémenté avec une **grille** (v0.16, voir [10](#10-le-personnage-la-caméra-et-les-contrôles)) ; G = déplacer.
 
 **Personnage.** M-23 fixe et neutre pour le MVP · M-24 nage avec **endurance** (aussi pour courir), noyade si on part loin sans plan · M-25 pas de limite artificielle : *on peut aller très loin sans rien trouver ; des milliers de km sans se noyer = fin du jeu* · M-26 **survie légère : endurance façon BotW, faim et soif légères** · M-27 barre de 5 cases · M-28 **ressources portées à la main au début, stock automatique après un achat** (brouette, tapis).
 

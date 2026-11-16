@@ -22,6 +22,8 @@ signal station_removed(station: Dictionary)
 signal survival_changed
 signal mirror_added(mirror: Dictionary)
 signal tier_unlocked(tier: int)
+## Un objet déplaçable a changé de place (zone, objet à portions, miroir, décor).
+signal item_moved(item: Dictionary)
 signal game_reset
 
 const CONFIG_PATH := "res://data/game_config.tres"
@@ -63,12 +65,16 @@ var pickups: Array[Dictionary] = []
 var stations: Array[Dictionary] = []
 ## Miroirs solaires posés : {id, position}.
 var mirrors: Array[Dictionary] = []
+## La palette de dépôt : {id: "depot", kind: "palette", position, rotation_deg}. Déplaçable comme le reste.
+var depot: Dictionary = {}
 ## Palier débloqué : 1 au départ, 2 avec le Manuel du bricoleur (PRD §7).
 var unlocked_tier: int = 1
 var play_time_s: float = 0.0
 var current_slot: int = 1
 ## Vrai quand un menu (catalogue…) a la main : le joueur ne bouge plus.
 var ui_open: bool = false
+## Vrai pendant le mode déplacement d'un objet (G) : le joueur ne puise ni n'interagit.
+var placing: bool = false
 
 var _autosave_timer: float = 0.0
 var _next_id: int = 1
@@ -90,7 +96,7 @@ func setup(config_override: GameConfig = null) -> void:
 
 func new_game() -> void:
 	_reset_state()
-	add_zone("cuvette", config.basin_position)
+	add_zone("cuvette", find_free_spot(footprint_of("cuvette"), config.basin_position))
 	_morning_refill()
 	_emit_all()
 
@@ -116,6 +122,7 @@ func _reset_state() -> void:
 	pickups = []
 	stations = []
 	mirrors = []
+	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
 	unlocked_tier = 1
 	play_time_s = 0.0
 	_autosave_timer = 0.0
@@ -327,7 +334,8 @@ func next_drop_position() -> Vector3:
 	var i := _deliveries_count
 	var angle := deg_to_rad(137.5 * i)
 	var radius := 1.5 * sqrt(float(i))
-	return config.delivery_center + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+	var wanted := config.delivery_center + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+	return find_free_spot(footprint_of("caisse"), wanted)
 
 
 ## Ouvre une caisse : applique l'effet de chaque objet à l'endroit de la caisse.
@@ -345,6 +353,10 @@ func open_crate(crate: Dictionary) -> void:
 
 
 func apply_item(item: CatalogItem, position: Vector3) -> void:
+	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
+	if item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR]:
+		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
+		position = find_free_spot(footprint_of(kind), position)
 	match item.effect:
 		CatalogItem.Effect.DRYING_ZONE:
 			add_zone(item.effect_param, position)
@@ -369,7 +381,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> void:
 		CatalogItem.Effect.MIRROR:
 			add_mirror(position)
 		CatalogItem.Effect.DECOR:
-			var d := {"kind": item.effect_param, "position": position}
+			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
 			decor_added.emit(d)
 
@@ -393,10 +405,17 @@ func _morning_refill() -> void:
 		add_pickup("shell", _random_beach_spot())
 
 
+## Un coquillage tombe au centre d'une case de la plage, jamais sous un objet posé.
 func _random_beach_spot() -> Vector3:
-	var angle := rng.randf() * TAU
-	var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
-	return Vector3(cos(angle) * radius, 0.52, sin(angle) * radius)
+	var blockers := _blockers_except({})
+	var spot := Vector3.ZERO
+	for attempt in 20:
+		var angle := rng.randf() * TAU
+		var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
+		spot = PlacementGrid.snap(Vector3(cos(angle) * radius, 0.52, sin(angle) * radius), config.grid_cell_m)
+		if PlacementGrid.is_valid(spot, footprint_of("coquillage"), blockers, config.build_radius_m):
+			return spot
+	return spot
 
 
 func _has_pickup_at(kind: String, position: Vector3) -> bool:
@@ -436,7 +455,7 @@ func take_pickup(p: Dictionary) -> bool:
 
 
 func add_mirror(position: Vector3) -> Dictionary:
-	var m := {"id": _new_id("mirror"), "position": position}
+	var m := {"id": _new_id("mirror"), "kind": "miroir", "position": position}
 	mirrors.append(m)
 	mirror_added.emit(m)
 	return m
@@ -475,6 +494,106 @@ func use_station(st: Dictionary) -> bool:
 	return true
 
 
+# --- Déplacer les objets (grille) -------------------------------------------------------------
+
+## Le « type » d'un objet déplaçable, qui donne son emprise : "cuvette", "miroir"…
+func item_kind(item: Dictionary) -> String:
+	return String(item.get("kind", "miroir"))
+
+
+func footprint(item: Dictionary) -> float:
+	return footprint_of(item_kind(item))
+
+
+func footprint_of(kind: String) -> float:
+	return float(config.footprints.get(kind, 1.0))
+
+
+## Où est le tas de sel d'une zone, par rapport à son centre (avant rotation) : sa propre case.
+func pile_offset(zone: Dictionary) -> Vector3:
+	return Vector3(float(config.pile_offset_cells.get(String(zone.kind), 2)) * config.grid_cell_m, 0.0, 0.0)
+
+
+## Tous les objets qu'on peut déplacer.
+func movable_items() -> Array[Dictionary]:
+	var all: Array[Dictionary] = []
+	all.append_array(zones)
+	all.append_array(stations)
+	all.append_array(mirrors)
+	all.append_array(decor)
+	all.append(depot)
+	return all
+
+
+## Emprises qui gênent `item` (tous les autres objets + les obstacles fixes).
+func blockers_for(item: Dictionary) -> Array:
+	return _blockers_except(item)
+
+
+## Toutes les emprises sauf celle de `item` : objets posés, caisses au sol, obstacles fixes,
+## noix de coco au pied des palmiers.
+func _blockers_except(item: Dictionary) -> Array:
+	var out := []
+	for other in movable_items():
+		if other != item:
+			out.append({"position": other.position, "radius": footprint(other)})
+	for c in crates:
+		out.append({"position": c.position, "radius": footprint_of("caisse")})
+	for o in config.fixed_obstacles:
+		out.append({"position": Vector3(o.x, 0.0, o.y), "radius": o.z})
+	for spot in config.coconut_spots:
+		out.append({"position": spot, "radius": config.coconut_radius_m})
+	return out
+
+
+## La case libre la plus proche de `near` pour une emprise de rayon `radius` (cherche en carrés
+## de plus en plus grands). Si rien n'est libre, renvoie la case de `near`.
+func find_free_spot(radius: float, near: Vector3) -> Vector3:
+	var cell := config.grid_cell_m
+	var start := PlacementGrid.snap(near, cell)
+	var blockers := _blockers_except({})
+	for ring in 16:
+		for dx in range(-ring, ring + 1):
+			for dz in range(-ring, ring + 1):
+				if maxi(absi(dx), absi(dz)) != ring:
+					continue
+				var p := start + Vector3(dx * cell, 0.0, dz * cell)
+				if PlacementGrid.is_valid(p, radius, blockers, config.build_radius_m):
+					return p
+	return start
+
+
+func can_place(item: Dictionary, pos: Vector3) -> bool:
+	return PlacementGrid.is_valid(pos, footprint(item), blockers_for(item), config.build_radius_m)
+
+
+## Déplace (et tourne) un objet sur la case visée. Renvoie faux si l'emplacement n'est pas valide.
+## Sans `rotation_deg`, l'objet garde son orientation.
+func move_item(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> bool:
+	var snapped := PlacementGrid.snap(pos, config.grid_cell_m)
+	snapped.y = (item.position as Vector3).y
+	if not can_place(item, snapped):
+		return false
+	item.position = snapped
+	if not is_nan(rotation_deg):
+		item.rotation_deg = PlacementGrid.wrap_deg(rotation_deg)
+	item_moved.emit(item)
+	return true
+
+
+## Orientation d'un objet autour de la verticale, en degrés (0 si jamais tourné).
+static func item_rotation(item: Dictionary) -> float:
+	return float(item.get("rotation_deg", 0.0))
+
+
+## À la lecture d'une sauvegarde : remet l'orientation, et prévient la vue.
+func _load_rotation(item: Dictionary, src: Dictionary) -> void:
+	if item.is_empty():
+		return
+	item.rotation_deg = PlacementGrid.wrap_deg(float(src.get("rotation_deg", 0.0)))
+	item_moved.emit(item)
+
+
 # --- Niveau de l'eau -----------------------------------------------------------------------
 
 ## Hauteur réelle (honnête) de la surface de l'océan, en mètres.
@@ -491,14 +610,15 @@ func to_dict() -> Dictionary:
 		"day": day.to_dict(),
 		"stock": stock.duplicate(),
 		"carried": carried.duplicate(),
-		"zones": zones.map(func(z): return {"kind": z.kind, "position": _v2a(z.position), "logic": (z.logic as DryingLogic).to_dict()}),
+		"zones": zones.map(func(z): return {"kind": z.kind, "position": _v2a(z.position), "rotation_deg": item_rotation(z), "logic": (z.logic as DryingLogic).to_dict()}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
-		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position)}),
+		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
 		"owned": owned.duplicate(),
 		"survival": survival.to_dict(),
 		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
-		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "logic": (st.logic as StationLogic).to_dict()}),
-		"mirrors": mirrors.map(func(m): return _v2a(m.position)),
+		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "rotation_deg": item_rotation(st), "logic": (st.logic as StationLogic).to_dict()}),
+		"mirrors": mirrors.map(func(m): return {"position": _v2a(m.position), "rotation_deg": item_rotation(m)}),
+		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
 		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
@@ -528,6 +648,7 @@ func load_dict(data: Dictionary) -> void:
 		var zone := add_zone(String(z.get("kind", "")), _a2v(z.get("position", [])))
 		if not zone.is_empty():
 			(zone.logic as DryingLogic).load_dict(z.get("logic", {}))
+			_load_rotation(zone, z)
 	if zones.is_empty():
 		add_zone("cuvette", config.basin_position)
 	for c in data.get("crates", []):
@@ -535,9 +656,10 @@ func load_dict(data: Dictionary) -> void:
 		crates.append(crate)
 		crate_added.emit(crate, false)
 	for d in data.get("decor", []):
-		var dec := {"kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
+		var dec := {"id": _new_id("decor"), "kind": String(d.get("kind", "")), "position": _a2v(d.get("position", []))}
 		decor.append(dec)
 		decor_added.emit(dec)
+		_load_rotation(dec, d)
 	survival.load_dict(data.get("survival", {}))
 	if data.has("pickups"):
 		for p in data.get("pickups", []):
@@ -548,8 +670,16 @@ func load_dict(data: Dictionary) -> void:
 		var station := add_station(String(st.get("kind", "")), _a2v(st.get("position", [])))
 		if not station.is_empty():
 			(station.logic as StationLogic).load_dict(st.get("logic", {}))
+			_load_rotation(station, st)
 	for m in data.get("mirrors", []):
-		add_mirror(_a2v(m))
+		if m is Array:
+			add_mirror(_a2v(m))  # sauvegarde d'avant la rotation : juste la position
+		else:
+			_load_rotation(add_mirror(_a2v(m.get("position", []))), m)
+	var dep: Dictionary = data.get("depot", {})
+	if dep.has("position"):
+		depot.position = _a2v(dep.position)
+	_load_rotation(depot, dep)
 	owned = data.get("owned", {}).duplicate()
 	_deliveries_count = int(data.get("deliveries_count", 0))
 	play_time_s = float(data.get("play_time_s", 0.0))
@@ -584,6 +714,7 @@ func _notification(what: int) -> void:
 # --- Outils internes -----------------------------------------------------------------------
 
 func _emit_all() -> void:
+	item_moved.emit(depot)  # la palette n'est pas recréée : on la remet à sa place
 	survival_changed.emit()
 	ocean_changed.emit()
 	stock_changed.emit()

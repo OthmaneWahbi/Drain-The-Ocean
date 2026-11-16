@@ -80,3 +80,8 @@ func get_prompt(_player: Node) -> String:
 
 func interact(_player: Node) -> void:
 	GameState.unload_to_stock()
+
+
+## La palette se déplace comme les autres objets (G) ; son état vit dans GameState.depot.
+func get_movable() -> Dictionary:
+	return GameState.depot

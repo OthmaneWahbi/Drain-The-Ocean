@@ -28,7 +28,9 @@ extends Resource
 ## Cuvette rocheuse de départ (M-36, M-37).
 @export var basin_capacity_l: float = 40.0
 @export var basin_dry_time_s: float = 45.0
-@export var basin_position: Vector3 = Vector3(-6, 0.5, 2)
+@export var basin_position: Vector3 = Vector3(-5.5, 0.5, 2.5)
+## Position de départ de la palette de dépôt (on peut la déplacer ensuite).
+@export var depot_position: Vector3 = Vector3(8.5, 0.5, 4.5)
 ## Bâche de séchage (premier achat).
 @export var tarp_capacity_l: float = 60.0
 @export var tarp_dry_time_s: float = 45.0
@@ -111,3 +113,23 @@ extends Resource
 @export var shells_per_morning: int = 5
 @export var beach_radius_min: float = 16.5
 @export var beach_radius_max: float = 19.3
+
+@export_group("Placement")
+## Taille d'une case de la grille de placement, en mètres.
+@export var grid_cell_m: float = 1.0
+## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
+@export var build_radius_m: float = 19.5
+## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
+@export var footprints: Dictionary = {
+	"cuvette": 2.5, "bache": 2.5, "bassin_bois": 3.5,
+	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
+	"caisse": 0.6, "coquillage": 0.25,
+}
+## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
+@export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
+## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
+@export var coconut_radius_m: float = 0.3
+## Angle d'un appui sur R pendant un déplacement, en degrés.
+@export var rotation_step_deg: float = 90.0
+## Obstacles fixes : (x, z, rayon) — téléphone, palmiers, jauge, rochers.
+@export var fixed_obstacles: PackedVector3Array = PackedVector3Array()

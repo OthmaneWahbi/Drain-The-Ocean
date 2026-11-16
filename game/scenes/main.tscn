@@ -155,7 +155,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.5, -3)
 script = ExtResource("4")
 
 [node name="Depot" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.5, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0.5, 4.5)
 script = ExtResource("5")
 
 [node name="Ocean" type="MeshInstance3D" parent="."]

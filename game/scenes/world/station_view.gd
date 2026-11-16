@@ -56,3 +56,8 @@ func get_prompt(_player: Node) -> String:
 
 func interact(_player: Node) -> void:
 	GameState.use_station(station)
+
+
+## Ce que la touche G déplace (voir placement_controller.gd).
+func get_movable() -> Dictionary:
+	return station

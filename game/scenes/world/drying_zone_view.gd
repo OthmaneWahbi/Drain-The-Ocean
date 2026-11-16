@@ -36,7 +36,7 @@ func _build_basin() -> void:
 	_water_min_y = 0.07
 	_water_max_y = 0.3
 	add_child(_water)
-	_add_pile(Vector3(2.2, 0, 0))
+	_add_pile()
 
 
 func _build_tarp() -> void:
@@ -51,7 +51,7 @@ func _build_tarp() -> void:
 	_water_min_y = 0.05
 	_water_max_y = 0.18
 	add_child(_water)
-	_add_pile(Vector3(1.9, 0, 0))
+	_add_pile()
 
 
 func _build_wood_basin() -> void:
@@ -67,13 +67,15 @@ func _build_wood_basin() -> void:
 	_water_min_y = 0.07
 	_water_max_y = 0.36
 	add_child(_water)
-	_add_pile(Vector3(size.x / 2.0 + 0.8, 0, 0))
+	_add_pile()
 
 
-func _add_pile(offset: Vector3) -> void:
+## Le tas occupe sa propre case de la grille, dans l'emprise de la zone (GameState.pile_offset) :
+## il ne peut donc jamais tomber sur un autre objet.
+func _add_pile() -> void:
 	_pile = SaltPile.new()
 	_pile.zone = zone
-	_pile.position = offset
+	_pile.position = GameState.pile_offset(zone)
 	add_child(_pile)
 
 
@@ -136,3 +138,8 @@ class SaltPile extends StaticBody3D:
 
 	func interact(_player: Node) -> void:
 		GameState.harvest(zone)
+
+
+## Ce que la touche G déplace (voir placement_controller.gd).
+func get_movable() -> Dictionary:
+	return zone
