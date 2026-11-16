@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.30 (vraie fin, traits du palmier, Nouvelle partie) |
+| Version du document | 0.31 (sons de base, mesure de perf) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -723,6 +723,9 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 - **[PROPOSÉ]** Vraie fin construite (v0.30 ; M-04, Q-24, Q-25) : touche de debug **F4** seulement. Phases minutées (données : `GameConfig.ending_durations`) : la **bonde** et sa chaîne se découvrent quand l'eau descend · **glouglou** (tourbillon, l'océan disparaît) · **traversée** à pied du fond à sec, plan large en 3e personne · **avion publicitaire** de l'agence (même pilote qui fait coucou) avec sa banderole « maintenant aussi transporteur : de n'importe où à n'importe où » · écran du **temps de partie** (chronomètre arrêté au début de la fin) · **générique** · retour au menu principal. Clic : passer le temps ou le générique. Le meilleur temps est gardé et affiché (★) dans le menu ; une partie finie se rouvre **juste avant de tirer la chaîne**.
 - **[PROPOSÉ]** Traits sur le palmier (v0.30 ; M-84) : un trait gravé par réveil après une noyade, par paquets de 5 (4 debout, le 5e en travers), sur le palmier le plus proche de la plage ; sauvegardé avec la partie.
 - **[DÉCIDÉ]** « Nouvelle partie » dans le menu (v0.30, Othmane, 2026-11-16) : gros bouton « Nouvelle partie » (premier emplacement vide, sinon le plus ancien), et pour chaque emplacement Continuer / Nouvelle / Effacer. Écraser ou effacer une partie demande toujours confirmation. Le menu pause a aussi « Nouvelle partie » (sauvegarde, puis menu principal).
+
+- **[PROPOSÉ]** Sons de base (v0.31 ; M-75, en attendant les banques CC0 M-76) : fabriqués par calcul, sans fichier : vagues en boucle (qui se taisent quand l'océan est vidé), seau qu'on remplit / qu'on vide, téléphone qui sonne tant qu'on ne décroche pas, ramassage, petit arpège à chaque jalon, avion, « plop » de la bonde puis glouglou. Volume général dans les options.
+- **[PROPOSÉ]** Mesure de perf (v0.31 ; M-11) : scénario `tests/scenarios/perf.gd`. Sans affichage, la logique du jeu prend ~1 ms par image (simulation seule : ~11 µs avec 12 zones et 40 tuyaux). Avec affichage (rendu logiciel du conteneur, sans carte graphique : chiffres d'images/s non représentatifs) : ~210 appels de dessin sur l'île de départ, ~340 sur une île remplie, ~67 000 primitives (surtout l'océan proche), ~55-60 Mo. À refaire sur le PC de référence (RTX 4 Go).
 
 ## 20. Glossaire
 
