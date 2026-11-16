@@ -37,6 +37,25 @@ static func pay(stock: Dictionary, price: Dictionary) -> bool:
 	return true
 
 
+## Paie en puisant dans plusieurs réserves, dans l'ordre (ex. d'abord les bras, puis la palette).
+## Ne touche à rien et renvoie faux si le total des réserves ne suffit pas.
+static func pay_from(sources: Array, price: Dictionary) -> bool:
+	if not can_afford(sum(sources), price):
+		return false
+	for k in price:
+		var key := String(k)
+		var due := int(price[k])
+		for src in sources:
+			if due <= 0:
+				break
+			var have := int(src.get(key, 0))
+			var take := mini(have, due)
+			if take > 0:
+				src[key] = have - take
+				due -= take
+	return true
+
+
 static func add(target: Dictionary, items: Dictionary) -> void:
 	for k in items:
 		var key := String(k)

@@ -222,11 +222,16 @@ func cart_price(item_ids: Array) -> Dictionary:
 	return Economy.sum(prices)
 
 
+## Tout ce qui peut servir à payer : la palette plus ce qu'on a dans les bras.
+func available_resources() -> Dictionary:
+	return Economy.sum([stock, carried])
+
+
 func can_buy(item: CatalogItem) -> bool:
 	return not (item.unique and owned.has(String(item.id)))
 
 
-## Passe commande : paie avec le stock de la palette et crée la caisse qui sera larguée.
+## Passe commande : paie avec les bras puis la palette, et crée la caisse qui sera larguée.
 ## Renvoie la caisse, ou un dictionnaire vide si le stock ne suffit pas.
 func order(item_ids: Array) -> Dictionary:
 	if item_ids.is_empty():
@@ -235,9 +240,14 @@ func order(item_ids: Array) -> Dictionary:
 		var item := catalog.find(StringName(id))
 		if item == null or not can_buy(item):
 			return {}
+	# On paie avec ce qu'on porte d'abord, puis avec la palette (retour d'Othmane).
 	var price := cart_price(item_ids)
-	if not Economy.pay(stock, price):
+	if not Economy.pay_from([carried, stock], price):
 		return {}
+	for k in carried.keys():
+		if int(carried[k]) <= 0:
+			carried.erase(k)
+	carried_changed.emit()
 	for id in item_ids:
 		var item := catalog.find(StringName(id))
 		if item.unique:

@@ -1,10 +1,12 @@
 extends StaticBody3D
 ## Vue 3D d'une zone de séchage. Ne contient aucune règle : elle lit le DryingLogic de sa zone
-## et appelle GameState quand le joueur clique dessus.
+## et appelle GameState quand le joueur agit.
+## Clic (l'outil, le seau) : verser dans la zone. Le sel s'entasse À CÔTÉ, sur un tas qu'on
+## ramasse avec E (les mains) : deux gestes, deux cibles, plus de confusion (retour d'Othmane).
 
 var zone: Dictionary
 var _water: MeshInstance3D
-var _salt: MeshInstance3D
+var _pile: SaltPile
 var _water_min_y: float
 var _water_max_y: float
 
@@ -29,11 +31,10 @@ func _build_basin() -> void:
 		add_child(rock)
 	add_child(Greybox.cylinder_collision(1.4, 0.35, Vector3(0, 0.17, 0)))
 	_water = Greybox.cylinder(1.08, 0.02, Greybox.WATER)
-	_salt = Greybox.cylinder(1.0, 0.02, Greybox.SALT, Vector3(0, 0.07, 0))
 	_water_min_y = 0.07
 	_water_max_y = 0.3
 	add_child(_water)
-	add_child(_salt)
+	_add_pile(Vector3(2.2, 0, 0))
 
 
 func _build_tarp() -> void:
@@ -45,22 +46,23 @@ func _build_tarp() -> void:
 		add_child(Greybox.box(Vector3(0.08, 0.2, 2.4), Greybox.TARP, side))
 	add_child(Greybox.box_collision(Vector3(2.4, 0.25, 2.4), Vector3(0, 0.12, 0)))
 	_water = Greybox.box(Vector3(2.3, 0.02, 2.3), Greybox.WATER)
-	_salt = Greybox.box(Vector3(2.0, 0.02, 2.0), Greybox.SALT, Vector3(0, 0.05, 0))
 	_water_min_y = 0.05
 	_water_max_y = 0.18
 	add_child(_water)
-	add_child(_salt)
+	_add_pile(Vector3(1.9, 0, 0))
+
+
+func _add_pile(offset: Vector3) -> void:
+	_pile = SaltPile.new()
+	_pile.zone = zone
+	_pile.position = offset
+	add_child(_pile)
 
 
 func _process(_delta: float) -> void:
 	var logic: DryingLogic = zone.logic
 	_water.visible = logic.water_l > 0.0
 	_water.position.y = lerpf(_water_min_y, _water_max_y, logic.fill_ratio())
-	# Plus il y a de sel, plus la tache blanche est grande.
-	var amount := Economy.count(logic.deposit)
-	_salt.visible = amount > 0
-	var s := clampf(0.25 + amount * 0.08, 0.25, 1.0)
-	_salt.scale = Vector3(s, 1, s)
 
 
 ## Texte affiché quand le joueur vise la zone.
@@ -69,17 +71,50 @@ func get_prompt(_player: Node) -> String:
 	var state := tr("ZONE_STATE") % [logic.water_l, logic.capacity_l]
 	if not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		return "%s · %s" % [tr("PROMPT_POUR"), state]
-	if logic.has_deposit():
-		return "%s (%d) · %s" % [tr("PROMPT_HARVEST"), Economy.count(logic.deposit), state]
 	if logic.free_space_l() <= 0.0:
 		return "%s · %s" % [tr("ZONE_FULL"), state]
 	return state
 
 
-## Clic gauche : verser si on a de l'eau et de la place, sinon récolter.
+## Clic gauche : verser si on a de l'eau et de la place.
 func use(_player: Node) -> void:
 	var logic: DryingLogic = zone.logic
 	if not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		GameState.pour_bucket_into(zone)
-	elif logic.has_deposit():
+
+
+## Le tas de sel (et de minéraux) à côté de la zone. Il grossit avec le dépôt ; E pour ramasser.
+class SaltPile extends StaticBody3D:
+	var zone: Dictionary
+	var _mesh: MeshInstance3D
+	var _shape: CollisionShape3D
+
+	func _ready() -> void:
+		_mesh = MeshInstance3D.new()
+		var cone := CylinderMesh.new()
+		cone.top_radius = 0.04
+		cone.bottom_radius = 0.45
+		cone.height = 0.5
+		cone.radial_segments = 10
+		cone.material = Greybox.material(Greybox.SALT)
+		_mesh.mesh = cone
+		_mesh.position.y = 0.25
+		add_child(_mesh)
+		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
+		add_child(_shape)
+
+	func _process(_delta: float) -> void:
+		var amount := Economy.count((zone.logic as DryingLogic).deposit)
+		_mesh.visible = amount > 0
+		_shape.disabled = amount <= 0
+		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
+		var s := clampf(0.35 + amount * 0.035, 0.35, 1.1)
+		_mesh.scale = Vector3(s, s, s)
+		_mesh.position.y = 0.25 * s
+
+	func get_prompt(_player: Node) -> String:
+		var amount := Economy.count((zone.logic as DryingLogic).deposit)
+		return tr("PROMPT_PILE") % amount if amount > 0 else ""
+
+	func interact(_player: Node) -> void:
 		GameState.harvest(zone)

@@ -1,7 +1,7 @@
 extends Node3D
 ## Chef d'orchestre de la scène : crée une vue 3D pour chaque élément de GameState
 ## (zones, caisses, décors), anime le soleil, place la surface de l'océan à sa vraie hauteur,
-## et gère les touches de debug.
+## et gère la sauvegarde manuelle (F5).
 
 const DryingZoneView := preload("res://scenes/world/drying_zone_view.gd")
 const CrateView := preload("res://scenes/world/crate_view.gd")
@@ -17,6 +17,10 @@ const CHUTE_TIME_S := 1.5
 @onready var ocean_mesh: Node3D = $Ocean
 
 var _views: Node3D
+## La lune : une lumière bleutée très faible et un disque blanc dessiné loin dans le ciel,
+## à l'opposé du soleil. Le soleil est éteint la nuit (sinon le ciel dessine un « soleil noir »).
+var _moon: DirectionalLight3D
+var _moon_disk: MeshInstance3D
 var _crate_views: Dictionary = {}  # id de caisse -> vue
 
 
@@ -24,6 +28,7 @@ func _ready() -> void:
 	_views = Node3D.new()
 	_views.name = "Views"
 	add_child(_views)
+	_build_moon()
 	GameState.game_reset.connect(_clear_views)
 	GameState.zone_added.connect(_on_zone_added)
 	GameState.crate_added.connect(_on_crate_added)
@@ -40,40 +45,58 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_sun()
-	# Le plan d'eau suit la hauteur honnête calculée depuis le volume retiré (M1).
+	# Le plan d'eau suit la hauteur honnête calculée depuis le volume retiré (M1),
+	# et suit le joueur à l'horizontale pour qu'on n'en voie jamais le bord.
 	ocean_mesh.position.y = GameState.water_level_y()
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		ocean_mesh.position.x = snappedf(cam.global_position.x, 100.0)
+		ocean_mesh.position.z = snappedf(cam.global_position.z, 100.0)
+
+
+func _build_moon() -> void:
+	_moon = DirectionalLight3D.new()
+	_moon.light_color = Color(0.6, 0.7, 1.0)
+	_moon.light_energy = 0.12
+	_moon.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY  # le disque est dessiné à part
+	add_child(_moon)
+	_moon_disk = MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 60.0
+	sphere.height = 120.0
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.92, 0.93, 0.98)
+	mat.disable_fog = true
+	sphere.material = mat
+	_moon_disk.mesh = sphere
+	_moon_disk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_moon_disk)
 
 
 func _update_sun() -> void:
 	var elevation := GameState.day.sun_elevation_deg()
-	sun.rotation_degrees = Vector3(-maxf(elevation, 8.0), 35.0, 0.0)
+	sun.rotation_degrees = Vector3(-elevation, 35.0, 0.0)
+	sun.visible = elevation > -2.0
 	var daylight := clampf(elevation / 15.0, 0.0, 1.0)
-	sun.light_energy = lerpf(0.08, 0.9, daylight)
+	sun.light_energy = lerpf(0.0, 0.9, daylight)
+	# La lune suit le chemin inverse du soleil.
+	var moon_elevation := -elevation
+	_moon.rotation_degrees = Vector3(-moon_elevation, 215.0, 0.0)
+	_moon.visible = moon_elevation > 0.0
+	_moon_disk.visible = _moon.visible
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		# La lumière part vers -Z : l'astre est donc du côté +Z de son repère.
+		_moon_disk.global_position = cam.global_position + _moon.global_transform.basis.z * 4000.0
 	world_env.environment.ambient_light_energy = lerpf(0.12, 0.45, daylight)
 	world_env.environment.background_energy_multiplier = lerpf(0.15, 1.0, daylight)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventKey and event.pressed and not event.echo):
-		return
-	match event.physical_keycode:
-		KEY_F5:
-			GameState.save_game()  # sauvegarde manuelle (M-78)
-		KEY_F9:
-			GameState.new_game()  # debug : nouvelle partie
-		KEY_F10:
-			Economy.add(GameState.stock, {"sel": 50, "mineraux": 5})  # debug : triche
-			GameState.stock_changed.emit()
-
-
-func _physics_process(delta: float) -> void:
-	# Debug : maintenir F8 accélère le temps ×10 (pour tester le séchage).
-	Engine.time_scale = 10.0 if Input.is_physical_key_pressed(KEY_F8) else 1.0
-	# Debug : maintenir F7 vide l'océan à grande vitesse, pour voir l'eau baisser (M1).
-	if Input.is_physical_key_pressed(KEY_F7):
-		var ocean := GameState.ocean
-		ocean.remove_water(ocean.total_volume_l * GameState.config.debug_drain_ratio_per_s * delta)
-		GameState.ocean_changed.emit()
+	# F5 : sauvegarde manuelle (M-78). Les touches de triche sont dans game/admin/.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F5:
+		GameState.save_game()
 
 
 func _clear_views() -> void:
