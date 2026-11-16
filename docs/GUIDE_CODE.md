@@ -202,6 +202,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `pump_view.gd` construit soit le levier, soit la tour du moulin ; les pales tournent vite quand `auto_pumped_l` a augmenté depuis l'image précédente.
 - Clic maintenu : `player.gd` regarde d'abord si la cible a `hold_use(player, delta)` et l'appelle à chaque image tant que le clic est enfoncé. `pump_view.gd` s'en sert et fait bouger son levier quand de l'eau passe.
 
+### La barre d'outils (M-27)
+
+- `core/toolbar_logic.gd` (classe `ToolbarLogic`) : `slots` (5 noms d'outil, `""` = vide), `selected`. `select(i, owned)` et `cycle(dir, owned)` reçoivent un `Callable` qui dit si un outil est possédé : la logique ne connaît pas GameState. `ensure_valid()` remet la case 1 si l'outil tenu n'est plus disponible.
+- GameState : `owns_tool()` (seau et mains toujours, râteau si `has_rake`), `select_tool()` / `cycle_tool()` qui annulent un remplissage en cours et émettent `tool_changed`. `harvest()` prend tout seulement si `current_tool() == "rateau"`.
+- `player.gd` : `_handle_toolbar_input()` lit `tool_1`…`tool_5`, `tool_next`, `tool_prev` (déjà déclarées dans `input_setup.gd`) ; le seau et le râteau tenus sont affichés selon l'outil ; puiser et vider ne se font qu'avec le seau. La zone ne verse que si le seau est en main ; le tas de sel a un `use()` qui ratisse avec le râteau.
+- `hud.gd` construit la barre (5 `PanelContainer`) et la redessine sur `tool_changed` : bord jaune pour la case tenue, grisé pour les cases indisponibles.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -236,3 +243,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #10 — Moulin-pompe et fin de la démo
 `auto_pump_kinds`, `_run_auto_pumps()`, `auto_pumped_l`, `demo_done`, `demo_finished`, vue du moulin, `demo_end.gd`, `test_windmill.gd`.
+
+### PR #11 — Barre d'outils
+`ToolbarLogic`, `GameState.toolbar` / `current_tool` / `select_tool` / `cycle_tool` / `tool_changed`, entrées 1-5 et molette, râteau tenu, barre du HUD, `test_toolbar.gd`.

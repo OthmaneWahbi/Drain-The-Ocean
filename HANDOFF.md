@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo.
-- **Documents :** PRD v0.20. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. 136 tests.
+- **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils.
+- **Documents :** PRD v0.21. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux de 4 m qui se branchent tout seuls aux zones les plus proches. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. Barre d'outils de 5 cases (seau, mains, râteau). 146 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
-- **Prochaine étape :** la barre d'outils (M-27), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
+- **Prochaine étape :** retours d'Othmane sur les 4 releases, puis le toboggan à sacs (N-09), l'objet payé en perle, et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -134,6 +134,10 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - L'eau remplit la zone la plus proche d'abord. Les tuyaux sont dessinés de la pompe au bord de chaque zone reliée.
 - Le moulin-pompe est une pompe « automatique » : la même étape qui fait vivre le monde le fait pomper (10 L/s), sans le joueur. On compte ce qu'il a pompé ; à 200 L, c'est la fin de la démo (une seule fois, mémorisée dans la sauvegarde).
 
+### La barre d'outils
+
+- 5 cases (seau, mains, râteau, deux vides). On ne tient qu'un outil : le seau ne puise et ne verse que s'il est en main ; le râteau ne ramasse tout d'un coup que s'il est en main. Une case n'est utilisable que si l'outil est possédé. L'outil tenu est sauvegardé (et vérifié au chargement).
+
 ### Le temps qui passe
 
 - Une seule étape fait vivre le monde : l'heure (et le matin), le séchage, les objets à portions, la faim et la soif. L'avance rapide de l'admin (F6) passe par la même étape, découpée en pas de 5 s.
@@ -156,6 +160,16 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Barre d'outils de 5 cases (M-27)
+- **Quoi :** `core/toolbar_logic.gd` (cases, choix, molette qui saute les cases indisponibles, vérification au chargement), `GameState` (`toolbar`, `current_tool`, `owns_tool`, `select_tool`, `cycle_tool`, signal `tool_changed`, outil sauvegardé), touches 1-5 et molette dans `player.gd`, seau et râteau visibles selon l'outil, seau et râteau qui n'agissent qu'en main, barre dans le HUD, 10 tests (`test_toolbar.gd`). Le test « râteau » de la boucle complète demande maintenant de le prendre en main.
+- **Pourquoi :** M-27, troisième des releases demandées.
+- **Impact :** PRD §10 (v0.21), `game/core/`, `game/scenes/`, strings, tests.
+
+### 2026-11-16 — TEST ÉCHOUÉ — Sauvegarde avec un outil hors barre
+- **Quoi :** charger une sauvegarde où l'outil tenu vaut 42 provoquait « Out of bounds get index '42' ».
+- **Cause :** `ToolbarLogic.is_available()` ne vérifiait pas l'indice.
+- **Correction :** indice hors barre = indisponible, donc retour au seau. Couvert par `test_selected_tool_is_saved_and_checked_on_load`.
 
 ### 2026-11-16 — MODIF — Moulin-pompe et fin de la démo
 - **Quoi :** type de pompe `moulin_pompe` (automatique, 10 L/s, au bord de l'eau, unique), `GameState._run_auto_pumps()` dans `simulate()`, `auto_pumped_l`, `demo_done`, signal `demo_finished` ; vue du moulin (tour, pales qui tournent quand l'eau passe) ; `scenes/ui/demo_end.gd` (gros avion teaser avec silhouettes T3, puis écran de fin avec bilan et « Continuer à jouer ») ; 7 tests (`test_windmill.gd`).

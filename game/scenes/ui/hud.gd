@@ -11,6 +11,9 @@ extends CanvasLayer
 @onready var fill_bar: ProgressBar = $FillBar
 var stamina_bar: ProgressBar
 var survival_label: Label
+## Les 5 cases de la barre d'outils (M-27), en bas au centre.
+var toolbar_slots: Array[PanelContainer] = []
+var _toolbar_labels: Array[Label] = []
 
 
 func _ready() -> void:
@@ -24,6 +27,9 @@ func _ready() -> void:
 	GameState.stock_changed.connect(_refresh_items)
 	GameState.carried_changed.connect(_refresh_items)
 	GameState.bucket_changed.connect(_refresh_items)
+	_build_toolbar()
+	GameState.tool_changed.connect(refresh_toolbar)
+	refresh_toolbar()
 	_refresh_ocean()
 	_refresh_items()
 
@@ -56,6 +62,46 @@ func _refresh_survival() -> void:
 static func gauge(ratio: float) -> String:
 	var full := clampi(int(ceil(ratio * 5.0 - 0.001)), 0, 5)
 	return "▮".repeat(full) + "▯".repeat(5 - full)
+
+
+func _build_toolbar() -> void:
+	var row := HBoxContainer.new()
+	row.name = "Toolbar"
+	row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	row.offset_left = -190.0
+	row.offset_right = 190.0
+	row.offset_top = -74.0
+	row.offset_bottom = -14.0
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	add_child(row)
+	for i in 5:
+		var slot := PanelContainer.new()
+		slot.custom_minimum_size = Vector2(70, 56)
+		var label := Label.new()
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 13)
+		slot.add_child(label)
+		row.add_child(slot)
+		toolbar_slots.append(slot)
+		_toolbar_labels.append(label)
+
+
+## Case choisie encadrée en jaune, cases vides ou pas encore achetées en grisé.
+func refresh_toolbar() -> void:
+	var tb := GameState.toolbar
+	for i in toolbar_slots.size():
+		var tool: String = tb.slots[i] if i < tb.slots.size() else ""
+		var available := tb.is_available(i, GameState.owns_tool) if i < tb.slots.size() else false
+		_toolbar_labels[i].text = "%d\n%s" % [i + 1, tr("TOOL_" + tool.to_upper()) if tool != "" else ""]
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0, 0, 0, 0.45)
+		style.set_corner_radius_all(6)
+		style.set_border_width_all(3 if i == tb.selected else 1)
+		style.border_color = Color(1.0, 0.85, 0.3) if i == tb.selected else Color(1, 1, 1, 0.25)
+		toolbar_slots[i].add_theme_stylebox_override("panel", style)
+		toolbar_slots[i].modulate = Color.WHITE if available else Color(1, 1, 1, 0.35)
 
 
 func _build_stamina_bar() -> void:

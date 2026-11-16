@@ -89,7 +89,7 @@ func _process(_delta: float) -> void:
 func get_prompt(_player: Node) -> String:
 	var logic: DryingLogic = zone.logic
 	var state := tr("ZONE_STATE") % [logic.water_l, logic.capacity_l]
-	if not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
+	if GameState.current_tool() == "seau" and not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		return "%s · %s" % [tr("PROMPT_POUR"), state]
 	if logic.free_space_l() <= 0.0:
 		return "%s · %s" % [tr("ZONE_FULL"), state]
@@ -99,7 +99,7 @@ func get_prompt(_player: Node) -> String:
 ## Clic gauche : verser si on a de l'eau et de la place.
 func use(_player: Node) -> void:
 	var logic: DryingLogic = zone.logic
-	if not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
+	if GameState.current_tool() == "seau" and not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		GameState.pour_bucket_into(zone)
 
 
@@ -134,10 +134,19 @@ class SaltPile extends StaticBody3D:
 
 	func get_prompt(_player: Node) -> String:
 		var amount := Economy.count((zone.logic as DryingLogic).deposit)
-		return tr("PROMPT_PILE") % amount if amount > 0 else ""
+		if amount <= 0:
+			return ""
+		if GameState.current_tool() == "rateau":
+			return tr("PROMPT_RAKE") % amount
+		return tr("PROMPT_PILE") % amount
 
 	func interact(_player: Node) -> void:
 		GameState.harvest(zone)
+
+	## Clic avec le râteau en main : tout ratisser d'un coup.
+	func use(_player: Node) -> void:
+		if GameState.current_tool() == "rateau":
+			GameState.harvest(zone)
 
 
 ## Ce que la touche G déplace (voir placement_controller.gd).
