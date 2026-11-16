@@ -20,7 +20,6 @@ config/icon="res://icon.svg"
 
 InputSetup="*res://core/input_setup.gd"
 GameState="*res://core/game_state.gd"
-Settings="*res://core/settings.gd"
 Admin="*res://admin/admin_tools.gd"
 
 [display]

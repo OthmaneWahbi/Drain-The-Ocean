@@ -35,6 +35,7 @@ var _id_views: Dictionary = {}  # id de ramassable / d'objet à portions -> vue
 
 
 func _ready() -> void:
+	Settings.apply()  # langue, volume, plein écran choisis dans les options
 	_views = Node3D.new()
 	_views.name = "Views"
 	add_child(_views)

@@ -254,7 +254,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 ### Menus, emplacements et options (PR #18)
 
 - `core/settings_logic.gd` (`SettingsLogic`, pur) : les valeurs, `sanitize()` (bornes), `to_dict`/`load_dict`, et `bob_offset()` (le balancement de tête, une sinusoïde nulle à l'arrêt ou si l'option est coupée).
-- Autoload `Settings` (`core/settings.gd`) : lit/écrit `user://settings.json`, `set_value(clé, valeur)` applique (langue via `TranslationServer`, volume du bus Master, plein écran) puis enregistre et émet `changed`. `persist = false` empêche d'écrire.
+- `Settings` (`core/settings.gd`) : **classe à variables statiques**, pas un autoload (depuis le correctif de la PR #22 : un autoload dépend d'une ligne de `project.godot` que l'éditeur peut perdre). `Settings.data` est chargé de `user://settings.json` au premier accès ; `Settings.set_value(clé, valeur)` applique (langue via `TranslationServer`, volume du bus Master, plein écran), enregistre et émet `Settings.events.changed`. `main.gd` appelle `Settings.apply()` au lancement. `Settings.persist = false` empêche d'écrire.
 - Le joueur lit `Settings.data` à chaque image (FOV, sensibilité, balancement) : rien à brancher.
 - `scenes/ui/menu_style.gd` (`MenuStyle`) : panneau, titre, fond, thème communs. `options_panel.gd` (`OptionsPanel`) est un seul panneau réutilisé par les deux menus. Les textes des boutons sont des **clés** de traduction : Godot les retraduit seul quand on change de langue.
 - `main_menu.gd` (`MainMenu`, `PROCESS_MODE_ALWAYS`) met l'arbre en pause, coupe la sauvegarde auto, lit `SaveSystem.summary(slot)` ; Jouer appelle `GameState.play_slot(slot)` (charge, ou partie neuve sauvegardée tout de suite). `pause_menu.gd` (`PauseMenu`) répond à Échap seulement si aucun autre menu n'a la main (`GameState.ui_open`).
@@ -280,6 +280,10 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `core/sound_synth.gd` (`SoundSynth`, pur) : chaque son est une recette qui remplit un tableau d'échantillons (-1..1) à 22 050 Hz. Briques : bruit blanc passé dans un filtre passe-bas à un pôle (`y += a·(x − y)`), sinusoïde dont la fréquence glisse (le « plop »), tons alternés (le téléphone), notes qui se superposent (l'arpège), dent de scie avec effet Doppler (l'avion). Le bruit utilise une graine fixe (`hash(nom)`) : le son est identique à chaque lancement, donc testable. Les boucles (vagues, glouglou) commencent et finissent à zéro pour ne pas claquer. `stream(nom)` emballe le tout dans un `AudioStreamWAV` 16 bits.
 - `scenes/audio/sound_board.gd` (`SoundBoard`) : fabrique les 9 sons une fois au démarrage, garde une petite réserve de 6 `AudioStreamPlayer` (pour jouer plusieurs sons à la fois), et **observe** GameState : il compare l'eau du seau d'une image à l'autre (plus = puiser, moins = verser), regarde `phone.is_ringing()`, et écoute quelques signaux (`milestone_reached`, `pickup_removed`, `crate_added`, `ending_phase_changed`). GameState ne sait rien des sons.
 - `tests/scenarios/perf.gd` : relève `Performance.get_monitor(...)` (temps de calcul, appels de dessin, primitives, nœuds, mémoire) sur l'île de départ puis sur une île remplie.
+
+### Correctif : Settings sans autoload (PR #22)
+
+- `Settings` devient une classe statique (voir « Menus, emplacements et options »). `tests/test_project.gd` charge **chaque** script du projet et vérifie qu'il compile, et que les autoloads attendus sont bien déclarés : une ligne perdue dans `project.godot` ou un script cassé que les autres tests n'atteignent pas fait échouer la CI.
 
 ### Les outils admin
 
