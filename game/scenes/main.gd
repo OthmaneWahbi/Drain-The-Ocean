@@ -7,6 +7,8 @@ const DryingZoneView := preload("res://scenes/world/drying_zone_view.gd")
 const CrateView := preload("res://scenes/world/crate_view.gd")
 const DecorView := preload("res://scenes/world/decor_view.gd")
 const DeliveryPlane := preload("res://scenes/world/delivery_plane.gd")
+const PickupView := preload("res://scenes/world/pickup_view.gd")
+const StationView := preload("res://scenes/world/station_view.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -22,6 +24,7 @@ var _views: Node3D
 var _moon: DirectionalLight3D
 var _moon_disk: MeshInstance3D
 var _crate_views: Dictionary = {}  # id de caisse -> vue
+var _id_views: Dictionary = {}  # id de ramassable / d'objet à portions -> vue
 
 
 func _ready() -> void:
@@ -34,6 +37,10 @@ func _ready() -> void:
 	GameState.crate_added.connect(_on_crate_added)
 	GameState.crate_removed.connect(_on_crate_removed)
 	GameState.decor_added.connect(_on_decor_added)
+	GameState.pickup_added.connect(_spawn_view.bind(PickupView))
+	GameState.station_added.connect(_spawn_view.bind(StationView))
+	GameState.pickup_removed.connect(_remove_view)
+	GameState.station_removed.connect(_remove_view)
 	# Le repère de niveau d'eau, sur la plage, tourné vers le centre de l'île (M-62, N-10).
 	var gauge := WaterGauge.new()
 	gauge.position = Vector3(3, 0.5, 17)
@@ -103,6 +110,22 @@ func _clear_views() -> void:
 	for child in _views.get_children():
 		child.queue_free()
 	_crate_views.clear()
+	_id_views.clear()
+
+
+## Crée la vue d'un élément de GameState (ramassable, objet à portions) et la retient par son id.
+func _spawn_view(item: Dictionary, script: GDScript) -> void:
+	var view: Node3D = script.new()
+	_views.add_child(view)
+	view.setup(item)
+	_id_views[item.id] = view
+
+
+func _remove_view(item: Dictionary) -> void:
+	var view: Node = _id_views.get(item.id)
+	if view and is_instance_valid(view):
+		view.queue_free()
+	_id_views.erase(item.id)
 
 
 func _on_zone_added(zone: Dictionary) -> void:

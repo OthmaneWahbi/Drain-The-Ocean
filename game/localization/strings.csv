@@ -47,3 +47,15 @@ ITEM_YOKE_DESC,Deux seaux à la fois.,Two buckets at once.
 HUD_STAMINA,Endurance,Stamina
 GAUGE_TITLE,Niveau de l'océan,Ocean level
 PROMPT_PILE,[E] Ramasser le tas (%d),[E] Pick up the pile (%d)
+PROMPT_COCONUT,[E] Manger la noix de coco,[E] Eat the coconut
+PROMPT_SHELL,[E] Ramasser le coquillage,[E] Pick up the shell
+PROMPT_HANDS_FULL,Les bras sont pleins,Your arms are full
+PROMPT_DRINK,[E] Boire (%d),[E] Drink (%d)
+PROMPT_RATION,[E] Manger une ration (%d),[E] Eat a ration (%d)
+CONDENSER_EMPTY,"Pas encore d'eau, la bâche condense…","No water yet, the sheet is condensing…"
+ITEM_CONDENSER,Bâche de condensation,Condensation sheet
+ITEM_CONDENSER_DESC,Produit une gorgée d'eau douce toutes les 90 s.,Makes a sip of fresh water every 90 s.
+ITEM_RATIONS,Rations,Rations
+ITEM_RATIONS_DESC,Une caisse de 5 repas.,A crate of 5 meals.
+HUD_FOOD,Faim,Food
+HUD_WATER,Soif,Water

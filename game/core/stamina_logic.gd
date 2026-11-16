@@ -17,6 +17,8 @@ var regen_s: float
 var exhausted_ratio: float
 var value: float = 1.0
 var exhausted: bool = false
+## Plafond imposé par la faim et la soif (N-03) : 1 quand on est bien nourri.
+var max_value: float = 1.0
 
 
 func _init(run: float = 20.0, swim: float = 60.0, regen: float = 5.0, exhausted_at: float = 0.25) -> void:
@@ -37,13 +39,19 @@ func step(delta: float, activity: Activity) -> void:
 			value += delta / regen_s
 		Activity.WALK_ON_LAND:
 			pass  # ni perte ni gain : il faut s'arrêter pour souffler
-	value = clampf(value, 0.0, 1.0)
+	value = clampf(value, 0.0, max_value)
 	if value < EPSILON:
 		value = 0.0  # évite qu'une poussière d'arrondi laisse 0,000001 d'endurance
 	if value <= 0.0:
 		exhausted = true
 	elif exhausted and value >= exhausted_ratio:
 		exhausted = false
+
+
+## Change le plafond (faim, soif) ; l'endurance au-dessus est ramenée dessous.
+func set_max(cap: float) -> void:
+	max_value = clampf(cap, 0.05, 1.0)
+	value = minf(value, max_value)
 
 
 func can_run() -> bool:
@@ -55,9 +63,9 @@ func is_empty() -> bool:
 
 
 func is_full() -> bool:
-	return value >= 1.0 - EPSILON
+	return value >= max_value - EPSILON
 
 
 func refill() -> void:
-	value = 1.0
+	value = max_value
 	exhausted = false

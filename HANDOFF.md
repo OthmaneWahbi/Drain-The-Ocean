@@ -35,11 +35,11 @@
 
 ## État actuel (résumé à tenir à jour)
 
-- **Phase :** M0 et M2 fusionnés (PR #2, #3). Retours du premier test d'Othmane en PR #4.
-- **Documents :** PRD v0.12. Décisions du MVP en PRD §19.2 et §19.3.
-- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Sauvegarde de toute la partie. 65 tests.
+- **Phase :** M0, M2 et les retours de test fusionnés (PR #2, #3, #4). Survie légère et plage vivante en PR #5.
+- **Documents :** PRD v0.14. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Sauvegarde de toute la partie. 76 tests.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel).
-- **Prochaine étape :** retours d'Othmane, puis la fin de M1 (shader d'eau, terrain de fond, mesure de perf), la faim et la soif légères, la barre d'outils, le manuel du bricoleur et T2.
+- **Prochaine étape :** retours d'Othmane, puis la barre d'outils (M-27), le manuel du bricoleur et T2 (bassin en bois, pompe à bras, tuyaux, miroir solaire, moulin-pompe), et la fin de M1 (shader d'eau, terrain de fond, mesure de perf).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -82,7 +82,7 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 
 ### Le corps : nage et endurance
 
-- L'endurance est une valeur de 0 à 1, gérée par un petit objet de logique pure. Courir la vide en 20 s, nager en 60 s. Elle ne remonte qu'à l'arrêt sur la terre ferme ; marcher ne la change pas ; dans l'eau, elle ne remonte jamais. Vidée en courant, on ne peut plus courir avant d'être remonté à 25 %.
+- L'endurance est une valeur de 0 à 1, gérée par un petit objet de logique pure. Courir la vide en 10 s, nager en 30 s. Elle ne remonte qu'à l'arrêt sur la terre ferme ; marcher ne la change pas ; dans l'eau, elle ne remonte jamais. Vidée en courant, on ne peut plus courir avant d'être remonté à 25 %.
 - On nage quand les pieds sont à plus de 1,2 m sous la surface : la gravité est remplacée par une flottaison qui ramène la tête hors de l'eau. Espace fait monter. Avancer contre un bord (le rivage) fait se hisser jusqu'à reprendre pied.
 - Endurance à zéro dans l'eau : noyade. Fondu au noir, retour au point de départ sur la plage, endurance pleine, rien n'est perdu (N-04).
 - La jauge d'endurance apparaît en bas de l'écran seulement quand elle n'est pas pleine ; elle devient rouge sous 25 % ou quand on est essoufflé.
@@ -109,6 +109,12 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 - Les outils de triche vivent **tous** dans un module à part, `game/admin/`, chargé au démarrage. Pour les retirer : supprimer ce dossier et sa ligne dans la liste des modules chargés au démarrage (`project.godot`). Rien d'autre n'en dépend. Ils se coupent seuls dans une version exportée « release ».
 - Touches : **F1** affiche la liste, **F6** +3 h, **F7** maintenu vide l'océan, **F8** maintenu temps ×10, **F9** nouvelle partie, **F10** +50 sel +5 minéraux, **F11** +10 000 de chaque ressource, **F12** ouvre toutes les caisses tout de suite.
 
+### La survie légère et la plage
+
+- **Faim et soif** baissent doucement (vides en 15 et 10 min). À zéro, pas de mort : une pénalité grandit et abaisse le plafond de l'endurance (jusqu'à −30 % par besoin). Manger ou boire l'efface aussitôt.
+- **Ramassables** (E) : les noix de coco sous les palmiers se mangent sur place ; les coquillages de la plage vont dans les bras. Chaque matin, une noix revient sur chaque emplacement vide, et la plage est complétée jusqu'à 5 coquillages.
+- **Objets à portions** livrés par l'agence : la bâche de condensation produit une gorgée d'eau douce toutes les 90 s (3 au plus) ; la caisse de rations contient 5 repas et disparaît vide.
+
 ### Le ciel
 
 - Le soleil suit une courbe selon l'heure et s'éteint sous l'horizon. La lune suit le chemin inverse : une lumière bleutée très faible, plus un disque blanc dessiné loin dans le ciel.
@@ -121,6 +127,40 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 ---
 
 ## Journal
+
+### 2026-11-16 — MODIF — Endurance réduite de moitié
+- **Quoi :** `stamina_run_s` 20 → 10 s, `stamina_swim_s` 60 → 30 s dans les données. PRD v0.14.
+- **Impact :** `game/data/game_config.tres`, `game/core/game_config.gd` (valeurs par défaut), PRD §4.1.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Endurance : moitié de N-05
+- **Quoi :** Othmane trouve l'endurance « trop généreuse » : ~10 s de course et ~30 s de nage au lieu de ~20 s et ~60 s (remplace la durée de N-05 ; le reste de N-05 tient). Il demande ensuite de fusionner la PR #5.
+- **Par :** Othmane
+
+### 2026-11-16 — MODIF — Survie légère, plage vivante et guide du code
+- **Quoi :**
+  - Nouveau `docs/GUIDE_CODE.md` : comment chaque idée est implémentée côté code (fichiers, nœuds, signaux, flux de données), de M0 à aujourd'hui, avec une section par version. Règle ajoutée dans `CLAUDE.md`.
+  - Faim et soif (`SurvivalLogic`) reliées au plafond d'endurance ; jauges dans le HUD.
+  - Noix de coco sous les palmiers et coquillages sur la plage, renouvelés chaque matin (`pickups`).
+  - Catalogue : bâche de condensation (20 sel) et rations (8 sel), via un nouvel effet `STATION` et `StationLogic`.
+  - Tout est sauvegardé ; une ancienne sauvegarde reçoit des noix et des coquillages au chargement.
+  - 11 nouveaux tests (76 au total).
+- **Pourquoi :** demande d'Othmane : passer à la release suivante, et expliquer la logique de code de chaque version.
+- **Impact :** `docs/GUIDE_CODE.md`, `CLAUDE.md`, `game/core/` (survival_logic, station_logic, stamina_logic, game_state, game_config, catalog_item), `game/data/`, `game/scenes/` (main, hud, world/pickup_view, world/station_view), `game/localization/strings.csv`, `game/tests/`, PRD v0.13 (§4.1, §19.2).
+- **Par :** Claude
+
+### 2026-11-16 — TEST ÉCHOUÉ — Pénalité de faim comptée trop tôt ; types non déduits
+- **Quoi :**
+  1. `test_empty_need_lowers_max_stamina_without_death` : un seul long pas de temps qui vidait la soif comptait **tout** ce pas dans la pénalité, même la partie où il restait de l'eau. Correction : seul le temps passé à zéro compte.
+  2. `test_game_loop.gd` ne se chargeait pas (variables sans type déduit sur un objet non typé) ; corrigé par des types explicites.
+- **Impact :** `game/core/survival_logic.gd`, `game/tests/test_game_loop.gd`.
+- **Par :** Claude
+
+### 2026-11-16 — DÉCISION — Explications de code à chaque version
+- **Quoi :** Othmane valide les retours de test (PR #4). Il veut qu'à chaque nouvelle version on lui explique brièvement la logique **de code** (pas seulement la logique de jeu), y compris pour les versions déjà faites, puis passer à la release suivante.
+- **Pourquoi :** choix d'Othmane.
+- **Impact :** `docs/GUIDE_CODE.md`, règle dans `CLAUDE.md`.
+- **Par :** Othmane
 
 ### 2026-11-16 — MODIF — Retours du premier test : panier, paiement, tas de sel, lune, outils admin
 - **Quoi :**

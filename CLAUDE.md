@@ -6,6 +6,7 @@ Ces règles s'appliquent à toute session (Claude ou autre assistant) qui travai
 
 - [`docs/PRD.md`](docs/PRD.md) est la **source unique de vérité** : fonctionnalités, règles de jeu, tech stack. Lis-le avant de travailler. Ne code rien qui le contredise ; si une tâche l'exige, mets d'abord le PRD à jour.
 - [`HANDOFF.md`](HANDOFF.md) est le **journal vivant** du projet. Lis sa section « État actuel » au début de chaque session.
+- [`docs/GUIDE_CODE.md`](docs/GUIDE_CODE.md) explique **côté code** comment chaque idée est implémentée (fichiers, nœuds, signaux, flux de données). Mets-le à jour à chaque version (y compris sa section « Par version »), et explique brièvement à Othmane la logique de code de chaque nouvelle version.
 
 ## Mise à jour obligatoire de HANDOFF.md
 
