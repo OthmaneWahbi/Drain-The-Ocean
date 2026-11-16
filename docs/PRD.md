@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.31 (sons de base, mesure de perf) |
+| Version du document | 0.32 (version 0.1.0 gardée, 0.1.1 : le terrain) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -726,6 +726,19 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 
 - **[PROPOSÉ]** Sons de base (v0.31 ; M-75, en attendant les banques CC0 M-76) : fabriqués par calcul, sans fichier : vagues en boucle (qui se taisent quand l'océan est vidé), seau qu'on remplit / qu'on vide, téléphone qui sonne tant qu'on ne décroche pas, ramassage, petit arpège à chaque jalon, avion, « plop » de la bonde puis glouglou. Volume général dans les options.
 - **[PROPOSÉ]** Mesure de perf (v0.31 ; M-11) : scénario `tests/scenarios/perf.gd`. Sans affichage, la logique du jeu prend ~1 ms par image (simulation seule : ~11 µs avec 12 zones et 40 tuyaux). Avec affichage (rendu logiciel du conteneur, sans carte graphique : chiffres d'images/s non représentatifs) : ~210 appels de dessin sur l'île de départ, ~340 sur une île remplie, ~67 000 primitives (surtout l'océan proche), ~55-60 Mo. À refaire sur le PC de référence (RTX 4 Go).
+
+
+
+### 19.6 Versions 0.1.X : les modèles
+
+- **[DÉCIDÉ]** La démo greybox finie est gardée telle quelle comme **version 0.1.0** (branche `version/0.1.0` sur GitHub, Othmane, 2026-11-16).
+- **[DÉCIDÉ]** Les versions 0.1.X remplacent les formes grises par de vrais modèles. Style : **low poly, mais pas laid, et cartoon**. On commence par **le terrain** (sable à plusieurs niveaux, eau, ciel, soleil) ; les autres modèles viennent une fois les terres validées par Othmane.
+- **[DÉCIDÉ]** Pour les modèles, utiliser **autant que possible des modèles low poly gratuits trouvés en ligne** (retouchés si besoin) plutôt que tout créer à la main (Othmane, 2026-11-16). Licence CC0 de préférence ; sinon licence qui autorise l'usage commercial, avec le crédit noté dans le dépôt.
+- **[PROPOSÉ]** 0.1.1, le terrain : l'île est générée (bruit déterministe) au lieu d'un cylindre gris. Le plateau constructible reste plat (rayon 19,5 m) ; autour, une plage en pente douce jusqu'au rivage (côte irrégulière, ~25 m), un plateau sous-marin peu profond, puis le fond marin. Des dunes en terrasses, coiffées d'herbe, sur les côtés de l'île, jamais du côté de la plage de départ (+Z). Facettes plates, couleurs par hauteur et par pente (herbe, sable sec, sable de pente, sable mouillé, sable immergé, fond).
+- **[PROPOSÉ]** Eau cartoon : couleurs en bandes selon la profondeur (turquoise → bleu profond), facettes, écume nette au rivage avec un deuxième anneau.
+- **[PROPOSÉ]** Ciel cartoon : dégradé jour / coucher / nuit, disque du soleil net avec halo, étoiles la nuit. La couleur du soleil se réchauffe près de l'horizon.
+
+---
 
 ## 20. Glossaire
 

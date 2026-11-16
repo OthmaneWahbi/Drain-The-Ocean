@@ -285,6 +285,14 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 - `Settings` devient une classe statique (voir « Menus, emplacements et options »). `tests/test_project.gd` charge **chaque** script du projet et vérifie qu'il compile, et que les autoloads attendus sont bien déclarés : une ligne perdue dans `project.godot` ou un script cassé que les autres tests n'atteignent pas fait échouer la CI.
 
+### Le terrain low poly (PR #23)
+
+- **`core/terrain_logic.gd` (`TerrainLogic`)** : pure logique. `height(x, z)` donne la hauteur du sol partout ; `color(y, pente, …)` sa couleur. Trois bruits `FastNoiseLite` à graine fixe : un sur l'angle (côte irrégulière, dunes), un pour les dunes, un pour le relief fin. Dans le rayon constructible, le sol est plat à `ground_y` (les objets posés ne bougent pas). Au-delà : `_beach()` (pente vers le rivage, plateau sous-marin, puis fond à `seabed_y`) et, si `dune_amount(angle) > 0`, une bosse découpée par `terrace()`. Créé par `GameState.setup()` (`GameState.terrain`), pour que tout le monde lise le même sol.
+- **`scenes/world/terrain_view.gd` (`TerrainView`)** : construit une grille légèrement décalée au hasard (graine fixe), deux triangles par case, chaque triangle avec sa propre normale (facettes plates) et la couleur de `TerrainLogic`. Tous les triangles ont le même sens, et la collision vient du même maillage (`create_trimesh_shape`).
+- **Eau** (`shaders/ocean.gdshader`) : la profondeur sous la surface donne une couleur arrondie en `color_bands` bandes ; normale calculée par `dFdx/dFdy` pour les facettes ; écume = bande nette près du sol.
+- **Ciel** (`shaders/sky.gdshader`, `SkyStyle`) : dégradé selon la hauteur du soleil (`LIGHT0_DIRECTION`), disque et halo, étoiles la nuit. `main.gd._update_sun` colore la lumière avec `SkyStyle.sun_color()`.
+- Ceux qui posent des choses au sol (décor du fond, marcheur de la fin, `player.find_free_spot`) demandent `GameState.terrain.height()` ou lancent un rayon vers le bas.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -352,3 +360,9 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #21 — Sons et perf
 `SoundSynth`, `SoundBoard`, `test_sound.gd`, `tests/scenarios/perf.gd`.
+
+### PR #22 — Settings sans autoload
+`Settings` en classe statique, `test_project.gd`, `test_settings_static.gd`.
+
+### PR #23 — Version 0.1.1 : terrain, eau, ciel
+`TerrainLogic`, `TerrainView`, `SkyStyle`, `sky.gdshader`, `ocean.gdshader` cartoon, `GameState.terrain`, `GameConfig.seabed_y`, `test_terrain.gd`.

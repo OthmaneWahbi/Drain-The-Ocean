@@ -187,8 +187,10 @@ func _drown() -> void:
 ## largeur du personnage). Contre un simple mur, on peut toujours partir de côté ou en arrière.
 func is_trapped() -> bool:
 	var free: Array = []
+	# On teste un peu au-dessus du sol : les petites bosses du terrain ne comptent pas comme des murs.
+	var raised := global_transform.translated(Vector3(0, UnstuckLogic.STEP_M, 0))
 	for dir in UnstuckLogic.probe_directions(UnstuckLogic.ESCAPE_M):
-		free.append(not test_move(global_transform, dir))
+		free.append(not test_move(raised, dir))
 	return UnstuckLogic.is_trapped(free)
 
 
@@ -224,13 +226,18 @@ func find_free_spot(origin: Vector3, include_origin: bool) -> Variant:
 		spots.append(origin)
 	spots.append_array(UnstuckLogic.candidates(origin, cfg.unstuck_step_m, cfg.unstuck_search_m))
 	for spot in spots:
-		query.transform = Transform3D(Basis.IDENTITY, spot + col.position + Vector3(0, 0.05, 0))
+		# D'abord le sol sous la place (le terrain n'est pas plat partout), puis la capsule posée dessus.
+		var down := PhysicsRayQueryParameters3D.create(spot + Vector3(0, 1.0, 0), spot + Vector3(0, -3.0, 0), PhysicsLayers.SOLID, [get_rid()])
+		var ground := space.intersect_ray(down)
+		if ground.is_empty():
+			continue  # pas de sol : on ne se jette pas à l'eau
+		var feet: Vector3 = ground.position
+		if feet.y < GameState.water_level_y() - 0.3:
+			continue  # sous l'eau : pas une place de secours
+		query.transform = Transform3D(Basis.IDENTITY, feet + col.position + Vector3(0, UnstuckLogic.STEP_M, 0))
 		if not space.intersect_shape(query, 1).is_empty():
 			continue
-		var down := PhysicsRayQueryParameters3D.create(spot + Vector3(0, 0.5, 0), spot + Vector3(0, -2.0, 0), PhysicsLayers.SOLID, [get_rid()])
-		if space.intersect_ray(down).is_empty():
-			continue  # pas de sol : on ne se jette pas à l'eau
-		return spot
+		return feet
 	return null
 
 

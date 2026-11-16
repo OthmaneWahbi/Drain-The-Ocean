@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="2"]
@@ -29,13 +29,8 @@ fog_light_color = Color(0.72, 0.85, 0.95, 1)
 fog_density = 0.0006
 fog_sky_affect = 0.0
 
-[sub_resource type="StandardMaterial3D" id="mat_sand"]
-albedo_color = Color(0.74, 0.66, 0.48, 1)
-metallic_specular = 0.1
-roughness = 1.0
-
 [sub_resource type="StandardMaterial3D" id="mat_wet_sand"]
-albedo_color = Color(0.62, 0.56, 0.44, 1)
+albedo_color = Color(0.56, 0.58, 0.48, 1)
 metallic_specular = 0.1
 roughness = 1.0
 
@@ -67,24 +62,8 @@ directional_shadow_max_distance = 150.0
 
 [node name="Island" type="Node3D" parent="."]
 
-[node name="Top" type="CSGCylinder3D" parent="Island"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 0)
-use_collision = true
-radius = 20.0
-height = 4.0
-sides = 24
-material = SubResource("mat_sand")
-
-[node name="Shore" type="CSGCylinder3D" parent="Island"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0)
-use_collision = true
-radius = 26.0
-height = 4.0
-sides = 24
-material = SubResource("mat_wet_sand")
-
 [node name="Seabed" type="CSGBox3D" parent="Island"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.55, 0)
 use_collision = true
 size = Vector3(400, 1, 400)
 material = SubResource("mat_wet_sand")

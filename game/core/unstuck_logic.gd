@@ -12,6 +12,8 @@ const MIN_SPEED := 0.15
 ## Distance qu'on doit pouvoir parcourir dans au moins une direction pour ne pas être coincé
 ## (plus que la largeur du personnage : un recoin minuscule compte comme une prison).
 const ESCAPE_M := 0.8
+## Hauteur des petites bosses qu'on enjambe sans y penser (on teste les directions au-dessus).
+const STEP_M := 0.2
 
 var check_after_s: float
 var _still_s: float = 0.0
