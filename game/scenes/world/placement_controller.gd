@@ -105,7 +105,7 @@ func _process(_delta: float) -> void:
 		if _start_next_in_queue():
 			return
 		if Input.is_action_just_pressed(&"move_object") and not GameState.ui_open \
-				and player.target and player.target.has_method(&"get_movable"):
+				and is_instance_valid(player.target) and player.target.has_method(&"get_movable"):
 			start(player.target)
 		return
 	# L'objet a disparu entre-temps (nouvelle partie, chargement…) : on arrête.

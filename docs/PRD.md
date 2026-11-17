@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.38 (0.1.7 : plus de clignotement en mode G) |
+| Version du document | 0.39 (0.1.8 : chasse aux bugs, tuyaux, coquillages, tas et palette revus) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -825,6 +825,18 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** L'aperçu (cases, voisins, grille, contours) épouse le relief du sable et flotte 6 à 9 cm au-dessus, une couche au-dessus de l'autre, dans un ordre de dessin fixe.
 - **[PROPOSÉ]** Le rayon de visée ignore tout l'objet déplacé, tas compris : l'objet ne saute plus entre deux places.
 - **[PROPOSÉ]** Au ras d'une ligne de la grille, il faut viser 15 cm dans la nouvelle case pour que l'objet y passe : le balancement de la tête ne le fait plus trembler.
+
+### 19.13 Version 0.1.8 : chasse aux bugs, modèles revus
+
+Demande d'Othmane (2026-11-17) **[DÉCIDÉ]** : faire beaucoup de tests et de parties d'essai (enregistrées et regardées) pour trouver les bugs ; chercher à fond des modèles gratuits meilleurs que les nôtres ; revoir les tuyaux, les coquillages (posés au sol), les tas et ce qui porte les tas (la palette).
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** Deux parties automatiques avec le vrai jeu (écran virtuel), lancées par la CI à chaque PR : un robot qui joue la boucle (puiser, verser, récolter, palette, téléphone, commande, caisse, déplacer, tuyaux, pause, nage, sauvegarde) et un « singe » qui appuie au hasard pendant 60 s. Une erreur de script fait échouer la CI.
+- **[PROPOSÉ]** Bugs corrigés : la jauge de faim et de soif envoyait un polygone invalide à chaque image (erreur moteur en boucle) ; le joueur pouvait garder en cible un objet disparu ; une caisse ouverte avant d'être larguée faisait une erreur à l'arrivée de l'avion.
+- **[PROPOSÉ]** Tuyaux : un peu plus gros, un manchon foncé à chaque raccord entre deux pièces (on les compte), une boule de jonction seulement sur les coudes, T et croix, et un piquet en bois avec collier et semelle sous toute pièce qui ne repose sur rien (sauf au-dessus d'une zone ou d'une pompe).
+- **[PROPOSÉ]** Coquillages : fermés dessous, côtes en deux tons, conque refaite (cône, spire, bourrelets, ouverture rose vers le ciel) ; posés **sur** le sable, penchés comme la pente, sans qu'aucun bord ne s'enfonce.
+- **[PROPOSÉ]** Palette : un seul bois (fini les rayures crème), des cloisons basses entre les cinq tas, le nom de chaque ressource sur une petite planche crème. Tas de coquillages sur du sable rosé, perles sur un coussin bleu nuit.
+- **[PROPOSÉ]** Modèles gratuits : rapport `recherche/Modèles gratuits low poly.md`. Aucun modèle n'est importé dans cette version : à décider par Othmane (seau et palette KayKit, tuyaux du Space Kit de Kenney, qui font 1 m comme nos cases).
 
 ## 20. Glossaire
 

@@ -20,6 +20,10 @@ func _ready() -> void:
 	add_child(Greybox.box_collision(Vector3(SIZE.x, 0.5, SIZE.z), Vector3(0, 0.25, 0)))
 	var n := Economy.RESOURCES.size()
 	var slot := SIZE.x / n
+	# 0.1.8 : des cloisons basses entre les emplacements, comme un étal : chaque tas a sa case.
+	for i in range(1, n):
+		var x := -SIZE.x / 2.0 + slot * i
+		add_child(Props.box(Vector3(0.05, 0.16, SIZE.z * 0.92), Props.WOOD_DARK, Vector3(x, SIZE.y + 0.08, 0)))
 	for i in n:
 		var r: String = Economy.RESOURCES[i]
 		var x := -SIZE.x / 2.0 + slot * (i + 0.5)
@@ -36,14 +40,16 @@ func _ready() -> void:
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		add_child(label)
 		_labels[r] = label
+		# Le nom, peint sur une petite planche crème clouée devant (plus lisible que sur le bois).
+		add_child(Props.box(Vector3(slot * 0.8, 0.13, 0.03), Props.CREAM, Vector3(x, SIZE.y / 2.0, SIZE.z / 2.0 + 0.015)))
 		var name_label := Label3D.new()
 		name_label.text = tr("RES_" + r.to_upper())
-		name_label.position = Vector3(x, SIZE.y / 2.0, SIZE.z / 2.0 + 0.01)
+		name_label.position = Vector3(x, SIZE.y / 2.0, SIZE.z / 2.0 + 0.035)
 		name_label.font_size = 18
 		name_label.pixel_size = 0.004
 		name_label.modulate = Color(0.12, 0.08, 0.04)
 		name_label.outline_size = 0
-		name_label.width = slot / 0.004
+		name_label.width = slot * 0.8 / 0.004
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_child(name_label)
 	GameState.stock_changed.connect(_refresh)
@@ -56,7 +62,7 @@ func _refresh() -> void:
 		var pile: Node3D = _piles[r]
 		pile.visible = count > 0
 		var h := pile_height(count)
-		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.95)
+		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.88)  # entre les cloisons
 		var label: Label3D = _labels[r]
 		label.text = str(count)
 		label.position.y = SIZE.y + pile.scale.y * PILE_MODEL_H + 0.25  # juste au-dessus du vrai tas

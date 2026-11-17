@@ -44,22 +44,43 @@ func _draw() -> void:
 	draw_circle(c + Vector2(3, 3), r + 3.0, Color(UiTheme.INK, 0.4))
 	draw_circle(c, r + 3.0, UiTheme.RED if low else UiTheme.INK)
 	draw_circle(c, r, UiTheme.PAPER)
-	var surface := c.y + r - 2.0 * r * clampf(shown, 0.0, 1.0)
-	var pts := PackedVector2Array()
-	var steps := 24
-	# La vague : de gauche à droite à la surface, puis le bas du cercle de droite à gauche.
-	for i in steps + 1:
-		var x := c.x - r + 2.0 * r * i / steps
-		var wave := sin(_t * 3.0 + i * 0.7) * 2.2
-		var dy := sqrt(maxf(r * r - pow(x - c.x, 2.0), 0.0))
-		pts.append(Vector2(x, clampf(surface + wave, c.y - dy, c.y + dy)))
-	for i in steps + 1:
-		var a := PI * i / steps  # de 0 (droite) à PI (gauche), par le bas
-		pts.append(c + Vector2(cos(a), sin(a)) * r)
-	if shown > 0.01 and pts.size() >= 3:
-		draw_colored_polygon(pts, liquid_color())
+	if shown >= 0.995:
+		draw_circle(c, r, liquid_color())
+	else:
+		var pts := liquid_polygon(c, r, shown, _t)
+		if pts.size() >= 3:
+			draw_colored_polygon(pts, liquid_color())
 	draw_arc(c, r, 0, TAU, 40, UiTheme.INK, 2.0, true)
 	_draw_icon(c, r * 0.55)
+
+
+## Le contour du liquide : la vague le long de la corde de surface, puis l'arc du bas. Les
+## points restent strictement dans le cercle et jamais deux fois au même endroit, sinon Godot
+## ne sait pas trianguler le polygone (erreur « triangulation failed » à chaque image, 0.1.8).
+## Vide (rien à dessiner) si le liquide est trop bas pour être visible.
+static func liquid_polygon(c: Vector2, r: float, level: float, t: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	var surface := c.y + r - 2.0 * r * clampf(level, 0.0, 1.0)
+	var half := sqrt(maxf(r * r - pow(surface - c.y, 2.0), 0.0))
+	if half < 2.0 or level <= 0.01:
+		return pts
+	var steps := 24
+	var amp := 2.2 * minf(half / r, 1.0)
+	for i in range(1, steps):  # la vague, sans ses deux bouts (ils sont sur l'arc)
+		var x := c.x - half + 2.0 * half * i / steps
+		var dy := sqrt(maxf(r * r - pow(x - c.x, 2.0), 0.0)) - 0.5
+		pts.append(Vector2(x, clampf(surface + sin(t * 3.0 + i * 0.7) * amp, c.y - dy, c.y + dy)))
+	var a0 := atan2(surface - c.y, half)  # le bout droit de la corde
+	var a1 := PI - a0  # le bout gauche, en passant par le bas
+	for i in steps + 1:
+		var a := a0 + (a1 - a0) * i / steps
+		pts.append(c + Vector2(cos(a), sin(a)) * r)
+	# On retire les points en double (Godot refuse de trianguler sinon).
+	var out := PackedVector2Array()
+	for p in pts:
+		if out.is_empty() or out[out.size() - 1].distance_to(p) > 0.25:
+			out.append(p)
+	return out
 
 
 ## Le pictogramme au milieu : un pilon pour la faim, une goutte pour la soif.

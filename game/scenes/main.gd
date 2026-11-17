@@ -254,10 +254,14 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 	if not crate.get("free", false):
 		var paid: Dictionary = crate.get("paid", {})
 		plane.hooked.connect(func(): plane.carry_bundle(_bundle_colors(paid)))
+	# 0.1.8 : la caisse a pu être ouverte (et sa vue libérée) avant le largage. On ne garde
+	# qu'une référence faible : un lambda qui capture un objet libéré fait une erreur Godot.
+	var view_ref: WeakRef = weakref(view)
 	plane.dropped.connect(func():
-		if is_instance_valid(view):
-			view.visible = true
-			view.drop_from(16.0, CHUTE_TIME_S))
+		var v: CrateView = view_ref.get_ref()
+		if v:
+			v.visible = true
+			v.drop_from(16.0, CHUTE_TIME_S))
 	plane.fly(depot.global_position, crate.position, drop_at)
 
 

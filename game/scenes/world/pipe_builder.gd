@@ -52,7 +52,7 @@ func _process(_delta: float) -> void:
 		text = tr("PROMPT_PIPE_PLACE") % GameState.pipe_stock
 	else:
 		text = tr("PROMPT_PIPE_BLOCKED") % GameState.pipe_stock
-	if player.target and player.target.has_method(&"get_prompt") and "cell" in player.target:
+	if is_instance_valid(player.target) and player.target.has_method(&"get_prompt") and "cell" in player.target:
 		text = "%s · %s" % [text, tr("PROMPT_PIPE_REMOVE")]
 	player.prompt = text
 	if Input.is_action_just_pressed(&"use_tool") and valid:
