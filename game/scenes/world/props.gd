@@ -30,8 +30,8 @@ const PILE_BASE := {
 	"sel": Color(0.93, 0.93, 0.9),
 	"mineraux": Color(0.55, 0.53, 0.5),
 	"mineraux_rares": Color(0.42, 0.36, 0.5),
-	"coquillages": Color(0.88, 0.78, 0.58),
-	"perles": Color(0.88, 0.8, 0.66),
+	"coquillages": Color(0.95, 0.78, 0.7),  # sable rosé, pour que les coquilles ressortent (0.1.8)
+	"perles": Color(0.36, 0.42, 0.72),  # un coussin bleu nuit : les perles blanches s'y voient (0.1.8)
 }
 const SHELL_COLORS := [Color(1.0, 0.62, 0.5), Color(0.98, 0.78, 0.45), Color(0.94, 0.5, 0.62), Color(0.8, 0.62, 0.92)]
 
@@ -271,49 +271,89 @@ static func shell(variant: int, size := 0.22) -> Node3D:
 
 ## Une coquille Saint-Jacques : un éventail bombé à côtes, et ses deux « oreilles » à la
 ## charnière. Charnière en (0, 0, -size/2), éventail vers +Z.
+## 0.1.8 : coquille fermée dessous (on ne voit plus à travers quand elle est sur le sable), côtes
+## en deux tons (une claire, une foncée) pour qu'on lise sa forme de loin, et un petit rebord.
 static func scallop(size: float, color: Color) -> Node3D:
 	var root := Node3D.new()
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var hinge := Vector3(0, 0.02 * size, -size * 0.5)
-	var ribs := 16
+	var light := SurfaceTool.new()
+	var dark := SurfaceTool.new()
+	var under := SurfaceTool.new()
+	for st: SurfaceTool in [light, dark, under]:
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hinge := Vector3(0, size * 0.05, -size * 0.5)
+	var ribs := 12
 	var spread := deg_to_rad(150.0)
 	var rim := []
 	var mid := []
+	var low := []
 	for k in ribs + 1:
 		var a := -spread / 2 + spread * k / ribs
 		var dir := Vector3(sin(a), 0, cos(a))
 		var ridge := k % 2 == 0
-		var rr := size * (1.0 if ridge else 0.94)
-		rim.append(hinge + dir * rr + Vector3(0, size * (0.06 if ridge else 0.02), 0))
-		mid.append(hinge + dir * rr * 0.55 + Vector3(0, size * (0.3 if ridge else 0.24), 0))
+		var rr := size * (1.0 if ridge else 0.95)
+		rim.append(hinge + dir * rr + Vector3(0, size * (0.07 if ridge else 0.03), 0))
+		mid.append(hinge + dir * rr * 0.55 + Vector3(0, size * (0.32 if ridge else 0.26), 0))
+		low.append(Vector3(rim[k].x, 0.0, rim[k].z))
 	var inside := hinge + Vector3(0, -size, size * 0.4)
 	for k in ribs:
+		var st: SurfaceTool = light if k % 2 == 0 else dark
 		tri_from(st, hinge, mid[k], mid[k + 1], inside)
 		tri_from(st, mid[k], rim[k], rim[k + 1], inside)
 		tri_from(st, mid[k], rim[k + 1], mid[k + 1], inside)
-	root.add_child(_mesh(st.commit(), color, true))
+		# Le rebord jusqu'au sol, puis le dessous plat.
+		var c := Vector3(0, size * 0.1, -size * 0.1)
+		tri_from(under, rim[k], low[k], low[k + 1], c)
+		tri_from(under, rim[k], low[k + 1], rim[k + 1], c)
+		tri_from(under, Vector3(hinge.x, 0.0, hinge.z), low[k + 1], low[k], Vector3(0, size, 0))
+	root.add_child(_mesh(light.commit(), color.lightened(0.04)))
+	root.add_child(_mesh(dark.commit(), color.darkened(0.16)))
+	root.add_child(_mesh(under.commit(), color.darkened(0.25)))
 	for side in [-1.0, 1.0]:  # les oreilles
-		var ear := box(Vector3(size * 0.22, size * 0.05, size * 0.16), color.darkened(0.08), hinge + Vector3(side * size * 0.13, size * 0.03, size * 0.02))
+		var ear := box(Vector3(size * 0.22, size * 0.06, size * 0.16), color.darkened(0.08), hinge + Vector3(side * size * 0.13, 0.0, size * 0.02))
 		root.add_child(ear)
-	root.position.z = 0.0
 	return root
 
 
-## Une conque : des spires de plus en plus petites vers la pointe, et une ouverture rose.
+## Une conque : un cône bombé couché sur le sable, sa spire en pointe, deux bourrelets qui
+## marquent les tours, le canal à l'autre bout et une ouverture rose tournée vers le ciel.
+## Pointe vers +X (0.1.8 : avant, des boules empilées qui ressemblaient à une pomme de terre).
 static func conch(size: float, color: Color) -> Node3D:
 	var root := Node3D.new()
 	var body := Node3D.new()
-	body.rotation.z = PI / 2  # couchée sur le sable, pointe vers +X
-	body.position.y = size * 0.32
+	body.rotation.z = -PI / 2  # couchée : l'axe Y du coquillage devient +X, son -X le haut
+	body.position.y = size * 0.29
 	root.add_child(body)
-	for k in 4:
-		var r := size * 0.32 * pow(0.68, k)
-		body.add_child(ball(r, color.darkened(0.05 * k), Vector3(0, -size * 0.1 + size * 0.24 * (1.0 - pow(0.7, k + 1)) * 2.2, 0), 30 + k, 0.08, Vector3(1, 0.8, 1)))
-	body.add_child(cyl(0.0, size * 0.06, size * 0.14, color.darkened(0.25), Vector3(0, size * 0.6, 0), 6))
-	var lip := ball(size * 0.26, Color(1.0, 0.62, 0.62), Vector3(size * 0.02, -size * 0.2, size * 0.12), 41, 0.0, Vector3(0.8, 1.0, 0.45))
+	body.add_child(cyl(size * 0.06, size * 0.3, size * 0.55, color, Vector3.ZERO, 9))
+	body.add_child(cyl(0.0, size * 0.17, size * 0.36, color.darkened(0.15), Vector3(0, size * 0.45, 0), 9))
+	body.add_child(torus(size * 0.2, size * 0.28, color.darkened(0.08), Vector3(0, -size * 0.04, 0), 10))
+	body.add_child(torus(size * 0.12, size * 0.18, color.darkened(0.12), Vector3(0, size * 0.2, 0), 10))
+	body.add_child(cyl(size * 0.09, size * 0.03, size * 0.22, color.darkened(0.1), Vector3(0, -size * 0.38, 0), 7))
+	var lip := ball(size * 0.2, Color(1.0, 0.7, 0.68), Vector3(-size * 0.22, -size * 0.1, 0), 41, 0.0, Vector3(0.35, 1.3, 0.85))
 	body.add_child(lip)
 	return root
+
+
+## Pose un petit objet (coquillage, étoile de mer) SUR le sable en `pos` (monde) : penché comme
+## la pente, et assez haut pour qu'aucun bord ne s'enfonce. On mesure le sable à `radius` autour
+## (0.1.8 : posés au centre seulement, ils disparaissaient à moitié dans les pentes).
+## Renvoie la transformée à donner au nœud.
+static func on_sand(terrain: TerrainLogic, pos: Vector3, radius: float, yaw: float) -> Transform3D:
+	if terrain == null:  # pas d'île (tests) : posé droit
+		return Transform3D(Basis(Vector3.UP, yaw), pos)
+	var hx := terrain.height(pos.x + radius, pos.z) - terrain.height(pos.x - radius, pos.z)
+	var hz := terrain.height(pos.x, pos.z + radius) - terrain.height(pos.x, pos.z - radius)
+	var up := Vector3(-hx, 2.0 * radius, -hz).normalized()
+	if up.angle_to(Vector3.UP) > deg_to_rad(25.0):  # pas couché sur le flanc d'une marche de dune
+		up = Vector3.UP.slerp(up, deg_to_rad(25.0) / up.angle_to(Vector3.UP))
+	var y := terrain.height(pos.x, pos.z)
+	for k in 8:
+		var a := TAU * k / 8.0
+		var p := pos + Vector3(cos(a), 0, sin(a)) * radius
+		# Le sable sous ce bord, moins la hauteur que la pente donne déjà à ce bord.
+		var tilt_rise := -(up.x * (p.x - pos.x) + up.z * (p.z - pos.z)) / maxf(up.y, 0.1)
+		y = maxf(y, terrain.height(p.x, p.z) - tilt_rise)
+	var basis := Basis(Quaternion(Vector3.UP, up)) * Basis(Vector3.UP, yaw)
+	return Transform3D(basis, Vector3(pos.x, y - 0.01, pos.z))
 
 
 ## Une étoile de mer à cinq bras (fonds marins, plages).
@@ -410,8 +450,11 @@ static func pallet(size: Vector3) -> Node3D:
 			root.add_child(box(Vector3(0.16, runner_h * 0.5, 0.16), WOOD_DARK.darkened(0.15), Vector3(x * size.x, runner_h * 0.25, z * size.z)))
 	var boards := 9
 	var w := size.x / boards
+	# 0.1.8 : un même bois, chaque planche à peine plus claire ou plus foncée (avant, une planche
+	# sur deux crème : on aurait dit des rayures).
+	var shades := [WOOD, WOOD.lightened(0.08), WOOD.darkened(0.06), WOOD.lightened(0.03)]
 	for i in boards:
-		var shade := WOOD if i % 2 == 0 else WOOD_LIGHT
+		var shade: Color = shades[(i * 7 + 3) % shades.size()]
 		root.add_child(box(Vector3(w * 0.86, size.y - runner_h, size.z), shade, Vector3(-size.x / 2 + w * (i + 0.5), runner_h + (size.y - runner_h) / 2, 0)))
 	return root
 

@@ -6,7 +6,11 @@ extends Node3D
 
 const DRY_COLOR := Color(0.32, 0.34, 0.38)
 const WET_COLOR := Color(0.25, 0.5, 0.75)
-const PIPE_RADIUS := 0.09
+## 0.1.8 : un peu plus gros, avec un manchon à chaque raccord entre deux pièces et un pied sous
+## les pièces en l'air, pour qu'on lise le réseau comme une vraie tuyauterie (et qu'on compte les
+## pièces).
+const PIPE_RADIUS := 0.11
+const COLLAR_COLOR := Color(0.22, 0.24, 0.28)
 
 
 func _ready() -> void:
@@ -27,10 +31,23 @@ func rebuild() -> void:
 		piece.position = PipeNetwork.cell_center(cell, cell_m, GameState.config.ground_y)
 		add_child(piece)
 		var color := WET_COLOR if wet.has(cell) else DRY_COLOR
-		piece.add_child(Props.ball(PIPE_RADIUS * 1.45, color, Vector3.ZERO, 3))  # le raccord
+		var links := 0
+		var straight := true
+		for d in PipeNetwork.DIRS:
+			if GameState.pipes.has(cell + d) or _touches_pump(cell, d):
+				links += 1
+				straight = straight and (GameState.pipes.has(cell - d) or _touches_pump(cell, -d))
+		# Le cœur de la pièce : rien sur un tuyau droit (il passe tout droit), une boule de
+		# jonction sur un coude, un T, une croix ou une pièce seule.
+		if links != 2 or not straight:
+			piece.add_child(Props.ball(PIPE_RADIUS * 1.35, color, Vector3.ZERO, 3))
 		for d in PipeNetwork.DIRS:
 			if GameState.pipes.has(cell + d):
 				_arm(piece, Vector3(d) * cell_m * 0.5, color)
+				if d.x + d.y + d.z > 0:  # un manchon par raccord (dessiné par une seule des deux pièces)
+					var collar := Props.cyl(PIPE_RADIUS * 1.3, PIPE_RADIUS * 1.3, 0.1, COLLAR_COLOR, Vector3(d) * cell_m * 0.5, 10)
+					_lay(collar, Vector3(d))
+					piece.add_child(collar)
 				# Solide jusqu'au bord de la case : une rangée de tuyaux se traverse en sautant dessus.
 				var half := Vector3(d).abs() * cell_m * 0.25 + (Vector3.ONE - Vector3(d).abs()) * 0.15
 				piece.add_child(Greybox.box_collision(half * 2.0, Vector3(d) * cell_m * 0.25))
@@ -46,14 +63,40 @@ func rebuild() -> void:
 			if GameState.pipe_feeds(cell, zone):
 				_spout(piece, color, wet.has(cell), (zone.position as Vector3).y + 0.45 - piece.position.y)
 				break
-		# Au-dessus de l'eau ou d'un creux, un piquet en bois porte la pièce jusqu'au sol.
-		if cell.y == 0:
+		# Une pièce en l'air (rien dessous) : un piquet en bois la porte jusqu'au sol, avec un
+		# collier en haut et une semelle en bas. Pas au-dessus d'une zone ni d'une pompe.
+		if _needs_stand(cell):
 			var ground := GameState.terrain.height(piece.position.x, piece.position.z) - piece.position.y
 			if ground < -0.25:
-				piece.add_child(Props.box(Vector3(0.08, -ground, 0.08), Props.WOOD_DARK, Vector3(0, ground / 2.0, 0)))
+				var post_h := -ground - PIPE_RADIUS
+				piece.add_child(Props.box(Vector3(0.08, post_h, 0.08), Props.WOOD_DARK, Vector3(0, ground + post_h / 2.0, 0)))
+				piece.add_child(Props.box(Vector3(0.22, 0.04, 0.22), Props.WOOD_DARK.darkened(0.2), Vector3(0, ground + 0.02, 0)))
+				piece.add_child(_clamp_for(cell))
 		# 0.1.6 (Othmane : « plus fun ») : les tuyaux sont solides, on peut marcher dessus. Le joueur
 		# ne peut pas s'y enfermer pour de bon : l'anti-blocage (player.gd) le pose sur une place libre.
 		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.4))
+
+
+## Rien sous cette pièce (ni tuyau, ni pompe, ni zone de séchage) : elle a besoin d'un pied.
+func _needs_stand(cell: Vector3i) -> bool:
+	if GameState.pipes.has(cell + Vector3i.DOWN) or _touches_pump(cell, Vector3i.DOWN):
+		return false
+	var cell_m: float = GameState.config.grid_cell_m
+	var c := Vector3((cell.x + 0.5) * cell_m, 0.0, (cell.z + 0.5) * cell_m)
+	for zone in GameState.zones:
+		if PlacementGrid.distance_to(PlacementGrid.rect_shape(GameState.item_rect(zone)), c) < 0.01:
+			return false
+	for pump in GameState.pumps:
+		if PlacementGrid.distance_to(PlacementGrid.rect_shape(GameState.item_rect(pump)), c) < 0.01:
+			return false
+	return true
+
+
+## Le collier qui tient le tuyau en haut du piquet (en travers du tuyau).
+func _clamp_for(cell: Vector3i) -> Node3D:
+	var along_x := GameState.pipes.has(cell + Vector3i.RIGHT) or GameState.pipes.has(cell + Vector3i.LEFT)
+	var size := Vector3(0.06, PIPE_RADIUS * 2.5, PIPE_RADIUS * 2.5) if along_x else Vector3(PIPE_RADIUS * 2.5, PIPE_RADIUS * 2.5, 0.06)
+	return Props.box(size, COLLAR_COLOR, Vector3(0, -PIPE_RADIUS * 0.3, 0))
 
 
 ## Les filets d'eau ne coulent que pendant qu'une pompe débite (à l'instant).

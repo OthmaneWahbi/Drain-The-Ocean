@@ -359,6 +359,17 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Le rayon de visée :** `bodies_of(vue)` liste les `CollisionObject3D` de la vue et de ses enfants (les tas d'une zone sont des corps à part) ; tous sont exclus.
 - **Hystérésis :** `keep_target(actuelle, candidate, visée, même_rotation)` garde la place actuelle tant que la visée n'est pas `HYSTERESIS_M` (15 cm) plus près de la nouvelle. Tourner l'objet ou un grand saut (plus d'1 m) passent tout de suite.
 
+### Chasse aux bugs et modèles revus (PR #30)
+
+- **Le robot :** `tests/scenarios/playtest.gd` est un `SceneTree` qui charge `main.tscn` et joue avec de vrais événements : `_tap` envoie un `InputEventAction` (les menus et le dialogue écoutent `_unhandled_input`, `Input.action_press` ne leur suffit pas), `_hold` garde une touche, `_face` tourne le joueur et sa tête vers un point, `_walk_to` marche (et saute s'il est bloqué). Chaque étape vérifie l'état de `GameState` (`_check`). Il faut un écran (xvfb) : en `--headless`, la souris n'est jamais capturée et le joueur ne vise rien.
+- **Le singe :** `tests/scenarios/monkey.gd` presse et relâche des actions au hasard, bouge la souris, clique, recapture la souris, commande, ouvre des caisses, avance le temps, sauvegarde et recharge. Il ne vérifie rien : la CI lit son journal.
+- **Jauge :** `NeedGauge.liquid_polygon(c, r, niveau, t)` part de la corde de surface (`half`), la vague reste à 0,5 px dans le cercle, puis l'arc du bas ; points en double retirés. Plein : `draw_circle`.
+- **Cible périmée :** `player._process` remet `target` à `null` quand il rend la main (mode G, menu, souris libre).
+- **Largage :** `_on_crate_added` passe la vue par `weakref` au lambda de `dropped`.
+- **Tuyaux :** `PipesView.rebuild` compte les liaisons de la pièce (tuyaux et pompe) ; une ligne droite n'a pas de boule. Le manchon (`COLLAR_COLOR`) n'est dessiné que vers +X, +Y, +Z, une fois par raccord. `_needs_stand(case)` : rien dessous, ni zone ni pompe sous la case ; alors piquet jusqu'au sol, semelle et `_clamp_for` (collier en travers du tuyau).
+- **Coquillages :** `Props.on_sand` lit la pente (différences de hauteur à ±rayon), la borne à 25°, et lève l'objet pour que ses 8 bords soient au-dessus du sable ; il renvoie une `Transform3D`. `scallop` utilise trois `SurfaceTool` (côtes claires, foncées, dessous).
+- **Palette :** `Depot._ready` ajoute 4 cloisons et une planchette crème par nom ; les tas se limitent à 88 % de leur place.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -450,3 +461,6 @@ Emprises en rectangles de cases (`config.footprints`), `PlacementGrid.rect_at` /
 
 ### PR #29 — Version 0.1.7 : plus de clignotement en mode G
 Aperçu en un maillage qui suit le relief (`draped_y`, `render_priority`), `bodies_of` pour le rayon, `keep_target` (hystérésis), `test_placement_overlay.gd`.
+
+### PR #30 — Version 0.1.8 : chasse aux bugs, modèles revus
+`playtest.gd` et `monkey.gd` (en CI sous xvfb), `NeedGauge.liquid_polygon`, cible remise à zéro, `weakref` au largage, tuyaux à manchons et piquets, `Props.on_sand`, coquillages refaits, palette à cloisons, `test_playtest_bugs.gd`.

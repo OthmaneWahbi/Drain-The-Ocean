@@ -53,3 +53,20 @@ jobs:
           set -o pipefail
           DTO_SKIP_MENU=1 ./godot --headless --path game --quit-after 120 2>&1 | tee smoke2.log
           ! grep -q "SCRIPT ERROR" smoke2.log
+
+      # 0.1.8 : le vrai jeu avec affichage (écran virtuel), joué par un robot puis au hasard.
+      - name: Écran virtuel pour les parties jouées
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+
+      - name: Partie jouée par un robot (playtest)
+        run: |
+          set -o pipefail
+          xvfb-run -a -s "-screen 0 640x360x24" ./godot --path game --rendering-driver opengl3 --resolution 640x360 -s res://tests/scenarios/playtest.gd 2>&1 | tee playtest.log
+          ! grep -qE "SCRIPT ERROR|triangulation failed|Lambda capture" playtest.log
+
+      - name: Entrées au hasard (singe, 60 s)
+        run: |
+          set -o pipefail
+          MONKEY_SEED=1 MONKEY_S=60 xvfb-run -a -s "-screen 0 480x270x24" ./godot --path game --rendering-driver opengl3 --resolution 480x270 -s res://tests/scenarios/monkey.gd 2>&1 | tee monkey.log
+          grep -q "singe :" monkey.log
+          ! grep -qE "SCRIPT ERROR|triangulation failed|Lambda capture" monkey.log

@@ -363,8 +363,10 @@ func _process(delta: float) -> void:
 	_update_bucket_water(delta)
 	_animate_body()
 	if GameState.placing:
+		target = null  # 0.1.8 : jamais une cible périmée (l'objet a pu disparaître entre-temps)
 		return  # le mode déplacement (PlacementController) gère la souris et le texte d'aide
 	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		target = null
 		GameState.bucket.cancel_fill()
 		prompt = ""
 		return

@@ -148,7 +148,7 @@ func _scatter_small(flowers: int, shells: int) -> void:
 		pos.y = terrain.height(pos.x, pos.z) - 0.02
 		if pos.y < 0.1:
 			continue  # pas dans l'eau
-		var shell := Props.shell(i, rng.randf_range(0.12, 0.2)) if i % 5 else Props.starfish(0.22, Color(1.0, 0.5, 0.35))
-		shell.position = pos
-		shell.rotation.y = rng.randf() * TAU
+		var size := rng.randf_range(0.12, 0.2)
+		var shell := Props.shell(i, size) if i % 5 else Props.starfish(0.22, Color(1.0, 0.5, 0.35))
+		shell.transform = Props.on_sand(terrain, pos, size * 0.55, rng.randf() * TAU)
 		add_child(shell)

@@ -22,8 +22,9 @@ func setup(p: Dictionary) -> void:
 			# qu'on la repère sur le sable.
 			var variant := int(absf(p.position.x * 3.0 + p.position.z * 5.0))
 			var shell := Props.shell(variant, 0.22)
-			shell.rotation.y = p.position.x
-			shell.position.y = -0.02
+			var t := Props.on_sand(GameState.terrain, p.position, 0.12, p.position.x)
+			t.origin -= p.position
+			shell.transform = t
 			add_child(shell)
 			add_child(Greybox.cylinder_collision(0.3, 0.3))
 
