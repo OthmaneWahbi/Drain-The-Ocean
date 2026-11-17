@@ -233,11 +233,12 @@ func _run() -> void:
 		_check(_gs.placing, "mode déplacement tout seul")
 		# On cherche une place libre en tournant la tête (comme un joueur), puis on clique.
 		var pc: Node = _main.get_node("Placement")
-		var forward: Vector3 = -_player.global_transform.basis.z
+		# La bâche (4 × 3 cases) ne tient pas là où l'on est : on la porte sur un coin dégagé.
+		await _walk_to(Vector3(-3, 0.5, -7), 0.6, 30.0)
 		for k in 12:
-			var dir := forward.rotated(Vector3.UP, TAU * k / 12.0)
-			_face(_player.global_position + dir * 3.5 + Vector3(0, -1.2, 0))
-			await _wait(0.4)
+			var dir := Vector3(0, 0, -1).rotated(Vector3.UP, TAU * k / 12.0)
+			_face(_player.global_position + dir * 4.5 + Vector3(0, -1.2, 0))
+			await _wait(0.5)
 			if pc._valid:
 				break
 			print("  info  [livraison] place refusée en %s : %s" % [pc._target_pos, _gs.placement_conflicts(pc.item, pc._target_pos, pc._rotation_deg)])
@@ -276,9 +277,9 @@ func _run() -> void:
 	await _wait(0.3)
 	_check(_gs.pipe_stock > 0, "des tuyaux en main (%d)" % _gs.pipe_stock)
 	_check(await _select_tool("tuyaux"), "on prend les tuyaux")
-	# Sur un coin de sable dégagé, loin de la cuvette et de la bâche.
-	await _walk_to(Vector3(-3, 0.5, -9), 0.6, 25.0)
-	_face(Vector3(-3, 0.5, -14))
+	# Sur un coin de sable dégagé, loin de la cuvette et de la bâche (posée vers (-3, -11)).
+	await _walk_to(Vector3(5, 0.5, -6), 0.6, 25.0)
+	_face(Vector3(5, 0.5, -11))
 	await _frames(3)
 	var placed := 0
 	for i in 3:

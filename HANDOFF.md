@@ -170,6 +170,11 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 
 ## Journal
 
+### 2026-11-17 — TEST ÉCHOUÉ — Robot : la bâche n'a pas trouvé de place (CI de la PR #31)
+- Sur la CI, le joueur était arrivé à la caisse juste là où la bâche (4 × 3 cases) voulait aller. Les cinq directions visées à 3,5 m chevauchaient le joueur ou la caisse, et le clic n'a rien posé. Ce n'est pas un bug du jeu : le jeu refuse à raison de poser une bâche sur le joueur.
+- **Correction (robot) :** il porte la bâche sur un coin dégagé, vers (-3, -7), et vise à 4,5 m. Il pose les tuyaux ailleurs, vers (5, -6). Deux parties de suite sans échec.
+- **Par :** Claude
+
 ### 2026-11-17 — MODIF — Version 0.1.9 : seau et palette KayKit, tuyaux Kenney
 - **Assets :** `assets/models/cc0/kaykit_bucket_empty.glb` et `kaykit_pallet.glb` viennent de KayKit Medieval Hexagon 1.0 (CC0). Ils ont été récupérés par `git clone` sur GitHub et convertis de glTF en GLB, texture incluse. `space_pipe_straight`, `space_pipe_corner`, `space_pipe_split` et `space_pipe_cross` viennent du Kenney Space Kit 2.0 (CC0), via le paquet npm `@anabis/kenney-space-kit-mirror`. `CREDITS.md` est complété.
 - **Seau (`Props.bucket`) :** il utilise le modèle KayKit (`fit_on_ground` à la hauteur demandée). La rustine est gardée. Le grand seau est teinté avec un matériau dupliqué. Le rayon de l'eau passe à 0,84 × r.
