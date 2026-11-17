@@ -28,6 +28,8 @@ var view: Node3D = null
 var _target_pos: Vector3
 var _rotation_deg: float = 0.0
 var _valid: bool = false
+## Vrai si l'endroit visé est trop loin du joueur (0.1.6).
+var _too_far: bool = false
 ## Les cases occupées (une dalle verte ou rouge) et les contours des emprises voisines.
 var _foot: MeshInstance3D
 var _foot_mat: StandardMaterial3D
@@ -112,7 +114,10 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed(&"rotate_object"):
 		_rotation_deg = PlacementGrid.wrap_deg(_rotation_deg + GameState.config.rotation_step_deg)
 	_follow_aim(player)
-	player.prompt = tr("PROMPT_PLACE") if _valid else tr("PROMPT_PLACE_BLOCKED")
+	if _too_far:
+		player.prompt = tr("PROMPT_PLACE_TOO_FAR")
+	else:
+		player.prompt = tr("PROMPT_PLACE") if _valid else tr("PROMPT_PLACE_BLOCKED")
 	if Input.is_action_just_pressed(&"use_tool") and _valid:
 		confirm()
 		player.prompt = ""
@@ -204,7 +209,8 @@ func show_footprint(pos: Vector3, rotation_deg: float) -> void:
 	var kind := GameState.item_kind(item)
 	var rect := GameState.footprint_rect(kind, pos, rotation_deg)
 	var conflicts := GameState.placement_conflicts(item, pos, rotation_deg)
-	_valid = GameState.can_place(item, pos, rotation_deg)
+	_too_far = not GameState.in_place_reach(item, pos, rotation_deg)
+	_valid = GameState.can_place(item, pos, rotation_deg) and not _too_far
 	var y := pos.y + 0.04
 	(_foot.mesh as BoxMesh).size = Vector3(rect.size.x - 0.04, 0.03, rect.size.y - 0.04)
 	_foot.position = Vector3(rect.get_center().x, y, rect.get_center().y)

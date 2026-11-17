@@ -28,8 +28,9 @@ func _windmill_next_to_basin() -> Dictionary:
 
 
 func _pipe_to_basin() -> void:
-	gs.pipe_stock += 3
-	for c in [Vector3i(-1, 0, 15), Vector3i(-1, 0, 14), Vector3i(-1, 0, 13)]:
+	gs.pipe_stock += 5
+	# Au-dessus du milieu de la cuvette, un bloc au-dessus (0.1.6).
+	for c in [Vector3i(-1, 0, 15), Vector3i(-1, 0, 14), Vector3i(-1, 1, 14), Vector3i(-1, 1, 13), Vector3i(-1, 1, 12)]:
 		assert_true(gs.place_pipe(c))
 
 

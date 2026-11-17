@@ -10,8 +10,9 @@ extends RefCounted
 ## Déplacement minimum (m/s) pour dire qu'on avance.
 const MIN_SPEED := 0.15
 ## Distance qu'on doit pouvoir parcourir dans au moins une direction pour ne pas être coincé
-## (plus que la largeur du personnage : un recoin minuscule compte comme une prison).
-const ESCAPE_M := 0.8
+## (plus que la largeur du personnage : un recoin minuscule compte comme une prison). 1,5 m depuis
+## 0.1.6 : un enclos d'une case fermé par des tuyaux (solides) laisse 1,6 m, même en diagonale c'est une prison.
+const ESCAPE_M := 1.5
 ## Hauteur des petites bosses qu'on enjambe sans y penser (on teste les directions au-dessus).
 const STEP_M := 0.2
 

@@ -63,6 +63,7 @@ shells_per_morning = 5
 beach_radius_min = 21.0
 beach_radius_max = 23.7
 grid_cell_m = 1.0
+place_reach_m = 6.0
 build_radius_m = 24.0
 footprints = {
 "cuvette": [-1.5, -1.5, 2.5, 1.5],
@@ -107,11 +108,12 @@ crate_stagger_s = 1.2
 ground_y = 0.5
 pipe_max_level = 4
 pipe_radius_m = 0.2
-inlet_radius = {
-"bache": 1.5,
-"bassin_bois": 2.5,
-"cuvette": 1.5
+inlet_cells = {
+"bache": [-0.5, -0.5, 0.5, 0.5],
+"bassin_bois": [-1.5, -0.5, 1.5, 0.5],
+"cuvette": [-0.5, -0.5, 0.5, 0.5]
 }
+pour_level = 1
 milestones = [{
 "icon": "baignoire",
 "id": "baignoire",

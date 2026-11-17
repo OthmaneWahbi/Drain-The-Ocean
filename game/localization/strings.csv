@@ -70,6 +70,7 @@ MIRROR_STATE,Miroir solaire : +%d %% d'évaporation autour,Solar mirror: +%d%% e
 PROMPT_MOVE,[G] Déplacer,[G] Move
 PROMPT_PLACE,[Clic] Poser · [R] Tourner · [G] Annuler,[Click] Place · [R] Rotate · [G] Cancel
 PROMPT_PLACE_BLOCKED,Impossible ici · [R] Tourner · [G] Annuler,Can't place here · [R] Rotate · [G] Cancel
+PROMPT_PLACE_TOO_FAR,Trop loin : approche-toi · [G] Annuler,Too far: come closer · [G] Cancel
 ITEM_HAND_PUMP,Pompe à bras,Hand pump
 ITEM_HAND_PUMP_DESC,Se pose au bord de l'eau. Maintiens le clic pour pomper 20 L/s dans les tuyaux que tu as posés.,Goes at the water's edge. Hold click to pump 20 L/s into basins linked by pipes.
 ITEM_PIPE,Tuyaux (5 pièces),Pipes (5 pieces)
@@ -215,3 +216,4 @@ PLANE_LETTER,A,A
 SLIDE_SIGN,ENVOI,SEND
 RATIONS_STAMP,RATIONS,RATIONS
 HUD_PER_SLOT,max %d par case,max %d per slot
+HUD_PIPES_IN_HAND,%d en main,%d in hand

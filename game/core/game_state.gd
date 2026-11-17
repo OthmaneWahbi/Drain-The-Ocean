@@ -788,7 +788,7 @@ func _run_auto_pumps(delta: float) -> void:
 ## Les zones reliées à une pompe par les tuyaux posés, de la plus proche à la plus lointaine.
 ## Recalculé à chaque appel : il n'y a pas de réseau mémorisé qui pourrait se désynchroniser.
 func zones_for_pump(pump: Dictionary) -> Array:
-	return PipeNetwork.zones_reached(pump.position, pipes, zones, inlet_radius, config.grid_cell_m, pump_cells(pump))
+	return PipeNetwork.zones_reached(pump.position, pipes, zones, pipe_feeds, config.grid_cell_m, pump_cells(pump))
 
 
 ## Les cases (X, Z) qu'occupe une pompe : les tuyaux se branchent tout autour (0.1.5).
@@ -808,9 +808,18 @@ func pump_at_cell(cell: Vector3i) -> Dictionary:
 	return {}
 
 
-## Rayon dans lequel une pièce de tuyau verse dans la zone (le bac, sans le tas de sel).
-func inlet_radius(zone: Dictionary) -> float:
-	return float(config.inlet_radius.get(String(zone.kind), 1.0))
+## L'arrivée d'eau d'une zone, au sol (X, Z) : les cases du milieu du bac (config.inlet_cells,
+## dans le repère de la zone), tournées avec elle. Un tuyau ne verse que là (0.1.6).
+func inlet_rect(zone: Dictionary) -> Rect2:
+	var c := config.grid_cell_m
+	var v: Array = config.inlet_cells.get(String(zone.kind), [-c / 2.0, -c / 2.0, c / 2.0, c / 2.0])
+	var local := Rect2(float(v[0]), float(v[1]), float(v[2]) - float(v[0]), float(v[3]) - float(v[1]))
+	return PlacementGrid.rect_at(local, zone.position, item_rotation(zone))
+
+
+## Vrai si cette pièce de tuyau verse dans la zone : un bloc au-dessus, vers le milieu du bac.
+func pipe_feeds(cell: Vector3i, zone: Dictionary) -> bool:
+	return PipeNetwork.feeds(cell, inlet_rect(zone), config.pour_level, config.grid_cell_m)
 
 
 ## Les pièces où passe l'eau d'au moins une pompe (pour les colorer).
@@ -839,9 +848,12 @@ func can_place_pipe(cell: Vector3i) -> bool:
 	# Pas dans une dune : la pièce doit être au-dessus du sable (on passe par-dessus, en hauteur).
 	if terrain.height(center.x, center.z) > PipeNetwork.cell_center(cell, config.grid_cell_m, config.ground_y).y - 0.1:
 		return false
+	var piece := PlacementGrid.circle_shape(center, config.pipe_radius_m)
+	# Les tuyaux sont solides (0.1.6) : jamais une pièce dans le joueur (il fait deux blocs de haut).
+	if cell.y <= 1 and PlacementGrid.overlaps(piece, PlacementGrid.circle_shape(player_position, config.player_radius_m)):
+		return false
 	if cell.y == 0:
-		var piece := PlacementGrid.circle_shape(center, config.pipe_radius_m)
-		for b in _blockers_except({}, true, false, false):
+		for b in _blockers_except({}, true, false):
 			if PlacementGrid.overlaps(piece, b):
 				return false
 		return true
@@ -1069,8 +1081,9 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 		if pk != item and pk.kind != "coconut":  # les noix sont déjà comptées par leur place
 			out.append(PlacementGrid.rect_shape(footprint_rect("coquillage", pk.position)))
 	out.append(PlacementGrid.circle_shape(player_position, config.player_radius_m))
-	# Les tuyaux au sol gênent tout, sauf les zones de séchage (on peut poser un bac sous un tuyau).
-	if with_pipes and not zones.has(item):
+	# Les tuyaux au sol gênent tout, zones de séchage comprises : depuis 0.1.6, un tuyau verse d'un
+	# bloc au-dessus du bac, jamais posé dedans.
+	if with_pipes:
 		for c in pipes:
 			if c.y == 0:
 				out.append(PlacementGrid.circle_shape(PipeNetwork.cell_center(c, config.grid_cell_m, 0.0), config.pipe_radius_m))
@@ -1106,6 +1119,13 @@ func find_free_spot(kind: String, near: Vector3, rotation_deg: float = 0.0) -> V
 func can_place(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> bool:
 	var rot := item_rotation(item) if is_nan(rotation_deg) else rotation_deg
 	return spot_ok(item_kind(item), pos, rot, blockers_for(item))
+
+
+## Vrai si le joueur est assez près pour poser cet objet là : le bord de son emprise est à moins
+## de `place_reach_m` de lui (0.1.6). Le mode déplacement (G) l'exige en plus de `can_place`.
+func in_place_reach(item: Dictionary, pos: Vector3, rotation_deg: float) -> bool:
+	var shape := PlacementGrid.rect_shape(footprint_rect(item_kind(item), pos, rotation_deg))
+	return PlacementGrid.distance_to(shape, player_position) <= config.place_reach_m
 
 
 ## Ce qui empêche de poser `item` en `pos` : les formes qu'il chevaucherait (vide si rien ne gêne).
