@@ -37,7 +37,7 @@ ITEM_BIG_BUCKET_DESC,20 L par trajet au lieu de 10.,20 L per trip instead of 10.
 ITEM_BOAT,Bateau,Boat
 ITEM_BOAT_DESC,Pour quitter l'île. Livraison garantie.,To leave the island. Delivery guaranteed.
 ITEM_WHEELBARROW,Brouette,Wheelbarrow
-ITEM_WHEELBARROW_DESC,Porter 40 unités au lieu de 10.,Carry 40 units instead of 10.
+ITEM_WHEELBARROW_DESC,128 par case au lieu de 64.,128 per slot instead of 64.
 ITEM_TONGS,Tongs,Flip-flops
 ITEM_TONGS_DESC,+20 % de vitesse de marche.,+20% walking speed.
 ITEM_RAKE,Râteau à sel,Salt rake
@@ -49,7 +49,7 @@ GAUGE_TITLE,Niveau de l'océan,Ocean level
 PROMPT_PILE,[E] Ramasser : %s (%d),[E] Pick up: %s (%d)
 PROMPT_COCONUT,[E] Manger la noix de coco,[E] Eat the coconut
 PROMPT_SHELL,[E] Ramasser le coquillage,[E] Pick up the shell
-PROMPT_HANDS_FULL,Les bras sont pleins,Your arms are full
+PROMPT_HANDS_FULL,Case pleine,Slot full
 PROMPT_DRINK,[E] Boire (%d),[E] Drink (%d)
 PROMPT_RATION,[E] Manger une ration (%d),[E] Eat a ration (%d)
 CONDENSER_EMPTY,"Pas encore d'eau, la bâche condense…","No water yet, the sheet is condensing…"
@@ -209,3 +209,9 @@ ITEM_PAPER_CATALOGUE_PITCH,Vous le lisez en ce moment.,You're reading it right n
 PAUSE_INFO_TITLE,Mon île,My island
 PAUSE_INFO_HOUR,Heure,Time of day
 PAUSE_INFO_NEEDS,Faim %d %% · Soif %d %%,Food %d%% · Water %d%%
+CRATE_STAMP,AGENCE,AGENCY
+CRATE_FRAGILE,Fragile · Ne pas noyer,Fragile · Do not drown
+PLANE_LETTER,A,A
+SLIDE_SIGN,ENVOI,SEND
+RATIONS_STAMP,RATIONS,RATIONS
+HUD_PER_SLOT,max %d par case,max %d per slot

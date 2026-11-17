@@ -53,8 +53,9 @@ extends Resource
 @export var shell_chance_per_scoop: float = 0.03
 ## Chance qu'un coquillage contienne une perle (N-07).
 @export var pearl_chance_per_shell: float = 0.02
-## Nombre d'objets portés à la main au maximum (M-28 : à la main au début).
-@export var hand_carry_capacity: int = 10
+## Ce qu'une case de la barre porte au plus d'un même matériau (0.1.4, Othmane : « 64 par case
+## sur les 5 cases », à la place de la limite totale de 10, puis 40 avec la brouette).
+@export var hand_carry_capacity: int = 64
 
 @export_group("Livraison")
 ## Centre de la zone où les caisses sont larguées.
@@ -136,6 +137,9 @@ extends Resource
 ## Buissons sur les dunes et bois flotté sur les plages (décor sans collision, 0.1.2).
 @export var dune_bushes: int = 85
 @export var driftwood: int = 12
+## Fleurs rouges dans l'herbe des dunes, et coquillages de décor sur le sable (0.1.4).
+@export var dune_flowers: int = 60
+@export var beach_shells: int = 30
 @export var seabed_y: float = -3.0
 ## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
 @export var footprints: Dictionary = {
@@ -151,6 +155,11 @@ extends Resource
 @export var coconut_radius_m: float = 0.3
 ## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 20.0, "moulin_pompe": 20.0}
+## Les pompes se posent DANS l'eau (0.1.4, Othmane : « elles pompent de l'eau ») : leurs pieds
+## reposent sur le fond, la plateforme reste au-dessus de l'eau. Profondeur minimale sous la
+## plateforme, et distance maximale au rivage (m). Les tuyaux peuvent aller jusque-là.
+@export var pump_min_depth_m: float = 0.25
+@export var pump_max_offshore_m: float = 7.0
 
 @export_group("Jalons")
 ## Jalons comparatifs (M-70), du plus petit au plus grand. Les trois premiers sont ceux de la démo.

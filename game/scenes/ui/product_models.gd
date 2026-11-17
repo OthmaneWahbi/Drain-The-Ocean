@@ -1,9 +1,9 @@
 class_name ProductModels
 extends RefCounted
 ## Les « photos » des produits du catalogue (0.1.2) : un petit modèle cartoon par article, posé
-## sur un plateau tournant dans un studio miniature (ProductPhoto). Fabriqués ici avec des formes
-## simples, dans les couleurs de UiTheme ; quand les vrais modèles des objets arriveront, il
-## suffira de les renvoyer ici.
+## sur un plateau tournant dans un studio miniature (ProductPhoto). Depuis 0.1.4, la plupart sont
+## les vrais modèles du jeu (Props) : ce qu'on voit au catalogue est ce qui sera livré. Les
+## autres (bateau, tongs, brouette, flamant, manuel, tuyaux) sont fabriqués ici.
 
 const WOOD := Color(0.62, 0.42, 0.24)
 const WOOD_DARK := Color(0.45, 0.3, 0.17)
@@ -18,25 +18,12 @@ static func build(id: String) -> Node3D:
 	var n := Node3D.new()
 	match id:
 		"bache":
-			n.add_child(_box(Vector3(1.4, 0.04, 1.0), BLUE, Vector3(0, 0.12, 0)))
-			n.add_child(_box(Vector3(0.9, 0.05, 0.55), Color(0.97, 0.97, 0.93), Vector3(0.1, 0.15, 0.05)))
-			for sx in [-1, 1]:
-				for sz in [-1, 1]:
-					n.add_child(_box(Vector3(0.06, 0.24, 0.06), WOOD, Vector3(sx * 0.68, 0.1, sz * 0.48)))
+			n.add_child(Props.drying_zone("bache"))
+			n.scale = Vector3.ONE * 0.55
 		"grand_seau":
-			n.add_child(_cyl(0.42, 0.32, 0.7, UiTheme.YELLOW, Vector3(0, 0.35, 0)))
-			n.add_child(_cyl(0.36, 0.36, 0.02, WATER, Vector3(0, 0.66, 0)))
-			var handle := MeshInstance3D.new()
-			var torus := TorusMesh.new()
-			torus.inner_radius = 0.38
-			torus.outer_radius = 0.43
-			torus.rings = 12
-			torus.ring_segments = 6
-			handle.mesh = torus
-			handle.material_override = _mat(METAL)
-			handle.rotation.x = PI / 2
-			handle.position = Vector3(0, 0.7, 0)
-			n.add_child(handle)
+			var b := Props.bucket(true, 0.75)
+			Props.set_bucket_fill(b, 0.85)
+			n.add_child(b)
 		"bateau":
 			var bottle := _cyl(0.24, 0.24, 1.0, GLASS, Vector3(0, 0.26, 0))
 			bottle.rotation.z = PI / 2
@@ -67,36 +54,19 @@ static func build(id: String) -> Node3D:
 				n.add_child(_box(Vector3(0.9, 0.05, 0.05), WOOD, Vector3(-0.45, 0.42, sz * 0.25)))
 				n.add_child(_box(Vector3(0.05, 0.3, 0.05), WOOD, Vector3(-0.2, 0.15, sz * 0.22)))
 		"rateau":
-			var stick := _box(Vector3(1.5, 0.05, 0.05), WOOD, Vector3(0, 0.3, 0))
-			stick.rotation.z = 0.25
-			n.add_child(stick)
-			n.add_child(_box(Vector3(0.06, 0.06, 0.6), METAL, Vector3(0.72, 0.48, 0)))
-			for k in 6:
-				n.add_child(_box(Vector3(0.03, 0.16, 0.03), METAL, Vector3(0.72, 0.4, -0.25 + k * 0.1)))
+			var r := Props.rake()
+			r.rotation = Vector3(-0.3, PI / 2, 0)
+			r.position = Vector3(0, 0.35, 0)
+			r.scale = Vector3.ONE * 1.2
+			n.add_child(r)
 		"palanche":
-			n.add_child(_box(Vector3(1.5, 0.07, 0.07), WOOD, Vector3(0, 0.95, 0)))
-			for sx in [-1, 1]:
-				n.add_child(_box(Vector3(0.02, 0.4, 0.02), Color(0.3, 0.25, 0.2), Vector3(sx * 0.65, 0.73, 0)))
-				n.add_child(_cyl(0.2, 0.15, 0.36, UiTheme.YELLOW, Vector3(sx * 0.65, 0.35, 0)))
+			n.add_child(Props.yoke())
 		"condenseur":
-			var tent := MeshInstance3D.new()
-			var cone := CylinderMesh.new()
-			cone.top_radius = 0.02
-			cone.bottom_radius = 0.6
-			cone.height = 0.6
-			cone.radial_segments = 4
-			tent.mesh = cone
-			tent.material_override = _mat(GLASS)
-			tent.position = Vector3(0, 0.3, 0)
-			n.add_child(tent)
-			n.add_child(_cyl(0.13, 0.11, 0.2, UiTheme.RED, Vector3(0, 0.1, 0)))
-			n.add_child(_box(Vector3(0.06, 0.06, 0.06), BLUE, Vector3(0, 0.66, 0)))
+			n.add_child(Props.condenser())
+			n.scale = Vector3.ONE * 0.6
 		"rations":
-			for i in 3:
-				var c: Color = [UiTheme.RED, UiTheme.TEAL, UiTheme.YELLOW][i]
-				var pos: Vector3 = [Vector3(-0.22, 0.2, 0), Vector3(0.22, 0.2, 0), Vector3(0, 0.6, 0)][i]
-				n.add_child(_cyl(0.2, 0.2, 0.4, METAL, pos))
-				n.add_child(_cyl(0.205, 0.205, 0.22, c, pos))
+			n.add_child(Props.rations())
+			n.scale = Vector3.ONE * 1.3
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)
@@ -108,44 +78,24 @@ static func build(id: String) -> Node3D:
 			book.add_child(_box(Vector3(0.5, 0.12, 0.01), UiTheme.YELLOW, Vector3(0, 0.25, 0.11)))
 			book.add_child(_box(Vector3(0.2, 0.2, 0.01), METAL, Vector3(0, -0.1, 0.11)))
 		"bassin_bois":
-			n.add_child(_box(Vector3(1.3, 0.3, 0.9), WOOD, Vector3(0, 0.15, 0)))
-			n.add_child(_box(Vector3(1.18, 0.02, 0.78), WATER, Vector3(0, 0.28, 0)))
-			for k in 3:
-				n.add_child(_box(Vector3(1.32, 0.03, 0.92), WOOD_DARK, Vector3(0, 0.05 + k * 0.1, 0)))
+			n.add_child(Props.drying_zone("bassin_bois"))
+			n.scale = Vector3.ONE * 0.32
 		"miroir":
-			n.add_child(_box(Vector3(0.06, 0.6, 0.06), WOOD_DARK, Vector3(0, 0.3, 0)))
-			var frame := _box(Vector3(1.0, 0.7, 0.06), UiTheme.YELLOW, Vector3(0, 0.75, 0))
-			frame.rotation.x = -0.4
-			n.add_child(frame)
-			var glass := _box(Vector3(0.9, 0.6, 0.02), Color(0.85, 0.95, 1.0), Vector3(0, 0.0, 0.035))
-			var m := _mat(Color(0.85, 0.95, 1.0))
-			m.metallic = 0.9
-			m.roughness = 0.05
-			glass.material_override = m
-			frame.add_child(glass)
+			n.add_child(Props.mirror())
+			n.scale = Vector3.ONE * 0.75
 		"pompe_bras":
-			n.add_child(_cyl(0.18, 0.2, 0.8, UiTheme.TEAL, Vector3(0, 0.4, 0)))
-			n.add_child(_cyl(0.06, 0.06, 0.35, METAL, Vector3(0.25, 0.65, 0)))
-			n.get_child(-1).rotation.z = PI / 2
-			var lever := _box(Vector3(0.7, 0.05, 0.05), UiTheme.RED, Vector3(-0.25, 0.92, 0))
-			lever.rotation.z = -0.35
-			n.add_child(lever)
-			n.add_child(_box(Vector3(0.5, 0.06, 0.5), WOOD_DARK, Vector3(0, 0.03, 0)))
+			n.add_child(Props.hand_pump())
+			n.scale = Vector3.ONE * 0.8
 		"tuyau":
 			for k in 5:
 				var pipe := _cyl(0.09, 0.09, 1.0, [UiTheme.TEAL, METAL][k % 2], Vector3(0, 0.09 + (k / 3) * 0.17, -0.2 + (k % 3) * 0.2 + (k / 3) * 0.1))
 				pipe.rotation.z = PI / 2
 				n.add_child(pipe)
 		"toboggan":
-			var ramp := _box(Vector3(1.4, 0.05, 0.4), UiTheme.YELLOW, Vector3(0, 0.45, 0))
-			ramp.rotation.z = -0.5
-			n.add_child(ramp)
-			for sz in [-1, 1]:
-				var rail := _box(Vector3(1.4, 0.12, 0.04), UiTheme.RED, Vector3(0, 0.5, sz * 0.2))
-				rail.rotation.z = -0.5
-				n.add_child(rail)
-			n.add_child(_box(Vector3(0.06, 0.8, 0.06), WOOD, Vector3(-0.55, 0.4, 0)))
-			n.add_child(_box(Vector3(0.3, 0.25, 0.25), Color(0.85, 0.75, 0.55), Vector3(0.62, 0.12, 0)))
+			var sl := Props.slide()
+			sl.rotation.y = PI / 2
+			n.add_child(sl)
+			n.scale = Vector3.ONE * 0.4
 		"flamant":
 			var ring := MeshInstance3D.new()
 			var t := TorusMesh.new()
@@ -164,27 +114,8 @@ static func build(id: String) -> Node3D:
 			n.add_child(_box(Vector3(0.12, 0.06, 0.07), Color(0.15, 0.15, 0.15), Vector3(0.55, 0.83, 0)))
 			n.add_child(_box(Vector3(0.03, 0.04, 0.15), Color(0.1, 0.1, 0.1), Vector3(0.44, 0.9, 0)))
 		"moulin_pompe":
-			var tower := MeshInstance3D.new()
-			var c := CylinderMesh.new()
-			c.top_radius = 0.08
-			c.bottom_radius = 0.3
-			c.height = 1.3
-			c.radial_segments = 4
-			tower.mesh = c
-			tower.material_override = _mat(WOOD)
-			tower.position = Vector3(0, 0.65, 0)
-			n.add_child(tower)
-			var hub := Node3D.new()
-			hub.position = Vector3(0, 1.3, 0.12)
-			hub.rotation.z = 0.3
-			n.add_child(hub)
-			for k in 4:
-				var blade := _box(Vector3(0.12, 0.55, 0.02), [UiTheme.RED, Color(0.97, 0.95, 0.88)][k % 2], Vector3(0, 0.3, 0))
-				var arm := Node3D.new()
-				arm.rotation.z = k * PI / 2
-				arm.add_child(blade)
-				hub.add_child(arm)
-			n.add_child(_box(Vector3(0.3, 0.15, 0.03), UiTheme.RED, Vector3(0, 1.3, -0.25)))
+			n.add_child(Props.windmill())
+			n.scale = Vector3.ONE * 0.3
 		_:
 			# Un article inconnu : une caisse de l'Agence, avec un point d'interrogation.
 			n.add_child(_box(Vector3(0.7, 0.6, 0.7), WOOD, Vector3(0, 0.3, 0)))

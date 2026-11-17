@@ -1,17 +1,32 @@
 extends StaticBody3D
-## Une caisse livrée. Elle tombe en parachute, puis on l'ouvre avec E.
+## Une caisse livrée. Elle tombe en parachute, puis on l'ouvre avec E. Modèles : Props.crate
+## (planches, tampon de l'Agence) et Props.parachute (coupole rouge et crème, suspentes).
 
 var crate: Dictionary
 var landed: bool = false
-var _chute: MeshInstance3D
+var _chute: Node3D
+var _t := 0.0
 
 
 func setup(p_crate: Dictionary) -> void:
 	crate = p_crate
-	add_child(Greybox.box(Vector3(0.9, 0.9, 0.9), Greybox.WOOD, Vector3(0, 0.45, 0)))
+	var model := Props.crate(0.9)
+	model.rotation.y = float(hash(str(crate.get("id", ""))) % 628) / 100.0  # chaque caisse un peu de travers
+	add_child(model)
 	add_child(Greybox.box_collision(Vector3(0.9, 0.9, 0.9), Vector3(0, 0.45, 0)))
-	_chute = Greybox.cylinder(1.2, 0.5, Color(0.95, 0.95, 0.95), Vector3(0, 3.0, 0), 10)
+	_chute = Props.parachute(1.3, 2.4, 0.42)
+	_chute.position.y = 0.9
+	_chute.rotation.y = model.rotation.y
 	add_child(_chute)
+
+
+## Le parachute se balance doucement pendant la descente.
+func _process(delta: float) -> void:
+	if landed:
+		return
+	_t += delta
+	_chute.rotation.z = sin(_t * 2.2) * 0.08
+	_chute.rotation.x = cos(_t * 1.7) * 0.06
 
 
 ## Place la caisse au sol tout de suite (chargement d'une sauvegarde).
@@ -56,6 +71,7 @@ func _settle() -> void:
 func _land() -> void:
 	landed = true
 	_chute.visible = false
+	set_process(false)
 
 
 func get_prompt(_player: Node) -> String:

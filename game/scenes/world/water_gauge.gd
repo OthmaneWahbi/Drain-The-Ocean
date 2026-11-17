@@ -16,8 +16,17 @@ var _label: Label3D
 
 
 func _ready() -> void:
-	add_child(Greybox.cylinder(0.06, 1.6, Greybox.WOOD, Vector3(0, 0.8, 0), 8))
-	var dial := Greybox.cylinder(0.45, 0.06, Color(0.92, 0.9, 0.84), Vector3.ZERO, 24)
+	# Un poteau en bois planté dans un tas de pierres, un cadran crème cerclé de laiton, une
+	# aiguille rouge et une plaque (0.1.4 : style du catalogue).
+	add_child(Props.box(Vector3(0.14, 1.65, 0.14), Props.WOOD_DARK, Vector3(0, 0.82, 0)))
+	for i in 5:
+		var a := TAU * i / 5.0
+		add_child(Props.ball(0.13, Color(0.6, 0.58, 0.55), Vector3(cos(a) * 0.18, 0.04, sin(a) * 0.18), 60 + i, 0.2, Vector3(1, 0.6, 1)))
+	var bezel := Props.torus(0.44, 0.52, Color(0.85, 0.66, 0.25), Vector3(0, 1.75, 0.06), 24)
+	bezel.rotation_degrees = Vector3(90, 0, 0)
+	add_child(bezel)
+	add_child(Props.cyl(0.07, 0.11, 0.2, Props.RED, Vector3(0, 2.28, 0.0), 8))
+	var dial := Greybox.cylinder(0.45, 0.06, UiTheme.PAPER, Vector3.ZERO, 24)
 	dial.rotation_degrees = Vector3(90, 0, 0)
 	dial.position = Vector3(0, 1.75, 0.04)
 	add_child(dial)
@@ -26,18 +35,21 @@ func _ready() -> void:
 		var tick := Node3D.new()
 		tick.position = Vector3(0, 1.75, 0.08)
 		tick.rotation_degrees.z = _angle_for_ratio(float(i) / (LOG_MAX - LOG_MIN))
-		tick.add_child(Greybox.box(Vector3(0.015, 0.06, 0.01), Color(0.15, 0.15, 0.15), Vector3(0, 0.36, 0)))
+		tick.add_child(Greybox.box(Vector3(0.02, 0.07 if i % 4 == 0 else 0.045, 0.01), UiTheme.INK, Vector3(0, 0.36, 0)))
 		add_child(tick)
 	_needle_pivot = Node3D.new()
 	_needle_pivot.position = Vector3(0, 1.75, 0.1)
-	_needle_pivot.add_child(Greybox.box(Vector3(0.025, 0.36, 0.01), Greybox.PHONE_RED, Vector3(0, 0.16, 0)))
+	_needle_pivot.add_child(Greybox.box(Vector3(0.03, 0.36, 0.01), UiTheme.RED, Vector3(0, 0.16, 0)))
+	_needle_pivot.add_child(Props.cyl(0.04, 0.04, 0.02, UiTheme.INK, Vector3.ZERO, 8))
+	_needle_pivot.get_child(-1).rotation.x = PI / 2
 	add_child(_needle_pivot)
-	add_child(Greybox.box(Vector3(0.95, 0.26, 0.03), Color(0.92, 0.9, 0.84), Vector3(0, 1.12, 0.07)))
+	add_child(Props.box(Vector3(1.0, 0.3, 0.04), Props.YELLOW, Vector3(0, 1.12, 0.07)))
 	_label = Label3D.new()
 	_label.position = Vector3(0, 1.12, 0.1)
 	_label.font_size = 28
 	_label.pixel_size = 0.004
-	_label.modulate = Color(0.1, 0.1, 0.1)
+	_label.modulate = UiTheme.INK
+	_label.font = UiTheme.bold_font()
 	_label.outline_size = 0
 	add_child(_label)
 	add_child(Greybox.box_collision(Vector3(1.0, 2.3, 0.3), Vector3(0, 1.15, 0)))

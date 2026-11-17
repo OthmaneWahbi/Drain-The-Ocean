@@ -22,6 +22,7 @@ func _ready() -> void:
 	for r in cfg.rocks:
 		_add_rock(Vector3(r.x, terrain.height(r.x, r.y), r.y), r.z)
 	_scatter(cfg.dune_bushes, cfg.driftwood)
+	_scatter_small(cfg.dune_flowers, cfg.beach_shells)
 
 
 ## Le palmier le plus proche de `pos` (pour les traits des réveils).
@@ -111,3 +112,43 @@ func _scatter(bushes: int, logs: int) -> void:
 		holder.rotation.y = rng.randf() * TAU
 		holder.add_child(model)
 		add_child(holder)
+
+
+## Fleurs (Nature Kit, CC0) dans l'herbe des dunes, et coquillages de décor sur la plage, hors
+## de la zone constructible (ceux qu'on ramasse sont des objets à part, GameState.pickups).
+func _scatter_small(flowers: int, shells: int) -> void:
+	var terrain := GameState.terrain
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 777
+	var placed := 0
+	var tries := 0
+	while placed < flowers and tries < flowers * 40:
+		tries += 1
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(terrain.build_radius + 1.0, terrain.coast_at(a) - 1.0)
+		var x := cos(a) * r
+		var z := sin(a) * r
+		var h := terrain.height(x, z)
+		if terrain.dune_amount(a) < 0.3 or h < terrain.ground_y + 1.4:
+			continue  # seulement là où l'herbe pousse (haut des dunes)
+		var flower := Models.load_model("flower_red")
+		Models.fit_on_ground(flower, rng.randf_range(0.25, 0.4))
+		var holder := Node3D.new()
+		holder.position = Vector3(x, h - 0.03, z)
+		holder.rotation.y = rng.randf() * TAU
+		holder.add_child(flower)
+		add_child(holder)
+		placed += 1
+	for i in shells:
+		var a := rng.randf() * TAU
+		var r := terrain.coast_at(a) - rng.randf_range(0.5, 3.0)
+		if r < terrain.build_radius:
+			continue
+		var pos := Vector3(cos(a) * r, 0, sin(a) * r)
+		pos.y = terrain.height(pos.x, pos.z) - 0.02
+		if pos.y < 0.1:
+			continue  # pas dans l'eau
+		var shell := Props.shell(i, rng.randf_range(0.12, 0.2)) if i % 5 else Props.starfish(0.22, Color(1.0, 0.5, 0.35))
+		shell.position = pos
+		shell.rotation.y = rng.randf() * TAU
+		add_child(shell)

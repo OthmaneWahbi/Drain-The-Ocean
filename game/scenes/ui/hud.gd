@@ -48,7 +48,8 @@ func _process(_delta: float) -> void:
 	var clock := "%02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)]
 	time_label.text = "%s · %s : %s" % [clock, tr("HUD_PLAY_TIME"), format_precise(GameState.play_time_s)] if Settings.data.show_timer else clock
 	time_label.visible = Settings.data.show_timer  # l'heure se lit dans le ciel ; le chrono, en option
-	hint_label.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.ui_open
+	# En pause, le menu dit déjà tout : l'aide se cache (elle passait sous la barre d'outils, 0.1.4).
+	hint_label.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.ui_open and not get_tree().paused
 	var player := get_tree().get_first_node_in_group(&"player")
 	prompt_label.text = player.prompt if player else ""
 	var progress := GameState.bucket.fill_progress_ratio()
@@ -121,7 +122,7 @@ static func slot_text(entry: String) -> String:
 	if entry == "":
 		return TranslationServer.translate("TOOL_EMPTY")
 	if Economy.RESOURCES.has(entry):
-		return "%s ×%d" % [TranslationServer.translate("RES_" + entry.to_upper()).capitalize(), int(GameState.carried.get(entry, 0))]
+		return "%s\n%d/%d" % [TranslationServer.translate("RES_" + entry.to_upper()).capitalize(), int(GameState.carried.get(entry, 0)), GameState.carry_capacity]
 	return TranslationServer.translate("TOOL_" + entry.to_upper())
 
 
@@ -164,8 +165,8 @@ func _apply_style() -> void:
 	for extra: Label in [stock_label, carried_label, bucket_label, survival_label]:
 		extra.visible = false
 	# L'aide « cliquer pour jouer » passe au-dessus de la barre d'outils, plus grande qu'avant.
-	hint_label.offset_top = -140.0
-	hint_label.offset_bottom = -104.0
+	hint_label.offset_top = -164.0
+	hint_label.offset_bottom = -128.0
 
 
 func _build_stamina_bar() -> void:
@@ -176,8 +177,9 @@ func _build_stamina_bar() -> void:
 	stamina_bar.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	stamina_bar.offset_left = -120.0
 	stamina_bar.offset_right = 120.0
-	stamina_bar.offset_top = -100.0
-	stamina_bar.offset_bottom = -86.0
+	# Au-dessus de la barre d'outils (et des jauges qui battent), jamais dessous.
+	stamina_bar.offset_top = -122.0
+	stamina_bar.offset_bottom = -108.0
 	stamina_bar.visible = false
 	add_child(stamina_bar)
 
@@ -190,7 +192,7 @@ func _refresh_ocean() -> void:
 
 func _refresh_items() -> void:
 	stock_label.text = "%s : %s" % [tr("HUD_STOCK"), CatalogueFormat.format_items(GameState.stock, true)]
-	carried_label.text = "%s (%d/%d) : %s" % [tr("HUD_CARRIED"), GameState.carried_count(), GameState.carry_capacity, CatalogueFormat.format_items(GameState.carried)]
+	carried_label.text = "%s (%s) : %s" % [tr("HUD_CARRIED"), tr("HUD_PER_SLOT") % GameState.carry_capacity, CatalogueFormat.format_items(GameState.carried)]
 	bucket_label.text = tr("HUD_BUCKET") % [GameState.bucket.water_l, GameState.bucket.capacity_l]
 
 

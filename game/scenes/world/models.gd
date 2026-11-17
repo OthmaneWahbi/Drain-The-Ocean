@@ -15,6 +15,16 @@ const RECOLOR := {
 	"dirt": Color(0.6, 0.52, 0.42),
 	"stone": Color(0.62, 0.6, 0.56),
 	"grass": Color(0.38, 0.6, 0.2),
+	# Le rocher à cristaux (Space Kit) : roche grise de l'île au lieu de la roche de Mars.
+	"rock": Color(0.56, 0.54, 0.52),
+	"rockTrack": Color(0.48, 0.46, 0.45),
+	"crystal": Color(0.3, 0.85, 0.8),
+	# Le crabe (Quaternius) : rouge cartoon, plus clair que l'original.
+	"Main": Color(0.9, 0.3, 0.18),
+	"Main_Dark": Color(0.62, 0.16, 0.1),
+	"White": Color(0.97, 0.95, 0.9),
+	"Black": Color(0.08, 0.06, 0.1),
+	"colorRed": Color(0.93, 0.3, 0.36),
 }
 const COCONUT := Color(0.42, 0.27, 0.14)
 
@@ -38,10 +48,14 @@ static func load_model(model_name: String) -> Node3D:
 ## Le matériau cartoon qui remplace `original` (partagé entre tous les modèles).
 static func restyled(original: Material) -> StandardMaterial3D:
 	var key := original.resource_name if original else ""
+	# Deux packs peuvent nommer pareil des matériaux à textures différentes (« Atlas ») : la
+	# texture fait partie de la clé.
+	if original is BaseMaterial3D and (original as BaseMaterial3D).albedo_texture:
+		key += "#%d" % (original as BaseMaterial3D).albedo_texture.get_instance_id()
 	if _materials.has(key):
 		return _materials[key]
 	var m := StandardMaterial3D.new()
-	m.resource_name = key
+	m.resource_name = original.resource_name if original else ""
 	var base := (original as BaseMaterial3D).albedo_color if original is BaseMaterial3D else Color.WHITE
 	m.albedo_color = RECOLOR.get(key, base)
 	if original is BaseMaterial3D and (original as BaseMaterial3D).albedo_texture:
@@ -81,8 +95,42 @@ static func vertices(root: Node3D, material_name := "") -> PackedVector3Array:
 			var mat := mi.mesh.surface_get_material(i)
 			if material_name != "" and (mat == null or mat.resource_name != material_name):
 				continue
-			for v: Vector3 in mi.mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX]:
+			var arrays := mi.mesh.surface_get_arrays(i)
+			var skel := mi.get_node_or_null(mi.skeleton) as Skeleton3D if mi.skin else null
+			if skel and arrays[Mesh.ARRAY_BONES] != null and arrays[Mesh.ARRAY_WEIGHTS] != null:
+				out.append_array(_skinned(mi, skel, arrays, relative_transform(skel, root)))
+				continue
+			for v: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
 				out.append(t * v)
+	return out
+
+
+## Les sommets d'un maillage animé (personnages, crabe) dans la pose de repos : chaque sommet
+## suit ses os (poids), sinon la taille lue serait celle du maillage brut, souvent sans rapport.
+static func _skinned(mi: MeshInstance3D, skel: Skeleton3D, arrays: Array, skel_t: Transform3D) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var skin := mi.skin
+	var mats: Array[Transform3D] = []
+	for b in skin.get_bind_count():
+		var bone := skin.get_bind_bone(b)
+		if bone < 0:
+			bone = skel.find_bone(skin.get_bind_name(b))
+		mats.append(skel.get_bone_global_rest(maxi(bone, 0)) * skin.get_bind_pose(b))
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var per := bones.size() / maxi(verts.size(), 1)
+	for k in verts.size():
+		var p := Vector3.ZERO
+		var total := 0.0
+		for j in per:
+			var w := weights[k * per + j]
+			if w <= 0.0:
+				continue
+			p += (mats[bones[k * per + j]] * verts[k]) * w
+			total += w
+		if total > 0.0:  # un sommet sans os ne s'affiche pas tel quel : on l'ignore
+			out.append(skel_t * (p / total))
 	return out
 
 
@@ -266,9 +314,10 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 		c = t
 		n = -n
 	st.set_normal(n.normalized())
+	# Godot voit de face les triangles dans le sens des aiguilles d'une montre : a, c, b.
 	st.add_vertex(a)
-	st.add_vertex(b)
 	st.add_vertex(c)
+	st.add_vertex(b)
 
 
 static func flat_material(color: Color) -> StandardMaterial3D:

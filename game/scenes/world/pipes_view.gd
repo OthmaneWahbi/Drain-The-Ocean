@@ -27,17 +27,44 @@ func rebuild() -> void:
 		piece.position = PipeNetwork.cell_center(cell, cell_m, GameState.config.ground_y)
 		add_child(piece)
 		var color := WET_COLOR if wet.has(cell) else DRY_COLOR
-		piece.add_child(Greybox.box(Vector3.ONE * PIPE_RADIUS * 2.6, color))
+		piece.add_child(Props.ball(PIPE_RADIUS * 1.45, color, Vector3.ZERO, 3))  # le raccord
 		for d in PipeNetwork.DIRS:
-			if GameState.pipes.has(cell + d) or _touches_pump(cell, d):
+			if GameState.pipes.has(cell + d):
 				_arm(piece, Vector3(d) * cell_m * 0.5, color)
-		# Une pièce au niveau 0 au-dessus d'une zone : un petit bec qui verse.
+			elif _touches_pump(cell, d):
+				# Jusqu'au corps de la pompe, avec une bride : on voit d'où vient l'eau.
+				_arm(piece, Vector3(d) * cell_m * 0.85, color)
+				var flange := Props.cyl(PIPE_RADIUS * 1.7, PIPE_RADIUS * 1.7, 0.06, Props.IRON, Vector3(d) * cell_m * 0.6, 10)
+				_lay(flange, Vector3(d))
+				piece.add_child(flange)
+		# Une pièce au-dessus d'une zone : un coude, une descente et un bec évasé jusqu'au bord du
+		# bac ; quand l'eau passe, un filet d'eau tombe dedans (0.1.4 : on voit où ça verse).
 		for zone in GameState.zones:
 			if PipeNetwork.feeds(cell, zone.position, GameState.inlet_radius(zone), cell_m):
-				_arm(piece, Vector3(0, -0.2, 0), color)
+				_spout(piece, color, wet.has(cell), (zone.position as Vector3).y + 0.45 - piece.position.y)
 				break
+		# Au-dessus de l'eau ou d'un creux, un piquet en bois porte la pièce jusqu'au sol.
+		if cell.y == 0:
+			var ground := GameState.terrain.height(piece.position.x, piece.position.z) - piece.position.y
+			if ground < -0.25:
+				piece.add_child(Props.box(Vector3(0.08, -ground, 0.08), Props.WOOD_DARK, Vector3(0, ground / 2.0, 0)))
 		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.5))
 		PhysicsLayers.make_walk_through(piece)  # on le vise, on ne s'y coince pas
+
+
+## Les filets d'eau ne coulent que pendant qu'une pompe débite (à l'instant).
+func _process(_delta: float) -> void:
+	var now := Time.get_ticks_msec()
+	var flowing := false
+	for pump in GameState.pumps:
+		if now - int(pump.get("last_run_ms", -100000)) < 300:
+			flowing = true
+			break
+	for piece in get_children():
+		var stream := piece.get_node_or_null("Stream") as Node3D
+		if stream:
+			stream.visible = flowing
+			stream.scale = Vector3(1.0 + sin(now * 0.03) * 0.15, 1.0, 1.0 + cos(now * 0.03) * 0.15)
 
 
 func _touches_pump(cell: Vector3i, d: Vector3i) -> bool:
@@ -48,6 +75,27 @@ func _touches_pump(cell: Vector3i, d: Vector3i) -> bool:
 
 
 ## Un bras de tuyau du centre de la pièce vers `to` (position locale).
+## Couche un cylindre (debout sur Y) dans la direction `d`.
+func _lay(mi: Node3D, d: Vector3) -> void:
+	if absf(d.y) < 0.001:
+		mi.rotation = Vector3(PI / 2.0, 0, 0) if absf(d.z) > absf(d.x) else Vector3(0, 0, PI / 2.0)
+
+
+## La descente vers la zone : tuyau vertical jusqu'à `bottom` (repère de la pièce), bec évasé, et
+## le filet d'eau quand la pièce est mouillée.
+func _spout(piece: Node3D, color: Color, wet: bool, bottom: float) -> void:
+	bottom = minf(bottom, -0.25)
+	var down := Props.cyl(PIPE_RADIUS, PIPE_RADIUS, -bottom, color, Vector3(0, bottom / 2.0, 0), 8)
+	down.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	piece.add_child(down)
+	piece.add_child(Props.cyl(PIPE_RADIUS * 1.2, PIPE_RADIUS * 2.2, 0.14, Props.IRON, Vector3(0, bottom - 0.05, 0), 10))
+	if wet:
+		var stream := Props.cyl(0.04, 0.06, 0.35, Color(0.5, 0.8, 1.0, 0.6), Vector3(0, bottom - 0.3, 0), 8)
+		stream.name = "Stream"
+		stream.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		piece.add_child(stream)
+
+
 func _arm(piece: Node3D, to: Vector3, color: Color) -> void:
 	var length := to.length()
 	var arm := Greybox.cylinder(PIPE_RADIUS, length, color, to / 2.0, 8)

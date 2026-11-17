@@ -16,7 +16,6 @@ const SlideView := preload("res://scenes/world/slide_view.gd")
 const MilestonePanel := preload("res://scenes/ui/milestone_panel.gd")
 const DemoEnd := preload("res://scenes/ui/demo_end.gd")
 const ToolbarMenu := preload("res://scenes/ui/toolbar_menu.gd")
-const DepotScript := preload("res://scenes/world/depot.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
 const CHUTE_TIME_S := 1.5
@@ -262,12 +261,12 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 	plane.fly(depot.global_position, crate.position, drop_at)
 
 
-## Une boîte par ressource payée, aux couleurs de la palette (au moins une).
+## Un sac par ressource payée, ficelé à la couleur de son tas (au moins un).
 func _bundle_colors(paid: Dictionary) -> Array:
 	var out := []
 	for r in Economy.RESOURCES:
 		if int(paid.get(r, 0)) > 0:
-			out.append(DepotScript.COLORS[r])
+			out.append(Props.PILE_BASE[r])
 	return out if not out.is_empty() else [Greybox.WOOD]
 
 

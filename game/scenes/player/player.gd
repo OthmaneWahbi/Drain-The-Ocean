@@ -23,8 +23,13 @@ var target: Node = null
 var prompt: String = ""
 var _bucket_node: Node3D
 var _rake_node: Node3D
-var _bucket_water: MeshInstance3D
 var _second_bucket: Node3D
+## Le personnage vu en 3e personne (Kenney, Mini Characters), animé (0.1.4).
+var _body: Node3D
+## Le niveau d'eau affiché dans les seaux (rejoint le vrai en douceur) et l'horloge des gouttes.
+var _shown_fill := 0.0
+var _drip_t := 0.0
+var _big_bucket := false
 ## Vrai quand le personnage nage (pieds assez loin sous la surface).
 var swimming: bool = false
 var _drowning: bool = false
@@ -52,24 +57,83 @@ func _ready() -> void:
 
 
 func _build_bucket() -> void:
-	# Le seau tenu en main : visible en 1re comme en 3e personne.
-	var bucket := Node3D.new()
-	bucket.position = Vector3(0.38, -0.42, -0.65)
-	head.add_child(bucket)
-	_bucket_node = bucket
-	bucket.add_child(Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3.ZERO, 12))
-	_bucket_water = Greybox.cylinder(0.12, 0.02, Greybox.WATER, Vector3(0, 0.11, 0), 12)
-	bucket.add_child(_bucket_water)
+	# Le seau tenu en main (Props.bucket : zinc rafistolé, ou jaune pour le grand seau), visible en
+	# 1re comme en 3e personne ; son eau monte avec le remplissage (PRD §15 : un plan qui monte).
+	_bucket_node = Node3D.new()
+	_bucket_node.position = Vector3(0.38, -0.55, -0.65)
+	head.add_child(_bucket_node)
 	# Le second seau de la palanche, à gauche.
-	_second_bucket = Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3(-0.38, -0.42, -0.65), 12)
+	_second_bucket = Node3D.new()
+	_second_bucket.position = Vector3(-0.38, -0.55, -0.65)
 	head.add_child(_second_bucket)
+	_rebuild_buckets()
 	# Le râteau, tenu quand on le choisit dans la barre d'outils (M-27).
-	_rake_node = Node3D.new()
-	_rake_node.position = Vector3(0.35, -0.35, -0.7)
+	_rake_node = Props.rake()
+	_rake_node.position = Vector3(0.35, -0.35, -0.4)
 	_rake_node.rotation_degrees = Vector3(-30, 0, 0)
-	_rake_node.add_child(Greybox.box(Vector3(0.04, 0.04, 1.1), Greybox.WOOD, Vector3(0, 0, -0.3)))
-	_rake_node.add_child(Greybox.box(Vector3(0.5, 0.06, 0.06), Greybox.ROCK, Vector3(0, -0.04, -0.85)))
 	head.add_child(_rake_node)
+	# Le corps en 3e personne : un petit personnage CC0 qui marche, court, saute (PRD §13).
+	body_mesh.visible = false
+	_body = Props.character("mini_male_a", 1.75, "idle")
+	_body.rotation.y = PI  # les personnages regardent +Z, le joueur avance vers −Z
+	add_child(_body)
+
+
+## Le seau change de modèle quand on reçoit le grand seau.
+func _rebuild_buckets() -> void:
+	_big_bucket = GameState.bucket_unit_l > GameState.config.starting_bucket_capacity_l
+	for holder: Node3D in [_bucket_node, _second_bucket]:
+		for c in holder.get_children():
+			c.queue_free()
+		holder.add_child(Props.bucket(_big_bucket, 0.3 if _big_bucket else 0.26))
+
+
+## Le niveau d'eau des seaux : la vraie quantité, plus la montée pendant qu'on puise.
+func _update_bucket_water(delta: float) -> void:
+	if (GameState.bucket_unit_l > GameState.config.starting_bucket_capacity_l) != _big_bucket:
+		_rebuild_buckets()
+	var b := GameState.bucket
+	var ratio := b.water_l / maxf(b.capacity_l, 0.001)
+	ratio += (1.0 - ratio) * b.fill_progress_ratio()  # pendant qu'on puise, l'eau monte déjà
+	_shown_fill = lerpf(_shown_fill, ratio, clampf(delta * 8.0, 0.0, 1.0))
+	for holder: Node3D in [_bucket_node, _second_bucket]:
+		if holder.get_child_count() > 0:
+			Props.set_bucket_fill(holder.get_child(-1), _shown_fill)
+	# Quelques gouttes tombent quand on marche avec un seau plein (M-32 : purement visuelles).
+	_drip_t -= delta
+	var walking := Vector2(velocity.x, velocity.z).length() > 0.5
+	if _bucket_node.visible and _shown_fill > 0.3 and walking and _drip_t <= 0.0:
+		_drip_t = randf_range(0.25, 0.6)
+		_drip(_bucket_node.global_position + Vector3(randf_range(-0.1, 0.1), 0.25, randf_range(-0.1, 0.1)))
+
+
+func _drip(from: Vector3) -> void:
+	var world := get_parent()
+	if world == null:
+		return
+	var drop := Props.droplet(0.025)
+	world.add_child(drop)
+	drop.global_position = from
+	var t := drop.create_tween()
+	t.tween_property(drop, "global_position:y", from.y - 1.2, 0.45).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	t.tween_callback(drop.queue_free)
+
+
+## L'animation du corps (3e personne) selon ce que fait le joueur.
+func _animate_body() -> void:
+	if not _body.visible:
+		return
+	var flat := Vector2(velocity.x, velocity.z).length()
+	if swimming:
+		Props.play(_body, "walk", 0.6)
+	elif not is_on_floor():
+		Props.play(_body, "jump" if velocity.y > 0.0 else "fall")
+	elif flat > GameState.config.walk_speed * 1.2:
+		Props.play(_body, "sprint")
+	elif flat > 0.4:
+		Props.play(_body, "walk", 1.3)
+	else:
+		Props.play(_body, "idle")
 
 
 func _build_fade() -> void:
@@ -264,8 +328,8 @@ func _update_head_bob(delta: float, speed: float) -> void:
 func _apply_view() -> void:
 	fp_camera.current = not third_person
 	tp_camera.current = third_person
-	# En 1re personne, on cache le corps pour ne pas voir l'intérieur de la capsule.
-	body_mesh.visible = third_person
+	# En 1re personne, on cache le corps (on verrait l'intérieur de la tête).
+	_body.visible = third_person
 
 
 ## Barre d'outils : 1-5 choisit une case, la molette passe à la suivante (M-18, M-27).
@@ -287,8 +351,9 @@ func _process(delta: float) -> void:
 	var tool := GameState.current_tool()
 	_bucket_node.visible = tool == "seau"
 	_rake_node.visible = tool == "rateau"
-	_bucket_water.visible = not GameState.bucket.is_empty()
 	_second_bucket.visible = tool == "seau" and GameState.bucket_count > 1
+	_update_bucket_water(delta)
+	_animate_body()
 	if GameState.placing:
 		return  # le mode déplacement (PlacementController) gère la souris et le texte d'aide
 	if GameState.ui_open or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:

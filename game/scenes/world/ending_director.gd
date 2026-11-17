@@ -98,7 +98,7 @@ func _process(delta: float) -> void:
 			_whirl.position.y = GameState.water_level_y() + 0.05
 		EndingLogic.Phase.WALK:
 			_walker.position = _walk_from.lerp(_walk_from + Vector3(0, 0, -16), t)
-			_walker.position.y = GameState.terrain.height(_walker.position.x, _walker.position.z) + absf(sin(t * 40.0)) * 0.06
+			_walker.position.y = GameState.terrain.height(_walker.position.x, _walker.position.z)
 			# Plan large en troisième personne : le petit personnage, le fond immense.
 			_camera.look_at_from_position(_walker.position + Vector3(6, 4, 9), _walker.position + Vector3(0, 1, -4))
 		EndingLogic.Phase.PLANE:
@@ -117,9 +117,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _build_walker() -> void:
 	_walker = Node3D.new()
 	_walk_from = Vector3(2, -3.0, -40)
-	_walker.add_child(Greybox.cylinder(0.3, 1.6, Color(0.95, 0.75, 0.3), Vector3(0, 0.8, 0), 10))
-	_walker.add_child(Greybox.box(Vector3(0.3, 0.3, 0.3), Color(0.9, 0.75, 0.6), Vector3(0, 1.8, 0)))
-	_walker.add_child(Greybox.cylinder(0.14, 0.26, Greybox.ROCK, Vector3(0.4, 0.7, 0), 10))  # son seau
+	# Le personnage du joueur (Kenney, Mini Characters), qui marche avec son vieux seau.
+	var body := Props.character("mini_male_a", 1.75, "walk")
+	body.rotation.y = PI  # il marche vers −Z
+	_walker.add_child(body)
+	var bucket := Props.bucket(false, 0.3)
+	bucket.position = Vector3(0.42, 0.45, 0)
+	_walker.add_child(bucket)
 	_walker.position = _walk_from
 	_scene.add_child(_walker)
 

@@ -5,7 +5,7 @@ extends StaticBody3D
 ## matériau (sel, minéraux, minéraux rares), qu'on ramasse avec E : deux gestes, deux cibles.
 
 var zone: Dictionary
-var _water: MeshInstance3D
+var _water: Node3D
 var _piles: Array[SaltPile] = []
 var _water_min_y: float
 var _water_max_y: float
@@ -14,59 +14,22 @@ var _water_max_y: float
 func setup(p_zone: Dictionary) -> void:
 	zone = p_zone
 	position = zone.position
-	match zone.kind:
+	_build(zone.kind)
+
+
+func _build(kind: String) -> void:
+	var model := Props.drying_zone(kind)
+	add_child(model)
+	_water = model.get_node("Water")
+	_water_min_y = model.get_meta("water_min")
+	_water_max_y = model.get_meta("water_max")
+	match kind:
 		"cuvette":
-			_build_basin()
+			add_child(Greybox.cylinder_collision(1.4, 0.35, Vector3(0, 0.17, 0)))
 		"bache":
-			_build_tarp()
+			add_child(Greybox.box_collision(Vector3(2.4, 0.25, 2.4), Vector3(0, 0.12, 0)))
 		"bassin_bois":
-			_build_wood_basin()
-
-
-func _build_basin() -> void:
-	# Cuvette : un anneau de rochers bas autour d'un creux.
-	add_child(Greybox.cylinder(1.4, 0.06, Greybox.ROCK, Vector3(0, 0.03, 0)))
-	for i in 10:
-		var a := TAU * i / 10.0
-		var rock := Greybox.box(Vector3(0.7, 0.35, 0.45), Greybox.ROCK, Vector3(cos(a) * 1.25, 0.17, sin(a) * 1.25))
-		rock.rotation.y = -a
-		add_child(rock)
-	add_child(Greybox.cylinder_collision(1.4, 0.35, Vector3(0, 0.17, 0)))
-	_water = Greybox.cylinder(1.08, 0.02, Greybox.WATER)
-	_water_min_y = 0.07
-	_water_max_y = 0.3
-	add_child(_water)
-	_add_pile()
-
-
-func _build_tarp() -> void:
-	# Bâche : un carré de toile avec un petit rebord.
-	add_child(Greybox.box(Vector3(2.4, 0.04, 2.4), Greybox.TARP, Vector3(0, 0.02, 0)))
-	for side in [Vector3(0, 0.1, 1.2), Vector3(0, 0.1, -1.2)]:
-		add_child(Greybox.box(Vector3(2.4, 0.2, 0.08), Greybox.TARP, side))
-	for side in [Vector3(1.2, 0.1, 0), Vector3(-1.2, 0.1, 0)]:
-		add_child(Greybox.box(Vector3(0.08, 0.2, 2.4), Greybox.TARP, side))
-	add_child(Greybox.box_collision(Vector3(2.4, 0.25, 2.4), Vector3(0, 0.12, 0)))
-	_water = Greybox.box(Vector3(2.3, 0.02, 2.3), Greybox.WATER)
-	_water_min_y = 0.05
-	_water_max_y = 0.18
-	add_child(_water)
-	_add_pile()
-
-
-func _build_wood_basin() -> void:
-	# Bassin en bois : un grand bac rectangulaire à planches.
-	var size := Vector2(4.0, 3.0)
-	add_child(Greybox.box(Vector3(size.x, 0.06, size.y), Greybox.WOOD, Vector3(0, 0.03, 0)))
-	for z in [size.y / 2.0, -size.y / 2.0]:
-		add_child(Greybox.box(Vector3(size.x, 0.4, 0.1), Greybox.WOOD, Vector3(0, 0.2, z)))
-	for x in [size.x / 2.0, -size.x / 2.0]:
-		add_child(Greybox.box(Vector3(0.1, 0.4, size.y), Greybox.WOOD, Vector3(x, 0.2, 0)))
-	add_child(Greybox.box_collision(Vector3(size.x, 0.4, size.y), Vector3(0, 0.2, 0)))
-	_water = Greybox.box(Vector3(size.x - 0.2, 0.02, size.y - 0.2), Greybox.WATER)
-	_water_min_y = 0.07
-	_water_max_y = 0.36
-	add_child(_water)
+			add_child(Greybox.box_collision(Vector3(4.0, 0.4, 3.0), Vector3(0, 0.2, 0)))
 	_add_pile()
 
 
@@ -108,26 +71,14 @@ func use(_player: Node) -> void:
 
 ## Le tas d'UN matériau à côté de la zone. Il grossit avec le dépôt ; E pour ramasser.
 class SaltPile extends StaticBody3D:
-	const COLORS := {
-		"sel": Color(0.95, 0.95, 0.92),
-		"mineraux": Color(0.55, 0.55, 0.6),
-		"mineraux_rares": Color(0.6, 0.3, 0.85),
-	}
 	var zone: Dictionary
 	var resource: String = "sel"
-	var _mesh: MeshInstance3D
+	var _mesh: Node3D
 	var _shape: CollisionShape3D
 
 	func _ready() -> void:
-		_mesh = MeshInstance3D.new()
-		var cone := CylinderMesh.new()
-		cone.top_radius = 0.04
-		cone.bottom_radius = 0.45
-		cone.height = 0.5
-		cone.radial_segments = 10
-		cone.material = Greybox.material(COLORS.get(resource, Greybox.SALT))
-		_mesh.mesh = cone
-		_mesh.position.y = 0.25
+		# Un vrai tas de ce qu'il contient (Props.pile), pas un cône de couleur (0.1.4).
+		_mesh = Props.pile(resource, hash(resource) % 1000)
 		add_child(_mesh)
 		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
 		add_child(_shape)
@@ -143,7 +94,6 @@ class SaltPile extends StaticBody3D:
 		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
 		var s := clampf(0.35 + amount * 0.035, 0.35, 1.1)
 		_mesh.scale = Vector3(s, s, s)
-		_mesh.position.y = 0.25 * s
 
 	func get_prompt(_player: Node) -> String:
 		var amount := count()
@@ -152,7 +102,7 @@ class SaltPile extends StaticBody3D:
 		var what := tr("RES_" + resource.to_upper())
 		if not GameState.has_slot_for(resource):
 			return tr("PROMPT_NO_SLOT") % what
-		if GameState.carry_space() <= 0:
+		if GameState.carry_space(resource) <= 0:
 			return tr("PROMPT_HANDS_FULL")
 		if GameState.current_tool() == "rateau":
 			return tr("PROMPT_RAKE") % [what, amount]

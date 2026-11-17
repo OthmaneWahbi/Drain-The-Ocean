@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.34 (0.1.3 : île 50 % plus grande, HUD allégé) |
+| Version du document | 0.35 (0.1.4 : tous les modèles, 64 par case, pompes dans l'eau) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -357,7 +357,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
 - **[PROPOSÉ]** Barre d'outils (M-27, M-18 ; prototype v0.21) : 5 cases en bas de l'écran, choisies avec 1-5 ou la molette. ~~Cases fixes (seau, mains, râteau…)~~ : remplacé en v0.23.
   - **[DÉCIDÉ]** Chaque matériau porté **prend une des 5 cases** en main ; un **menu** permet de **réorganiser** les 5 cases (Othmane, 2026-11-16).
-  - **[PROPOSÉ]** Détails (v0.23) : au départ, le seau et 4 cases vides (une case vide = les mains nues). Un outil acheté (râteau, tuyaux) prend la première case vide. Un matériau ramassé (sel, minéraux, coquillages…) prend une case vide, avec sa quantité (« Sel ×3 ») ; la même case garde ensuite tout ce matériau. Sans case libre, on ne peut pas le prendre (« Plus de case libre »). La case se libère quand on pose tout à la palette ou qu'on le dépense. La limite de ce qu'on porte en tout (10, 40 avec la brouette) ne change pas. Un outil obtenu quand la barre est pleine prend la première case qui se libère.
+  - **[PROPOSÉ]** Détails (v0.23) : au départ, le seau et 4 cases vides (une case vide = les mains nues). Un outil acheté (râteau, tuyaux) prend la première case vide. Un matériau ramassé (sel, minéraux, coquillages…) prend une case vide, avec sa quantité (« Sel ×3 ») ; la même case garde ensuite tout ce matériau. Sans case libre, on ne peut pas le prendre (« Plus de case libre »). La case se libère quand on pose tout à la palette ou qu'on le dépense. ~~La limite de ce qu'on porte en tout (10, 40 avec la brouette) ne change pas.~~ Remplacé en 0.1.4 : plus de limite totale, chaque case porte jusqu'à **64** unités de son matériau (voir [19.9](#199-version-014--tous-les-modèles-64-par-case-pompes-dans-leau)). Un outil obtenu quand la barre est pleine prend la première case qui se libère.
   - **[PROPOSÉ]** Menu « Ranger la barre » : **Tab**. On clique une case puis une autre pour les échanger ; ce qu'on tenait reste en main. Tab ou Échap pour fermer. La disposition est sauvegardée.
   - Le seau ne sert (puiser, verser, vider) que s'il est en main. Les mains servent à ne rien renverser ; E et la pompe à bras marchent avec n'importe quel outil.
   - Le râteau ne ramasse tout d'un coup que s'il est **en main** (clic ou E sur le tas) ; sinon on ramasse 3 par 3.
@@ -623,7 +623,7 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 - **Séchage :** zones avec surface et capacité, évaporation selon le soleil, récolte manuelle puis au râteau.
 - **Ressources :** sel, minéraux, minéraux rares, coquillages (réapparition sur la plage chaque matin), perle ; transport à la main au début, stock automatique après un achat.
 - **Téléphone :** premier appel tutoriel, catalogue illustré, panier, palette de dépôt arrachée par l'avion, livraison en parachute en 5 s, offres spéciales environ une fois par jour, ouverture des caisses, pose avec aperçu fantôme.
-- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1 ; **[PROPOSÉ]** 30 sel, porte 40 unités au lieu de 10), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
+- **Contenu :** paliers T0 à T2, une quinzaine d'objets (voir [questionnaire, section I](QUESTIONS_MVP.md#i-le-contenu-du-catalogue-du-mvp)), jusqu'au moulin-pompe, première machine automatique. Ajouts validés (N-02, N-07, N-09) : **brouette** (T1 ; **[PROPOSÉ]** 30 sel, porte 40 unités au lieu de 10 ; 0.1.4 : 128 par case au lieu de 64), **bâche de condensation** (T1, eau douce), **rations** (T1), **toboggan à sacs** jusqu'à la palette (T2), un **objet spécial payé en perle**.
 - **Progrès :** compteur de litres retirés, % restant, 3 premiers jalons comparatifs.
 - **[DÉCIDÉ]** **Outils admin** pour tester (beaucoup de ressources, accélérer le temps, vider l'océan…), regroupés dans un seul module facile à retirer avant la démo (Othmane, 2026-11-16). Ils sont coupés d'office dans une version exportée « release ».
 - **Fin de démo :** teaser des machines T3, puis écran de fin de démo. La vraie fin (drain, avion publicitaire, temps, générique) est construite mais accessible seulement par une touche de debug.
@@ -760,12 +760,30 @@ Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphoniqu
 Demande d'Othmane (2026-11-16) : « agrandir l'île d'environ 50 % et soigner le terrain ; faim et soif animées à côté de la barre d'objets ; les données inutiles seulement dans le menu ». **[DÉCIDÉ]**. Détails **[PROPOSÉ]** :
 
 - **[PROPOSÉ]** Rivage moyen à 38 m (25,5 avant), zone constructible de 24 m de rayon (19,5 avant). Une **crique** devant la plage de départ (+Z) rapproche l'eau du camp (rivage à ~30 m de ce côté), pour que la boucle seau → cuvette garde le même rythme ; le camp (cuvette, palette, cabine, largages, réapparition) avance de 4,5 m vers la plage. Un **îlot** avec deux palmiers au large. Dunes plus hautes (3,2 m), sable sur les flancs, herbe sur le haut et en touffes sur les terrasses. Neuf palmiers de décor de plus, plus de buissons et de bois flotté.
-- **[PROPOSÉ]** Pompes : « au bord de l'eau » veut dire à au moins 20 m du centre (15,5 avant).
+- ~~**[PROPOSÉ]** Pompes : « au bord de l'eau » veut dire à au moins 20 m du centre (15,5 avant).~~ Remplacé en 0.1.4 : les pompes se posent dans l'eau (§19.9).
 - **[PROPOSÉ]** HUD : seulement l'océan restant (et le chrono en option speedrun). Faim et soif en **jauges rondes animées** à gauche de la barre d'outils (liquide qui ondule, battement rouge sous 25 %). L'eau du seau s'affiche dans sa case. Le reste (heure, temps de jeu, palette, bras, seau, faim et soif en %) est dans le panneau « Mon île » du menu pause.
 
 ---
 
 
+
+### 19.9 Version 0.1.4 : tous les modèles, 64 par case, pompes dans l'eau
+
+Demandes d'Othmane (2026-11-16) **[DÉCIDÉ]** :
+- une passe sur **tous les modèles**, en cherchant d'abord des modèles gratuits en ligne dans notre style ; les tas (sel, minéraux…) doivent ressembler à ce qu'ils contiennent, les coquillages à des coquillages ;
+- les seaux se remplissent pour de vrai, et le reste comme décrit dans le PRD (§13 : personnage animé en 3e personne ; §15 : un plan d'eau qui monte et descend ; M-32 : quelques gouttes) ;
+- en pause, le texte d'aide ne doit plus passer sous la barre d'objets ;
+- **plus de limite de 40 portés : 64 par case sur les 5 cases** ;
+- les tuyaux se raccordent plus clairement aux zones où ils versent ;
+- **les pompes se posent dans l'eau** (elles pompent de l'eau) : elles dépassent de l'eau mais reposent sur le fond.
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** Modèles CC0 ajoutés (retouchés au chargement) : cristaux et gemmes (minéraux rares), rocher à cristaux (minéraux), crabe animé, poisson, fleurs des dunes, deux petits personnages animés (le joueur et le pilote). Le reste (tas, coquillages, caisse et parachute, biplan, palette, zones, pompe, moulin, toboggan, miroir, jauge, seaux, râteau, condenseur, rations, mouettes, coraux, algues, étoiles de mer) est fabriqué par code dans le même style : rien de gratuit et d'accessible ne correspondait.
+- **[PROPOSÉ]** Les photos du catalogue utilisent les mêmes modèles que le jeu : on reçoit ce qu'on a vu.
+- **[PROPOSÉ]** Le seau de départ est en zinc, avec une rustine (clin d'œil de §12) ; le grand seau est jaune. L'eau monte pendant qu'on puise, et quelques gouttes tombent quand on marche avec un seau bien rempli.
+- **[PROPOSÉ]** La brouette passe à **128 par case** (au lieu de 64), pour garder son intérêt.
+- **[PROPOSÉ]** Une pompe se pose dans l'eau : au moins 25 cm de fond, et au plus 7 m du rivage (`pump_min_depth_m`, `pump_max_offshore_m`). Sa plateforme reste à hauteur du sable, sur des pilotis plantés dans le fond. Livrée, elle va dans l'eau la plus proche du point de largage. Les tuyaux peuvent aller au-dessus de l'eau jusqu'aux pompes (portés par des piquets), mais pas à travers une dune : on passe par-dessus, en hauteur.
+- **[PROPOSÉ]** Raccords : une bride au contact de la pompe ; au-dessus d'une zone, une descente avec un bec évasé jusqu'au bord du bac, et un filet d'eau qui coule pendant que la pompe débite.
 
 ## 20. Glossaire
 

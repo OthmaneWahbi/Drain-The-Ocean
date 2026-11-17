@@ -311,6 +311,21 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **`scenes/ui/need_gauge.gd` (`NeedGauge`)** : un `Control` dessiné à la main (`_draw`) : médaillon, liquide découpé dans le cercle avec une vague en sinus, pictogramme (pilon ou goutte). `level` est la cible, `shown` la rejoint ; sous 25 % il bat (échelle) et le bord rougit. Le HUD met à jour `level` à chaque image.
 - **`PauseMenu.island_report(gs)`** : le bilan texte du panneau « Mon île ».
 
+### Tous les modèles, 64 par case, pompes dans l'eau (PR #26)
+
+- **`Props` (`scenes/world/props.gd`)** fabrique les modèles des objets. Ce sont des Node3D sans physique, posés sur (0, 0, 0). Les vues ajoutent la collision et retrouvent les pièces animées par leur nom : `Lever` (pompe), `Blades` (moulin), `Propeller` et `Cockpit` (avion), `Water` (zones, seaux).
+  - Briques de base : `box`, `cyl`, `beam` (une barre de A à B), `torus`, `ball` (sphère à facettes), `dome` (pour les tas), `painted` (texte peint). Les matériaux sont partagés par couleur.
+  - Triangles faits main : `tri_from(st, a, b, c, inside)` tourne la face vers l'extérieur, dans le sens horaire qu'attend Godot.
+- **Tas :** `Props.pile(ressource)` est un monticule de la couleur du socle avec des morceaux dessus : cristaux de sel, `crystal_rock`, `crystal` et `gem_pink`, coquillages, perles. La palette le met à l'échelle avec `Depot.pile_scale` (plafond de largeur par case). Les tas des zones (`SaltPile`) le grossissent d'un bloc.
+- **Personnages :** `Props.character(nom, hauteur, animation)` et `Props.play(noeud, animation)`. `Models.vertices` applique les os de la pose de repos (`Models._skinned`), sinon la taille d'un modèle animé est fausse.
+- **Seaux :** `player.gd` reconstruit les seaux quand on reçoit le grand seau (`_rebuild_buckets`). `_update_bucket_water` suit `water_l / capacity_l`, plus la montée pendant qu'on puise (`fill_progress_ratio`). `_drip` lâche une goutte qui tombe. Le corps (`_body`) remplace la capsule ; `_animate_body` choisit l'animation.
+- **Portage :** `GameState.carry_space(clé)` = `carry_capacity` (par case) − ce qu'on porte de ce matériau, 0 sans case. `harvest` parcourt les matériaux et prend chacun dans la limite de sa case.
+- **Pompes dans l'eau :**
+  - `spot_ok(type, pos, rayon, gêneurs)` est la règle unique de placement, utilisée par `can_place` et `find_free_spot`. Pour une pompe, elle vérifie `is_water_spot` : assez de fond sous la plateforme, pas trop loin du rivage.
+  - `can_place_pipe` accepte les cases au-dessus de l'eau jusqu'à `coast_at + pump_max_offshore_m`, mais refuse une case enterrée dans une dune.
+  - `PumpView._update_stilts` met les pilotis à la profondeur sous la pompe, à chaque image : elle peut être déplacée.
+- **Raccords (`PipesView`) :** une bride côté pompe ; `_spout` ajoute une descente, un bec et un filet d'eau (`Stream`) au-dessus d'une zone. `_process` n'affiche le filet que si une pompe a débité il y a moins de 0,3 s (`pump.last_run_ms`). Un piquet porte les pièces au-dessus d'un creux.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -390,3 +405,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #25 — Version 0.1.3 : île agrandie, HUD léger
 `TerrainLogic` (crique, îlots), `GameConfig.outer_palms`, camp avancé vers la plage, `NeedGauge`, panneau « Mon île », `test_hud_light.gd`.
+
+### PR #26 — Version 0.1.4 : tous les modèles, 64 par case, pompes dans l'eau
+`Props`, CC0 ajoutés (cristaux, crabe, poisson, fleurs, personnages), seaux qui se remplissent, corps animé, `carry_space(clé)`, `spot_ok` / `is_water_spot`, pilotis, raccords de tuyaux, `test_props.gd`.
