@@ -26,7 +26,7 @@ func setup(p: Dictionary) -> void:
 		_build_windmill()
 	else:
 		_build_hand_pump()
-	_stilts = _build_stilts(0.85 if GameState.is_auto_pump(pump) else 0.42)
+	_stilts = _build_stilts(Props.WINDMILL_STILTS if GameState.is_auto_pump(pump) else Props.PUMP_STILTS)
 	add_child(_stilts)
 	_rate_label = Label3D.new()
 	_rate_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -40,14 +40,7 @@ func setup(p: Dictionary) -> void:
 
 ## Quatre pieux en bois et une entretoise, de hauteur 1 (mis à l'échelle selon la profondeur).
 func _build_stilts(half: float) -> Node3D:
-	var s := Node3D.new()
-	s.name = "Stilts"
-	for sx in [-1, 1]:
-		for sz in [-1, 1]:
-			s.add_child(Props.box(Vector3(0.14, 1.0, 0.14), Props.WOOD_DARK, Vector3(sx * half, 0.5, sz * half)))
-		s.add_child(Props.box(Vector3(0.06, 0.06, half * 2), Props.WOOD, Vector3(sx * half, 0.6, 0)))
-	s.add_child(Props.box(Vector3(half * 2 + 0.3, 0.08, half * 2 + 0.3), Props.WOOD, Vector3(0, 0.96, 0)))
-	return s
+	return Props.stilts(half)
 
 
 ## Les pieds suivent le fond sous la pompe (elle peut être déplacée avec G).

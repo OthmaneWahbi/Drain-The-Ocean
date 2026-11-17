@@ -23,7 +23,8 @@ func after_each() -> void:
 
 func _windmill_next_to_basin() -> Dictionary:
 	assert_true(gs.move_item(gs.zones[0], Vector3(-0.5, 0.5, 12.5)))
-	return gs.add_pump("moulin_pompe", Vector3(-0.5, 0.5, 16.5))
+	# Le moulin occupe 3 × 3 cases (0.1.5) : son bord est en z = 16, le tuyau part de la case 15.
+	return gs.add_pump("moulin_pompe", Vector3(-0.5, 0.5, 17.5))
 
 
 func _pipe_to_basin() -> void:

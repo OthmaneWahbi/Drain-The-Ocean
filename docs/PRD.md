@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.35 (0.1.4 : tous les modèles, 64 par case, pompes dans l'eau) |
+| Version du document | 0.36 (0.1.5 : la grille de placement colle aux modèles) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -347,11 +347,11 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** En plus, une **vue de dessus** (mode « construction ») pour placer les machines sur l'île, activée quand on pose un objet.
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[DÉCIDÉ]** On peut **déplacer les objets posés sur l'île**, avec une **grille** (Othmane, 2026-11-16, « Maybe a grid system would be good ? »).
-  - **[PROPOSÉ]** Détails du prototype : l'île est découpée en cases de **1 m**. On vise un objet et on appuie sur **G** : l'objet suit le regard case par case, la grille s'affiche autour, et un disque montre son **emprise** (vert = possible, rouge = impossible). **Clic** pour poser, **G** ou Échap pour annuler (l'objet revient à sa place).
-  - **[PROPOSÉ]** Un emplacement est valide si l'emprise (un cercle autour de l'objet) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
+  - **[PROPOSÉ]** Détails du prototype : l'île est découpée en cases de **1 m**. On vise un objet et on appuie sur **G** : l'objet suit le regard case par case, la grille s'affiche autour, et ~~un disque~~ (0.1.5 : les cases qu'il occupera) montre son **emprise** (vert = possible, rouge = impossible). **Clic** pour poser, **G** ou Échap pour annuler (l'objet revient à sa place).
+  - **[PROPOSÉ]** Un emplacement est valide si l'emprise (~~un cercle autour de l'objet~~ 0.1.5 : un rectangle de cases qui colle au modèle, voir [19.10](#1910-version-015--la-grille-de-placement-colle-aux-modèles)) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
   - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
   - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
-  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** ~~Un seul tas de sel par zone~~ (v0.22). **[DÉCIDÉ]** Chaque matériau récolté a **son propre tas** à côté de la zone de séchage (Othmane, 2026-11-16). **[PROPOSÉ]** Les tas (sel, minéraux, minéraux rares) sont côte à côte, chacun sur sa case, à 2 ou 3 cases du centre, dans l'emprise de la zone (elle grandit : cuvette et bâche 3 m, bassin 4 m) et tournent avec elle ; E ramasse 3 unités du tas visé, le râteau tout le tas ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
+  - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** ~~Un seul tas de sel par zone~~ (v0.22). **[DÉCIDÉ]** Chaque matériau récolté a **son propre tas** à côté de la zone de séchage (Othmane, 2026-11-16). **[PROPOSÉ]** Les tas (sel, minéraux, minéraux rares) sont côte à côte, chacun sur sa case, à 2 ou 3 cases du centre, dans l'emprise de la zone (~~elle grandit : cuvette et bâche 3 m, bassin 4 m~~ 0.1.5 : une colonne de 3 cases à côté du bac) et tournent avec elle ; E ramasse 3 unités du tas visé, le râteau tout le tas ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
   - **[DÉCIDÉ]** Avant d'apparaître, les coquillages, noix de coco, caisses et objets livrés vérifient ce qui occupe déjà la place (Othmane, 2026-11-16). **[PROPOSÉ]** S'il n'y a vraiment plus de place (plage pleine), rien n'apparaît plutôt que d'apparaître sur quelque chose. Le joueur compte aussi : rien n'apparaît ni ne se pose sur lui, et une caisse encore en vol réserve déjà sa place.
   - **[DÉCIDÉ]** Quand on ouvre une caisse qui contient un objet à poser (zone de séchage, miroir, condenseur…), le jeu passe **tout seul en mode déplacement** (Othmane, 2026-11-16). **[PROPOSÉ]** S'il y en a plusieurs, ils passent l'un après l'autre ; annuler laisse l'objet sur la case libre où il est apparu.
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
@@ -784,6 +784,21 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** La brouette passe à **128 par case** (au lieu de 64), pour garder son intérêt.
 - **[PROPOSÉ]** Une pompe se pose dans l'eau : au moins 25 cm de fond, et au plus 7 m du rivage (`pump_min_depth_m`, `pump_max_offshore_m`). Sa plateforme reste à hauteur du sable, sur des pilotis plantés dans le fond. Livrée, elle va dans l'eau la plus proche du point de largage. Les tuyaux peuvent aller au-dessus de l'eau jusqu'aux pompes (portés par des piquets), mais pas à travers une dune : on passe par-dessus, en hauteur.
 - **[PROPOSÉ]** Raccords : une bride au contact de la pompe ; au-dessus d'une zone, une descente avec un bec évasé jusqu'au bord du bac, et un filet d'eau qui coule pendant que la pompe débite.
+
+### 19.10 Version 0.1.5 : la grille de placement colle aux modèles
+
+Demande d'Othmane (2026-11-17) **[DÉCIDÉ]** : travailler la grille. Beaucoup d'objets prennent bien plus de place qu'ils ne devraient, et bien plus que ce qu'on voit, ce qui rend le placement pénible.
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** Chaque objet occupe un **rectangle de cases entières** qui colle à son modèle, au lieu d'un cercle. Il tourne avec l'objet (R) : un toboggan d'1 × 3 cases tourné d'un quart de tour occupe 3 × 1 cases.
+- **[PROPOSÉ]** Tailles (en cases) : cuvette et bâche 4 × 3 (le bac 3 × 3 et la colonne de ses tas), bassin en bois 6 × 3, condenseur 2 × 2, miroir 2 × 1, toboggan 1 × 3, palette 4 × 2, pompe à bras 1 × 2 (avec son bec), moulin 3 × 3 (ses pilotis), rations, caisse, flamant, bateau en bouteille et catalogue 1 × 1. Avant, la cuvette bloquait un disque de 6 m de diamètre (28 m²) ; maintenant 12 cases.
+- **[PROPOSÉ]** Deux objets peuvent se poser **case contre case** : se toucher par un bord n'est pas un chevauchement.
+- **[PROPOSÉ]** Les bords d'une emprise tombent toujours sur les lignes de la grille : un objet de largeur paire (miroir, condenseur, palette) a son centre sur une ligne, un objet de largeur impaire au milieu d'une case.
+- **[PROPOSÉ]** Pendant le déplacement (G), on voit au sol les **cases** que l'objet occupera (vert ou rouge), la grille autour, les emprises voisines en bleu et, en rouge, ce qui gêne. Le point visé est le milieu de l'objet.
+- **[PROPOSÉ]** Le joueur, les palmiers, les rochers, les noix de coco et les tuyaux restent de petits cercles : ils ne bloquent que leur case, ou un bout.
+- **[PROPOSÉ]** Les tuyaux se branchent sur **toutes les cases qui bordent la pompe** (et celle du dessus), plus seulement sur les 4 cases autour de son centre : c'est nécessaire pour le moulin, qui fait 3 × 3 cases.
+- **[PROPOSÉ]** Le toboggan sert les zones dont le **bord** est à moins de 3 m de lui (comme avant, mais compté depuis le vrai bord).
+- **[PROPOSÉ]** Un test vérifie que chaque emprise couvre son modèle (à 12 cm près) et qu'aucun de ses côtés ne pourrait reculer d'une case : si un modèle change, le test le signale.
 
 ## 20. Glossaire
 

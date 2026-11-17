@@ -30,7 +30,7 @@ extends Resource
 @export var basin_dry_time_s: float = 45.0
 @export var basin_position: Vector3 = Vector3(-5.5, 0.5, 7)
 ## Position de départ de la palette de dépôt (on peut la déplacer ensuite).
-@export var depot_position: Vector3 = Vector3(8.5, 0.5, 9)
+@export var depot_position: Vector3 = Vector3(9, 0.5, 9)
 ## Bâche de séchage (premier achat).
 @export var tarp_capacity_l: float = 60.0
 @export var tarp_dry_time_s: float = 45.0
@@ -141,11 +141,15 @@ extends Resource
 @export var dune_flowers: int = 60
 @export var beach_shells: int = 30
 @export var seabed_y: float = -3.0
-## Rayon d'emprise de chaque type d'objet déplaçable (tas de sel compris pour les zones).
+## Emprise de chaque type d'objet déplaçable (0.1.5) : un rectangle [x0, z0, x1, z1] en mètres,
+## dans le repère de l'objet (avant rotation), fait de cases entières. Il couvre ce qu'on voit du
+## modèle (tas compris pour les zones), sans plus : tests/test_footprints.gd le vérifie.
 @export var footprints: Dictionary = {
-	"cuvette": 3.0, "bache": 3.0, "bassin_bois": 4.0,
-	"condenseur": 1.1, "rations": 0.5, "miroir": 0.7, "bateau_en_bouteille": 0.4, "palette": 2.0,
-	"caisse": 0.6, "catalogue_papier": 0.4, "toboggan": 1.0, "flamant": 0.5, "coquillage": 0.25, "pompe_bras": 0.8, "moulin_pompe": 0.8,
+	"cuvette": [-1.5, -1.5, 2.5, 1.5], "bache": [-1.5, -1.5, 2.5, 1.5], "bassin_bois": [-2.5, -1.5, 3.5, 1.5],
+	"condenseur": [-1.0, -1.0, 1.0, 1.0], "rations": [-0.5, -0.5, 0.5, 0.5], "miroir": [-1.0, -0.5, 1.0, 0.5],
+	"bateau_en_bouteille": [-0.5, -0.5, 0.5, 0.5], "palette": [-2.0, -1.0, 2.0, 1.0], "caisse": [-0.5, -0.5, 0.5, 0.5],
+	"catalogue_papier": [-0.5, -0.5, 0.5, 0.5], "toboggan": [-0.5, -0.5, 0.5, 2.5], "flamant": [-0.5, -0.5, 0.5, 0.5],
+	"coquillage": [-0.25, -0.25, 0.25, 0.25], "pompe_bras": [-0.5, -0.5, 0.5, 1.5], "moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -153,7 +157,7 @@ extends Resource
 @export var pile_slots: Dictionary = {"sel": 0, "mineraux": 1, "mineraux_rares": -1}
 ## Les noix de coco au pied des palmiers bloquent aussi leur case (rayon en mètres).
 @export var coconut_radius_m: float = 0.3
-## Types qui se posent au bord de l'eau : distance minimale de leur centre au milieu de l'île.
+## Types qui se posent dans l'eau (les pompes). La valeur (ancienne distance minimale au centre) ne sert plus depuis 0.1.4.
 @export var shore_only_kinds: Dictionary = {"pompe_bras": 20.0, "moulin_pompe": 20.0}
 ## Les pompes se posent DANS l'eau (0.1.4, Othmane : « elles pompent de l'eau ») : leurs pieds
 ## reposent sur le fond, la plateforme reste au-dessus de l'eau. Profondeur minimale sous la

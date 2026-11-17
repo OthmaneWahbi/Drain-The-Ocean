@@ -36,10 +36,10 @@
 ## État actuel (résumé à tenir à jour)
 
 - **Phase :** PR #2 à #5 fusionnées (M0, M2, retours de test, survie légère). Correctifs et début de T2 en PR #6, fusionnée directement à la demande d'Othmane. Déplacement des objets sur une grille (rotation, palette déplaçable, cases libres pour tout ce qui apparaît) en PR #7, fusionnée à la demande d'Othmane. PR #8 : vérification des cases avant toute apparition, mode déplacement automatique à l'ouverture d'une caisse, CI plus stricte. PR #9 : pompe à bras et tuyaux. PR #10 : moulin-pompe et fin de la démo. PR #11 : barre d'outils. PR #12 : tuyaux posés à la main, débit des pompes, une caisse par objet. PR #13 : un tas par matériau, matériaux dans la barre, menu pour la ranger. Puis les releases qui finissent la démo (PRD §19.5) : PR #14 monde vivant, PR #15 téléphone, PR #16 toboggan et flamant, PR #17 jalons, PR #18 menus et options, PR #19 anti-blocage, PR #20 vraie fin et Nouvelle partie, PR #21 sons et perf. Toute la liste du PRD §19.1 est construite. PR #22 : `Settings` devient une classe statique. **Version 0.1.0** gardée sur la branche `version/0.1.0`. PR #23 : version 0.1.1, le terrain low poly cartoon (PRD §19.6). PR #24 : version 0.1.2, palmiers et rochers CC0, cabine téléphonique, dialogues, catalogue illustré, interface « catalogue » (PRD §19.7). PR #25 : version 0.1.3, île 50 % plus grande avec crique et îlot, HUD allégé (PRD §19.8). PR #26 : version 0.1.4, tous les modèles, 64 par case, pompes dans l'eau (PRD §19.9).
-- **Documents :** PRD v0.35. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
+- **Documents :** PRD v0.36. Guide du code : `docs/GUIDE_CODE.md`. Décisions du MVP en PRD §19.2 et §19.3.
 - **Ce qui marche :** la boucle complète *puiser → verser dans la cuvette → attendre le séchage → récolter → porter à la palette → commander au téléphone → avion → caisse en parachute → ouvrir → objet posé*. Premier achat vers 1 min 30. Nage avec endurance, noyade et retour sur la plage. Catalogue : bâche, grand seau, brouette, tongs, râteau, palanche, bateau en bouteille. Jauge à aiguille du niveau d'eau. Cycle jour/nuit de 20 min avec lune. Tas de sel (un par matériau) à côté des zones. Paiement avec les bras + la palette. Outils admin dans `game/admin/`. Faim et soif, noix de coco, rations, bâche de condensation, coquillages chaque matin. Palette à un tas par ressource. Manuel du bricoleur → T2 : bassin en bois, miroir solaire. Sauvegarde de toute la partie. Déplacer et tourner les objets posés, palette comprise (G, R, grille de 1 m, vert/rouge). Pompe à bras (clic maintenu, 20 L/s) et tuyaux posés à la main pièce par pièce, au sol ou en hauteur, avec le débit affiché au-dessus des pompes. Moulin-pompe (10 L/s tout seul) et écran de fin de démo. Barre de 5 cases où vont les outils et les matériaux portés (un par case), menu Tab pour la ranger. Un tas par matériau à côté des zones. Une caisse par objet à poser. Océan à vagues avec filtre sous l'eau, fond marin, nuages, animaux. Téléphone (tutoriel, offres du jour, paiement arraché au crochet). Toboggan à sacs, flamant payé en perle. 3 jalons comparatifs. Menu principal à 3 emplacements (Continuer, Nouvelle partie, Effacer), menu pause, options. Anti-blocage. Vraie fin (F4), traits sur le palmier. Sons de base. Île générée low poly (plage, dunes en terrasses, rivage irrégulier), eau et ciel cartoon. Palmiers, rochers et buissons CC0, cabine téléphonique avec dialogues (Ginette), Grand Catalogue illustré, interface papier crème et polices cartoon. Île 50 % plus grande (crique, îlot), faim et soif en jauges animées, panneau « Mon île » au menu pause. Tous les objets ont leur modèle (tas qui ressemblent à leur contenu, coquillages, caisse et parachute, biplan, pompes sur pilotis, moulin, seaux qui se remplissent, personnage animé), 64 par case, pompes dans l'eau. 287 tests + scénarios physiques et de perf.
 - **À valider par Othmane :** la règle de séchage et le rendement de 4 L par sel (PRD §6.3), les détails de la nage (§10), la jauge logarithmique (§8.2), le prix de la brouette (30 sel), les détails du placement sur grille (§10 : cases de 1 m, emprises, quart de tour avec R).
-- **Prochaine étape :** Othmane valide la 0.1.4 (modèles, 64 par case, pompes dans l'eau, brouette à 128 par case). Puis le test de 30-45 min par un testeur extérieur (PRD §19.1) et la mesure de perf sur le PC de référence. Plus tard : banques de sons CC0 (M-76), assets low-poly (M-06/M-07).
+- **Prochaine étape :** Othmane valide la 0.1.5 (grille de placement : emprises en cases qui collent aux modèles) et la 0.1.4 (modèles, 64 par case, pompes dans l'eau, brouette à 128 par case). Puis le test de 30-45 min par un testeur extérieur (PRD §19.1) et la mesure de perf sur le PC de référence. Plus tard : banques de sons CC0 (M-76), assets low-poly (M-06/M-07).
 - **Questions ouvertes :** seulement celles de long terme (PRD §18) ; aucune ne bloque.
 
 ---
@@ -117,9 +117,10 @@ Pourquoi : la logique est testable automatiquement ; la sauvegarde n'a qu'un seu
 
 ### Déplacer les objets (grille)
 
-- L'île est découpée en **cases de 1 m**. Chaque objet posé a une **emprise** : un cercle autour de son centre (2 m pour la cuvette, 3 m pour le bassin, 0,7 m pour le miroir…), réglée dans les données.
+- L'île est découpée en **cases de 1 m**. Chaque objet posé a une **emprise** : depuis 0.1.5, un **rectangle de cases entières** qui colle à son modèle (cuvette 4 × 3 avec ses tas, miroir 2 × 1, toboggan 1 × 3…), réglé dans les données et vérifié par un test contre le modèle. Il tourne avec l'objet. Ses bords tombent sur les lignes de la grille.
+- Le joueur, les palmiers, les rochers, les noix de coco et les tuyaux restent de petits cercles. Deux emprises qui se touchent par un bord ne se chevauchent pas.
 - Une place est valide si l'emprise reste sur le sable sec (moins de 19,5 m du centre de l'île) et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère d'eau, listés dans les données).
-- En jeu : viser un objet + **G**. L'objet lui-même sert d'aperçu et suit le regard case par case ; un disque vert ou rouge montre son emprise et la grille s'affiche autour. Clic = poser (GameState vérifie encore et annonce « objet déplacé ») ; G ou Échap = annuler. Pendant ce mode, le seau et E sont coupés.
+- En jeu : viser un objet + **G**. L'objet lui-même sert d'aperçu et suit le regard case par case ; les cases qu'il occupera sont vertes ou rouges, la grille s'affiche autour, les emprises voisines en bleu et ce qui gêne en rouge. Clic = poser (GameState vérifie encore et annonce « objet déplacé ») ; G ou Échap = annuler. Pendant ce mode, le seau et E sont coupés.
 - **R** tourne l'objet d'un quart de tour pendant le déplacement. L'orientation est dans l'état de l'objet, comme sa position.
 - La **palette** se déplace comme le reste ; le téléphone reste fixe.
 - Tout ce qui apparaît tout seul prend une case libre : une caisse livrée ou un objet qui en sort va sur la case libre la plus proche de l'endroit prévu ; un coquillage tombe au centre d'une case libre de la plage ; le tas de sel d'une zone a sa propre case, à l'intérieur de l'emprise de la zone (il tourne avec elle). Les noix de coco au pied des palmiers bloquent aussi leur place.
@@ -167,6 +168,32 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 ---
 
 ## Journal
+
+### 2026-11-17 — MODIF — Version 0.1.5 : la grille de placement colle aux modèles
+- **Emprises :** `config.footprints` donne pour chaque type un rectangle `[x0, z0, x1, z1]` en mètres (repère de l'objet), fait de cases entières, au lieu d'un rayon. Cuvette et bâche 4 × 3, bassin 6 × 3, condenseur 2 × 2, miroir 2 × 1, toboggan 1 × 3, palette 4 × 2, pompe à bras 1 × 2, moulin 3 × 3, le reste 1 × 1.
+- **`PlacementGrid` :** formes « rectangle » ou « cercle », `rect_at` (rectangle tourné d'un quart de tour), `snap_rect` (bords sur les lignes de la grille), `overlaps` (se toucher n'est pas chevaucher), `conflicts`, `fits`, `distance_to`, `cells_of`.
+- **`GameState` :** `footprint_of(type)` renvoie un `Rect2` ; `footprint_rect`, `item_rect`, `snap_item`, `placement_conflicts`. `spot_ok`, `can_place`, `move_item` et `find_free_spot(type, près, rotation)` tiennent compte de la rotation. Les cercles restent pour le joueur, les palmiers, les rochers, les noix et les tuyaux. La palette part de (9 ; 9) pour être alignée.
+- **Tuyaux :** `PipeNetwork.pump_ports` prend les cases de l'emprise de la pompe (`GameState.pump_cells`) : un tuyau se branche sur toute case qui la borde. `PipesView` met la bride sur toute la pompe (`pump_at_cell`).
+- **Toboggan :** `zones_for_slide` compte la portée depuis le bord de la zone.
+- **Aperçu (G) :** la dalle verte/rouge prend la taille des cases occupées, la grille couvre l'emprise plus 3 cases, les emprises voisines sont en bleu et celles qui gênent en rouge (`PlacementController.show_footprint`). Le point visé est le milieu de l'objet.
+- **Modèles :** `Props.stilts` (pilotis) remplace la fonction de la vue de pompe ; les pilotis de la pompe à bras sont un peu plus serrés (0,35 m).
+- **Tests :** `test_footprints.gd` (chaque emprise couvre son modèle sans case de trop, case contre case, rotation, alignement, 40 cuvettes sur l'île, tuyaux à côté des objets, moulin branché de tous les côtés, portée du toboggan, sauvegarde). Tests existants passés aux rectangles. 303 tests.
+- **Captures :** `captures/v015/`.
+- **Par :** Claude
+
+### 2026-11-17 — TEST ÉCHOUÉ — Tests à mettre aux rectangles
+- `test_windmill` et `test_pumps` : le tuyau en (-1, 0, 15) tombait dans le moulin, qui fait maintenant 3 × 3 cases. **Correction :** le moulin des tests est posé une case plus loin (z = 17,5), et le tuyau se branche au bord de son emprise.
+- `test_placement` : la cuvette posée en (8 ; 4) ne touchait plus la palette (les cercles étaient plus gros que les objets). **Correction :** le test vise (9 ; 7).
+- `test_footprints` (nouveau) : deux emplacements choisis tombaient sur le palmier fixe de (5 ; 1,5) et le toboggan était réaligné hors de portée. **Correction :** le test se place plus loin, sur des cases alignées.
+- **Par :** Claude
+
+### 2026-11-17 — NOTE — Vieilles sauvegardes et grille
+- Un objet de largeur paire (miroir, condenseur, palette) sauvegardé avant 0.1.5 est au milieu d'une case, donc décalé d'une demi-case par rapport à la grille. Il reste valide (les chevauchements se calculent au centimètre) et se réaligne dès qu'on le déplace.
+- **Par :** Claude
+
+### 2026-11-17 — DÉCISION — Travailler la grille de placement
+- Othmane : « beaucoup d'objets prennent bien plus de place qu'ils ne devraient, et bien plus que ce qu'on voit, ce qui rend le placement pénible ».
+- **Par :** Othmane
 
 ### 2026-11-17 — MODIF — Version 0.1.4 : tous les modèles, 64 par case, pompes dans l'eau
 - **Modèles :** nouvelle classe `Props` (`scenes/world/props.gd`). Elle fabrique les tas (`pile`, un par ressource), les coquillages (Saint-Jacques, conque), les perles et les étoiles de mer, la caisse au tampon « AGENCE », le parachute rouge et crème, la palette, les sacs, le biplan, les trois zones de séchage, la pompe à bras, le moulin à huit pales, le toboggan, le miroir, les seaux (zinc rafistolé ou jaune, eau qui monte), le râteau, la palanche, le condenseur, les rations, les gouttes, et les personnages animés.

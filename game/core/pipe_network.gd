@@ -37,17 +37,28 @@ static func neighbors(cell: Vector3i, cells: Dictionary) -> Array[Vector3i]:
 	return out
 
 
-## Les cases où un tuyau touche la pompe : les 4 cases autour d'elle au sol, et celle du dessus.
-static func pump_ports(pump_cell: Vector3i) -> Array[Vector3i]:
-	return [pump_cell + Vector3i(1, 0, 0), pump_cell + Vector3i(-1, 0, 0), pump_cell + Vector3i(0, 0, 1),
-		pump_cell + Vector3i(0, 0, -1), pump_cell + Vector3i(0, 1, 0)]
+## Les cases où un tuyau touche la pompe : au sol, toutes les cases qui bordent son emprise
+## (`foot`, en cases X/Z ; une seule case, celle de la pompe, si vide), et la case au-dessus d'elle.
+static func pump_ports(pump_cell: Vector3i, foot: Rect2i = Rect2i()) -> Array[Vector3i]:
+	if foot.size == Vector2i.ZERO:
+		foot = Rect2i(pump_cell.x, pump_cell.z, 1, 1)
+	var y := pump_cell.y
+	var out: Array[Vector3i] = []
+	for x in range(foot.position.x, foot.end.x):
+		out.append(Vector3i(x, y, foot.position.y - 1))
+		out.append(Vector3i(x, y, foot.end.y))
+	for z in range(foot.position.y, foot.end.y):
+		out.append(Vector3i(foot.position.x - 1, y, z))
+		out.append(Vector3i(foot.end.x, y, z))
+	out.append(pump_cell + Vector3i(0, 1, 0))
+	return out
 
 
 ## Parcours en largeur depuis les pièces qui touchent la pompe : case -> distance (en pièces).
-static func reach(pump_cell: Vector3i, cells: Dictionary) -> Dictionary:
+static func reach(pump_cell: Vector3i, cells: Dictionary, foot: Rect2i = Rect2i()) -> Dictionary:
 	var dist := {}
 	var queue: Array[Vector3i] = []
-	for port in pump_ports(pump_cell):
+	for port in pump_ports(pump_cell, foot):
 		if cells.has(port) and not dist.has(port):
 			dist[port] = 1
 			queue.append(port)
@@ -67,8 +78,8 @@ static func feeds(cell: Vector3i, zone_pos: Vector3, zone_radius: float, cell_m:
 
 
 ## Les zones remplies par une pompe, de la plus proche (en pièces de tuyau) à la plus lointaine.
-static func zones_reached(pump_pos: Vector3, cells: Dictionary, zones: Array, zone_radius: Callable, cell_m: float = 1.0) -> Array:
-	var dist := reach(cell_of(pump_pos, cell_m), cells)
+static func zones_reached(pump_pos: Vector3, cells: Dictionary, zones: Array, zone_radius: Callable, cell_m: float = 1.0, foot: Rect2i = Rect2i()) -> Array:
+	var dist := reach(cell_of(pump_pos, cell_m), cells, foot)
 	var found := []
 	for zone in zones:
 		var best := -1

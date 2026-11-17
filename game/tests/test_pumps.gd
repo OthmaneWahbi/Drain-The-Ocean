@@ -33,7 +33,8 @@ func _lay(cells: Array) -> void:
 func _pump_and_basin(kind: String = "pompe_bras") -> Dictionary:
 	gs.config.pump_min_depth_m = -100.0
 	assert_true(gs.move_item(gs.zones[0], Vector3(-0.5, 0.5, 12.5)))
-	return gs.add_pump(kind, Vector3(-0.5, 0.5, 16.5))
+	# La pompe à bras occupe la case 16 (et son bec la 17) ; le moulin, 3 × 3 cases de 16 à 18.
+	return gs.add_pump(kind, Vector3(-0.5, 0.5, 17.5 if kind == "moulin_pompe" else 16.5))
 
 
 ## Ligne droite au sol de la pompe jusqu'au-dessus de la cuvette.

@@ -67,7 +67,11 @@ func _process(_delta: float) -> void:
 			stream.scale = Vector3(1.0 + sin(now * 0.03) * 0.15, 1.0, 1.0 + cos(now * 0.03) * 0.15)
 
 
+## La case voisine (dans la direction `d`) est la pompe : son emprise au sol, ou la pompe juste
+## en dessous (une pièce posée sur elle).
 func _touches_pump(cell: Vector3i, d: Vector3i) -> bool:
+	if not GameState.pump_at_cell(cell + d).is_empty():
+		return true
 	for pump in GameState.pumps:
 		if PipeNetwork.cell_of(pump.position, GameState.config.grid_cell_m) == cell + d:
 			return true
