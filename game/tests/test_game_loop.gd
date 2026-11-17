@@ -46,8 +46,13 @@ func test_pour_on_sand_returns_water_to_ocean() -> void:
 
 
 func _harvest_all(zone: Dictionary) -> void:
-	while zone.logic.has_deposit() and gs.carry_space() > 0:
+	for i in 500:
+		var before: int = gs.carried_count()
+		if not zone.logic.has_deposit():
+			return
 		gs.harvest(zone)
+		if gs.carried_count() == before:
+			return  # plus de place
 
 
 func test_full_loop_to_first_purchase() -> void:
@@ -101,12 +106,24 @@ func test_manual_harvest_takes_a_few_per_click() -> void:
 	assert_eq(int(basin.logic.deposit["sel"]), 5)
 
 
-func test_hand_carry_limit_leaves_rest_in_zone() -> void:
+func test_slot_limit_leaves_rest_in_zone() -> void:
+	# 0.1.4 : 64 par case (plus de limite totale de 10) ; le surplus reste dans la zone.
 	var basin: Dictionary = gs.zones[0]
-	basin.logic.deposit = {"sel": 14}
+	basin.logic.deposit = {"sel": 70}
 	_harvest_all(basin)
-	assert_eq(gs.carried_count(), 10)
-	assert_eq(int(basin.logic.deposit["sel"]), 4)
+	assert_eq(gs.carried_count(), 64)
+	assert_eq(int(basin.logic.deposit["sel"]), 6)
+
+
+func test_each_slot_holds_64_of_its_material() -> void:
+	# Cinq cases : le seau en prend une, il en reste quatre de 64 (Othmane, 0.1.4).
+	gs.add_carried({"sel": 64, "mineraux": 64, "coquillages": 64})
+	assert_eq(gs.carried_count(), 192, "bien au-delà de l'ancienne limite de 40 :")
+	assert_eq(gs.carry_space("sel"), 0)
+	assert_eq(gs.carry_space("perles"), 64)
+	var left: Dictionary = gs.add_carried({"perles": 70, "mineraux_rares": 5})
+	assert_eq(int(left.get("perles", 0)), 6)
+	assert_eq(int(left.get("mineraux_rares", 0)), 5, "plus de case libre :")
 
 
 func test_rake_harvests_everything_at_once() -> void:
@@ -126,8 +143,8 @@ func test_rake_harvests_everything_at_once() -> void:
 func test_wheelbarrow_carries_more() -> void:
 	gs.stock["sel"] = 30
 	gs.open_crates(gs.order(["brouette"]))
-	assert_eq(gs.carry_capacity, 40)
-	assert_eq(gs.carry_space(), 40)
+	assert_eq(gs.carry_capacity, 128)
+	assert_eq(gs.carry_space("sel"), 128)
 
 
 func test_yoke_doubles_buckets_and_stacks_with_big_bucket() -> void:
@@ -196,7 +213,7 @@ func test_save_keeps_upgrades() -> void:
 	other.setup(gs.config)
 	other.load_dict(data)
 	assert_almost(other.bucket.capacity_l, 40.0)
-	assert_eq(other.carry_capacity, 40)
+	assert_eq(other.carry_capacity, 128)
 	assert_true(other.has_rake)
 	assert_almost(other.speed_multiplier, 1.2)
 	other.free()

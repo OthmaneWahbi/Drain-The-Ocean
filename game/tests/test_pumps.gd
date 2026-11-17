@@ -28,8 +28,10 @@ func _lay(cells: Array) -> void:
 		assert_true(gs.place_pipe(c), "pièce refusée en %s" % c)
 
 
-## Cuvette en (-0,5 ; 12,5), pompe à bras sur la plage en (-0,5 ; 16,5), sans tuyau.
+## Cuvette en (-0,5 ; 12,5), pompe à bras en (-0,5 ; 16,5), sans tuyau. Ces tests parlent du
+## réseau, pas de l'eau : ici une pompe peut aller partout (la règle « dans l'eau » a ses tests).
 func _pump_and_basin(kind: String = "pompe_bras") -> Dictionary:
+	gs.config.pump_min_depth_m = -100.0
 	assert_true(gs.move_item(gs.zones[0], Vector3(-0.5, 0.5, 12.5)))
 	return gs.add_pump(kind, Vector3(-0.5, 0.5, 16.5))
 
@@ -122,7 +124,7 @@ func test_pipe_rules() -> void:
 	assert_true(gs.place_pipe(Vector3i(1, 1, -8)), "partir à l'horizontale en hauteur")
 	assert_false(gs.can_place_pipe(Vector3i(0, gs.config.pipe_max_level + 1, -8)), "trop haut")
 	assert_false(gs.can_place_pipe(Vector3i(0, -1, -8)), "sous le sol")
-	assert_false(gs.can_place_pipe(Vector3i(30, 0, 0)), "dans la mer")
+	assert_false(gs.can_place_pipe(Vector3i(60, 0, 0)), "dans la mer")
 	assert_false(gs.can_place_pipe(Vector3i(8, 0, 9)), "dans la palette")
 	assert_false(gs.can_place_pipe(Vector3i(5, 0, 1)), "dans le téléphone")
 	var basin: Dictionary = gs.zones[0]
@@ -259,17 +261,25 @@ func test_moving_while_windmill_runs() -> void:
 
 # --- Achat, placement, sauvegarde ------------------------------------------------------------
 
-func test_pump_must_go_on_the_shore() -> void:
-	var pump: Dictionary = gs.add_pump("pompe_bras", Vector3(-0.5, 0.5, 21.5))
-	assert_true(gs.can_place(pump, Vector3(-0.5, 0.5, 21.5)))
+func test_pump_must_go_in_the_water() -> void:
+	# 0.1.4 (Othmane) : une pompe pompe de l'eau, elle se pose dedans, près du rivage.
+	var pump: Dictionary = gs.add_pump("pompe_bras", Vector3(-0.5, 0.5, 35.5))
+	assert_true(gs.can_place(pump, Vector3(-0.5, 0.5, 35.5)), "dans la crique : oui")
 	assert_false(gs.can_place(pump, Vector3(-0.5, 0.5, -6.5)), "au milieu de l'île : non")
-	assert_false(gs.can_place(pump, Vector3(-0.5, 0.5, 24.5)), "dans l'eau : non")
+	assert_false(gs.can_place(pump, Vector3(-0.5, 0.5, 21.5)), "sur le sable : non")
+	assert_false(gs.can_place(pump, Vector3(-0.5, 0.5, 46.5)), "trop loin du rivage : non")
+
+
+func test_pipes_reach_the_pump_over_the_water_but_not_through_dunes() -> void:
+	assert_true(gs.can_place_pipe(Vector3i(-1, 0, 34)), "au-dessus de l'eau, jusqu'à la pompe")
+	assert_false(gs.can_place_pipe(Vector3i(29, 0, 0)), "dans la dune : non")
+	assert_false(gs.can_place_pipe(Vector3i(-1, 0, 60)), "en pleine mer : non")
 
 
 func test_pump_from_crate_lands_on_the_shore() -> void:
 	gs.open_crates(gs.order(["pompe_bras"]))
 	var p: Dictionary = gs.pumps[0]
-	assert_true(Vector2(p.position.x, p.position.z).length() >= gs.config.shore_only_kinds["pompe_bras"] - 1e-6)
+	assert_true(gs.is_water_spot(p.position), "livrée dans l'eau")
 	assert_true(gs.can_place(p, p.position))
 
 

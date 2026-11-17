@@ -311,8 +311,18 @@ func carried_count() -> int:
 	return Economy.count(carried)
 
 
-func carry_space() -> int:
-	return maxi(carry_capacity - carried_count(), 0)
+## La place pour un matériau (0.1.4) : chaque case de la barre en porte `carry_capacity`
+## (64, 128 avec la brouette). Sans `key` : la plus grande place, pour n'importe quel matériau
+## (une case vide, sinon la case la moins pleine).
+func carry_space(key: String = "") -> int:
+	if key != "":
+		if not has_slot_for(key):
+			return 0
+		return maxi(carry_capacity - int(carried.get(key, 0)), 0)
+	var best := carry_capacity if toolbar.first_free() >= 0 else 0
+	for k in carried:
+		best = maxi(best, carry_capacity - int(carried[k]))
+	return best
 
 
 ## Ajoute des ressources dans les bras, dans la limite de ce qu'on peut porter.
@@ -324,7 +334,7 @@ func add_carried(items: Dictionary) -> Dictionary:
 	for k in items:
 		var key := String(k)
 		var n := int(items[k])
-		var take := mini(n, carry_space()) if has_slot_for(key) else 0
+		var take := mini(n, carry_space(key))
 		if take > 0:
 			carried[key] = int(carried.get(key, 0)) + take
 			toolbar.put(key)
@@ -342,7 +352,7 @@ func has_slot_for(key: String) -> bool:
 
 ## Vrai si on peut prendre au moins une unité de ce matériau (place dans les bras ET une case).
 func can_carry(key: String) -> bool:
-	return carry_space() > 0 and has_slot_for(key)
+	return carry_space(key) > 0
 
 
 ## Récolte le dépôt d'une zone (M-39) : quelques unités par clic à la main, tout d'un coup
@@ -351,9 +361,21 @@ func can_carry(key: String) -> bool:
 func harvest(zone: Dictionary, resource: String = "") -> void:
 	var logic: DryingLogic = zone.logic
 	# Le râteau ramasse tout d'un coup, mais seulement si on le TIENT (barre d'outils).
-	var n := carry_space() if current_tool() == "rateau" else mini(config.manual_harvest_per_click, carry_space())
-	var leftover := add_carried(logic.take_some(n, resource))
-	Economy.add(logic.deposit, leftover)
+	var budget := 1 << 30 if current_tool() == "rateau" else config.manual_harvest_per_click
+	var keys: Array = [resource] if resource != "" else Economy.RESOURCES.duplicate()
+	if resource == "":
+		keys.reverse()  # les plus rares d'abord
+	# Chaque matériau a sa case et sa limite (64 par case) : on prend ce qui rentre, le reste reste.
+	for key: String in keys:
+		if budget <= 0:
+			break
+		var n := mini(budget, carry_space(key))
+		if n <= 0:
+			continue
+		var got := logic.take_some(n, key)
+		var leftover := add_carried(got)
+		Economy.add(logic.deposit, leftover)
+		budget -= Economy.count(got) - Economy.count(leftover)
 
 
 # --- Barre d'outils (M-27) --------------------------------------------------------------------
@@ -615,7 +637,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
 	if is_placeable(item):
 		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
-		position = find_free_spot(footprint_of(kind), position, min_center_radius_of(kind))
+		position = find_free_spot(footprint_of(kind), position, kind)
 	match item.effect:
 		CatalogItem.Effect.DRYING_ZONE:
 			return add_zone(item.effect_param, position)
@@ -793,7 +815,12 @@ func can_place_pipe(cell: Vector3i) -> bool:
 		return false
 	var center := PipeNetwork.cell_center(cell, config.grid_cell_m, 0.0)
 	var flat := Vector2(center.x, center.z)
-	if flat.length() + 0.5 > config.build_radius_m:
+	# Sur l'île, ou au-dessus de l'eau jusqu'aux pompes (0.1.4 : elles sont dans l'eau).
+	var limit := maxf(config.build_radius_m, terrain.coast_at(atan2(flat.y, flat.x)) + config.pump_max_offshore_m + 1.0)
+	if flat.length() + 0.5 > limit:
+		return false
+	# Pas dans une dune : la pièce doit être au-dessus du sable (on passe par-dessus, en hauteur).
+	if terrain.height(center.x, center.z) > PipeNetwork.cell_center(cell, config.grid_cell_m, config.ground_y).y - 0.1:
 		return false
 	if cell.y == 0:
 		for b in _blockers_except({}, true, false, false):
@@ -847,6 +874,7 @@ func run_pump(pump: Dictionary, delta: float) -> float:
 	if poured < taken:
 		ocean.return_water(taken - poured)
 	pump.last_lps = poured / delta
+	pump.last_run_ms = Time.get_ticks_msec()  # pour l'affichage (filets d'eau aux becs)
 	ocean_changed.emit()
 	return poured
 
@@ -1019,30 +1047,51 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 
 ## La case libre la plus proche de `near` pour une emprise de rayon `radius` (cherche en carrés
 ## de plus en plus grands). Si rien n'est libre, renvoie la case de `near`.
-func find_free_spot(radius: float, near: Vector3, min_center_radius: float = 0.0) -> Vector3:
+func find_free_spot(radius: float, near: Vector3, kind: String = "") -> Vector3:
 	var cell := config.grid_cell_m
 	var start := PlacementGrid.snap(near, cell)
 	var blockers := _blockers_except({})
-	# Assez d'anneaux pour couvrir toute l'île, même en partant d'un bord.
 	var rings := int(ceil(config.build_radius_m * 2.0 / cell)) + 1
+	if is_water_kind(kind):
+		# Une pompe part du rivage le plus proche, et cherche dans l'eau.
+		var a := atan2(near.z, near.x)
+		var shore := terrain.coast_at(a) + 2.0
+		start = PlacementGrid.snap(Vector3(cos(a) * shore, near.y, sin(a) * shore), cell)
+		rings = int(ceil((terrain.coast_radius + config.pump_max_offshore_m) * 2.0 / cell)) + 1
 	for ring in rings:
 		for dx in range(-ring, ring + 1):
 			for dz in range(-ring, ring + 1):
 				if maxi(absi(dx), absi(dz)) != ring:
 					continue
 				var p := start + Vector3(dx * cell, 0.0, dz * cell)
-				if PlacementGrid.is_valid(p, radius, blockers, config.build_radius_m, min_center_radius):
+				if spot_ok(kind, p, radius, blockers):
 					return p
 	return start
 
 
 func can_place(item: Dictionary, pos: Vector3) -> bool:
-	return PlacementGrid.is_valid(pos, footprint(item), blockers_for(item), config.build_radius_m, min_center_radius_of(item_kind(item)))
+	return spot_ok(item_kind(item), pos, footprint(item), blockers_for(item))
 
 
-## Distance minimale au centre de l'île pour ce type (les pompes vont au bord de l'eau).
-func min_center_radius_of(kind: String) -> float:
-	return float(config.shore_only_kinds.get(kind, 0.0))
+## Un emplacement valide pour ce type : sur l'île (zone constructible), ou dans l'eau près du
+## rivage pour les pompes (0.1.4). Jamais sur une autre emprise.
+func spot_ok(kind: String, pos: Vector3, radius: float, blockers: Array) -> bool:
+	if not is_water_kind(kind):
+		return PlacementGrid.is_valid(pos, radius, blockers, config.build_radius_m)
+	return is_water_spot(pos) and PlacementGrid.is_valid(pos, radius, blockers, INF)
+
+
+## Les types qui se posent dans l'eau (les pompes).
+func is_water_kind(kind: String) -> bool:
+	return config.shore_only_kinds.has(kind)
+
+
+## Dans l'eau, assez profond, et pas plus loin du rivage que `pump_max_offshore_m`.
+func is_water_spot(pos: Vector3) -> bool:
+	if water_level_y() - terrain.height(pos.x, pos.z) < config.pump_min_depth_m:
+		return false
+	var flat := Vector2(pos.x, pos.z)
+	return flat.length() - terrain.coast_at(atan2(pos.z, pos.x)) <= config.pump_max_offshore_m
 
 
 ## Déplace (et tourne) un objet sur la case visée. Renvoie faux si l'emplacement n'est pas valide.

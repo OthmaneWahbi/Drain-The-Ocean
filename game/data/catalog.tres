@@ -53,7 +53,7 @@ desc_key = "ITEM_WHEELBARROW_DESC"
 tier = 1
 price = {"sel": 30}
 effect = 4
-effect_value = 40.0
+effect_value = 128.0
 unique = true
 
 [sub_resource type="Resource" id="rake"]

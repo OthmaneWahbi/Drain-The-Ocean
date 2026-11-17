@@ -8,19 +8,7 @@ var mirror: Dictionary
 func setup(m: Dictionary) -> void:
 	mirror = m
 	position = m.position
-	add_child(Greybox.cylinder(0.05, 1.0, Greybox.ROCK, Vector3(0, 0.5, 0), 6))
-	var panel := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(1.2, 0.04, 0.9)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.92, 1.0)
-	mat.metallic = 1.0
-	mat.roughness = 0.05
-	box.material = mat
-	panel.mesh = box
-	panel.position = Vector3(0, 1.05, 0)
-	panel.rotation_degrees = Vector3(35, 0, 0)
-	add_child(panel)
+	add_child(Props.mirror())  # un chevalet et un grand cadre jaune incliné
 	# Le cercle d'effet, à peine visible au sol.
 	var ring := Greybox.cylinder(GameState.config.mirror_radius_m, 0.01, Color(1, 0.95, 0.6, 0.12), Vector3(0, 0.02, 0), 32)
 	add_child(ring)

@@ -95,7 +95,7 @@ func test_windmill_is_unique_shore_only_and_tier_2() -> void:
 	gs.open_crates(gs.order(["moulin_pompe"]))
 	assert_false(gs.can_buy(item), "un seul moulin")
 	var w: Dictionary = gs.pumps[0]
-	assert_true(Vector2(w.position.x, w.position.z).length() >= 15.5 - 1e-6)
+	assert_true(gs.is_water_spot(w.position), "dans l'eau, comme les pompes")
 	assert_false(gs.can_place(w, Vector3(0.5, 0.5, 0.5)))
 	gs.unlocked_tier = 1
 	gs.owned.clear()

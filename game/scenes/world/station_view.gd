@@ -4,6 +4,7 @@ extends StaticBody3D
 
 var station: Dictionary
 var _drops: Array[MeshInstance3D] = []
+var _t := 0.0
 
 
 func setup(st: Dictionary) -> void:
@@ -17,31 +18,28 @@ func setup(st: Dictionary) -> void:
 
 
 func _build_condenser() -> void:
-	# Une bâche transparente tendue en pente au-dessus d'un bac, avec quatre piquets.
-	for x in [-0.8, 0.8]:
-		for z in [-0.6, 0.6]:
-			add_child(Greybox.cylinder(0.04, 0.9, Greybox.WOOD, Vector3(x, 0.45, z), 6))
-	var sheet := Greybox.box(Vector3(1.8, 0.03, 1.4), Color(0.75, 0.9, 1.0, 0.5), Vector3(0, 0.75, 0))
-	sheet.rotation_degrees.x = 12.0
-	add_child(sheet)
-	add_child(Greybox.box(Vector3(0.9, 0.2, 0.5), Greybox.ROCK, Vector3(0, 0.1, 0.45)))
+	# Une bâche transparente sur quatre piquets, des pierres et une gamelle (Props.condenser) ;
+	# une goutte par portion d'eau douce, dans la gamelle.
+	add_child(Props.condenser())
 	for i in GameState.config.condenser_capacity:
-		var drop := Greybox.cylinder(0.08, 0.05, Greybox.WATER, Vector3(-0.25 + i * 0.25, 0.22, 0.45), 8)
+		var drop := Props.droplet(0.06)
+		drop.position = Vector3(-0.14 + i * 0.14, 0.2, 0.45)
 		_drops.append(drop)
 		add_child(drop)
 	add_child(Greybox.box_collision(Vector3(1.8, 0.9, 1.4), Vector3(0, 0.45, 0)))
 
 
 func _build_rations() -> void:
-	add_child(Greybox.box(Vector3(0.7, 0.45, 0.5), Color(0.35, 0.45, 0.25), Vector3(0, 0.23, 0)))
-	add_child(Greybox.box(Vector3(0.72, 0.06, 0.52), Greybox.WOOD, Vector3(0, 0.47, 0)))
+	add_child(Props.rations())
 	add_child(Greybox.box_collision(Vector3(0.7, 0.5, 0.5), Vector3(0, 0.25, 0)))
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_t += delta
 	var amount := (station.logic as StationLogic).amount
 	for i in _drops.size():
 		_drops[i].visible = i < amount
+		_drops[i].position.y = 0.2 + absf(sin(_t * 2.0 + i)) * 0.03  # elles tremblotent
 
 
 func get_prompt(_player: Node) -> String:

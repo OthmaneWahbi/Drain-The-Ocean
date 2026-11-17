@@ -11,32 +11,38 @@ const ROPE_M := 4.4
 
 var _hook: Node3D
 var _arm: Node3D
+var _propeller: Node3D
 var _t := 0.0
 
 
 func _ready() -> void:
-	add_child(Greybox.box(Vector3(0.9, 0.9, 4.0), Color(0.9, 0.9, 0.9)))
-	add_child(Greybox.box(Vector3(6.0, 0.12, 1.0), Color(0.8, 0.1, 0.1), Vector3(0, 0.1, 0.2)))
-	add_child(Greybox.box(Vector3(2.0, 0.1, 0.6), Color(0.8, 0.1, 0.1), Vector3(0, 0.2, -1.8)))
-	add_child(Greybox.box(Vector3(0.1, 0.8, 0.6), Color(0.8, 0.1, 0.1), Vector3(0, 0.6, -1.8)))
-	# Le pilote dans sa cabine, qui agite le bras.
-	add_child(Greybox.box(Vector3(0.5, 0.35, 0.6), Color(0.6, 0.85, 0.95, 0.6), Vector3(0, 0.55, 1.0)))
-	add_child(Greybox.box(Vector3(0.22, 0.22, 0.22), Color(0.9, 0.75, 0.6), Vector3(0, 0.6, 1.0)))
+	# Le biplan de l'Agence (Props.plane) et son pilote en costume (Kenney, Mini Characters),
+	# assis dans le cockpit ; une main sort par le côté pour faire coucou.
+	var model := Props.plane()
+	add_child(model)
+	_propeller = model.get_node("Propeller")
+	var cockpit: Node3D = model.get_node("Cockpit")
+	var pilot := Props.character("mini_male_d", 1.0, "drive")
+	pilot.rotation.y = PI  # les personnages regardent +Z ; l'avion vole vers −Z
+	pilot.position.y = -0.35
+	cockpit.add_child(pilot)
 	_arm = Node3D.new()
-	_arm.position = Vector3(0.18, 0.55, 1.0)
-	_arm.add_child(Greybox.box(Vector3(0.06, 0.3, 0.06), Color(0.9, 0.75, 0.6), Vector3(0, 0.15, 0)))
-	add_child(_arm)
-	# Le crochet qui pend sous l'avion.
+	_arm.position = Vector3(0.3, 0.25, 0.0)
+	_arm.add_child(Props.beam(Vector3.ZERO, Vector3(0.0, 0.4, 0.0), 0.08, Props.SKIN))
+	_arm.add_child(Props.ball(0.07, Color.WHITE, Vector3(0, 0.44, 0), 2))
+	cockpit.add_child(_arm)
+	# Le crochet qui pend sous l'avion : une corde, un crochet de fer.
 	_hook = Node3D.new()
-	_hook.add_child(Greybox.box(Vector3(0.04, ROPE_M, 0.04), Color(0.3, 0.25, 0.2), Vector3(0, -ROPE_M / 2.0, 0)))
-	_hook.add_child(Greybox.box(Vector3(0.35, 0.08, 0.08), Color(0.4, 0.4, 0.45), Vector3(0, -ROPE_M, 0)))
-	_hook.add_child(Greybox.box(Vector3(0.08, 0.25, 0.08), Color(0.4, 0.4, 0.45), Vector3(0.15, -ROPE_M + 0.1, 0)))
+	_hook.add_child(Props.beam(Vector3.ZERO, Vector3(0, -ROPE_M, 0), 0.035, Props.ROPE, true))
+	_hook.add_child(Props.torus(0.1, 0.14, Props.IRON, Vector3(0, -ROPE_M - 0.1, 0), 10))
+	_hook.get_child(-1).rotation.x = PI / 2
 	add_child(_hook)
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	_arm.rotation.z = sin(_t * 10.0) * 0.6
+	_arm.rotation.z = -0.5 + sin(_t * 10.0) * 0.6
+	_propeller.rotation.z += delta * 30.0
 	# La corde reste verticale quel que soit le cap de l'avion.
 	_hook.global_rotation = Vector3.ZERO
 
@@ -49,7 +55,9 @@ func hide_hook() -> void:
 ## Le paiement arraché pend au crochet et part avec l'avion.
 func carry_bundle(colors: Array) -> void:
 	for i in colors.size():
-		_hook.add_child(Greybox.box(Vector3(0.45, 0.3, 0.45), colors[i], Vector3(0, -ROPE_M - 0.25 - i * 0.3, 0)))
+		var bag := Props.sack(0.5, colors[i], 7 + i)
+		bag.position = Vector3(0, -ROPE_M - 0.6 - i * 0.45, 0)
+		_hook.add_child(bag)
 
 
 ## Trajet : arrivée de loin → palette (bas) → point de largage → départ au loin.

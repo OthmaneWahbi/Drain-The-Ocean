@@ -142,7 +142,7 @@ static func island_report(gs: Node = null) -> String:
 		"%s : %s L" % [t.call("HUD_REMOVED").capitalize(), HudScript.format_liters(gs.ocean.removed_l)],
 		"%s : %02d:%02d · %s : %s" % [t.call("PAUSE_INFO_HOUR"), int(h), int(fmod(h, 1.0) * 60.0), t.call("HUD_PLAY_TIME"), HudScript.format_time(gs.play_time_s)],
 		"%s : %s" % [t.call("HUD_STOCK"), CatalogueFormat.format_items(gs.stock, true)],
-		"%s (%d/%d) : %s" % [t.call("HUD_CARRIED"), gs.carried_count(), gs.carry_capacity, CatalogueFormat.format_items(gs.carried)],
+		"%s (%s) : %s" % [t.call("HUD_CARRIED"), t.call("HUD_PER_SLOT") % gs.carry_capacity, CatalogueFormat.format_items(gs.carried)],
 		t.call("HUD_BUCKET") % [gs.bucket.water_l, gs.bucket.capacity_l],
 		t.call("PAUSE_INFO_NEEDS") % [int(round(gs.survival.food * 100.0)), int(round(gs.survival.water * 100.0))],
 	]

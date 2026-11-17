@@ -11,19 +11,19 @@ func setup(p: Dictionary) -> void:
 	position = p.position
 	match p.kind:
 		"coconut":
-			var nut := MeshInstance3D.new()
-			var sphere := SphereMesh.new()
-			sphere.radius = 0.16
-			sphere.height = 0.3
-			sphere.radial_segments = 8
-			sphere.rings = 5
-			sphere.material = Greybox.material(Color(0.4, 0.27, 0.15))
-			nut.mesh = sphere
+			# La même noix de coco que sur les palmiers (Models.coconut), posée sur le sable.
+			var nut := Models.coconut(0.15, int(absf(p.position.x * 13.0 + p.position.z * 7.0)))
+			nut.position.y = 0.1
+			nut.rotation = Vector3(0.6, p.position.x, 0.3)
 			add_child(nut)
 			add_child(Greybox.cylinder_collision(0.3, 0.4))
 		"shell":
-			var shell := Greybox.cylinder(0.1, 0.04, Color(0.95, 0.8, 0.75), Vector3.ZERO, 7)
-			shell.scale = Vector3(1.0, 1.0, 0.7)
+			# Une vraie coquille (Saint-Jacques ou conque, selon l'endroit), qui brille un peu pour
+			# qu'on la repère sur le sable.
+			var variant := int(absf(p.position.x * 3.0 + p.position.z * 5.0))
+			var shell := Props.shell(variant, 0.22)
+			shell.rotation.y = p.position.x
+			shell.position.y = -0.02
 			add_child(shell)
 			add_child(Greybox.cylinder_collision(0.3, 0.3))
 
@@ -35,7 +35,7 @@ func get_prompt(_player: Node) -> String:
 		"shell":
 			if not GameState.has_slot_for("coquillages"):
 				return tr("PROMPT_NO_SLOT") % tr("RES_COQUILLAGES")
-			return tr("PROMPT_SHELL") if GameState.carry_space() > 0 else tr("PROMPT_HANDS_FULL")
+			return tr("PROMPT_SHELL") if GameState.carry_space("coquillages") > 0 else tr("PROMPT_HANDS_FULL")
 	return ""
 
 

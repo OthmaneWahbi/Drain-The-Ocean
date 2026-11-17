@@ -22,3 +22,4 @@
 # pour que le dépôt reste utilisable sans serveur LFS (0.1.2). Les gros fichiers restent en LFS.
 game/assets/fonts/*.ttf -filter -diff -merge binary
 game/assets/models/cc0/*.glb -filter -diff -merge binary
+game/assets/models/cc0/*.png -filter -diff -merge binary

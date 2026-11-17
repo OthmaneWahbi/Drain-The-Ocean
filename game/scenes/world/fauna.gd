@@ -25,20 +25,6 @@ func _ready() -> void:
 	add_child(Crab.new(_rng))
 
 
-static func _part(size: Vector3, color: Color, pos: Vector3) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = size
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	b.material = mat
-	m.mesh = b
-	m.position = pos
-	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	return m
-
-
-## Une mouette : un corps et deux ailes qui battent, sur un grand cercle.
 class Seagull extends Node3D:
 	var radius: float
 	var height: float
@@ -55,14 +41,31 @@ class Seagull extends Node3D:
 		speed = p_speed
 
 	func _ready() -> void:
-		add_child(Fauna._part(Vector3(0.18, 0.16, 0.6), Color(0.95, 0.95, 0.95), Vector3.ZERO))
-		add_child(Fauna._part(Vector3(0.08, 0.08, 0.14), Color(0.95, 0.7, 0.2), Vector3(0, 0, -0.36)))
-		_left = Node3D.new()
-		_left.add_child(Fauna._part(Vector3(0.7, 0.03, 0.22), Color(0.85, 0.85, 0.88), Vector3(-0.35, 0, 0)))
+		# Une mouette en facettes : corps blanc fuselé, bec jaune, ailes grises à bouts noirs.
+		add_child(Props.ball(0.16, Color(0.97, 0.97, 0.97), Vector3.ZERO, 5, 0.0, Vector3(0.9, 0.85, 2.0)))
+		add_child(Props.ball(0.11, Color(0.97, 0.97, 0.97), Vector3(0, 0.08, -0.3), 6))
+		var beak := Props.cyl(0.0, 0.035, 0.14, Color(0.98, 0.72, 0.18), Vector3(0, 0.06, -0.45), 5)
+		beak.rotation.x = -PI / 2
+		add_child(beak)
+		add_child(Props.cyl(0.02, 0.09, 0.22, Color(0.85, 0.85, 0.88), Vector3(0, 0, 0.36), 4))
+		add_child(Props.cyl(0.02, 0.09, 0.22, Color(0.85, 0.85, 0.88), Vector3(0, 0, 0.36), 4))
+		get_child(-1).rotation.x = PI / 2
+		get_child(-2).rotation.x = PI / 2
+		_left = _wing(-1.0)
 		add_child(_left)
-		_right = Node3D.new()
-		_right.add_child(Fauna._part(Vector3(0.7, 0.03, 0.22), Color(0.85, 0.85, 0.88), Vector3(0.35, 0, 0)))
+		_right = _wing(1.0)
 		add_child(_right)
+
+	func _wing(side: float) -> Node3D:
+		var w := Node3D.new()
+		w.add_child(Props.box(Vector3(0.4, 0.03, 0.26), Color(0.82, 0.83, 0.87), Vector3(side * 0.22, 0, 0)))
+		var tip := Props.box(Vector3(0.36, 0.025, 0.18), Color(0.82, 0.83, 0.87), Vector3(side * 0.58, 0.04, 0.03))
+		tip.rotation.z = side * 0.25
+		w.add_child(tip)
+		w.add_child(Props.box(Vector3(0.12, 0.026, 0.16), Color(0.12, 0.12, 0.14), Vector3(side * 0.74, 0.08, 0.04)))
+		for part: MeshInstance3D in w.get_children():
+			part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		return w
 
 	func _process(delta: float) -> void:
 		_t += delta
@@ -91,8 +94,18 @@ class Fish extends Node3D:
 		depth = p_depth
 
 	func _ready() -> void:
-		add_child(Fauna._part(Vector3(0.12, 0.2, 0.45), Color(0.95, 0.55, 0.2), Vector3.ZERO))
-		add_child(Fauna._part(Vector3(0.04, 0.18, 0.15), Color(0.9, 0.45, 0.15), Vector3(0, 0, 0.28)))
+		# Le poisson du Food Kit de Kenney (CC0), tête vers −Z (le sens de look_at).
+		var fish := Models.load_model("fish")
+		Models.fit_on_ground(fish, 0.22)
+		var holder := Node3D.new()
+		holder.add_child(fish)
+		holder.position.y = -0.11
+		var span := Models.bounds(Models.vertices(fish))
+		if span.size.x > span.size.z:
+			holder.rotation.y = PI / 2  # le modèle est allongé sur X : on le remet sur Z
+		add_child(holder)
+		for mi: MeshInstance3D in Models.meshes_of(fish):
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	func _process(delta: float) -> void:
 		_t += delta
@@ -112,19 +125,15 @@ class Crab extends Node3D:
 	var _target: Vector3
 	var _rest := 0.0
 	var _t := 0.0
-	var _legs: Array[Node3D] = []
+	var _model: Node3D
 
 	func _init(rng: RandomNumberGenerator) -> void:
 		_rng = rng
 
 	func _ready() -> void:
-		add_child(Fauna._part(Vector3(0.36, 0.12, 0.26), Color(0.85, 0.25, 0.15), Vector3(0, 0.1, 0)))
-		for side in [-1.0, 1.0]:
-			add_child(Fauna._part(Vector3(0.1, 0.08, 0.1), Color(0.9, 0.3, 0.18), Vector3(0.24 * side, 0.12, -0.14)))
-			for i in 3:
-				var leg := Fauna._part(Vector3(0.14, 0.03, 0.03), Color(0.75, 0.2, 0.12), Vector3(0.22 * side, 0.05, -0.08 + i * 0.08))
-				add_child(leg)
-				_legs.append(leg)
+		# Le crabe animé de Quaternius (CC0) : il marche (« Walk ») et attend (« Idle »).
+		_model = Props.character("crab", 0.25, "MonsterArmature|Idle")
+		add_child(_model)
 		position = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
 		_target = position
 
@@ -132,7 +141,9 @@ class Crab extends Node3D:
 		_t += delta
 		if _rest > 0.0:
 			_rest -= delta
+			Props.play(_model, "MonsterArmature|Idle")
 			return
+		Props.play(_model, "MonsterArmature|Walk", 1.6)
 		var to := _target - position
 		if to.length() < 0.1:
 			_target = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
@@ -143,5 +154,3 @@ class Crab extends Node3D:
 		position += to.normalized() * minf(SPEED * delta, to.length())
 		# Il marche de côté : son flanc (axe X) regarde où il va.
 		rotation.y = atan2(-to.z, to.x)
-		for i in _legs.size():
-			_legs[i].rotation.z = sin(_t * 18.0 + i) * 0.4
