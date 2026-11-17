@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.39 (0.1.8 : chasse aux bugs, tuyaux, coquillages, tas et palette revus) |
+| Version du document | 0.40 (0.1.9 : seau et palette KayKit, tuyaux Kenney) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -836,7 +836,17 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** Tuyaux : un peu plus gros, un manchon foncé à chaque raccord entre deux pièces (on les compte), une boule de jonction seulement sur les coudes, T et croix, et un piquet en bois avec collier et semelle sous toute pièce qui ne repose sur rien (sauf au-dessus d'une zone ou d'une pompe).
 - **[PROPOSÉ]** Coquillages : fermés dessous, côtes en deux tons, conque refaite (cône, spire, bourrelets, ouverture rose vers le ciel) ; posés **sur** le sable, penchés comme la pente, sans qu'aucun bord ne s'enfonce.
 - **[PROPOSÉ]** Palette : un seul bois (fini les rayures crème), des cloisons basses entre les cinq tas, le nom de chaque ressource sur une petite planche crème. Tas de coquillages sur du sable rosé, perles sur un coussin bleu nuit.
-- **[PROPOSÉ]** Modèles gratuits : rapport `recherche/Modèles gratuits low poly.md`. Aucun modèle n'est importé dans cette version : à décider par Othmane (seau et palette KayKit, tuyaux du Space Kit de Kenney, qui font 1 m comme nos cases).
+- **[PROPOSÉ]** Modèles gratuits : rapport `recherche/Modèles gratuits low poly.md`. Aucun modèle n'est importé dans cette version : à décider par Othmane (seau et palette KayKit, tuyaux du Space Kit de Kenney, qui font 1 m comme nos cases). → **[DÉCIDÉ]** importés en 0.1.9 (voir 19.14).
+
+### 19.14 Version 0.1.9 : seau et palette KayKit, tuyaux Kenney
+
+Décision d'Othmane (2026-11-17) **[DÉCIDÉ]** : essayer les modèles CC0 proposés par la recherche de la 0.1.8, c'est-à-dire le seau et la palette de KayKit et les tuyaux de 1 m du Space Kit de Kenney.
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** Seau : le seau en bois de KayKit, à la même taille qu'avant, avec notre eau qui monte dedans. La rustine du seau de départ est gardée. Le grand seau est teinté jaune.
+- **[PROPOSÉ]** Palette : des palettes KayKit posées côte à côte en damier. Une sur deux est tournée d'un quart de tour, pour que les planches se croisent. Les cloisons et les noms de la 0.1.8 restent.
+- **[PROPOSÉ]** Tuyaux : les pièces Kenney, réduites en travers à 35 %. Un tuyau droit est un tronçon d'un mètre. Un coude, un T ou une croix à plat utilisent le raccord Kenney, tourné vers les voisins, avec un tronçon jusqu'au bord de la case. Les montées et les pièces seules gardent une boule de jonction. Le bras vers la pompe, la descente vers une zone et les piquets restent faits par code. Le métal prend la couleur du réseau (gris sec, bleu mouillé).
+- **[PROPOSÉ]** Restent faits par code faute de modèle gratuit : coquillages, tas, perles, pompe, moulin, zones de séchage, bâche.
 
 ## 20. Glossaire
 

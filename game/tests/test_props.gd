@@ -74,3 +74,28 @@ func test_catalogue_photos_use_the_real_models() -> void:
 		assert_false(n.has_meta("unknown"), id)
 		assert_true(n.get_child_count() > 0, id)
 		n.free()
+
+
+## 0.1.9 : les modèles CC0 essayés à la demande d'Othmane (seau et palette KayKit, tuyaux Kenney).
+func test_cc0_bucket_and_pallet_keep_their_size() -> void:
+	var b := Props.bucket(false, 0.26)
+	assert_almost(_height(b), 0.26, 0.03, "le seau KayKit à la hauteur demandée")
+	b.free()
+	var p := Props.pallet(Vector3(3.6, 0.15, 1.6))
+	var box := Models.bounds(Models.vertices(p))
+	assert_almost(box.size.x, 3.6, 0.05, "largeur de la palette")
+	assert_almost(box.size.z, 1.6, 0.05, "profondeur de la palette")
+	assert_almost(box.position.y, 0.0, 0.01, "posée au sol")
+	p.free()
+
+
+func test_kenney_junctions_turn_to_match_their_neighbours() -> void:
+	var PipesView := load("res://scenes/world/pipes_view.gd")
+	var corner: Array = PipesView.JUNCTIONS["space_pipe_corner"]
+	var want: Array[Vector3i] = [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]
+	var yaw: float = PipesView._yaw_matching(corner, want)
+	assert_false(is_nan(yaw), "un coude tourne vers +X et +Z")
+	var tee: Array[Vector3i] = [Vector3i(0, 0, 1), Vector3i(0, 0, -1), Vector3i(1, 0, 0)]
+	assert_false(is_nan(PipesView._yaw_matching(PipesView.JUNCTIONS["space_pipe_split"], tee)), "un T")
+	var bad: Array[Vector3i] = [Vector3i(1, 0, 0), Vector3i(-1, 0, 0)]
+	assert_true(is_nan(PipesView._yaw_matching(corner, bad)), "un droit n'est pas un coude")
