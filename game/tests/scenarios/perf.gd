@@ -57,7 +57,7 @@ func _process(delta: float) -> bool:
 				# Une île bien remplie.
 				gs.unlocked_tier = 2
 				for i in 12:
-					gs.add_zone(["bache", "bassin_bois", "cuvette"][i % 3], gs.find_free_spot(gs.footprint_of("bassin_bois"), Vector3(0, 0, 0)))
+					gs.add_zone(["bache", "bassin_bois", "cuvette"][i % 3], gs.find_free_spot("bassin_bois", Vector3(0, 0, 0)))
 				for i in 40:
 					gs.pipes[Vector3i(-8 + i % 10, 0, 8 + i / 10)] = true
 				gs.network_changed.emit()

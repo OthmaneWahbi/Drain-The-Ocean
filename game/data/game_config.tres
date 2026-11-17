@@ -17,7 +17,7 @@ start_hour = 7.0
 basin_capacity_l = 40.0
 basin_dry_time_s = 45.0
 basin_position = Vector3(-5.5, 0.5, 7)
-depot_position = Vector3(8.5, 0.5, 9)
+depot_position = Vector3(9, 0.5, 9)
 tarp_capacity_l = 60.0
 tarp_dry_time_s = 45.0
 wood_basin_capacity_l = 200.0
@@ -65,21 +65,21 @@ beach_radius_max = 23.7
 grid_cell_m = 1.0
 build_radius_m = 24.0
 footprints = {
-"bache": 3.0,
-"bassin_bois": 4.0,
-"bateau_en_bouteille": 0.4,
-"caisse": 0.6,
-"catalogue_papier": 0.4,
-"flamant": 0.5,
-"toboggan": 1.0,
-"coquillage": 0.25,
-"condenseur": 1.1,
-"cuvette": 3.0,
-"miroir": 0.7,
-"palette": 2.0,
-"moulin_pompe": 0.8,
-"pompe_bras": 0.8,
-"rations": 0.5
+"cuvette": [-1.5, -1.5, 2.5, 1.5],
+"bache": [-1.5, -1.5, 2.5, 1.5],
+"bassin_bois": [-2.5, -1.5, 3.5, 1.5],
+"condenseur": [-1.0, -1.0, 1.0, 1.0],
+"rations": [-0.5, -0.5, 0.5, 0.5],
+"miroir": [-1.0, -0.5, 1.0, 0.5],
+"bateau_en_bouteille": [-0.5, -0.5, 0.5, 0.5],
+"palette": [-2.0, -1.0, 2.0, 1.0],
+"caisse": [-0.5, -0.5, 0.5, 0.5],
+"catalogue_papier": [-0.5, -0.5, 0.5, 0.5],
+"toboggan": [-0.5, -0.5, 0.5, 2.5],
+"flamant": [-0.5, -0.5, 0.5, 0.5],
+"coquillage": [-0.25, -0.25, 0.25, 0.25],
+"pompe_bras": [-0.5, -0.5, 0.5, 1.5],
+"moulin_pompe": [-1.5, -1.5, 1.5, 1.5]
 }
 pile_offset_cells = {
 "bache": 2,

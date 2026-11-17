@@ -240,7 +240,7 @@ func test_each_material_pile_has_its_own_cell_inside_the_zone() -> void:
 		var cells := {}
 		for res in gs.config.pile_slots:
 			var off: Vector3 = gs.pile_offset(z, res)
-			assert_true(Vector2(off.x, off.z).length() + 0.5 <= gs.footprint_of(kind) + 1e-6, "%s/%s déborde" % [kind, res])
+			assert_true((gs.footprint_of(kind) as Rect2).encloses(Rect2(off.x - 0.5, off.z - 0.5, 1, 1)), "%s/%s déborde" % [kind, res])
 			assert_almost(fposmod(off.x, 1.0), 0.0, 1e-6)
 			assert_almost(fposmod(off.z, 1.0), 0.0, 1e-6)
 			assert_false(cells.has(off), "%s : deux tas sur la même case" % kind)

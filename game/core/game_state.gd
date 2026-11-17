@@ -169,7 +169,7 @@ func setup(config_override: GameConfig = null) -> void:
 
 func new_game() -> void:
 	_reset_state()
-	add_zone("cuvette", find_free_spot(footprint_of("cuvette"), config.basin_position))
+	add_zone("cuvette", find_free_spot("cuvette", config.basin_position))
 	_morning_refill()
 	_emit_all()
 
@@ -205,7 +205,7 @@ func _reset_state() -> void:
 	pipe_stock = 0
 	auto_pumped_l = 0.0
 	demo_done = false
-	depot = {"id": "depot", "kind": "palette", "position": config.depot_position, "rotation_deg": 0.0}
+	depot = {"id": "depot", "kind": "palette", "position": snap_item("palette", config.depot_position), "rotation_deg": 0.0}
 	unlocked_tier = 1
 	play_time_s = 0.0
 	ending = null
@@ -610,7 +610,7 @@ func next_drop_position() -> Vector3:
 	var angle := deg_to_rad(137.5 * i)
 	var radius := 1.5 * sqrt(float(i))
 	var wanted := config.delivery_center + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
-	return find_free_spot(footprint_of("caisse"), wanted)
+	return find_free_spot("caisse", wanted)
 
 
 ## Ouvre une caisse : applique l'effet de chaque objet à l'endroit de la caisse.
@@ -637,7 +637,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 	# Un objet posé prend la case libre la plus proche de la caisse, jamais sur un autre objet.
 	if is_placeable(item):
 		var kind := "miroir" if item.effect == CatalogItem.Effect.MIRROR else String(item.effect_param)
-		position = find_free_spot(footprint_of(kind), position, kind)
+		position = find_free_spot(kind, position)
 	match item.effect:
 		CatalogItem.Effect.DRYING_ZONE:
 			return add_zone(item.effect_param, position)
@@ -712,14 +712,14 @@ func _random_beach_spot() -> Vector3:
 		var angle := rng.randf() * TAU
 		var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
 		var spot := PlacementGrid.snap(Vector3(cos(angle) * radius, 0.52, sin(angle) * radius), config.grid_cell_m)
-		if PlacementGrid.is_valid(spot, footprint_of("coquillage"), blockers, config.build_radius_m):
+		if PlacementGrid.is_valid(PlacementGrid.rect_shape(footprint_rect("coquillage", spot)), blockers, config.build_radius_m):
 			return spot
 	return NO_SPOT
 
 
 ## Vrai si rien n'occupe ce cercle. `with_coconut_spots` : compter aussi les places des noix de coco.
 func _spot_is_free(pos: Vector3, radius: float, with_coconut_spots: bool = true) -> bool:
-	return PlacementGrid.is_valid(pos, radius, _blockers_except({}, with_coconut_spots), INF)
+	return PlacementGrid.is_valid(PlacementGrid.circle_shape(pos, radius), _blockers_except({}, with_coconut_spots), INF)
 
 
 func _has_pickup_at(kind: String, position: Vector3) -> bool:
@@ -788,7 +788,24 @@ func _run_auto_pumps(delta: float) -> void:
 ## Les zones reliées à une pompe par les tuyaux posés, de la plus proche à la plus lointaine.
 ## Recalculé à chaque appel : il n'y a pas de réseau mémorisé qui pourrait se désynchroniser.
 func zones_for_pump(pump: Dictionary) -> Array:
-	return PipeNetwork.zones_reached(pump.position, pipes, zones, inlet_radius, config.grid_cell_m)
+	return PipeNetwork.zones_reached(pump.position, pipes, zones, inlet_radius, config.grid_cell_m, pump_cells(pump))
+
+
+## Les cases (X, Z) qu'occupe une pompe : les tuyaux se branchent tout autour (0.1.5).
+func pump_cells(pump: Dictionary) -> Rect2i:
+	var r := item_rect(pump)
+	var c := config.grid_cell_m
+	var lo := Vector2i(floori(r.position.x / c + 0.01), floori(r.position.y / c + 0.01))
+	var hi := Vector2i(ceili(r.end.x / c - 0.01), ceili(r.end.y / c - 0.01))
+	return Rect2i(lo, hi - lo)
+
+
+## La pompe dont l'emprise contient cette case (au niveau du sol), ou vide.
+func pump_at_cell(cell: Vector3i) -> Dictionary:
+	for pump in pumps:
+		if cell.y == PipeNetwork.cell_of(pump.position, config.grid_cell_m).y and pump_cells(pump).has_point(Vector2i(cell.x, cell.z)):
+			return pump
+	return {}
 
 
 ## Rayon dans lequel une pièce de tuyau verse dans la zone (le bac, sans le tas de sel).
@@ -800,7 +817,7 @@ func inlet_radius(zone: Dictionary) -> float:
 func wet_pipes() -> Dictionary:
 	var out := {}
 	for pump in pumps:
-		out.merge(PipeNetwork.reach(PipeNetwork.cell_of(pump.position, config.grid_cell_m), pipes))
+		out.merge(PipeNetwork.reach(PipeNetwork.cell_of(pump.position, config.grid_cell_m), pipes, pump_cells(pump)))
 	return out
 
 
@@ -823,9 +840,9 @@ func can_place_pipe(cell: Vector3i) -> bool:
 	if terrain.height(center.x, center.z) > PipeNetwork.cell_center(cell, config.grid_cell_m, config.ground_y).y - 0.1:
 		return false
 	if cell.y == 0:
+		var piece := PlacementGrid.circle_shape(center, config.pipe_radius_m)
 		for b in _blockers_except({}, true, false, false):
-			var bp: Vector3 = b.position
-			if flat.distance_to(Vector2(bp.x, bp.z)) < float(b.radius) + config.pipe_radius_m - 1e-6:
+			if PlacementGrid.overlaps(piece, b):
 				return false
 		return true
 	if not PipeNetwork.neighbors(cell, pipes).is_empty():
@@ -903,8 +920,7 @@ func zones_for_slide(slide: Dictionary) -> Array:
 	var out := []
 	var sp: Vector3 = slide.position
 	for z in zones:
-		var zp: Vector3 = z.position
-		if Vector2(zp.x - sp.x, zp.z - sp.z).length() <= footprint(z) + config.slide_reach_m:
+		if PlacementGrid.distance_to(PlacementGrid.rect_shape(item_rect(z)), sp) <= config.slide_reach_m:
 			out.append(z)
 	return out
 
@@ -983,12 +999,28 @@ func item_kind(item: Dictionary) -> String:
 	return String(item.get("kind", "miroir"))
 
 
-func footprint(item: Dictionary) -> float:
-	return footprint_of(item_kind(item))
+## L'emprise d'un type, dans son propre repère (avant rotation) : un rectangle de cases entières
+## (config.footprints, [x0, z0, x1, z1] en mètres). Une case si le type est inconnu.
+func footprint_of(kind: String) -> Rect2:
+	var c := config.grid_cell_m
+	var v: Array = config.footprints.get(kind, [-c / 2.0, -c / 2.0, c / 2.0, c / 2.0])
+	return Rect2(float(v[0]), float(v[1]), float(v[2]) - float(v[0]), float(v[3]) - float(v[1]))
 
 
-func footprint_of(kind: String) -> float:
-	return float(config.footprints.get(kind, 1.0))
+## L'emprise d'un type posé en `pos` et tourné de `rotation_deg` : un rectangle au sol (X, Z).
+func footprint_rect(kind: String, pos: Vector3, rotation_deg: float = 0.0) -> Rect2:
+	return PlacementGrid.rect_at(footprint_of(kind), pos, rotation_deg)
+
+
+## L'emprise d'un objet tel qu'il est posé.
+func item_rect(item: Dictionary) -> Rect2:
+	return footprint_rect(item_kind(item), item.position, item_rotation(item))
+
+
+## Aligne un objet de ce type sur la grille, au plus près de `pos` (les bords de son emprise
+## tournée tombent sur les lignes de la grille).
+func snap_item(kind: String, pos: Vector3, rotation_deg: float = 0.0) -> Vector3:
+	return PlacementGrid.snap_rect(pos, footprint_of(kind), rotation_deg, config.grid_cell_m)
 
 
 ## Où est le tas d'un matériau, par rapport au centre de sa zone (avant rotation) : chaque
@@ -1025,38 +1057,39 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 		if not with_zones and zones.has(other):
 			continue
 		if other != item:
-			out.append({"position": other.position, "radius": footprint(other)})
+			out.append(PlacementGrid.rect_shape(item_rect(other)))
 	for c in crates:
-		out.append({"position": c.position, "radius": footprint_of("caisse")})
+		out.append(PlacementGrid.rect_shape(footprint_rect("caisse", c.position)))
 	for o in config.fixed_obstacles:
-		out.append({"position": Vector3(o.x, 0.0, o.y), "radius": o.z})
+		out.append(PlacementGrid.circle_shape(Vector3(o.x, 0.0, o.y), o.z))
 	if with_coconut_spots:
 		for spot in config.coconut_spots:
-			out.append({"position": spot, "radius": config.coconut_radius_m})
+			out.append(PlacementGrid.circle_shape(spot, config.coconut_radius_m))
 	for pk in pickups:
 		if pk != item and pk.kind != "coconut":  # les noix sont déjà comptées par leur place
-			out.append({"position": pk.position, "radius": footprint_of("coquillage")})
-	out.append({"position": player_position, "radius": config.player_radius_m})
+			out.append(PlacementGrid.rect_shape(footprint_rect("coquillage", pk.position)))
+	out.append(PlacementGrid.circle_shape(player_position, config.player_radius_m))
 	# Les tuyaux au sol gênent tout, sauf les zones de séchage (on peut poser un bac sous un tuyau).
 	if with_pipes and not zones.has(item):
 		for c in pipes:
 			if c.y == 0:
-				out.append({"position": PipeNetwork.cell_center(c, config.grid_cell_m, 0.0), "radius": config.pipe_radius_m})
+				out.append(PlacementGrid.circle_shape(PipeNetwork.cell_center(c, config.grid_cell_m, 0.0), config.pipe_radius_m))
 	return out
 
 
-## La case libre la plus proche de `near` pour une emprise de rayon `radius` (cherche en carrés
-## de plus en plus grands). Si rien n'est libre, renvoie la case de `near`.
-func find_free_spot(radius: float, near: Vector3, kind: String = "") -> Vector3:
+## L'emplacement libre le plus proche de `near` pour un objet de ce type (et cette orientation),
+## aligné sur la grille : on cherche en carrés de plus en plus grands. Si rien n'est libre, renvoie
+## l'emplacement aligné le plus proche de `near`.
+func find_free_spot(kind: String, near: Vector3, rotation_deg: float = 0.0) -> Vector3:
 	var cell := config.grid_cell_m
-	var start := PlacementGrid.snap(near, cell)
+	var start := snap_item(kind, near, rotation_deg)
 	var blockers := _blockers_except({})
 	var rings := int(ceil(config.build_radius_m * 2.0 / cell)) + 1
 	if is_water_kind(kind):
 		# Une pompe part du rivage le plus proche, et cherche dans l'eau.
 		var a := atan2(near.z, near.x)
 		var shore := terrain.coast_at(a) + 2.0
-		start = PlacementGrid.snap(Vector3(cos(a) * shore, near.y, sin(a) * shore), cell)
+		start = snap_item(kind, Vector3(cos(a) * shore, near.y, sin(a) * shore), rotation_deg)
 		rings = int(ceil((terrain.coast_radius + config.pump_max_offshore_m) * 2.0 / cell)) + 1
 	for ring in rings:
 		for dx in range(-ring, ring + 1):
@@ -1064,21 +1097,30 @@ func find_free_spot(radius: float, near: Vector3, kind: String = "") -> Vector3:
 				if maxi(absi(dx), absi(dz)) != ring:
 					continue
 				var p := start + Vector3(dx * cell, 0.0, dz * cell)
-				if spot_ok(kind, p, radius, blockers):
+				if spot_ok(kind, p, rotation_deg, blockers):
 					return p
 	return start
 
 
-func can_place(item: Dictionary, pos: Vector3) -> bool:
-	return spot_ok(item_kind(item), pos, footprint(item), blockers_for(item))
+## Peut-on poser `item` en `pos` (avec cette orientation, ou la sienne) ?
+func can_place(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> bool:
+	var rot := item_rotation(item) if is_nan(rotation_deg) else rotation_deg
+	return spot_ok(item_kind(item), pos, rot, blockers_for(item))
+
+
+## Ce qui empêche de poser `item` en `pos` : les formes qu'il chevaucherait (vide si rien ne gêne).
+func placement_conflicts(item: Dictionary, pos: Vector3, rotation_deg: float) -> Array:
+	var shape := PlacementGrid.rect_shape(footprint_rect(item_kind(item), pos, rotation_deg))
+	return PlacementGrid.conflicts(shape, blockers_for(item))
 
 
 ## Un emplacement valide pour ce type : sur l'île (zone constructible), ou dans l'eau près du
-## rivage pour les pompes (0.1.4). Jamais sur une autre emprise.
-func spot_ok(kind: String, pos: Vector3, radius: float, blockers: Array) -> bool:
+## rivage pour les pompes (0.1.4). L'emprise (tournée) ne chevauche aucune autre forme.
+func spot_ok(kind: String, pos: Vector3, rotation_deg: float, blockers: Array) -> bool:
+	var shape := PlacementGrid.rect_shape(footprint_rect(kind, pos, rotation_deg))
 	if not is_water_kind(kind):
-		return PlacementGrid.is_valid(pos, radius, blockers, config.build_radius_m)
-	return is_water_spot(pos) and PlacementGrid.is_valid(pos, radius, blockers, INF)
+		return PlacementGrid.is_valid(shape, blockers, config.build_radius_m)
+	return is_water_spot(pos) and PlacementGrid.is_valid(shape, blockers, INF)
 
 
 ## Les types qui se posent dans l'eau (les pompes).
@@ -1097,13 +1139,13 @@ func is_water_spot(pos: Vector3) -> bool:
 ## Déplace (et tourne) un objet sur la case visée. Renvoie faux si l'emplacement n'est pas valide.
 ## Sans `rotation_deg`, l'objet garde son orientation.
 func move_item(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> bool:
-	var snapped := PlacementGrid.snap(pos, config.grid_cell_m)
+	var rot := item_rotation(item) if is_nan(rotation_deg) else PlacementGrid.wrap_deg(rotation_deg)
+	var snapped := snap_item(item_kind(item), pos, rot)
 	snapped.y = (item.position as Vector3).y
-	if not can_place(item, snapped):
+	if not can_place(item, snapped, rot):
 		return false
 	item.position = snapped
-	if not is_nan(rotation_deg):
-		item.rotation_deg = PlacementGrid.wrap_deg(rotation_deg)
+	item.rotation_deg = rot
 	item_moved.emit(item)
 	network_changed.emit()
 	return true

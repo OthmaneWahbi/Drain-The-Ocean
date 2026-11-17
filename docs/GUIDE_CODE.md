@@ -168,7 +168,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `core/placement_grid.gd` (classe `PlacementGrid`, logique pure, deux fonctions statiques) :
   - `snap(pos, cell)` ramène un point au **centre** de sa case (`snappedf` décalé d'une demi-case) ;
   - `is_valid(pos, radius, others, build_radius)` : en 2D (X, Z), l'emprise doit tenir dans le cercle constructible et ne toucher aucun cercle de `others` (distance < somme des rayons = chevauchement).
-- Données (`GameConfig`, groupe « Placement ») : `grid_cell_m`, `build_radius_m`, `footprints` (type → rayon), `fixed_obstacles` (un `PackedVector3Array` où chaque élément est `(x, z, rayon)`).
+- Données (`GameConfig`, groupe « Placement ») : `grid_cell_m`, `build_radius_m`, `footprints` (type → rayon ; rectangle depuis 0.1.5, voir plus bas), `fixed_obstacles` (un `PackedVector3Array` où chaque élément est `(x, z, rayon)`).
 - Dans GameState :
   - `movable_items()` = zones + stations + miroirs + décors : tous des dictionnaires `{id, kind, position…}`. Les décors ont maintenant un `id`, les miroirs un `kind = "miroir"`, pour être traités pareil.
   - `blockers_for(item)` : les emprises de tous les AUTRES objets + les obstacles fixes. `can_place(item, pos)` appelle `PlacementGrid.is_valid`.
@@ -326,6 +326,22 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
   - `PumpView._update_stilts` met les pilotis à la profondeur sous la pompe, à chaque image : elle peut être déplacée.
 - **Raccords (`PipesView`) :** une bride côté pompe ; `_spout` ajoute une descente, un bec et un filet d'eau (`Stream`) au-dessus d'une zone. `_process` n'affiche le filet que si une pompe a débité il y a moins de 0,3 s (`pump.last_run_ms`). Un piquet porte les pièces au-dessus d'un creux.
 
+### La grille de placement colle aux modèles (PR #27)
+
+- **Les formes (`PlacementGrid`, logique pure)** : une forme est `{"rect": Rect2}` (X, Z du monde) ou `{"position", "radius"}` (cercle). `overlaps(a, b)` gère rectangle/rectangle (marge `EPS` : se toucher n'est pas chevaucher), rectangle/cercle (point du rectangle le plus proche du centre) et cercle/cercle. `fits` vérifie les 4 coins contre `build_radius`. `is_valid(forme, autres, rayon)` = `fits` + aucun `conflicts`.
+- **Rotation :** `rect_at(local, pos, angle)` tourne les 4 coins comme la vue (`Vector3.rotated(UP, angle)`, le même sens que `rotation_degrees.y`), prend le rectangle qui les englobe et arrondit au dixième de millimètre.
+- **Alignement :** `snap_rect(pos, local, angle, case)` déplace l'objet pour que le coin bas de son rectangle tourné tombe sur une ligne. Avec des côtés en cases entières, tous les bords y tombent. C'est ce qui place un miroir (2 cases) sur une ligne et une cuvette (bac de 3 cases) au milieu d'une case.
+- **Données :** `config.footprints[type] = [x0, z0, x1, z1]`. `GameState.footprint_of(type)` en fait un `Rect2` ; `footprint_rect(type, pos, angle)` le pose ; `item_rect(objet)` lit sa position et son `rotation_deg` ; `snap_item(type, pos, angle)` aligne.
+- **Une seule règle :** `spot_ok(type, pos, angle, gêneurs)`. `can_place(objet, pos, angle = NAN)` (NAN : l'angle actuel), `move_item` (aligne avec le nouvel angle, puis vérifie avec lui : tourner sur place peut être refusé), `find_free_spot(type, près, angle)` (carrés de plus en plus grands autour de la position alignée).
+- **Gêneurs :** `_blockers_except` donne des rectangles pour les objets posés, les caisses et les coquillages, des cercles pour les obstacles fixes, les noix, le joueur et les tuyaux. `placement_conflicts(objet, pos, angle)` renvoie ceux qu'on chevauche.
+- **Tuyaux et pompes :** `GameState.pump_cells(pompe)` = cases de son emprise (`Rect2i`). `PipeNetwork.pump_ports(case, emprise)` liste les cases qui la bordent (pas les diagonales) et celle au-dessus du centre ; `reach` et `zones_reached` le reçoivent. `pump_at_cell(case)` sert à `PipesView._touches_pump` pour la bride.
+- **Toboggan :** `zones_for_slide` utilise `PlacementGrid.distance_to(rectangle de la zone, toboggan) <= slide_reach_m`.
+- **Aperçu (`PlacementController`) :** `_follow_aim` vise le milieu de l'emprise (on retire le décalage du centre du rectangle tourné), aligne avec `snap_item`, puis `show_footprint(pos, angle)` :
+  - une dalle `BoxMesh` de la taille du rectangle (verte ou rouge) ;
+  - la grille en lignes sur le rectangle agrandi de `GRID_MARGIN_CELLS` ;
+  - un `ImmediateMesh` à deux surfaces : les voiles (triangles, cachés par les objets) et les contours (lignes, `no_depth_test`), en bleu pour les voisins, en rouge pour les gêneurs. Le joueur n'est montré que s'il gêne.
+- **Le test qui garde les emprises honnêtes (`test_footprints.gd`) :** `_model(type)` assemble ce que la vue montre (zone + tas au plus gros, pompe + pilotis…) ; `Models.bounds` donne son rectangle au sol. L'emprise doit le couvrir (à `OVERHANG` = 12 cm près) et chaque côté doit toucher le modèle à moins d'une case. Si on change un modèle, ce test dit quelle emprise ajuster.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -408,3 +424,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #26 — Version 0.1.4 : tous les modèles, 64 par case, pompes dans l'eau
 `Props`, CC0 ajoutés (cristaux, crabe, poisson, fleurs, personnages), seaux qui se remplissent, corps animé, `carry_space(clé)`, `spot_ok` / `is_water_spot`, pilotis, raccords de tuyaux, `test_props.gd`.
+
+### PR #27 — Version 0.1.5 : la grille colle aux modèles
+Emprises en rectangles de cases (`config.footprints`), `PlacementGrid.rect_at` / `snap_rect` / `overlaps`, `spot_ok` avec rotation, `find_free_spot(type, …)`, ports de pompe tout autour de l'emprise, aperçu des cases (`show_footprint`), `test_footprints.gd`.

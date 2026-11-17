@@ -20,7 +20,8 @@ func after_each() -> void:
 
 func _slide_next_to_basin() -> Dictionary:
 	var basin: Dictionary = gs.zones[0]
-	return gs.add_slide("toboggan", basin.position + Vector3(gs.footprint(basin) + 1.5, 0, 0))
+	var edge: float = gs.item_rect(basin).end.x - basin.position.x
+	return gs.add_slide("toboggan", basin.position + Vector3(edge + 1.5, 0, 0))
 
 
 func test_slide_is_tier_2_placeable_and_movable() -> void:
@@ -64,7 +65,8 @@ func test_slide_sends_nearby_salt_by_itself() -> void:
 
 func test_far_zones_are_not_served() -> void:
 	var basin: Dictionary = gs.zones[0]
-	var sl: Dictionary = gs.add_slide("toboggan", basin.position + Vector3(gs.footprint(basin) + gs.config.slide_reach_m + 1.0, 0, 0))
+	var edge: float = gs.item_rect(basin).end.x - basin.position.x
+	var sl: Dictionary = gs.add_slide("toboggan", basin.position + Vector3(edge + gs.config.slide_reach_m + 1.0, 0, 0))
 	assert_eq(gs.zones_for_slide(sl).size(), 0)
 	basin.logic.deposit = {"sel": 5}
 	gs.simulate(gs.config.slide_period_s * 1.1)

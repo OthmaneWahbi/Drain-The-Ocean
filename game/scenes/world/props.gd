@@ -576,6 +576,24 @@ static func hand_pump() -> Node3D:
 	return root
 
 
+## Demi-écart des pilotis sous la pompe à bras et sous le moulin (la plateforme déborde de 0,15 m).
+const PUMP_STILTS := 0.35
+const WINDMILL_STILTS := 0.85
+
+
+## Les pilotis d'une pompe posée dans l'eau : quatre pieux, des entretoises et une plateforme,
+## de hauteur 1 (la vue les met à l'échelle de la profondeur, pieds sur le fond). Nœud « Stilts ».
+static func stilts(half: float) -> Node3D:
+	var s := Node3D.new()
+	s.name = "Stilts"
+	for sx in [-1, 1]:
+		for sz in [-1, 1]:
+			s.add_child(box(Vector3(0.14, 1.0, 0.14), WOOD_DARK, Vector3(sx * half, 0.5, sz * half)))
+		s.add_child(box(Vector3(0.06, 0.06, half * 2), WOOD, Vector3(sx * half, 0.6, 0)))
+	s.add_child(box(Vector3(half * 2 + 0.3, 0.08, half * 2 + 0.3), WOOD, Vector3(0, 0.96, 0)))
+	return s
+
+
 ## Le moulin-pompe : une tour en treillis de bois, la tête rouge, la girouette crème au « A », et
 ## huit pales (« Blades », tournent autour de Z) en rouge et crème.
 static func windmill() -> Node3D:

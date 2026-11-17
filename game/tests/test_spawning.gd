@@ -28,21 +28,22 @@ func _rich() -> void:
 func _assert_nothing_overlaps(label: String) -> void:
 	var things := []
 	for it in gs.movable_items():
-		things.append({"position": it.position, "radius": gs.footprint(it), "name": gs.item_kind(it)})
+		things.append({"shape": PlacementGrid.rect_shape(gs.item_rect(it)), "name": gs.item_kind(it)})
 	for c in gs.crates:
-		things.append({"position": c.position, "radius": gs.footprint_of("caisse"), "name": "caisse"})
+		things.append({"shape": PlacementGrid.rect_shape(gs.footprint_rect("caisse", c.position)), "name": "caisse"})
 	for p in gs.pickups:
-		var r: float = gs.config.coconut_radius_m if p.kind == "coconut" else gs.footprint_of("coquillage")
-		things.append({"position": p.position, "radius": r, "name": p.kind})
+		if p.kind == "coconut":
+			things.append({"shape": PlacementGrid.circle_shape(p.position, gs.config.coconut_radius_m), "name": p.kind})
+		else:
+			things.append({"shape": PlacementGrid.rect_shape(gs.footprint_rect("coquillage", p.position)), "name": p.kind})
 	for o in gs.config.fixed_obstacles:
-		things.append({"position": Vector3(o.x, 0, o.y), "radius": o.z, "name": "fixe"})
+		things.append({"shape": PlacementGrid.circle_shape(Vector3(o.x, 0, o.y), o.z), "name": "fixe"})
 	for i in things.size():
 		for j in range(i + 1, things.size()):
 			var a: Dictionary = things[i]
 			var b: Dictionary = things[j]
-			var d: float = Vector2(a.position.x, a.position.z).distance_to(Vector2(b.position.x, b.position.z))
-			if d < a.radius + b.radius - 1e-6:
-				fail("%s : %s et %s se chevauchent (%.2f m)" % [label, a.name, b.name, d])
+			if PlacementGrid.overlaps(a.shape, b.shape):
+				fail("%s : %s et %s se chevauchent (%s / %s)" % [label, a.name, b.name, a.shape, b.shape])
 				return
 
 
@@ -98,7 +99,8 @@ func test_crate_in_flight_blocks_placement_and_other_crates() -> void:
 	var c1: Dictionary = gs.order(["bache"])[0]
 	var c2: Dictionary = gs.order(["bache"])[0]
 	assert_false(c1.is_empty())
-	assert_true(c1.position.distance_to(c2.position) >= 2.0 * gs.footprint_of("caisse") - 1e-6, "deux caisses pas au même endroit")
+	assert_false(PlacementGrid.overlaps(PlacementGrid.rect_shape(gs.footprint_rect("caisse", c1.position)),
+		PlacementGrid.rect_shape(gs.footprint_rect("caisse", c2.position))), "deux caisses pas au même endroit")
 	var basin: Dictionary = gs.zones[0]
 	assert_false(gs.move_item(basin, c1.position), "on ne pose rien là où une caisse va tomber")
 	_assert_nothing_overlaps("caisses")
@@ -181,8 +183,8 @@ func test_nothing_spawns_or_lands_on_the_player() -> void:
 	gs.player_position = c.position  # le joueur se tient sur la caisse pour l'ouvrir
 	gs.open_crate(c)
 	var tarp: Dictionary = gs.zones[gs.zones.size() - 1]
-	var d: float = Vector2(tarp.position.x, tarp.position.z).distance_to(Vector2(c.position.x, c.position.z))
-	assert_true(d >= gs.footprint(tarp) + gs.config.player_radius_m - 1e-6, "la bâche n'apparaît pas sur le joueur")
+	var player := PlacementGrid.circle_shape(c.position, gs.config.player_radius_m)
+	assert_false(PlacementGrid.overlaps(PlacementGrid.rect_shape(gs.item_rect(tarp)), player), "la bâche n'apparaît pas sur le joueur")
 
 
 func test_player_blocks_placement() -> void:
@@ -234,7 +236,7 @@ func test_moving_a_zone_keeps_its_water_and_salt() -> void:
 
 func test_find_free_spot_is_valid_even_when_crowded() -> void:
 	for i in 8:
-		var spot: Vector3 = gs.find_free_spot(gs.footprint_of("bassin_bois"), Vector3.ZERO)
+		var spot: Vector3 = gs.find_free_spot("bassin_bois", Vector3.ZERO)
 		assert_true(spot.is_finite())
 		gs.add_zone("bassin_bois", spot)
 	_assert_nothing_overlaps("8 bassins")
