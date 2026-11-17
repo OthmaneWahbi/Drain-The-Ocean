@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.37 (0.1.6 : tuyaux solides qui versent au milieu, portée de pose) |
+| Version du document | 0.38 (0.1.7 : plus de clignotement en mode G) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -816,6 +816,15 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** Portée de pose : le bord de l'objet doit être à moins de **6 m** du joueur (`place_reach_m`). Plus loin, l'aperçu est rouge et l'invite dit « Trop loin : approche-toi ».
 - **[PROPOSÉ]** Les tas de la palette grandissent d'un bloc jusqu'à remplir leur place, puis presque plus (au plus 15 % plus hauts que larges) : le compteur dit le reste.
 - **[PROPOSÉ]** Tuyaux solides : on s'y cogne et on peut monter dessus. Une pièce ne se pose jamais dans le joueur (au sol ou à hauteur de tête). Si l'on s'enferme dans un enclos de tuyaux, l'anti-blocage nous en sort : il juge « coincé » quand aucune direction ne laisse partir de 1,5 m, et ne nous repose jamais dans un autre enclos.
+
+### 19.12 Version 0.1.7 : plus de clignotement en mode G
+
+Demande d'Othmane (2026-11-17) **[DÉCIDÉ]** : en mode G (déplacement), les graphismes clignotent ; corriger ce clipping et s'assurer qu'il ne revient pas.
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** L'aperçu (cases, voisins, grille, contours) épouse le relief du sable et flotte 6 à 9 cm au-dessus, une couche au-dessus de l'autre, dans un ordre de dessin fixe.
+- **[PROPOSÉ]** Le rayon de visée ignore tout l'objet déplacé, tas compris : l'objet ne saute plus entre deux places.
+- **[PROPOSÉ]** Au ras d'une ligne de la grille, il faut viser 15 cm dans la nouvelle case pour que l'objet y passe : le balancement de la tête ne le fait plus trembler.
 
 ## 20. Glossaire
 

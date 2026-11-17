@@ -352,6 +352,13 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Tas de la palette :** `Depot.pile_scale` borne la hauteur à `largeur × PILE_MAX_STRETCH` ; le compteur se place avec `pile.scale.y`.
 - **Barre :** `Hud.refresh_toolbar` ajoute `HUD_PIPES_IN_HAND` sous « Tuyaux » et s'abonne à `network_changed`.
 
+### Plus de clignotement en mode G (PR #29)
+
+- **Un seul maillage d'aperçu :** `PlacementController._overlay` (`ImmediateMesh`) refait à chaque image quatre surfaces : cases occupées, voiles des voisins, grille, contours. Chacune a son matériau (`_overlay_material(priorité)`) : transparent, sans écriture de profondeur, `render_priority` 1 à 4, donc l'ordre ne dépend plus de la distance à la caméra. Les contours gardent `no_depth_test`.
+- **Sur le relief :** `_drape_rect`, `_drape_fan` et `_drape_line` découpent en pas de `DRAPE_STEP` (25 cm) et prennent la hauteur de `draped_y(terrain, eau, plancher, x, z, lift)` = max(sol, eau, plancher) + lift. Le plancher est la hauteur de l'objet pour une pompe (sa plateforme sur l'eau), sinon rien. `LIFT_FOOT` à `LIFT_LINE` vont de 6 à 9 cm.
+- **Le rayon de visée :** `bodies_of(vue)` liste les `CollisionObject3D` de la vue et de ses enfants (les tas d'une zone sont des corps à part) ; tous sont exclus.
+- **Hystérésis :** `keep_target(actuelle, candidate, visée, même_rotation)` garde la place actuelle tant que la visée n'est pas `HYSTERESIS_M` (15 cm) plus près de la nouvelle. Tourner l'objet ou un grand saut (plus d'1 m) passent tout de suite.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -440,3 +447,6 @@ Emprises en rectangles de cases (`config.footprints`), `PlacementGrid.rect_at` /
 
 ### PR #28 — Version 0.1.6 : tuyaux solides, versement au milieu, portée de pose
 `inlet_cells` / `pour_level` / `pipe_feeds`, `place_reach_m` / `in_place_reach`, `PILE_MAX_STRETCH`, collision des tuyaux, `ESCAPE_M` 1,5 m et `_trapped_at`, `HUD_PIPES_IN_HAND`, `test_reach.gd`.
+
+### PR #29 — Version 0.1.7 : plus de clignotement en mode G
+Aperçu en un maillage qui suit le relief (`draped_y`, `render_priority`), `bodies_of` pour le rayon, `keep_target` (hystérésis), `test_placement_overlay.gd`.
