@@ -250,9 +250,14 @@ func _drown() -> void:
 ## Coincé : aucune des 8 directions ne laisse avancer de `UnstuckLogic.ESCAPE_M` (plus que la
 ## largeur du personnage). Contre un simple mur, on peut toujours partir de côté ou en arrière.
 func is_trapped() -> bool:
+	return _trapped_at(global_transform)
+
+
+## Coincé si le joueur était à cette place (sert aussi à ne pas le reposer dans la même prison).
+func _trapped_at(xform: Transform3D) -> bool:
 	var free: Array = []
 	# On teste un peu au-dessus du sol : les petites bosses du terrain ne comptent pas comme des murs.
-	var raised := global_transform.translated(Vector3(0, UnstuckLogic.STEP_M, 0))
+	var raised := xform.translated(Vector3(0, UnstuckLogic.STEP_M, 0))
 	for dir in UnstuckLogic.probe_directions(UnstuckLogic.ESCAPE_M):
 		free.append(not test_move(raised, dir))
 	return UnstuckLogic.is_trapped(free)
@@ -300,6 +305,9 @@ func find_free_spot(origin: Vector3, include_origin: bool) -> Variant:
 			continue  # sous l'eau : pas une place de secours
 		query.transform = Transform3D(Basis.IDENTITY, feet + col.position + Vector3(0, UnstuckLogic.STEP_M, 0))
 		if not space.intersect_shape(query, 1).is_empty():
+			continue
+		# Une place libre mais fermée (au milieu d'un enclos de tuyaux, 0.1.6) n'en est pas une.
+		if _trapped_at(Transform3D(global_transform.basis, feet + Vector3(0, 0.05, 0))):
 			continue
 		return feet
 	return null

@@ -36,6 +36,7 @@ func _ready() -> void:
 	GameState.tool_changed.connect(refresh_toolbar)
 	GameState.bucket_changed.connect(refresh_toolbar)  # l'eau du seau, dans sa case
 	GameState.carried_changed.connect(refresh_toolbar)  # les quantités portées dans les cases
+	GameState.network_changed.connect(refresh_toolbar)  # les tuyaux en main (0.1.6)
 	refresh_toolbar()
 	_refresh_ocean()
 	_refresh_items()
@@ -135,6 +136,8 @@ func refresh_toolbar() -> void:
 		_toolbar_labels[i].text = "%d\n%s" % [i + 1, slot_text(tool)]
 		if tool == "seau":
 			_toolbar_labels[i].text += "\n%d / %d L" % [int(GameState.bucket.water_l), int(GameState.bucket.capacity_l)]
+		elif tool == "tuyaux":
+			_toolbar_labels[i].text += "\n" + tr("HUD_PIPES_IN_HAND") % GameState.pipe_stock
 		var picked := i == tb.selected
 		var style := UiTheme.paper(UiTheme.YELLOW if picked else Color(UiTheme.PAPER, 0.88), UiTheme.RED if picked else UiTheme.INK, 10, 4)
 		style.set_border_width_all(4 if picked else 2)

@@ -71,21 +71,24 @@ static func reach(pump_cell: Vector3i, cells: Dictionary, foot: Rect2i = Rect2i(
 	return dist
 
 
-## Vrai si la pièce est au-dessus de la zone (ou dedans) : son centre est dans le rayon de la zone.
-static func feeds(cell: Vector3i, zone_pos: Vector3, zone_radius: float, cell_m: float = 1.0) -> bool:
+## Vrai si la pièce verse dans la zone (0.1.6, Othmane) : elle est au niveau `pour_level` (un seul
+## bloc au-dessus du bac), et son centre est dans l'arrivée de la zone `inlet` (le milieu du bac).
+static func feeds(cell: Vector3i, inlet: Rect2, pour_level: int, cell_m: float = 1.0) -> bool:
+	if cell.y != pour_level:
+		return false
 	var c := Vector2((cell.x + 0.5) * cell_m, (cell.z + 0.5) * cell_m)
-	return c.distance_to(Vector2(zone_pos.x, zone_pos.z)) <= zone_radius
+	return inlet.grow(1e-3).has_point(c)
 
 
 ## Les zones remplies par une pompe, de la plus proche (en pièces de tuyau) à la plus lointaine.
-static func zones_reached(pump_pos: Vector3, cells: Dictionary, zones: Array, zone_radius: Callable, cell_m: float = 1.0, foot: Rect2i = Rect2i()) -> Array:
+## `pours(case, zone)` dit si une pièce verse dans une zone (GameState.pipe_feeds).
+static func zones_reached(pump_pos: Vector3, cells: Dictionary, zones: Array, pours: Callable, cell_m: float = 1.0, foot: Rect2i = Rect2i()) -> Array:
 	var dist := reach(cell_of(pump_pos, cell_m), cells, foot)
 	var found := []
 	for zone in zones:
 		var best := -1
-		var r := float(zone_radius.call(zone))
 		for c in dist:
-			if feeds(c, zone.position, r, cell_m) and (best < 0 or int(dist[c]) < best):
+			if bool(pours.call(c, zone)) and (best < 0 or int(dist[c]) < best):
 				best = int(dist[c])
 		if best >= 0:
 			found.append({"zone": zone, "dist": best})

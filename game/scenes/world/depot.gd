@@ -59,7 +59,7 @@ func _refresh() -> void:
 		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.95)
 		var label: Label3D = _labels[r]
 		label.text = str(count)
-		label.position.y = SIZE.y + h + 0.25
+		label.position.y = SIZE.y + pile.scale.y * PILE_MODEL_H + 0.25  # juste au-dessus du vrai tas
 		label.modulate = Color(1, 1, 1, 1.0 if count > 0 else 0.4)
 
 
@@ -70,12 +70,17 @@ static func pile_height(count: int) -> float:
 	return clampf(0.08 + log(1.0 + count) / log(10.0) * 0.35, 0.08, 1.5)
 
 
+## Un tas ne s'étire jamais plus que ça en hauteur par rapport à sa largeur (0.1.6 : au-delà,
+## les morceaux posés dessus paraissaient déformés).
+const PILE_MAX_STRETCH := 1.15
+
+
 ## L'échelle d'un tas de hauteur `h` : il grandit d'un bloc jusqu'à remplir sa place sur la
-## palette (`max_width`), puis seulement en hauteur.
+## palette (`max_width`), puis à peine en hauteur (le compteur dit le reste). Jamais étiré.
 static func pile_scale(h: float, max_width: float) -> Vector3:
 	var k := h / PILE_MODEL_H
 	var kw := minf(k, max_width / PILE_MODEL_W)
-	return Vector3(kw, k, kw)
+	return Vector3(kw, minf(k, kw * PILE_MAX_STRETCH), kw)
 
 
 func get_prompt(_player: Node) -> String:

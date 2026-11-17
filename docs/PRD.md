@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.36 (0.1.5 : la grille de placement colle aux modèles) |
+| Version du document | 0.37 (0.1.6 : tuyaux solides qui versent au milieu, portée de pose) |
 | Date | 2026-11-16 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -219,7 +219,7 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
   - ~~Liaisons automatiques par tronçons de 4 m (v0.19)~~ : remplacé en v0.22 par la pose à la main ci-dessous.
   - **[DÉCIDÉ]** Les tuyaux se posent **à la main** par le joueur, à l'**horizontale ou à la verticale**, librement : on compose le réseau comme on veut (Othmane, 2026-11-16).
   - **[PROPOSÉ]** Détails de la pose (v0.22) : un lot de tuyaux (50 sel) donne **5 pièces**. Une pièce occupe **une case de la grille** (1 m) à un **niveau de hauteur** de 0 (au sol) à 4. On prend l'outil « Tuyaux » dans la barre, on vise : un cube fantôme vert (ou rouge) montre où la pièce ira ; clic pour poser. En visant une pièce, la nouvelle se colle sur la face visée (au-dessus, à côté…). Une pièce en hauteur doit toucher une autre pièce ou être juste au-dessus d'une pompe. Avec l’outil en main, **E sur une pièce** la reprend dans le stock.
-  - **[PROPOSÉ]** Une pompe envoie l'eau dans les pièces qui la touchent (les 4 cases autour et la case au-dessus) ; l'eau suit les pièces reliées entre elles. Une pièce **au-dessus ou au bord d'une zone** (assez près de son centre) y verse l'eau. Les zones les plus proches de la pompe en suivant les tuyaux sont remplies d'abord. Les tuyaux mouillés sont bleus, les autres gris.
+  - **[PROPOSÉ]** Une pompe envoie l'eau dans les pièces qui la touchent (les 4 cases autour et la case au-dessus) ; l'eau suit les pièces reliées entre elles. ~~Une pièce **au-dessus ou au bord d'une zone** (assez près de son centre) y verse l'eau.~~ **[DÉCIDÉ]** Une pièce ne verse dans une zone que **vers son centre** et **un seul bloc au-dessus** (Othmane, 2026-11-17 ; voir [19.11](#1911-version-016--tuyaux-solides-qui-versent-au-milieu-portée-de-pose)). Les zones les plus proches de la pompe en suivant les tuyaux sont remplies d'abord. Les tuyaux mouillés sont bleus, les autres gris.
   - **[PROPOSÉ]** Au sol, une pièce bloque les objets (sauf les zones de séchage, qu'un tuyau peut surplomber pour les remplir). En hauteur, elle passe au-dessus de tout. Déplacer une pompe, une zone ou un autre objet ne casse rien : le réseau est recalculé à chaque fois à partir des pièces posées (Othmane, 2026-11-16 : « le pompage ne doit pas casser quand on déplace quelque chose » **[DÉCIDÉ]**).
   - **[DÉCIDÉ]** Les pompes **affichent leur débit** quand on s'en approche ; la pompe à bras l'affiche quand on s'en sert (Othmane, 2026-11-16). **[PROPOSÉ]** Une étiquette « Moulin-pompe : 10 L/s » flotte au-dessus de la pompe à moins de 7 m ; 0 L/s quand rien n'est relié ou que les zones sont pleines.
   - On remplit la zone la plus proche d'abord. Quand toutes les zones reliées sont pleines, la pompe ne prend plus rien à l'océan.
@@ -719,7 +719,7 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 
 - **[PROPOSÉ]** Menus et options (v0.28 ; M-21, M-71, M-72, M-73, M-77) : au lancement, un **menu principal** avec 3 emplacements de sauvegarde (temps de jeu, litres retirés, date), Jouer / Effacer, Options, Quitter ; le jeu est en pause derrière et rien n'est sauvegardé tant qu'aucun emplacement n'est choisi. **Échap** ouvre le menu pause (vraie pause : le chronomètre s'arrête) : Reprendre, Sauvegarder, Options, Menu principal, Quitter ; il ne s'ouvre pas par-dessus le catalogue (M-74). **Options** (à part des parties, `user://settings.json`) : champ de vision 60-110, sensibilité, volume, balancement de la tête, plein écran, langue FR/EN, chronomètre speedrun. Le chronomètre de partie est **caché** par défaut (le HUD montre l'heure du jeu) ; l'option speedrun l'affiche au centième. Sauvegarde automatique aussi **après chaque achat**.
 
-- **[DÉCIDÉ]** Anti-blocage (v0.29, demande d'Othmane, 2026-11-16 : « Make sure no softlocking is possible ») : on ne doit jamais pouvoir rester coincé. (1) Les **petits objets se traversent** : tas de matériaux, tuyaux, coquillages, noix de coco ; on les vise toujours (E, clic) mais on ne s'y cogne pas. (2) **Détection automatique** : si l'on essaie d'avancer sans bouger pendant 1 s et qu'aucune des 8 directions ne laisse partir de 80 cm, le personnage se pose sur la place libre la plus proche (avec du sol, cercles de 50 cm jusqu'à 4 m). (3) **Filet de sécurité** : bouton « Me débloquer » dans le menu pause, qui ramène sur la plage (à côté si un objet bloque le point de retour). Valeurs dans `GameConfig` (`unstuck_*`).
+- **[DÉCIDÉ]** Anti-blocage (v0.29, demande d'Othmane, 2026-11-16 : « Make sure no softlocking is possible ») : on ne doit jamais pouvoir rester coincé. (1) Les **petits objets se traversent** : tas de matériaux, ~~tuyaux~~ (solides depuis 0.1.6, décision d'Othmane), coquillages, noix de coco ; on les vise toujours (E, clic) mais on ne s'y cogne pas. (2) **Détection automatique** : si l'on essaie d'avancer sans bouger pendant 1 s et qu'aucune des 8 directions ne laisse partir de ~~80 cm~~ 1,5 m (0.1.6), le personnage se pose sur la place libre la plus proche (avec du sol, cercles de 50 cm jusqu'à 4 m). (3) **Filet de sécurité** : bouton « Me débloquer » dans le menu pause, qui ramène sur la plage (à côté si un objet bloque le point de retour). Valeurs dans `GameConfig` (`unstuck_*`).
 
 - **[PROPOSÉ]** Vraie fin construite (v0.30 ; M-04, Q-24, Q-25) : touche de debug **F4** seulement. Phases minutées (données : `GameConfig.ending_durations`) : la **bonde** et sa chaîne se découvrent quand l'eau descend · **glouglou** (tourbillon, l'océan disparaît) · **traversée** à pied du fond à sec, plan large en 3e personne · **avion publicitaire** de l'agence (même pilote qui fait coucou) avec sa banderole « maintenant aussi transporteur : de n'importe où à n'importe où » · écran du **temps de partie** (chronomètre arrêté au début de la fin) · **générique** · retour au menu principal. Clic : passer le temps ou le générique. Le meilleur temps est gardé et affiché (★) dans le menu ; une partie finie se rouvre **juste avant de tirer la chaîne**.
 - **[PROPOSÉ]** Traits sur le palmier (v0.30 ; M-84) : un trait gravé par réveil après une noyade, par paquets de 5 (4 debout, le 5e en travers), sur le palmier le plus proche de la plage ; sauvegardé avec la partie.
@@ -799,6 +799,23 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** Les tuyaux se branchent sur **toutes les cases qui bordent la pompe** (et celle du dessus), plus seulement sur les 4 cases autour de son centre : c'est nécessaire pour le moulin, qui fait 3 × 3 cases.
 - **[PROPOSÉ]** Le toboggan sert les zones dont le **bord** est à moins de 3 m de lui (comme avant, mais compté depuis le vrai bord).
 - **[PROPOSÉ]** Un test vérifie que chaque emprise couvre son modèle (à 12 cm près) et qu'aucun de ses côtés ne pourrait reculer d'une case : si un modèle change, le test le signale.
+
+### 19.11 Version 0.1.6 : tuyaux solides qui versent au milieu, portée de pose
+
+Demandes d'Othmane (2026-11-17) **[DÉCIDÉ]** :
+- afficher le nombre de tuyaux en main ;
+- les ombres des tuyaux reliés ne s'affichaient pas ;
+- un tuyau ne doit verser dans une zone que s'il est **vers le centre** et **un seul bloc au-dessus** (avant, il versait dès qu'il passait au-dessus du bac) ;
+- **limiter la distance** à laquelle on pose un objet ;
+- les tas se déformaient au-delà d'une certaine quantité ;
+- **les tuyaux ont une collision** (« c'est plus fun »).
+
+Détails **[PROPOSÉ]** :
+- **[PROPOSÉ]** Le nombre de tuyaux en main s'écrit dans leur case de la barre (« 12 en main »).
+- **[PROPOSÉ]** Arrivée d'eau : la case du milieu pour la cuvette et la bâche, les 3 cases du milieu pour le bassin en bois (qui est plus long) ; elle tourne avec la zone. Un tuyau ne se pose plus dans une zone (au sol), et une zone ne se pose plus sur un tuyau au sol : on passe par-dessus et on descend d'un bloc au-dessus du milieu.
+- **[PROPOSÉ]** Portée de pose : le bord de l'objet doit être à moins de **6 m** du joueur (`place_reach_m`). Plus loin, l'aperçu est rouge et l'invite dit « Trop loin : approche-toi ».
+- **[PROPOSÉ]** Les tas de la palette grandissent d'un bloc jusqu'à remplir leur place, puis presque plus (au plus 15 % plus hauts que larges) : le compteur dit le reste.
+- **[PROPOSÉ]** Tuyaux solides : on s'y cogne et on peut monter dessus. Une pièce ne se pose jamais dans le joueur (au sol ou à hauteur de tête). Si l'on s'enferme dans un enclos de tuyaux, l'anti-blocage nous en sort : il juge « coincé » quand aucune direction ne laisse partir de 1,5 m, et ne nous repose jamais dans un autre enclos.
 
 ## 20. Glossaire
 

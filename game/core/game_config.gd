@@ -125,6 +125,9 @@ extends Resource
 @export_group("Placement")
 ## Taille d'une case de la grille de placement, en mètres.
 @export var grid_cell_m: float = 1.0
+## On ne pose un objet qu'à portée (0.1.6, Othmane) : le bord de son emprise à moins de cette
+## distance du joueur, en mètres.
+@export var place_reach_m: float = 6.0
 ## On ne pose rien au-delà de ce rayon (le sable sec de l'île fait 20 m de rayon).
 @export var build_radius_m: float = 24.0
 ## Hauteur du fond marin (le terrain y descend et y reste ; la bonde de la fin y est posée).
@@ -211,8 +214,11 @@ extends Resource
 @export var pipe_max_level: int = 4
 ## Emprise d'une pièce de tuyau au sol (pour que rien ne se pose dessus).
 @export var pipe_radius_m: float = 0.2
-## Une pièce de tuyau dont le centre est à moins de ce rayon d'une zone y verse son eau.
-@export var inlet_radius: Dictionary = {"cuvette": 1.5, "bache": 1.5, "bassin_bois": 2.5}
+## L'arrivée d'eau de chaque zone (0.1.6, Othmane : « vers le centre ») : les cases du milieu du
+## bac, rectangle [x0, z0, x1, z1] en mètres dans le repère de la zone. Une pièce y verse si son
+## centre est dedans ET qu'elle est au niveau `pour_level` (un seul bloc au-dessus du bac).
+@export var inlet_cells: Dictionary = {"cuvette": [-0.5, -0.5, 0.5, 0.5], "bache": [-0.5, -0.5, 0.5, 0.5], "bassin_bois": [-1.5, -0.5, 1.5, 0.5]}
+@export var pour_level: int = 1
 
 @export_group("Placement (suite)")
 ## Le joueur occupe ce rayon : on ne pose rien et rien n'apparaît sur lui.

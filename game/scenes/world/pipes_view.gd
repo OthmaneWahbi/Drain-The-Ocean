@@ -31,6 +31,9 @@ func rebuild() -> void:
 		for d in PipeNetwork.DIRS:
 			if GameState.pipes.has(cell + d):
 				_arm(piece, Vector3(d) * cell_m * 0.5, color)
+				# Solide jusqu'au bord de la case : une rangée de tuyaux se traverse en sautant dessus.
+				var half := Vector3(d).abs() * cell_m * 0.25 + (Vector3.ONE - Vector3(d).abs()) * 0.15
+				piece.add_child(Greybox.box_collision(half * 2.0, Vector3(d) * cell_m * 0.25))
 			elif _touches_pump(cell, d):
 				# Jusqu'au corps de la pompe, avec une bride : on voit d'où vient l'eau.
 				_arm(piece, Vector3(d) * cell_m * 0.85, color)
@@ -40,7 +43,7 @@ func rebuild() -> void:
 		# Une pièce au-dessus d'une zone : un coude, une descente et un bec évasé jusqu'au bord du
 		# bac ; quand l'eau passe, un filet d'eau tombe dedans (0.1.4 : on voit où ça verse).
 		for zone in GameState.zones:
-			if PipeNetwork.feeds(cell, zone.position, GameState.inlet_radius(zone), cell_m):
+			if GameState.pipe_feeds(cell, zone):
 				_spout(piece, color, wet.has(cell), (zone.position as Vector3).y + 0.45 - piece.position.y)
 				break
 		# Au-dessus de l'eau ou d'un creux, un piquet en bois porte la pièce jusqu'au sol.
@@ -48,8 +51,9 @@ func rebuild() -> void:
 			var ground := GameState.terrain.height(piece.position.x, piece.position.z) - piece.position.y
 			if ground < -0.25:
 				piece.add_child(Props.box(Vector3(0.08, -ground, 0.08), Props.WOOD_DARK, Vector3(0, ground / 2.0, 0)))
-		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.5))
-		PhysicsLayers.make_walk_through(piece)  # on le vise, on ne s'y coince pas
+		# 0.1.6 (Othmane : « plus fun ») : les tuyaux sont solides, on peut marcher dessus. Le joueur
+		# ne peut pas s'y enfermer pour de bon : l'anti-blocage (player.gd) le pose sur une place libre.
+		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.4))
 
 
 ## Les filets d'eau ne coulent que pendant qu'une pompe débite (à l'instant).
@@ -90,7 +94,6 @@ func _lay(mi: Node3D, d: Vector3) -> void:
 func _spout(piece: Node3D, color: Color, wet: bool, bottom: float) -> void:
 	bottom = minf(bottom, -0.25)
 	var down := Props.cyl(PIPE_RADIUS, PIPE_RADIUS, -bottom, color, Vector3(0, bottom / 2.0, 0), 8)
-	down.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	piece.add_child(down)
 	piece.add_child(Props.cyl(PIPE_RADIUS * 1.2, PIPE_RADIUS * 2.2, 0.14, Props.IRON, Vector3(0, bottom - 0.05, 0), 10))
 	if wet:
@@ -103,7 +106,6 @@ func _spout(piece: Node3D, color: Color, wet: bool, bottom: float) -> void:
 func _arm(piece: Node3D, to: Vector3, color: Color) -> void:
 	var length := to.length()
 	var arm := Greybox.cylinder(PIPE_RADIUS, length, color, to / 2.0, 8)
-	arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if absf(to.y) < 0.001:
 		# Le cylindre est debout (axe Y) : on le couche dans la bonne direction.
 		arm.rotation = Vector3(PI / 2.0, 0, 0) if absf(to.z) > absf(to.x) else Vector3(0, 0, PI / 2.0)

@@ -342,6 +342,16 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
   - un `ImmediateMesh` à deux surfaces : les voiles (triangles, cachés par les objets) et les contours (lignes, `no_depth_test`), en bleu pour les voisins, en rouge pour les gêneurs. Le joueur n'est montré que s'il gêne.
 - **Le test qui garde les emprises honnêtes (`test_footprints.gd`) :** `_model(type)` assemble ce que la vue montre (zone + tas au plus gros, pompe + pilotis…) ; `Models.bounds` donne son rectangle au sol. L'emprise doit le couvrir (à `OVERHANG` = 12 cm près) et chaque côté doit toucher le modèle à moins d'une case. Si on change un modèle, ce test dit quelle emprise ajuster.
 
+### Tuyaux solides qui versent au milieu, portée de pose (PR #28)
+
+- **Verser :** `PipeNetwork.feeds(case, arrivée: Rect2, niveau)` est vrai si `case.y == niveau` et que le centre de la case est dans l'arrivée. `GameState.inlet_rect(zone)` pose `config.inlet_cells[type]` (repère de la zone) avec `PlacementGrid.rect_at` : l'arrivée tourne avec la zone. `pipe_feeds(case, zone)` est le seul endroit qui décide ; `zones_reached` le reçoit en `Callable`, et `PipesView` l'appelle pour dessiner le bec.
+- **Tuyaux et zones :** `_blockers_except` met les tuyaux au sol dans les gêneurs de tout le monde, zones comprises, et `can_place_pipe` compte les zones (`with_zones` vrai).
+- **Portée :** `in_place_reach(objet, pos, angle)` = `PlacementGrid.distance_to(rectangle, player_position) <= place_reach_m`. Ce n'est pas dans `can_place` (le code et les tests posent où ils veulent) : seul `PlacementController.show_footprint` l'exige, avec `_too_far` pour l'invite.
+- **Tuyaux solides :** `PipesView` ne rend plus les pièces traversables. Collision : une boîte de 0,4 m au raccord et une boîte de 0,3 m d'épaisseur par bras vers une pièce voisine (jusqu'au bord de la case). `can_place_pipe` compare la pièce au cercle du joueur pour les niveaux 0 et 1.
+- **Anti-blocage :** `player._trapped_at(transform)` fait les 8 sondes `test_move` de `UnstuckLogic.ESCAPE_M` (1,5 m) ; `is_trapped()` l'appelle sur la position actuelle et `find_free_spot` sur chaque place candidate, pour ne pas reposer le joueur dans un enclos.
+- **Tas de la palette :** `Depot.pile_scale` borne la hauteur à `largeur × PILE_MAX_STRETCH` ; le compteur se place avec `pile.scale.y`.
+- **Barre :** `Hud.refresh_toolbar` ajoute `HUD_PIPES_IN_HAND` sous « Tuyaux » et s'abonne à `network_changed`.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -427,3 +437,6 @@ Coquillages et joueur dans les emprises qui gênent, `NO_SPOT`, `_spot_is_free()
 
 ### PR #27 — Version 0.1.5 : la grille colle aux modèles
 Emprises en rectangles de cases (`config.footprints`), `PlacementGrid.rect_at` / `snap_rect` / `overlaps`, `spot_ok` avec rotation, `find_free_spot(type, …)`, ports de pompe tout autour de l'emprise, aperçu des cases (`show_footprint`), `test_footprints.gd`.
+
+### PR #28 — Version 0.1.6 : tuyaux solides, versement au milieu, portée de pose
+`inlet_cells` / `pour_level` / `pipe_feeds`, `place_reach_m` / `in_place_reach`, `PILE_MAX_STRETCH`, collision des tuyaux, `ESCAPE_M` 1,5 m et `_trapped_at`, `HUD_PIPES_IN_HAND`, `test_reach.gd`.

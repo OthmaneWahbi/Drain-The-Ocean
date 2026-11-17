@@ -38,7 +38,9 @@ func _pump_and_basin(kind: String = "pompe_bras") -> Dictionary:
 
 
 ## Ligne droite au sol de la pompe jusqu'au-dessus de la cuvette.
-const STRAIGHT := [Vector3i(-1, 0, 15), Vector3i(-1, 0, 14), Vector3i(-1, 0, 13)]
+## 0.1.6 : on part au sol, on monte d'un bloc devant la cuvette (z = 14, hors de son emprise), et
+## on arrive au-dessus du milieu du bac (case (-1, 12)), un seul bloc au-dessus : là, ça verse.
+const STRAIGHT := [Vector3i(-1, 0, 15), Vector3i(-1, 0, 14), Vector3i(-1, 1, 14), Vector3i(-1, 1, 13), Vector3i(-1, 1, 12)]
 
 
 # --- Logique pure ------------------------------------------------------------------------------
@@ -78,9 +80,36 @@ func test_zones_reached_nearest_first_and_elevated_pipes_feed() -> void:
 		cells[Vector3i(0, 2 if z > 1 else 0, z)] = true
 	cells[Vector3i(0, 1, 1)] = true
 	cells[Vector3i(0, 2, 1)] = true
-	var found := PipeNetwork.zones_reached(Vector3(0.5, 0, 0.5), cells, [far, near], func(_z): return 1.5)
-	assert_eq(found.size(), 2, "un tuyau EN HAUTEUR au-dessus d'une zone y verse aussi")
+	var pours := func(c: Vector3i, zone: Dictionary) -> bool:
+		var p: Vector3 = zone.position
+		return PipeNetwork.feeds(c, Rect2(p.x - 0.5, p.z - 0.5, 1, 1), 1)
+	var found := PipeNetwork.zones_reached(Vector3(0.5, 0, 0.5), cells, [far, near], pours)
+	assert_eq(found.size(), 0, "à deux blocs au-dessus, ça passe sans verser")
+	cells[Vector3i(0, 1, 3)] = true  # une descente d'un bloc au-dessus de chaque zone
+	cells[Vector3i(0, 1, 8)] = true
+	found = PipeNetwork.zones_reached(Vector3(0.5, 0, 0.5), cells, [far, near], pours)
+	assert_eq(found.size(), 2, "un bloc au-dessus du milieu : ça verse")
 	assert_true(found[0] == near)
+
+
+func test_a_pipe_pours_only_one_block_above_the_middle() -> void:
+	# Othmane (0.1.6) : un tuyau ne verse que vers le centre de la zone, et à un seul bloc au-dessus.
+	var basin: Dictionary = gs.zones[0]
+	assert_true(gs.move_item(basin, Vector3(-0.5, 0.5, 12.5)))  # bac x -2..1, z 11..14 ; milieu (-1, 12)
+	assert_true(gs.pipe_feeds(Vector3i(-1, 1, 12), basin), "au-dessus du milieu, un bloc")
+	assert_false(gs.pipe_feeds(Vector3i(-1, 0, 12), basin), "dans le bac")
+	assert_false(gs.pipe_feeds(Vector3i(-1, 2, 12), basin), "deux blocs au-dessus")
+	assert_false(gs.pipe_feeds(Vector3i(-2, 1, 12), basin), "au-dessus du bord du bac")
+	assert_false(gs.pipe_feeds(Vector3i(-1, 1, 13), basin), "au-dessus du bord du bac")
+	assert_false(gs.pipe_feeds(Vector3i(0, 1, 12), basin), "au-dessus du bord du bac")
+	# Le bassin en bois est plus long : ses 3 cases du milieu versent, et ça tourne avec lui.
+	var wood: Dictionary = gs.add_zone("bassin_bois", Vector3(-8.5, 0.5, -12.5))
+	for dx in [-1, 0, 1]:
+		assert_true(gs.pipe_feeds(Vector3i(-9 + dx, 1, -13), wood), "bassin, case %d" % dx)
+	assert_false(gs.pipe_feeds(Vector3i(-11, 1, -13), wood))
+	wood.rotation_deg = 90.0
+	assert_true(gs.pipe_feeds(Vector3i(-9, 1, -14), wood), "tourné : le long de Z")
+	assert_false(gs.pipe_feeds(Vector3i(-10, 1, -13), wood))
 
 
 func test_axis_of_normal() -> void:
@@ -129,15 +158,15 @@ func test_pipe_rules() -> void:
 	assert_false(gs.can_place_pipe(Vector3i(8, 0, 9)), "dans la palette")
 	assert_false(gs.can_place_pipe(Vector3i(5, 0, 1)), "dans le téléphone")
 	var basin: Dictionary = gs.zones[0]
-	assert_true(gs.can_place_pipe(PipeNetwork.cell_of(basin.position)), "dans une zone : oui, il y verse")
+	assert_false(gs.can_place_pipe(PipeNetwork.cell_of(basin.position)), "dans une zone : non (0.1.6, on verse d'en haut)")
 
 
-func test_objects_cannot_be_put_on_ground_pipes_but_zones_can() -> void:
+func test_nothing_goes_on_ground_pipes_not_even_zones() -> void:
 	gs.pipe_stock = 1
 	assert_true(gs.place_pipe(Vector3i(0, 0, -8)))
 	var m: Dictionary = gs.add_mirror(Vector3(5.5, 0.5, -12.5))
 	assert_false(gs.move_item(m, Vector3(0.5, 0.5, -7.5)), "pas de miroir sur un tuyau")
-	assert_true(gs.move_item(gs.zones[0], Vector3(0.5, 0.5, -8.5)), "une zone peut passer sous un tuyau")
+	assert_false(gs.move_item(gs.zones[0], Vector3(0.5, 0.5, -8.5)), "pas de zone sur un tuyau au sol (0.1.6)")
 
 
 # --- Pompage ----------------------------------------------------------------------------------
@@ -172,7 +201,9 @@ func test_a_gap_in_the_pipe_stops_the_water() -> void:
 func test_overhead_pipe_over_an_object() -> void:
 	# Pompe → monte de 2 → passe en hauteur → arrive au-dessus de la cuvette.
 	var pump := _pump_and_basin()
-	_lay([Vector3i(-1, 1, 16), Vector3i(-1, 2, 16), Vector3i(-1, 2, 15), Vector3i(-1, 2, 14), Vector3i(-1, 2, 13)])
+	_lay([Vector3i(-1, 1, 16), Vector3i(-1, 2, 16), Vector3i(-1, 2, 15), Vector3i(-1, 2, 14), Vector3i(-1, 2, 13), Vector3i(-1, 2, 12)])
+	assert_eq(gs.zones_for_pump(pump).size(), 0, "deux blocs au-dessus : ça passe sans verser")
+	_lay([Vector3i(-1, 1, 12)])
 	assert_eq(gs.zones_for_pump(pump).size(), 1)
 	assert_true(gs.run_pump(pump, 1.0) > 0.0)
 
@@ -193,7 +224,7 @@ func test_one_network_feeds_two_zones_nearest_first() -> void:
 	var pump := _pump_and_basin()
 	var tarp: Dictionary = gs.add_zone("bache", Vector3(5.5, 0.5, 12.5))
 	_lay(STRAIGHT)
-	_lay([Vector3i(0, 0, 15), Vector3i(1, 0, 15), Vector3i(2, 0, 15), Vector3i(3, 0, 15), Vector3i(4, 0, 15), Vector3i(5, 0, 15), Vector3i(5, 0, 14), Vector3i(5, 0, 13)])
+	_lay([Vector3i(0, 0, 15), Vector3i(1, 0, 15), Vector3i(2, 0, 15), Vector3i(3, 0, 15), Vector3i(4, 0, 15), Vector3i(5, 0, 15), Vector3i(5, 0, 14), Vector3i(5, 1, 14), Vector3i(5, 1, 13), Vector3i(5, 1, 12)])
 	var targets: Array = gs.zones_for_pump(pump)
 	assert_eq(targets.size(), 2)
 	assert_true(targets[0] == gs.zones[0], "la cuvette est plus proche")
@@ -301,7 +332,7 @@ func test_pipes_and_pumps_are_saved() -> void:
 	var other: Node = GameStateScript.new()
 	other.setup(gs.config)
 	other.load_dict(data)
-	assert_eq(other.pipes.size(), 4)
+	assert_eq(other.pipes.size(), STRAIGHT.size() + 1)
 	assert_true(other.pipes.has(Vector3i(-1, 1, 15)))
 	assert_eq(other.pipe_stock, 7)
 	assert_eq(other.zones_for_pump(other.pumps[0]).size(), 1)
