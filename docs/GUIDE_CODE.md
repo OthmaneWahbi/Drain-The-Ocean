@@ -370,6 +370,20 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **Coquillages :** `Props.on_sand` lit la pente (différences de hauteur à ±rayon), la borne à 25°, et lève l'objet pour que ses 8 bords soient au-dessus du sable ; il renvoie une `Transform3D`. `scallop` utilise trois `SurfaceTool` (côtes claires, foncées, dessous).
 - **Palette :** `Depot._ready` ajoute 4 cloisons et une planchette crème par nom ; les tas se limitent à 88 % de leur place.
 
+### Seau, palette et tuyaux CC0 (PR #31)
+
+- **Modèles :** chargés par `Models.load_model` (dossier `assets/models/cc0/`). Les GLB KayKit ont été faits à partir du glTF d'origine (fichier `.bin` et texture rangés dans le GLB).
+- **Seau :** `Props.bucket` met le modèle KayKit à la hauteur voulue (`Models.fit_on_ground`). Il garde notre nœud `Water` et les métadonnées `height` et `radius`, donc `set_bucket_fill` ne change pas. Grand seau : on duplique chaque matériau et on règle `albedo_color` sur jaune.
+- **Palette :** `Props.pallet(size)` pose `nx × nz` palettes, chacune dans un `holder` tourné d'un quart de tour une fois sur deux. L'échelle de chaque palette (`sx`, `sz`) tient compte de la rotation.
+- **Tuyaux :**
+  - `PipesView._draw_piece(pièce, case, liens, couleur)`. Les liens comprennent la pompe.
+    - Deux liens opposés : un `_segment` d'un bord à l'autre.
+    - À plat avec au moins deux liens : le raccord de `JUNCTIONS` dont `_yaw_matching` trouve l'angle, réduit à `KENNEY_SCALE`.
+    - Sinon : une boule.
+    - Ensuite, un `_segment` du raccord au bord de la case vers chaque pièce voisine.
+  - `_kenney` remet à zéro la position des maillages (le pack les décale de (2, 0, 1,5)) et descend le modèle de `KENNEY_AXIS_Y` pour que l'axe du tuyau soit à l'origine. Il peint les surfaces selon le nom de leur matériau (`metal`, `metalDark`, `dark`).
+  - Les collisions, le bras vers la pompe, la descente vers la zone et les piquets ne changent pas.
+
 ### Les outils admin
 
 - `admin/admin_tools.gd` est un autoload indépendant (F6 appelle `GameState.advance_time()`) : il écoute les touches F1, F6 à F12 dans `_unhandled_input`, et ne fait qu'appeler des fonctions publiques de GameState. Il se supprime lui-même hors version de debug (`OS.is_debug_build()`). Rien ne l'appelle, donc on peut l'enlever sans rien casser.
@@ -464,3 +478,6 @@ Aperçu en un maillage qui suit le relief (`draped_y`, `render_priority`), `bodi
 
 ### PR #30 — Version 0.1.8 : chasse aux bugs, modèles revus
 `playtest.gd` et `monkey.gd` (en CI sous xvfb), `NeedGauge.liquid_polygon`, cible remise à zéro, `weakref` au largage, tuyaux à manchons et piquets, `Props.on_sand`, coquillages refaits, palette à cloisons, `test_playtest_bugs.gd`.
+
+### PR #31 — Version 0.1.9 : seau et palette KayKit, tuyaux Kenney
+`kaykit_bucket_empty` / `kaykit_pallet` / `space_pipe_*` (CC0), `Props.bucket` et `Props.pallet` sur modèles, `PipesView._draw_piece` / `_segment` / `_kenney` / `_yaw_matching`, 2 tests dans `test_props.gd`.

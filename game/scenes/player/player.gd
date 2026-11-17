@@ -57,7 +57,7 @@ func _ready() -> void:
 
 
 func _build_bucket() -> void:
-	# Le seau tenu en main (Props.bucket : zinc rafistolé, ou jaune pour le grand seau), visible en
+	# Le seau tenu en main (Props.bucket : seau en bois KayKit rafistolé, ou teinté jaune pour le grand seau), visible en
 	# 1re comme en 3e personne ; son eau monte avec le remplissage (PRD §15 : un plan qui monte).
 	_bucket_node = Node3D.new()
 	_bucket_node.position = Vector3(0.38, -0.55, -0.65)

@@ -9,8 +9,18 @@ const WET_COLOR := Color(0.25, 0.5, 0.75)
 ## 0.1.8 : un peu plus gros, avec un manchon à chaque raccord entre deux pièces et un pied sous
 ## les pièces en l'air, pour qu'on lise le réseau comme une vraie tuyauterie (et qu'on compte les
 ## pièces).
-const PIPE_RADIUS := 0.11
+const PIPE_RADIUS := 0.12
 const COLLAR_COLOR := Color(0.22, 0.24, 0.28)
+## 0.1.9 (Othmane : « essaie-les ») : les pièces du Space Kit de Kenney (CC0), qui font 1 m comme
+## nos cases. Le tuyau y fait 70 cm de large : on le réduit à `KENNEY_SCALE` en travers.
+const KENNEY_SCALE := 0.35
+const KENNEY_AXIS_Y := 0.3  # hauteur de l'axe du tuyau dans les modèles Kenney
+## Les arrivées des raccords Kenney (avant rotation) : coude, T, croix.
+const JUNCTIONS := {
+	"space_pipe_corner": [Vector3i(-1, 0, 0), Vector3i(0, 0, -1)],
+	"space_pipe_split": [Vector3i(-1, 0, 0), Vector3i(1, 0, 0), Vector3i(0, 0, -1)],
+	"space_pipe_cross": [Vector3i(-1, 0, 0), Vector3i(1, 0, 0), Vector3i(0, 0, -1), Vector3i(0, 0, 1)],
+}
 
 
 func _ready() -> void:
@@ -31,23 +41,13 @@ func rebuild() -> void:
 		piece.position = PipeNetwork.cell_center(cell, cell_m, GameState.config.ground_y)
 		add_child(piece)
 		var color := WET_COLOR if wet.has(cell) else DRY_COLOR
-		var links := 0
-		var straight := true
+		var links: Array[Vector3i] = []  # vers une pièce voisine ou la pompe
 		for d in PipeNetwork.DIRS:
 			if GameState.pipes.has(cell + d) or _touches_pump(cell, d):
-				links += 1
-				straight = straight and (GameState.pipes.has(cell - d) or _touches_pump(cell, -d))
-		# Le cœur de la pièce : rien sur un tuyau droit (il passe tout droit), une boule de
-		# jonction sur un coude, un T, une croix ou une pièce seule.
-		if links != 2 or not straight:
-			piece.add_child(Props.ball(PIPE_RADIUS * 1.35, color, Vector3.ZERO, 3))
+				links.append(d)
+		_draw_piece(piece, cell, links, color)
 		for d in PipeNetwork.DIRS:
 			if GameState.pipes.has(cell + d):
-				_arm(piece, Vector3(d) * cell_m * 0.5, color)
-				if d.x + d.y + d.z > 0:  # un manchon par raccord (dessiné par une seule des deux pièces)
-					var collar := Props.cyl(PIPE_RADIUS * 1.3, PIPE_RADIUS * 1.3, 0.1, COLLAR_COLOR, Vector3(d) * cell_m * 0.5, 10)
-					_lay(collar, Vector3(d))
-					piece.add_child(collar)
 				# Solide jusqu'au bord de la case : une rangée de tuyaux se traverse en sautant dessus.
 				var half := Vector3(d).abs() * cell_m * 0.25 + (Vector3.ONE - Vector3(d).abs()) * 0.15
 				piece.add_child(Greybox.box_collision(half * 2.0, Vector3(d) * cell_m * 0.25))
@@ -75,6 +75,83 @@ func rebuild() -> void:
 		# 0.1.6 (Othmane : « plus fun ») : les tuyaux sont solides, on peut marcher dessus. Le joueur
 		# ne peut pas s'y enfermer pour de bon : l'anti-blocage (player.gd) le pose sur une place libre.
 		piece.add_child(Greybox.box_collision(Vector3.ONE * 0.4))
+
+
+## Dessine une pièce avec les modèles Kenney. Tout droit : un tronçon d'un mètre. Un coude, un T
+## ou une croix à plat : le raccord Kenney au centre (tourné pour coller aux voisins), puis un
+## tronçon jusqu'au bord de la case vers chaque voisin. Le reste (montées, pièce seule) : une
+## boule de jonction et des tronçons. Le bras vers une pompe reste dessiné à part.
+func _draw_piece(piece: Node3D, cell: Vector3i, links: Array[Vector3i], color: Color) -> void:
+	var half_cell: float = GameState.config.grid_cell_m * 0.5
+	if links.size() == 2 and links[0] == -links[1]:
+		piece.add_child(_segment(Vector3(links[0]), -half_cell, half_cell, color))
+		return
+	var hub_r := 0.0
+	var junction := ""
+	var horizontal := links.all(func(d: Vector3i) -> bool: return d.y == 0)
+	if horizontal and links.size() >= 2:
+		for name: String in JUNCTIONS:
+			var yaw := _yaw_matching(JUNCTIONS[name], links)
+			if not is_nan(yaw):
+				var j := _kenney(name, color)
+				j.basis = Basis(Vector3.UP, yaw).scaled(Vector3.ONE * KENNEY_SCALE)
+				piece.add_child(j)
+				junction = name
+				hub_r = 0.5 * KENNEY_SCALE
+				break
+	if junction == "":
+		piece.add_child(Props.ball(PIPE_RADIUS * 1.3, color, Vector3.ZERO, 3))
+		hub_r = PIPE_RADIUS * 0.6
+	for d in links:
+		if GameState.pipes.has(cell + d):
+			piece.add_child(_segment(Vector3(d), hub_r, half_cell, color))
+
+
+## L'angle (autour de Y) qui amène les arrivées `base` sur `want`, ou NAN.
+static func _yaw_matching(base: Array, want: Array[Vector3i]) -> float:
+	if base.size() != want.size():
+		return NAN
+	for k in 4:
+		var yaw := PI / 2.0 * k
+		var ok := true
+		for b: Vector3i in base:
+			var r := Vector3(b).rotated(Vector3.UP, yaw).round()
+			if not want.has(Vector3i(r)):
+				ok = false
+				break
+		if ok:
+			return yaw
+	return NAN
+
+
+## Un tronçon Kenney droit le long de `dir`, de `from` à `to` mètres du centre de la pièce.
+func _segment(dir: Vector3, from: float, to: float, color: Color) -> Node3D:
+	var seg := _kenney("space_pipe_straight", color)
+	var along := Basis.IDENTITY  # le modèle est couché le long de Z
+	if absf(dir.x) > 0.5:
+		along = Basis(Vector3.UP, PI / 2.0)
+	elif absf(dir.y) > 0.5:
+		along = Basis(Vector3.RIGHT, PI / 2.0)
+	seg.basis = along * Basis.from_scale(Vector3(KENNEY_SCALE, KENNEY_SCALE, to - from))
+	seg.position = dir * (from + to) / 2.0
+	return seg
+
+
+## Une pièce Kenney, son axe de tuyau à l'origine, peinte : métal de la couleur du réseau,
+## brides un ton plus foncé, intérieur très foncé.
+func _kenney(model_name: String, color: Color) -> Node3D:
+	var holder := Node3D.new()
+	var model := Models.load_model(model_name)
+	for mi: MeshInstance3D in Models.meshes_of(model):
+		mi.position = Vector3.ZERO  # le pack décale ses modèles ; on les recentre
+		for i in mi.mesh.get_surface_count():
+			var src := mi.mesh.surface_get_material(i)
+			var key := src.resource_name if src else ""
+			var c := color if key == "metal" else color.darkened(0.3 if key == "metalDark" else 0.6)
+			mi.set_surface_override_material(i, Props.mat(c))
+	model.position = Vector3(0, -KENNEY_AXIS_Y, 0)
+	holder.add_child(model)
+	return holder
 
 
 ## Rien sous cette pièce (ni tuyau, ni pompe, ni zone de séchage) : elle a besoin d'un pied.

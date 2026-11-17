@@ -442,20 +442,30 @@ static func parachute(radius := 1.3, drop := 2.4, crate_half := 0.42) -> Node3D:
 
 ## La palette de dépôt : des planches posées sur trois traverses. Dessus en y = size.y.
 static func pallet(size: Vector3) -> Node3D:
+	# 0.1.9 : des palettes KayKit (Medieval Hexagon, CC0) mises côte à côte en damier, chacune
+	# presque à l'échelle (une palette KayKit est carrée, 30 cm de côté : on la grossit environ 3
+	# fois) pour que l'ensemble fasse `size` sans étirer les planches.
 	var root := Node3D.new()
-	var runner_h := size.y * 0.62
-	for z in [-0.42, 0.0, 0.42]:
-		root.add_child(box(Vector3(size.x, runner_h, 0.14), WOOD_DARK, Vector3(0, runner_h / 2, z * size.z)))
-		for x in [-0.45, 0.0, 0.45]:  # les plots sous les traverses
-			root.add_child(box(Vector3(0.16, runner_h * 0.5, 0.16), WOOD_DARK.darkened(0.15), Vector3(x * size.x, runner_h * 0.25, z * size.z)))
-	var boards := 9
-	var w := size.x / boards
-	# 0.1.8 : un même bois, chaque planche à peine plus claire ou plus foncée (avant, une planche
-	# sur deux crème : on aurait dit des rayures).
-	var shades := [WOOD, WOOD.lightened(0.08), WOOD.darkened(0.06), WOOD.lightened(0.03)]
-	for i in boards:
-		var shade: Color = shades[(i * 7 + 3) % shades.size()]
-		root.add_child(box(Vector3(w * 0.86, size.y - runner_h, size.z), shade, Vector3(-size.x / 2 + w * (i + 0.5), runner_h + (size.y - runner_h) / 2, 0)))
+	var nx := maxi(1, roundi(size.x / 0.9))
+	var nz := maxi(1, roundi(size.z / 0.8))
+	var w := size.x / nx
+	var d := size.z / nz
+	for i in nx:
+		for k in nz:
+			var p := Models.load_model("kaykit_pallet")
+			var box_ := Models.bounds(Models.vertices(p))
+			# Une sur deux tournée d'un quart de tour : les planches se croisent.
+			var turned := (i + k) % 2 == 1
+			var sx := (d if turned else w) / box_.size.x
+			var sz := (w if turned else d) / box_.size.z
+			var holder := Node3D.new()
+			p.scale = Vector3(sx, size.y / box_.size.y, sz)
+			var c := box_.get_center()
+			p.position = Vector3(-c.x * sx, -box_.position.y * p.scale.y, -c.z * sz)
+			holder.add_child(p)
+			holder.rotation.y = PI / 2.0 if turned else 0.0
+			holder.position = Vector3(-size.x / 2.0 + w * (i + 0.5), 0, -size.z / 2.0 + d * (k + 0.5))
+			root.add_child(holder)
 	return root
 
 
@@ -753,24 +763,22 @@ static func bucket(big := false, height := 0.26) -> Node3D:
 	var root := Node3D.new()
 	var color := YELLOW if big else METAL
 	var r := height * (0.62 if big else 0.56)
-	# Le seau est ouvert en haut (sans couvercle) et peint des deux côtés : on voit l'eau dedans.
-	var body := cyl(r, r * 0.78, height, color, Vector3(0, height / 2, 0), 12)
-	(body.mesh as CylinderMesh).cap_top = false
-	var inside := mat(color).duplicate() as StandardMaterial3D
-	inside.cull_mode = BaseMaterial3D.CULL_DISABLED
-	body.material_override = inside
-	root.add_child(body)
-	root.add_child(torus(r * 0.94, r * 1.06, color.darkened(0.2), Vector3(0, height, 0), 14))
-	root.add_child(torus(r * 0.84, r * 0.9, color.darkened(0.25), Vector3(0, height * 0.3, 0), 14))
+	# 0.1.9 : le seau en bois de KayKit (Medieval Hexagon, CC0), ouvert en haut : on voit l'eau
+	# dedans. Le grand seau est teinté en jaune pour qu'on les distingue.
+	var model := Models.load_model("kaykit_bucket_empty")
+	Models.fit_on_ground(model, height)
+	if big:
+		for mi: MeshInstance3D in Models.meshes_of(model):
+			for i in mi.mesh.get_surface_count():
+				var tinted := (mi.get_surface_override_material(i) as StandardMaterial3D).duplicate() as StandardMaterial3D
+				tinted.albedo_color = color
+				mi.set_surface_override_material(i, tinted)
+	root.add_child(model)
 	if not big:
 		# La rustine du seau de départ (PRD §12 : il s'abîme et se rapièce).
 		var patch := box(Vector3(height * 0.28, height * 0.24, 0.01), Color(0.78, 0.5, 0.32), Vector3(r * 0.2, height * 0.55, r * 0.88), Vector3(0, 0.2, 0.15))
 		root.add_child(patch)
-	var handle := torus(r * 0.96, r * 1.02, IRON, Vector3(0, height, 0), 16)
-	handle.rotation.z = PI / 2
-	handle.scale = Vector3(1, 1.1, 1)
-	root.add_child(handle)
-	var water := cyl(r * 0.93, r * 0.8, 0.02, WATER, Vector3(0, height * 0.9, 0), 12)
+	var water := cyl(r * 0.84, r * 0.74, 0.02, WATER, Vector3(0, height * 0.9, 0), 12)
 	water.name = "Water"
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(water)
