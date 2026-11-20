@@ -116,7 +116,10 @@ func test_slot_limit_leaves_rest_in_zone() -> void:
 
 
 func test_each_slot_holds_64_of_its_material() -> void:
-	# Cinq cases : le seau en prend une, il en reste quatre de 64 (Othmane, 0.1.4).
+	# Six cases : le seau en prend une, il en reste cinq de 64 (Othmane, 0.1.4 ; 0.1.11 : la pelle
+	# s'achète, une case de plus au départ). La pelle achetée en reprend une.
+	gs.has_shovel = true
+	gs._sync_toolbar()
 	gs.add_carried({"sel": 64, "mineraux": 64, "coquillages": 64})
 	assert_eq(gs.carried_count(), 192, "bien au-delà de l'ancienne limite de 40 :")
 	assert_eq(gs.carry_space("sel"), 0)

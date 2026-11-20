@@ -85,6 +85,10 @@ func _ready() -> void:
 	var shovel := ShovelTool.new()
 	shovel.name = "ShovelTool"
 	add_child(shovel)
+	# Les coups de pelle animés : la motte qui vole, la poussière (0.1.11).
+	var sand_fx := SandFx.new()
+	sand_fx.name = "SandFx"
+	add_child(sand_fx)
 	# La fin de la démo (M-05), déclenchée par le moulin-pompe.
 	var milestones := MilestonePanel.new()
 	milestones.name = "Milestones"

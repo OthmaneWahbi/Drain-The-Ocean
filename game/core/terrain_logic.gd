@@ -20,6 +20,11 @@ extends RefCounted
 ## sol touche vraiment le sol. `base_height()` reste la forme « idéale » de l'île.
 ## On peut **travailler le sable** (la pelle) : `edits` remplace la hauteur de certains coins, qui
 ## ne sont alors plus décalés. Une case dont les 4 coins sont travaillés à la même hauteur est plate.
+##
+## 0.1.11 : la grille est **deux fois plus fine** (un sommet tous les 50 cm, SUB sommets par mètre) :
+## des facettes quatre fois plus petites. La case de placement et de pelle reste de 1 m : elle
+## couvre SUB × SUB petites cases et (SUB + 1)² sommets. Les indices de sommet (i, j) sont en
+## pas de VERTEX_STEP ; les cases (Vector2i) sont en mètres.
 
 var ground_y: float
 var build_radius: float
@@ -41,18 +46,27 @@ var terrace_step: float = 0.5
 ## Relief du plateau (m) : assez pour des facettes, trop peu pour qu'un objet flotte.
 var plateau_relief: float = 0.03
 
-## La grille du maillage : sommets de -GRID_HALF à +GRID_HALF (en mètres, pas de 1 m).
-const GRID_HALF := 72
-const GRID_CELL := 1.0
-## Décalage au hasard des sommets (part d'une case) : des triangles irréguliers, pas une grille.
+## Petites cases du maillage par mètre (0.1.11 : 2, des facettes de 50 cm).
+const SUB := 2
+## L'écart entre deux sommets (m).
+const VERTEX_STEP := 1.0 / SUB
+## La grille du maillage : sommets d'indice -GRID_HALF à +GRID_HALF (soit ±72 m).
+const GRID_HALF := 72 * SUB
+## La case de placement et de pelle (m).
+const CELL_M := 1.0
+## Décalage au hasard des sommets (part d'une petite case) : des triangles irréguliers, pas une grille.
 const JITTER := 0.3
 ## Écart de hauteur toléré entre les coins d'une case plate.
 const FLAT_TOLERANCE := 0.02
 
-## Les coins travaillés (pelle) : Vector2i(i, j) -> hauteur (m).
+## Les sommets travaillés (pelle) : Vector2i(i, j) (indices de sommet) -> hauteur (m).
 var edits: Dictionary = {}
 ## Les sommets non travaillés déjà calculés (la forme idéale ne change jamais).
 var _vcache: Dictionary = {}
+## 0.1.11 : les sommets voisins d'un sommet travaillé ne sont plus décalés au hasard (ils gardent
+## la hauteur naturelle). Sans ça, le pied d'une pente de pelle zigzague et ses facettes forment
+## des dents de scie. Se déduit toujours de `edits` (rien à sauvegarder).
+var _pinned: Dictionary = {}
 
 var _angle_noise := FastNoiseLite.new()
 var _dune_noise := FastNoiseLite.new()
@@ -147,7 +161,9 @@ static func terrace(h: float, step: float) -> float:
 
 
 ## Couleur d'une facette selon sa hauteur moyenne, sa pente (0 plat … 1 vertical) et un peu de hasard.
-func color(y: float, slope: float, jitter: float, sea_y: float = 0.0) -> Color:
+## `vary` faux : la couleur de la catégorie seule (0.1.11 : le terrain varie par sommet, en douceur,
+## au lieu d'un damier de facettes).
+func color(y: float, slope: float, jitter: float, sea_y: float = 0.0, vary: bool = true) -> Color:
 	var c: Color
 	if y > ground_y + 1.4 and slope < 0.3:
 		c = Color(0.34, 0.46, 0.21)  # herbe sur le haut des dunes (les flancs restent en sable)
@@ -163,6 +179,8 @@ func color(y: float, slope: float, jitter: float, sea_y: float = 0.0) -> Color:
 		c = Color(0.46, 0.42, 0.29)  # sable sous l'eau
 	else:
 		c = Color(0.36, 0.38, 0.30)  # fond marin
+	if not vary:
+		return c
 	var k := 1.0 + jitter * 0.06
 	return Color(c.r * k, c.g * k, c.b * k)
 
@@ -182,21 +200,23 @@ static func hash01(i: int, j: int, k: int) -> float:
 func vertex(i: int, j: int) -> Vector3:
 	var key := Vector2i(i, j)
 	if edits.has(key):
-		return Vector3(i * GRID_CELL, float(edits[key]), j * GRID_CELL)
+		return Vector3(i * VERTEX_STEP, float(edits[key]), j * VERTEX_STEP)
+	if _pinned.has(key):
+		return Vector3(i * VERTEX_STEP, base_height(i * VERTEX_STEP, j * VERTEX_STEP), j * VERTEX_STEP)
 	var cached: Variant = _vcache.get(key)
 	if cached != null:
 		return cached
-	var x := i * GRID_CELL
-	var z := j * GRID_CELL
+	var x := i * VERTEX_STEP
+	var z := j * VERTEX_STEP
 	if absi(i) < GRID_HALF and absi(j) < GRID_HALF:
-		x += (hash01(i, j, 1) * 2.0 - 1.0) * JITTER * GRID_CELL
-		z += (hash01(i, j, 2) * 2.0 - 1.0) * JITTER * GRID_CELL
+		x += (hash01(i, j, 1) * 2.0 - 1.0) * JITTER * VERTEX_STEP
+		z += (hash01(i, j, 2) * 2.0 - 1.0) * JITTER * VERTEX_STEP
 	var v := Vector3(x, base_height(x, z), z)
 	_vcache[key] = v
 	return v
 
 
-## Les deux triangles de la case dont le coin bas est (i, j) : 6 sommets, dans l'ordre.
+## Les deux triangles de la petite case dont le coin bas est le sommet (i, j) : 6 sommets, dans l'ordre.
 ## La diagonale alterne d'une case à l'autre (moins de lignes droites visibles).
 func cell_triangles(i: int, j: int) -> Array[Vector3]:
 	var a := vertex(i, j)
@@ -206,6 +226,26 @@ func cell_triangles(i: int, j: int) -> Array[Vector3]:
 	if posmod(i + j, 2) == 0:
 		return [a, c, b, b, c, d]
 	return [a, c, d, a, d, b]
+
+
+## Les indices des 6 sommets de cell_triangles(i, j), dans le même ordre.
+static func cell_triangle_ids(i: int, j: int) -> Array[Vector2i]:
+	var a := Vector2i(i, j)
+	var b := Vector2i(i + 1, j)
+	var c := Vector2i(i, j + 1)
+	var d := Vector2i(i + 1, j + 1)
+	if posmod(i + j, 2) == 0:
+		return [a, c, b, b, c, d]
+	return [a, c, d, a, d, b]
+
+
+## La normale lissée au sommet (i, j) (0.1.11), tournée vers le haut : la moyenne de la pente
+## autour du sommet. Le sable s'éclaire en douceur au lieu de pans plats.
+func vertex_normal(i: int, j: int) -> Vector3:
+	var dx := vertex(i + 1, j) - vertex(i - 1, j)
+	var dz := vertex(i, j + 1) - vertex(i, j - 1)
+	var n := dz.cross(dx).normalized()
+	return -n if n.y < 0.0 else n
 
 
 ## La hauteur du maillage en (x, z) : on cherche le triangle qui contient le point (dans la case
@@ -219,8 +259,8 @@ func height(x: float, z: float) -> float:
 
 ## La facette (triangle [a, b, c]) du maillage sous (x, z), ou [] hors de la grille.
 func facet(x: float, z: float) -> Array:
-	var ci := floori(x / GRID_CELL)
-	var cj := floori(z / GRID_CELL)
+	var ci := floori(x / VERTEX_STEP)
+	var cj := floori(z / VERTEX_STEP)
 	if ci < -GRID_HALF or cj < -GRID_HALF or ci >= GRID_HALF or cj >= GRID_HALF:
 		return []
 	var p := Vector2(x, z)
@@ -296,17 +336,43 @@ func is_grass_around(x: float, z: float, radius: float) -> bool:
 
 ## La case de la grille de placement (1 m) qui contient (x, z).
 static func cell_of(x: float, z: float) -> Vector2i:
-	return Vector2i(floori(x / GRID_CELL), floori(z / GRID_CELL))
+	return Vector2i(floori(x / CELL_M), floori(z / CELL_M))
 
 
-## Les 4 coins d'une case (i, j bas, puis i+1, puis j+1…).
+## Les (SUB + 1)² sommets d'une case de 1 m (indices de sommet), bords compris.
+static func cell_vertices(cell: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for b in SUB + 1:
+		for a in SUB + 1:
+			out.append(Vector2i(cell.x * SUB + a, cell.y * SUB + b))
+	return out
+
+
+## Les 4 coins extérieurs d'une case de 1 m (indices de sommet).
 static func cell_corners(cell: Vector2i) -> Array[Vector2i]:
-	return [cell, cell + Vector2i(1, 0), cell + Vector2i(0, 1), cell + Vector2i(1, 1)]
+	var o := cell * SUB
+	return [o, o + Vector2i(SUB, 0), o + Vector2i(0, SUB), o + Vector2i(SUB, SUB)]
 
 
-## Vrai si au moins un coin de la case a été travaillé.
+## Les cases de 1 m qui touchent ce sommet (1 au milieu d'une case, 2 sur un bord, 4 sur un coin).
+static func cells_of_vertex(v: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for d in [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, -1)]:
+		var small: Vector2i = v + d
+		var cell := Vector2i(floori(float(small.x) / SUB), floori(float(small.y) / SUB))
+		if not out.has(cell):
+			out.append(cell)
+	return out
+
+
+## Un sommet en mètres (sans le décalage au hasard).
+static func vertex_xz(v: Vector2i) -> Vector2:
+	return Vector2(v.x * VERTEX_STEP, v.y * VERTEX_STEP)
+
+
+## Vrai si au moins un sommet de la case a été travaillé.
 func cell_worked(cell: Vector2i) -> bool:
-	for c in cell_corners(cell):
+	for c in cell_vertices(cell):
 		if edits.has(c):
 			return true
 	return false
@@ -314,17 +380,16 @@ func cell_worked(cell: Vector2i) -> bool:
 
 ## Le niveau d'une case où l'on peut poser quelque chose, ou NAN :
 ##  - une case du plateau jamais travaillée : `ground_y` (le relief du plateau ne compte pas) ;
-##  - une case dont les 4 coins sont travaillés à la même hauteur : cette hauteur.
+##  - une case dont tous les sommets sont travaillés à la même hauteur : cette hauteur.
 func cell_level(cell: Vector2i) -> float:
-	var corners := cell_corners(cell)
 	if not cell_worked(cell):
-		for c in corners:
-			if Vector2(c.x, c.y).length() * GRID_CELL > build_radius:
+		for c in cell_corners(cell):
+			if vertex_xz(c).length() > build_radius:
 				return NAN
 		return ground_y
 	var lo := INF
 	var hi := -INF
-	for c in corners:
+	for c in cell_vertices(cell):
 		if not edits.has(c):
 			return NAN
 		lo = minf(lo, float(edits[c]))
@@ -332,22 +397,53 @@ func cell_level(cell: Vector2i) -> float:
 	return lo if hi - lo <= FLAT_TOLERANCE else NAN
 
 
-## La hauteur moyenne actuelle des 4 coins d'une case.
+## La hauteur moyenne actuelle des sommets d'une case.
 func cell_mean(cell: Vector2i) -> float:
 	var s := 0.0
-	for c in cell_corners(cell):
+	var vs := cell_vertices(cell)
+	for c in vs:
 		s += vertex(c.x, c.y).y
-	return s / 4.0
+	return s / vs.size()
 
 
-## Met les 4 coins de la case à la hauteur `y` (la case devient plate). Renvoie les coins changés.
+## Met tous les sommets de la case à la hauteur `y` (la case devient plate). Renvoie les sommets
+## changés (et leurs voisins qui viennent d'être recalés sur la grille, voir `_pinned`).
 func set_cell(cell: Vector2i, y: float) -> Array[Vector2i]:
 	var changed: Array[Vector2i] = []
-	for c in cell_corners(cell):
+	for c in cell_vertices(cell):
 		if not edits.has(c) or absf(float(edits[c]) - y) > 0.0001:
 			changed.append(c)
 		edits[c] = y
+		_pinned.erase(c)
+	if not changed.is_empty():
+		for c in cell_vertices(cell):
+			changed.append_array(_pin_around(c))
 	return changed
+
+
+## Recale sur la grille les voisins non travaillés d'un sommet travaillé. Renvoie les nouveaux.
+func _pin_around(v: Vector2i) -> Array[Vector2i]:
+	var added: Array[Vector2i] = []
+	for dj in range(-1, 2):
+		for di in range(-1, 2):
+			var k := v + Vector2i(di, dj)
+			if not edits.has(k) and not _pinned.has(k):
+				_pinned[k] = true
+				added.append(k)
+	return added
+
+
+## Les sommets recalés sur la grille autour du sable travaillé.
+func pinned_vertices() -> Array:
+	return _pinned.keys()
+
+
+## Efface tout le travail de la pelle (nouvelle partie). Renvoie les sommets qui ont bougé.
+func clear_edits() -> Array:
+	var touched: Array = edits.keys() + _pinned.keys()
+	edits.clear()
+	_pinned.clear()
+	return touched
 
 
 ## Les coins travaillés, pour la sauvegarde : [[i, j, y], …].
@@ -358,10 +454,36 @@ func edits_to_array() -> Array:
 	return out
 
 
-func edits_from_array(a: Variant) -> void:
-	edits.clear()
+## `sub` : la finesse de la grille de la sauvegarde (1 avant 0.1.11). Une ancienne grille est
+## convertie : chaque case de 1 m dont les 4 coins étaient travaillés est refaite à l'identique
+## (plate si elle l'était), les coins isolés gardent leur hauteur.
+func edits_from_array(a: Variant, sub: int = SUB) -> void:
+	clear_edits()
+	_edits_from_array(a, sub)
+	for v: Vector2i in edits.keys():
+		_pin_around(v)
+
+
+func _edits_from_array(a: Variant, sub: int) -> void:
 	if not a is Array:
 		return
+	if sub == SUB:
+		for e in a:
+			if e is Array and e.size() >= 3:
+				edits[Vector2i(int(e[0]), int(e[1]))] = float(e[2])
+		return
+	var old := {}
 	for e in a:
 		if e is Array and e.size() >= 3:
-			edits[Vector2i(int(e[0]), int(e[1]))] = float(e[2])
+			old[Vector2i(int(e[0]), int(e[1]))] = float(e[2])
+	for c: Vector2i in old:
+		edits[c * SUB] = old[c]
+	for c: Vector2i in old:
+		var corners := [c, c + Vector2i(1, 0), c + Vector2i(0, 1), c + Vector2i(1, 1)]
+		if not corners.all(func(k): return old.has(k)):
+			continue
+		# Interpolation bilinéaire des 4 coins sur les sommets de la case.
+		for v in cell_vertices(c):
+			var u := float(v.x - c.x * SUB) / SUB
+			var w := float(v.y - c.y * SUB) / SUB
+			edits[v] = lerpf(lerpf(old[corners[0]], old[corners[1]], u), lerpf(old[corners[2]], old[corners[3]], u), w)

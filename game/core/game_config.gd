@@ -195,10 +195,10 @@ extends Resource
 @export var tutorial_crate_item: String = "catalogue_papier"
 
 @export_group("Barre d'outils")
-## Les 6 cases de la barre au début d'une partie (M-27, 0.1.10 : 6 cases avec la pelle) :
+## Les 6 cases de la barre au début d'une partie (M-27, 0.1.10 : 6 cases ; 0.1.11 : la pelle s'achète) :
 ## "" = case vide (les mains nues). Les outils achetés et les matériaux portés prennent ensuite
 ## les cases vides.
-@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "pelle", "", "", "", ""])
+@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "", "", "", "", ""])
 
 @export_group("Pompes et tuyaux")
 ## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
@@ -245,3 +245,10 @@ extends Resource
 @export var dig_reach_m: float = 4.0
 ## Pendant un glisser (lisser), une case de plus toutes les … secondes au plus.
 @export var dig_drag_interval_s: float = 0.08
+
+@export_group("Pelle (0.1.11)")
+## Pelletées de sable que la pelle peut porter. Une pelletée = une case de 1 m creusée d'un cran
+## (dig_step_m). Creuser remplit la pelle, remblayer la vide : le sable se déplace, il ne se crée pas.
+@export var shovel_capacity_scoops: int = 6
+## Durée de l'animation d'un coup de pelle (le sable glisse vers son nouveau niveau).
+@export var dig_anim_s: float = 0.3

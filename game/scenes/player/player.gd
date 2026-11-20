@@ -24,6 +24,14 @@ var prompt: String = ""
 var _bucket_node: Node3D
 var _rake_node: Node3D
 var _shovel_node: Node3D
+## Le coup de pelle en cours (0..1, -1 sans coup) et son sens (creuser ou remblayer).
+var _swing_t := -1.0
+var _swing_dig := true
+## 0.1.11 : la pelle tenue à mi-manche, la lame devant soi, un peu relevée. Avant, la lame
+## était à 1,9 m devant l'œil et passait sous le sable dès qu'on regardait par terre.
+const SHOVEL_REST := Vector3(0.41, -0.61, 0.01)
+const SHOVEL_REST_ROT := Vector3(11, 12.3, 0)
+const SWING_S := 0.32
 ## Le matériau porté, montré en main : un petit bac avec son tas (0.1.10, remarque 4).
 var _carry_node: Node3D
 var _carry_kind := ""
@@ -59,6 +67,8 @@ func _ready() -> void:
 	_build_fade()
 	_apply_view()
 	GameState.terrain_changed.connect(_on_terrain_changed)
+	GameState.shovel_changed.connect(_on_shovel_changed)
+	_on_shovel_changed()
 
 
 ## Le matériau tenu (sel, minéraux…) : un petit bac porté à deux mains, avec un tas qui grossit
@@ -87,6 +97,42 @@ func _update_carry(tool: String) -> void:
 
 
 ## Le sable a bougé (pelle) : si le sol monte sous nos pieds, on remonte avec lui.
+## Le sable porté sur la lame de la pelle (0.1.11).
+func _on_shovel_changed() -> void:
+	Props.set_shovel_load(_shovel_node, float(GameState.shovel_sand) / maxf(GameState.config.shovel_capacity_scoops, 1))
+
+
+## Un coup de pelle (0.1.11, appelé par SandFx) : la pelle plonge vers le sable puis remonte
+## (creuser), ou se lève puis bascule vers l'avant (remblayer).
+func swing_shovel(dig: bool) -> void:
+	_swing_t = 0.0
+	_swing_dig = dig
+
+
+## Le bout de la lame, dans le monde (là où part et arrive la motte de sable).
+func shovel_tip() -> Vector3:
+	return _shovel_node.to_global(Vector3(0, 0.03, -1.0))
+
+
+func _animate_shovel(delta: float) -> void:
+	if _swing_t < 0.0:
+		return
+	_swing_t += delta / SWING_S
+	var t := minf(_swing_t, 1.0)
+	# Une bosse : 0 → 1 → 0, plus rapide à l'aller.
+	var k := sin(PI * pow(t, 0.7))
+	if _swing_dig:
+		_shovel_node.position = SHOVEL_REST + Vector3(-0.02, -0.08, -0.18) * k
+		_shovel_node.rotation_degrees = SHOVEL_REST_ROT + Vector3(-16.0, 0.0, 4.0) * k
+	else:
+		_shovel_node.position = SHOVEL_REST + Vector3(-0.02, 0.07, -0.1) * k
+		_shovel_node.rotation_degrees = SHOVEL_REST_ROT + Vector3(-6.0, 0.0, -22.0) * k
+	if _swing_t >= 1.0:
+		_swing_t = -1.0
+		_shovel_node.position = SHOVEL_REST
+		_shovel_node.rotation_degrees = SHOVEL_REST_ROT
+
+
 func _on_terrain_changed(_corners: Array) -> void:
 	var ground := GameState.terrain.height(global_position.x, global_position.z)
 	if global_position.y < ground + 0.02:
@@ -111,8 +157,8 @@ func _build_bucket() -> void:
 	head.add_child(_rake_node)
 	# La pelle (0.1.10), tenue lame en avant, un peu baissée.
 	_shovel_node = Props.shovel()
-	_shovel_node.position = Vector3(0.32, -0.42, -0.85)
-	_shovel_node.rotation_degrees = Vector3(-32, 8, 0)
+	_shovel_node.position = SHOVEL_REST
+	_shovel_node.rotation_degrees = SHOVEL_REST_ROT
 	head.add_child(_shovel_node)
 	# Le corps en 3e personne : un petit personnage CC0 qui marche, court, saute (PRD §13).
 	body_mesh.visible = false
@@ -406,6 +452,7 @@ func _process(delta: float) -> void:
 	_bucket_node.visible = tool == "seau"
 	_rake_node.visible = tool == "rateau"
 	_shovel_node.visible = tool == "pelle"
+	_animate_shovel(delta)
 	_update_carry(tool)
 	_second_bucket.visible = tool == "seau" and GameState.bucket_count > 1
 	_update_bucket_water(delta)

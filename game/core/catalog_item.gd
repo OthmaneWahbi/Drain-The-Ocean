@@ -4,7 +4,7 @@ extends Resource
 
 ## Ce que fait l'objet une fois la caisse ouverte.
 ## (Ne jamais réordonner : le fichier de données stocke ces valeurs par numéro.)
-enum Effect { DRYING_ZONE, BUCKET_CAPACITY, DECOR, BUCKET_COUNT, CARRY_CAPACITY, WALK_SPEED, RAKE, STATION, UNLOCK_TIER, MIRROR, PUMP, PIPES, SLIDE, CATALOGUE }
+enum Effect { DRYING_ZONE, BUCKET_CAPACITY, DECOR, BUCKET_COUNT, CARRY_CAPACITY, WALK_SPEED, RAKE, STATION, UNLOCK_TIER, MIRROR, PUMP, PIPES, SLIDE, CATALOGUE, SHOVEL }
 
 @export var id: StringName
 @export var name_key: String

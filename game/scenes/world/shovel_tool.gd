@@ -8,6 +8,8 @@ extends Node3D
 ##   survolée en gardant le clic est mise à ce niveau (on « passe la pelle »).
 ## - Clic droit : creuser d'un cran. Maj + clic droit : remonter d'un cran.
 ## Toutes les règles (bornes, objets, eau) sont dans GameState (dig_target, dig_reason, work_cell).
+## 0.1.11 : la pelle s'achète, et elle porte le sable creusé (6 pelletées) : on le repose ailleurs
+## en remblayant. Le texte d'aide dit combien elle en porte. L'animation est dans SandFx.
 
 const OK_COLOR := Color(0.3, 0.9, 0.35, 0.42)
 const BLOCKED_COLOR := Color(0.95, 0.25, 0.2, 0.42)
@@ -59,7 +61,7 @@ func _process(delta: float) -> void:
 	var c := GameState.config.grid_cell_m
 	_ghost.position = Vector3((target_cell.x + 0.5) * c, y + 0.03, (target_cell.y + 0.5) * c)
 	_ghost_mat.albedo_color = OK_COLOR if reason == "" else BLOCKED_COLOR
-	player.prompt = tr("PROMPT_DIG") if reason == "" else tr(reason)
+	player.prompt = tr("PROMPT_DIG") % [GameState.shovel_sand, GameState.config.shovel_capacity_scoops] if reason == "" else tr(reason)
 	# Clic gauche : aplanir (le premier clic fixe le niveau, le glisser l'étend).
 	_drag_t -= delta
 	if Input.is_action_just_pressed(&"use_tool"):

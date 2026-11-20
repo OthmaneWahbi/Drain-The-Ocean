@@ -155,3 +155,36 @@ func test_no_flower_on_worked_sand() -> void:
 	assert_false(IslandProps.decor_allowed(t, 0.5, 0.5, 0.1, "sand"))
 	assert_true(IslandProps.decor_allowed(t, 5.5, 5.5, 0.1, "sand"))
 	assert_false(IslandProps.decor_allowed(t, 5.5, 5.5, 0.1, "grass"), "pas de fleur sur le sable")
+
+
+# --- La grille fine (0.1.11) ----------------------------------------------------------------------
+
+func test_the_mesh_has_a_vertex_every_half_metre() -> void:
+	assert_eq(TerrainLogic.SUB, 2)
+	assert_almost(TerrainLogic.VERTEX_STEP, 0.5, 1e-6)
+	assert_eq(TerrainLogic.cell_vertices(Vector2i(1, 2)).size(), 9, "une case de 1 m = 9 sommets")
+	assert_true(TerrainLogic.cell_vertices(Vector2i(1, 2)).has(Vector2i(3, 5)), "le sommet du milieu")
+	assert_eq(TerrainLogic.cells_of_vertex(Vector2i(3, 5)), [Vector2i(1, 2)] as Array[Vector2i], "au milieu : une seule case")
+	assert_eq(TerrainLogic.cells_of_vertex(Vector2i(2, 4)).size(), 4, "au coin : quatre cases")
+
+
+func test_worked_vertices_pin_their_neighbours_to_the_grid() -> void:
+	var before := t.vertex(-1, 4)
+	var changed := t.set_cell(Vector2i(0, 2), 0.5)
+	var after := t.vertex(-1, 4)
+	assert_almost(after.x, -0.5, 1e-6, "le voisin n'est plus décalé")
+	assert_almost(after.y, t.base_height(-0.5, 2.0), 1e-6, "et garde la hauteur naturelle")
+	assert_true(changed.has(Vector2i(-1, 4)))
+	assert_true(before.distance_to(after) < 0.3)
+	var touched := t.clear_edits()
+	assert_true(touched.has(Vector2i(-1, 4)) and touched.has(Vector2i(0, 4)))
+	assert_true(t.vertex(-1, 4).is_equal_approx(before), "nouvelle partie : l'île d'origine")
+
+
+func test_height_matches_the_fine_mesh() -> void:
+	for p in [Vector2(0.3, 0.2), Vector2(12.7, -3.1), Vector2(-20.25, 15.5)]:
+		var f := t.facet(p.x, p.y)
+		assert_eq(f.size(), 3)
+		var a: Vector3 = f[0]
+		var b: Vector3 = f[1]
+		assert_true(a.distance_to(b) < 0.9, "des facettes de 50 cm")

@@ -49,6 +49,14 @@ static func build(id: String) -> Node3D:
 			var wb := Props.fit_model("kaykit_wheelbarrow", Vector3(0.52, 0.42, 1.1))
 			wb.rotation.y = PI / 2
 			n.add_child(wb)
+		"pelle":
+			# 0.1.11 : la pelle s'achète. Couchée en biais, la lame chargée de sable.
+			var sh := Props.shovel()
+			Props.set_shovel_load(sh, 0.7)
+			sh.rotation = Vector3(-0.45, PI / 2 + 0.5, 0)
+			sh.position = Vector3(-0.15, 0.4, 0)
+			sh.scale = Vector3.ONE * 1.5
+			n.add_child(sh)
 		"rateau":
 			var r := Props.rake()
 			r.rotation = Vector3(-0.3, PI / 2, 0)
