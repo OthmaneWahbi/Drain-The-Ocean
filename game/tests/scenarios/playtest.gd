@@ -42,10 +42,14 @@ func _check(ok: bool, what: String) -> void:
 		_fails.append("[%s] %s" % [_step, what])
 
 
+## Attendre `s` secondes de TEMPS DE JEU (pas de temps réel) : sur une machine très lente
+## (la CI, 2 images/s), le moteur ralentit le jeu, et un délai en temps réel ne suffit plus
+## pour marcher ou puiser.
 func _wait(s: float) -> void:
-	var end := Time.get_ticks_msec() + int(s * 1000.0)
-	while Time.get_ticks_msec() < end:
+	var t := 0.0
+	while t < s:
 		await process_frame
+		t += root.get_process_delta_time()
 
 
 func _frames(n: int) -> void:
@@ -88,14 +92,15 @@ func _face(pos: Vector3) -> void:
 
 ## Marche (vraiment, avec les touches) jusqu'à `stop_d` m du point. Faux si on n'y arrive pas.
 func _walk_to(pos: Vector3, stop_d: float = 1.5, timeout: float = 20.0) -> bool:
-	var end := Time.get_ticks_msec() + int(timeout * 1000.0)
+	var t := 0.0  # temps de jeu, voir _wait
 	Input.action_press(&"move_forward")
 	var ok := false
 	var last := _player.global_position
 	var still := 0
-	while Time.get_ticks_msec() < end:
+	while t < timeout:
 		_face(Vector3(pos.x, _player.head.global_position.y, pos.z))
 		await process_frame
+		t += root.get_process_delta_time()
 		var p := _player.global_position
 		if Vector2(pos.x - p.x, pos.z - p.z).length() <= stop_d:
 			ok = true
@@ -147,6 +152,7 @@ func _run() -> void:
 	_face(sea + Vector3(0, -1, 3))
 	await _hold(&"use_tool", 2.5)
 	_check(_gs.bucket.water_l > 0.0, "le seau a de l'eau (%.1f L)" % _gs.bucket.water_l)
+	print("  info  [puiser] fps %.1f, joueur %s, dans l'eau : %s" % [Engine.get_frames_per_second(), _player.global_position, _player.is_in_water()])
 
 	# 2. Verser dans la cuvette.
 	_step = "verser"

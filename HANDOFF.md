@@ -176,6 +176,13 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 
 ## Journal
 
+### 2026-11-20 — TEST ÉCHOUÉ — Robot : « le seau a de l'eau » et « on arrive à la cuvette » (3e CI de la PR #32)
+- **Échecs :** le seau est resté vide après 2,5 s de clic, puis le robot s'est arrêté à 7 m de la cuvette, en (-4,06 ; 14,3), au milieu de son chemin, sans obstacle.
+- **Cause :** la machine de la CI (rendu logiciel) tombe vers 2 images/s. Sous 7,5 images/s, Godot ralentit le jeu lui-même (au plus 8 pas de physique par image). Le robot comptait ses délais en secondes réelles : 2,5 s réelles ne faisaient plus 1 s de jeu pour remplir le seau, et 25 s réelles ne suffisaient plus pour traverser la plage. Vérifié ici sur un seul cœur : 3 images/s, et 2,5 s de jeu prennent 7,6 s réelles. Ce n'est pas un défaut du jeu.
+- **Correction (robot) :** les attentes et la marche du robot comptent en temps de jeu. Le robot écrit aussi les images/s après avoir puisé. La partie passe ici à 3 et à 8 images/s.
+- **Remplace** la piste de l'entrée « Robot : on arrive à la cuvette (2e CI) ».
+- **Par :** Claude
+
 ### 2026-11-20 — TEST ÉCHOUÉ — Robot : « on arrive à la cuvette » (2e CI de la PR #32)
 - Sur la CI, le robot n'est pas arrivé à la cuvette en 25 s après avoir puisé. Ici, 6 parties de suite passent : je n'arrive pas à le reproduire.
 - **Piste :** le nouveau sol (morceaux de collision) ou la nouvelle cuvette gênent la marche sur la machine plus lente de la CI.
