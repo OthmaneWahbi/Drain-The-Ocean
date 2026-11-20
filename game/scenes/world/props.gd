@@ -821,6 +821,7 @@ static func windmill() -> Node3D:
 	pivot.scale = Vector3.ONE * k
 	root.add_child(pivot)
 	var local := blades_mesh.transform
+	blades_mesh.owner = null  # il change de parent : il n'appartient plus à la scène du modèle
 	model.remove_child(blades_mesh)
 	pivot.add_child(blades_mesh)
 	blades_mesh.transform = Transform3D(local.basis, local.origin - hub)

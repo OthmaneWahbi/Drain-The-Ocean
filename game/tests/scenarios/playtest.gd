@@ -251,6 +251,9 @@ func _run() -> void:
 	# 7. Déplacer la cuvette (G), la tourner (R), la reposer.
 	_step = "déplacer"
 	bp = basin.position
+	# 0.1.10 : on contourne la cuvette par l'ouest (son bourrelet fait 0,3 m : en ligne droite, le
+	# robot pouvait rester collé à son bord).
+	await _walk_to(bp + Vector3(-2.8, 0, 0), 0.8, 20.0)
 	_check(await _walk_to(bp + Vector3(0, 0, 3.4), 0.6, 20.0), "on se place devant la cuvette")
 	_face(bp + Vector3(0, 0.2, 1.3))  # le bord le plus proche
 	await _frames(3)
@@ -260,9 +263,20 @@ func _run() -> void:
 	_check(_gs.placing, "G : mode déplacement")
 	await _tap(&"rotate_object")
 	await _wait(0.4)
+	# Comme un joueur : si la place visée est rouge (la cuvette tournée toucherait le joueur), on
+	# vise un peu plus loin. Le bord de la cuvette tombe pile sur une ligne de la grille.
+	var pcm: Node = _main.get_node("Placement")
+	for k in 5:
+		if pcm._valid:
+			break
+		print("  info  [déplacer] place refusée en %s : %s" % [pcm._target_pos, _gs.placement_reason(pcm.item, pcm._target_pos, pcm._rotation_deg)])
+		_face(bp + Vector3(0, 0.2, 1.0 - 0.5 * k))
+		await _wait(0.4)
 	await _tap(&"use_tool")
 	await _wait(0.3)
 	_check(not _gs.placing, "reposée")
+	if _gs.placing:
+		await _tap(&"move_object")  # sinon le mode déplacement bloquerait les tuyaux
 	print("  info  [déplacer] cuvette en %s, %d°" % [basin.position, _gs.item_rotation(basin)])
 
 	# 8. Les tuyaux : en poser trois devant soi.

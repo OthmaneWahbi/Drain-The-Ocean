@@ -176,6 +176,12 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 
 ## Journal
 
+### 2026-11-20 — TEST ÉCHOUÉ — Robot : la cuvette n'est pas reposée (CI de la PR #32)
+- **Échecs :** « on se place devant la cuvette », « reposée », puis « pièces posées en visant le sol : 0/3 ». Reproduit ici avec un dossier de données vide, une fois sur deux.
+- **Cause :** la nouvelle cuvette a une collision plus large (1,5 m) et plus basse. En ligne droite, le robot pouvait rester collé à son bord. Puis, en visant son bord, le point visé tombait pile sur une ligne de la grille : la cuvette tournée prenait la case du joueur (place rouge) et le clic ne posait rien. Le mode déplacement restait ouvert et bloquait ensuite la pose des tuyaux.
+- **Correction (robot) :** il contourne la cuvette par l'ouest. Comme pour la bâche, il vise un peu plus loin tant que la place est rouge. Il ferme le mode déplacement si la pose a échoué. Le jeu refusait à raison. 3 parties de suite sans échec. Au passage, l'avertissement « owner inconsistent » des pales du moulin est corrigé.
+- **Par :** Claude
+
 ### 2026-11-20 — MODIF — Version 0.1.10 : la pelle, les remarques d'Othmane, les modèles CC0, les tuyaux
 - **Pelle (remarque 5, la plus importante) :** `TerrainLogic` devient une grille de sommets tous les mètres (les cases du placement), décalés au hasard sauf ceux travaillés (`edits`, coin → hauteur). `height()` lit le vrai maillage (`facet`), `cell_level()` dit si une case est plate. `TerrainView` est découpé en morceaux de 16 × 16 cases, reconstruits seuls sur `GameState.terrain_changed`. `GameState` : `dig_target`, `dig_reason`, `work_cell`, `ground_level`, `placement_reason` ; plus de cercle constructible, on pose sur des cases plates au même niveau. Nouvelle vue `ShovelTool` (carreau vert/rouge, clic = aplanir en glissant, clic droit = creuser, Maj + clic droit = monter). Barre de 6 cases (`tool_6`), action `use_tool_alt` (clic droit). Réglages `dig_*` dans `GameConfig`. Le sable travaillé est sauvegardé (`terrain`).
 - **Remarque 1 :** `IslandProps` pose tout au plus bas du sol (`lowest_height`), les fleurs seulement sur l'herbe (`is_grass_around`, la même règle que la couleur des facettes), et cache le décor des cases travaillées.
