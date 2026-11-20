@@ -24,13 +24,37 @@ func test_palm_crown_is_fuller_and_has_coconuts() -> void:
 	var leaves := 0
 	var nuts := 0
 	for mi: MeshInstance3D in Models.meshes_of(palm):
-		if mi.material_override and mi.material_override.albedo_color == Models.COCONUT:
+		if mi.has_meta("coconut"):
 			nuts += 1
 		elif mi.material_override and mi.material_override.albedo_color == Models.RECOLOR.leafsDark:
 			leaves += 1
 	assert_true(leaves >= 1, "une deuxième couronne de palmes")
 	assert_true(nuts >= 3, "des noix de coco : %d" % nuts)
 	palm.free()
+
+
+func test_coconut_is_hairy_with_three_real_holes() -> void:
+	var mesh := Models.coconut_mesh(0.15, 4)
+	var arrays := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var cols: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var fibers := 0
+	var hole := 0
+	for i in range(0, verts.size(), 3):
+		if cols[i].r > 0.5:
+			fibers += 1
+		if cols[i].r < 0.12:
+			hole += 1
+			# Le fond d'un trou est SOUS la surface de la coque (un vrai creux, pas un bouton).
+			for k in 3:
+				assert_true(verts[i + k].length() <= 0.15 * 1.1 + 1e-4)
+	assert_true(fibers > 20, "des fibres : %d" % fibers)
+	assert_eq(hole, 21, "trois trous de 7 facettes")
+	var deepest := 1.0
+	for i in verts.size():
+		if cols[i].r < 0.12:
+			deepest = minf(deepest, verts[i].length())
+	assert_true(deepest < 0.15 * 0.9, "le fond des trous rentre dans la noix : %f" % deepest)
 
 
 func test_downloaded_models_are_recolored_and_double_sided() -> void:

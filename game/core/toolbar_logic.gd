@@ -1,6 +1,6 @@
 class_name ToolbarLogic
 extends RefCounted
-## La barre de 5 cases en main (M-27, M-18), sans aucun affichage.
+## La barre de 6 cases (5 avant 0.1.10) en main (M-27, M-18), sans aucun affichage.
 ##
 ## Chaque case contient un outil possédé ("seau", "rateau", "tuyaux"…), un tas de matériau
 ## porté ("sel", "mineraux"…) ou rien (""). Une case vide = les mains nues. On choisit avec 1-5
@@ -11,7 +11,7 @@ var slots: PackedStringArray
 var selected: int = 0
 
 
-func _init(p_slots: PackedStringArray = PackedStringArray(["seau", "", "", "", ""])) -> void:
+func _init(p_slots: PackedStringArray = PackedStringArray(["seau", "pelle", "", "", "", ""])) -> void:
 	slots = p_slots.duplicate()
 
 

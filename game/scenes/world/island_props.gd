@@ -6,6 +6,10 @@ extends Node3D
 ## le même (graine fixe), et seulement hors de la zone constructible.
 
 var palms: Array[Node3D] = []
+## Le petit décor (0.1.10) : [nœud, x, z, rayon, enfoncement (ou orientation), règle] ; règle
+## "grass" (fleurs : seulement sur l'herbe), "shell" (coquillage couché sur la pente) ou "sand". Quand la pelle touche le sable, on le recale au
+## sol ou on le cache (fleur hors de l'herbe, décor sur une case travaillée).
+var _decor: Array = []
 
 
 func _ready() -> void:
@@ -13,16 +17,53 @@ func _ready() -> void:
 	var terrain := GameState.terrain
 	for i in cfg.palms.size():
 		var p := cfg.palms[i]
-		_add_palm(Vector3(p.x, terrain.height(p.x, p.y), p.y), p.z, i)
+		_add_palm(Vector3(p.x, terrain.lowest_height(p.x, p.y, 0.35), p.y), p.z, i)
 	for i in cfg.outer_palms.size():
 		var p := cfg.outer_palms[i]
-		var y := terrain.height(p.x, p.y)
+		var y := terrain.lowest_height(p.x, p.y, 0.35)
 		if y > 0.15:  # jamais dans l'eau
 			_add_palm(Vector3(p.x, y, p.y), p.z, cfg.palms.size() + i)
 	for r in cfg.rocks:
-		_add_rock(Vector3(r.x, terrain.height(r.x, r.y), r.y), r.z)
+		_add_rock(Vector3(r.x, terrain.lowest_height(r.x, r.y, r.z * 0.4), r.y), r.z)
 	_scatter(cfg.dune_bushes, cfg.driftwood)
 	_scatter_small(cfg.dune_flowers, cfg.beach_shells)
+	GameState.terrain_changed.connect(_on_terrain_changed)
+
+
+## Garde un élément de décor posé au plus bas du sol sous lui (jamais en l'air sur une pente).
+func _add_decor(node: Node3D, x: float, z: float, radius: float, sink: float, rule: String) -> void:
+	node.position = Vector3(x, GameState.terrain.lowest_height(x, z, radius) - sink, z)
+	add_child(node)
+	_decor.append([node, x, z, radius, sink, rule])
+
+
+## La pelle a bougé des coins : on recale le décor proche, et on cache ce qui n'a plus sa place.
+func _on_terrain_changed(corners: Array) -> void:
+	if corners.is_empty():
+		return
+	var terrain := GameState.terrain
+	var near := {}
+	for c: Vector2i in corners:
+		for dj in range(-2, 2):
+			for di in range(-2, 2):
+				near[c + Vector2i(di, dj)] = true
+	for d in _decor:
+		var cell := TerrainLogic.cell_of(d[1], d[2])
+		if not near.has(cell):
+			continue
+		var node: Node3D = d[0]
+		if d[5] == "shell":  # couché sur la pente (d[4] = son orientation)
+			node.transform = Props.on_sand(terrain, Vector3(d[1], 0.0, d[2]), d[3], d[4])
+		else:
+			node.position.y = terrain.lowest_height(d[1], d[2], d[3]) - d[4]
+		node.visible = decor_allowed(terrain, d[1], d[2], d[3], d[5])
+
+
+## Un élément de décor a-t-il sa place ici ? (statique, pour les tests)
+static func decor_allowed(terrain: TerrainLogic, x: float, z: float, radius: float, rule: String) -> bool:
+	if terrain.cell_worked(TerrainLogic.cell_of(x, z)):
+		return false
+	return rule != "grass" or terrain.is_grass_around(x, z, radius)
 
 
 ## Le palmier le plus proche de `pos` (pour les traits des réveils).
@@ -89,29 +130,26 @@ func _scatter(bushes: int, logs: int) -> void:
 		# Sur les dunes (bien au-dessus du sable de la plage), là où l'herbe pousse.
 		if terrain.dune_amount(a) < 0.3 or h < terrain.ground_y + 0.8:
 			continue
+		var size := rng.randf_range(0.6, 1.1)
 		var bush := Models.load_model("bush_large" if rng.randf() < 0.4 else "bush")
-		Models.fit_on_ground(bush, rng.randf_range(0.6, 1.1))
+		Models.fit_on_ground(bush, size)
 		var holder := Node3D.new()
-		holder.position = Vector3(x, h - 0.05, z)
 		holder.rotation.y = rng.randf() * TAU
 		holder.add_child(bush)
-		add_child(holder)
+		_add_decor(holder, x, z, size * 0.3, 0.03, "sand")
 		placed += 1
 	for i in logs:
 		var a := rng.randf() * TAU
 		if terrain.dune_amount(a) > 0.0:
 			a = PI / 2 + rng.randf_range(-0.9, 0.9)  # la plage de départ (+Z), sans dunes
 		var r := terrain.coast_at(a) - rng.randf_range(0.8, 2.2)
-		var pos := Vector3(cos(a) * r, 0, sin(a) * r)
-		pos.y = terrain.height(pos.x, pos.z) - 0.05
 		var kind := "log" if i % 2 == 0 else "rock_small"
 		var model := Models.load_model(kind)
 		Models.fit_on_ground(model, 0.35 if kind == "log" else 0.28)
 		var holder := Node3D.new()
-		holder.position = pos
 		holder.rotation.y = rng.randf() * TAU
 		holder.add_child(model)
-		add_child(holder)
+		_add_decor(holder, cos(a) * r, sin(a) * r, 0.3, 0.04, "sand")
 
 
 ## Fleurs (Nature Kit, CC0) dans l'herbe des dunes, et coquillages de décor sur la plage, hors
@@ -128,16 +166,16 @@ func _scatter_small(flowers: int, shells: int) -> void:
 		var r := rng.randf_range(terrain.build_radius + 1.0, terrain.coast_at(a) - 1.0)
 		var x := cos(a) * r
 		var z := sin(a) * r
-		var h := terrain.height(x, z)
-		if terrain.dune_amount(a) < 0.3 or h < terrain.ground_y + 1.4:
-			continue  # seulement là où l'herbe pousse (haut des dunes)
+		var size := rng.randf_range(0.25, 0.4)
+		# Seulement sur les facettes d'herbe, sans déborder sur le sable (remarque 1, 0.1.10).
+		if terrain.dune_amount(a) < 0.3 or not terrain.is_grass_around(x, z, size * 0.5):
+			continue
 		var flower := Models.load_model("flower_red")
-		Models.fit_on_ground(flower, rng.randf_range(0.25, 0.4))
+		Models.fit_on_ground(flower, size)
 		var holder := Node3D.new()
-		holder.position = Vector3(x, h - 0.03, z)
 		holder.rotation.y = rng.randf() * TAU
 		holder.add_child(flower)
-		add_child(holder)
+		_add_decor(holder, x, z, size * 0.3, 0.02, "grass")
 		placed += 1
 	for i in shells:
 		var a := rng.randf() * TAU
@@ -150,5 +188,7 @@ func _scatter_small(flowers: int, shells: int) -> void:
 			continue  # pas dans l'eau
 		var size := rng.randf_range(0.12, 0.2)
 		var shell := Props.shell(i, size) if i % 5 else Props.starfish(0.22, Color(1.0, 0.5, 0.35))
-		shell.transform = Props.on_sand(terrain, pos, size * 0.55, rng.randf() * TAU)
+		var yaw := rng.randf() * TAU
+		shell.transform = Props.on_sand(terrain, pos, size * 0.55, yaw)
 		add_child(shell)
+		_decor.append([shell, pos.x, pos.z, size * 0.55, yaw, "shell"])

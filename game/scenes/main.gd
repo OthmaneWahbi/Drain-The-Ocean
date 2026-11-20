@@ -81,6 +81,10 @@ func _ready() -> void:
 	var builder := PipeBuilder.new()
 	builder.name = "PipeBuilder"
 	add_child(builder)
+	# Travailler le sable (case « pelle » de la barre, 0.1.10).
+	var shovel := ShovelTool.new()
+	shovel.name = "ShovelTool"
+	add_child(shovel)
 	# La fin de la démo (M-05), déclenchée par le moulin-pompe.
 	var milestones := MilestonePanel.new()
 	milestones.name = "Milestones"

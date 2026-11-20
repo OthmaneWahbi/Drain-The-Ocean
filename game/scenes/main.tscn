@@ -44,7 +44,10 @@ environment = SubResource("env")
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 30, 0)
 light_energy = 0.9
 shadow_enabled = true
-directional_shadow_max_distance = 150.0
+directional_shadow_max_distance = 70.0
+shadow_bias = 0.04
+shadow_normal_bias = 1.2
+shadow_blur = 0.6
 
 [node name="Island" type="Node3D" parent="."]
 

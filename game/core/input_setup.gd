@@ -20,11 +20,13 @@ const KEY_BINDINGS := {
 	&"tool_3": KEY_3,
 	&"tool_4": KEY_4,
 	&"tool_5": KEY_5,
+	&"tool_6": KEY_6,
 	&"toolbar_menu": KEY_TAB,
 }
 
 const MOUSE_BINDINGS := {
 	&"use_tool": MOUSE_BUTTON_LEFT,
+	&"use_tool_alt": MOUSE_BUTTON_RIGHT,
 	&"tool_next": MOUSE_BUTTON_WHEEL_DOWN,
 	&"tool_prev": MOUSE_BUTTON_WHEEL_UP,
 }

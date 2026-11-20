@@ -195,9 +195,10 @@ extends Resource
 @export var tutorial_crate_item: String = "catalogue_papier"
 
 @export_group("Barre d'outils")
-## Les 5 cases de la barre au début d'une partie (M-27) : "" = case vide (les mains nues).
-## Les outils achetés et les matériaux portés prennent ensuite les cases vides.
-@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "", "", "", ""])
+## Les 6 cases de la barre au début d'une partie (M-27, 0.1.10 : 6 cases avec la pelle) :
+## "" = case vide (les mains nues). Les outils achetés et les matériaux portés prennent ensuite
+## les cases vides.
+@export var toolbar_slots: PackedStringArray = PackedStringArray(["seau", "pelle", "", "", "", ""])
 
 @export_group("Pompes et tuyaux")
 ## Litres par seconde quand on actionne la pompe (le seau fait ~5 L/s en comptant les allers-retours).
@@ -232,3 +233,15 @@ extends Resource
 @export var rotation_step_deg: float = 90.0
 ## Obstacles fixes : (x, z, rayon) — téléphone, palmiers, jauge, rochers.
 @export var fixed_obstacles: PackedVector3Array = PackedVector3Array()
+
+@export_group("Pelle (0.1.10)")
+## Pas de hauteur de la pelle : on creuse ou on monte le sable par marches de cette hauteur.
+@export var dig_step_m: float = 0.25
+## On ne creuse jamais plus bas que l'eau + cette marge (pas de trou qui se remplit).
+@export var dig_min_above_water_m: float = 0.2
+## On ne monte jamais le sable plus haut que le sol de l'île + cette hauteur.
+@export var dig_max_above_ground_m: float = 2.5
+## Portée de la pelle (distance joueur → case visée), en mètres.
+@export var dig_reach_m: float = 4.0
+## Pendant un glisser (lisser), une case de plus toutes les … secondes au plus.
+@export var dig_drag_interval_s: float = 0.08

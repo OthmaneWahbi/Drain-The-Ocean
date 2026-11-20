@@ -27,6 +27,7 @@ func _ready() -> void:
 	GameState.network_changed.connect(rebuild)
 	GameState.item_moved.connect(func(_it): rebuild())
 	GameState.game_reset.connect(rebuild)
+	GameState.terrain_changed.connect(func(_c): rebuild())  # les piquets suivent le sable (0.1.10)
 	rebuild()
 
 

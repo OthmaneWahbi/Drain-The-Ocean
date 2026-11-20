@@ -25,7 +25,7 @@ func _build(kind: String) -> void:
 	_water_max_y = model.get_meta("water_max")
 	match kind:
 		"cuvette":
-			add_child(Greybox.cylinder_collision(1.4, 0.35, Vector3(0, 0.17, 0)))
+			add_child(Greybox.cylinder_collision(1.5, 0.3, Vector3(0, 0.15, 0)))
 		"bache":
 			add_child(Greybox.box_collision(Vector3(2.4, 0.25, 2.4), Vector3(0, 0.12, 0)))
 		"bassin_bois":
@@ -77,8 +77,12 @@ class SaltPile extends StaticBody3D:
 	var _shape: CollisionShape3D
 
 	func _ready() -> void:
+		# 0.1.10 (remarque 9) : chaque tas est dans son petit bac en bois, toujours là (on voit où
+		# tombera ce qui sèche), et le tas y grossit.
+		add_child(Props.bin(0.84, 0.2))
 		# Un vrai tas de ce qu'il contient (Props.pile), pas un cône de couleur (0.1.4).
 		_mesh = Props.pile(resource, hash(resource) % 1000)
+		_mesh.position.y = 0.03
 		add_child(_mesh)
 		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
 		add_child(_shape)
@@ -92,7 +96,7 @@ class SaltPile extends StaticBody3D:
 		_mesh.visible = amount > 0
 		_shape.disabled = amount <= 0
 		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
-		var s := clampf(0.35 + amount * 0.035, 0.35, 1.1)
+		var s := clampf(0.35 + amount * 0.035, 0.35, 1.05)  # jamais plus large que le bac
 		_mesh.scale = Vector3(s, s, s)
 
 	func get_prompt(_player: Node) -> String:

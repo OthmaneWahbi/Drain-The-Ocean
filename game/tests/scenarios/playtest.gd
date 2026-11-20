@@ -42,10 +42,14 @@ func _check(ok: bool, what: String) -> void:
 		_fails.append("[%s] %s" % [_step, what])
 
 
+## Attendre `s` secondes de TEMPS DE JEU (pas de temps réel) : sur une machine très lente
+## (la CI, 2 images/s), le moteur ralentit le jeu, et un délai en temps réel ne suffit plus
+## pour marcher ou puiser.
 func _wait(s: float) -> void:
-	var end := Time.get_ticks_msec() + int(s * 1000.0)
-	while Time.get_ticks_msec() < end:
+	var t := 0.0
+	while t < s:
 		await process_frame
+		t += root.get_process_delta_time()
 
 
 func _frames(n: int) -> void:
@@ -88,14 +92,15 @@ func _face(pos: Vector3) -> void:
 
 ## Marche (vraiment, avec les touches) jusqu'à `stop_d` m du point. Faux si on n'y arrive pas.
 func _walk_to(pos: Vector3, stop_d: float = 1.5, timeout: float = 20.0) -> bool:
-	var end := Time.get_ticks_msec() + int(timeout * 1000.0)
+	var t := 0.0  # temps de jeu, voir _wait
 	Input.action_press(&"move_forward")
 	var ok := false
 	var last := _player.global_position
 	var still := 0
-	while Time.get_ticks_msec() < end:
+	while t < timeout:
 		_face(Vector3(pos.x, _player.head.global_position.y, pos.z))
 		await process_frame
+		t += root.get_process_delta_time()
 		var p := _player.global_position
 		if Vector2(pos.x - p.x, pos.z - p.z).length() <= stop_d:
 			ok = true
@@ -147,12 +152,16 @@ func _run() -> void:
 	_face(sea + Vector3(0, -1, 3))
 	await _hold(&"use_tool", 2.5)
 	_check(_gs.bucket.water_l > 0.0, "le seau a de l'eau (%.1f L)" % _gs.bucket.water_l)
+	print("  info  [puiser] fps %.1f, joueur %s, dans l'eau : %s" % [Engine.get_frames_per_second(), _player.global_position, _player.is_in_water()])
 
 	# 2. Verser dans la cuvette.
 	_step = "verser"
 	var basin: Dictionary = _gs.zones[0]
 	var bp: Vector3 = basin.position
-	_check(await _walk_to(bp, 2.4, 25.0), "on arrive à la cuvette")
+	var arrived := await _walk_to(bp, 2.4, 25.0)
+	_check(arrived, "on arrive à la cuvette")
+	if not arrived:
+		print("  info  [verser] joueur %s, cuvette %s" % [_player.global_position, bp])
 	_face(bp + Vector3(0, 0.1, 0))
 	await _frames(3)
 	_check(_player.target != null, "on vise la cuvette (cible : %s)" % [_player.target])
@@ -251,6 +260,9 @@ func _run() -> void:
 	# 7. Déplacer la cuvette (G), la tourner (R), la reposer.
 	_step = "déplacer"
 	bp = basin.position
+	# 0.1.10 : on contourne la cuvette par l'ouest (son bourrelet fait 0,3 m : en ligne droite, le
+	# robot pouvait rester collé à son bord).
+	await _walk_to(bp + Vector3(-2.8, 0, 0), 0.8, 20.0)
 	_check(await _walk_to(bp + Vector3(0, 0, 3.4), 0.6, 20.0), "on se place devant la cuvette")
 	_face(bp + Vector3(0, 0.2, 1.3))  # le bord le plus proche
 	await _frames(3)
@@ -260,9 +272,20 @@ func _run() -> void:
 	_check(_gs.placing, "G : mode déplacement")
 	await _tap(&"rotate_object")
 	await _wait(0.4)
+	# Comme un joueur : si la place visée est rouge (la cuvette tournée toucherait le joueur), on
+	# vise un peu plus loin. Le bord de la cuvette tombe pile sur une ligne de la grille.
+	var pcm: Node = _main.get_node("Placement")
+	for k in 5:
+		if pcm._valid:
+			break
+		print("  info  [déplacer] place refusée en %s : %s" % [pcm._target_pos, _gs.placement_reason(pcm.item, pcm._target_pos, pcm._rotation_deg)])
+		_face(bp + Vector3(0, 0.2, 1.0 - 0.5 * k))
+		await _wait(0.4)
 	await _tap(&"use_tool")
 	await _wait(0.3)
 	_check(not _gs.placing, "reposée")
+	if _gs.placing:
+		await _tap(&"move_object")  # sinon le mode déplacement bloquerait les tuyaux
 	print("  info  [déplacer] cuvette en %s, %d°" % [basin.position, _gs.item_rotation(basin)])
 
 	# 8. Les tuyaux : en poser trois devant soi.

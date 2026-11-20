@@ -6,16 +6,28 @@ extends Node3D
 ## pièce déjà posée (nouvelle pièce collée à cette face : à côté, au-dessus, en dessous). Un cube
 ## vert (possible) ou rouge (impossible) montre où ira la pièce. Clic = poser ; E sur une pièce =
 ## la reprendre (voir pipes_view.gd). Toutes les règles sont dans GameState.can_place_pipe().
+##
+## 0.1.10 (Othmane : « les tuyaux doivent mieux marcher ») :
+## - clic maintenu en glissant : on pose toute une ligne droite, une pièce par case survolée, au
+##   niveau de la première ;
+## - clic droit sur une pièce : on la reprend (comme E) ;
+## - le fantôme dit ce que fera la pièce : bleu si l'eau d'une pompe y passera, bleu vif avec un
+##   texte si elle verse dans une zone.
 
 const REACH := 6.0
 const OK_COLOR := Color(0.3, 0.9, 0.35, 0.45)
 const BLOCKED_COLOR := Color(0.95, 0.25, 0.2, 0.45)
+const WET_COLOR := Color(0.3, 0.6, 1.0, 0.5)
+const FEEDS_COLOR := Color(0.2, 0.8, 1.0, 0.65)
 
 var target_cell: Vector3i
 var has_target: bool = false
 var valid: bool = false
 var _ghost: MeshInstance3D
 var _ghost_mat: StandardMaterial3D
+## Le glisser en cours : le niveau de la première pièce (-1 hors glisser) et la dernière case.
+var _drag_level := -1
+var _last_cell := Vector3i(1 << 20, 0, 0)
 
 
 func _ready() -> void:
@@ -37,26 +49,47 @@ func _process(_delta: float) -> void:
 	has_target = false
 	if player == null or not _active():
 		_ghost.visible = false
+		_drag_level = -1
 		return
 	_aim(player)
 	_ghost.visible = has_target
 	if not has_target:
 		return
+	# Pendant un glisser, on reste au niveau de la première pièce (une ligne bien droite).
+	if _drag_level >= 0:
+		target_cell.y = _drag_level
 	valid = GameState.pipe_stock > 0 and GameState.can_place_pipe(target_cell)
 	_ghost.position = PipeNetwork.cell_center(target_cell, GameState.config.grid_cell_m, GameState.config.ground_y)
-	_ghost_mat.albedo_color = OK_COLOR if valid else BLOCKED_COLOR
+	var preview := GameState.pipe_preview(target_cell) if valid else ""
+	_ghost_mat.albedo_color = BLOCKED_COLOR if not valid else (FEEDS_COLOR if preview == "feeds" else (WET_COLOR if preview == "wet" else OK_COLOR))
 	var text: String
 	if GameState.pipe_stock <= 0:
 		text = tr("PROMPT_PIPE_EMPTY")
 	elif valid:
 		text = tr("PROMPT_PIPE_PLACE") % GameState.pipe_stock
+		if preview == "feeds":
+			text = "%s · %s" % [text, tr("PROMPT_PIPE_FEEDS")]
+		elif preview == "wet":
+			text = "%s · %s" % [text, tr("PROMPT_PIPE_WET")]
 	else:
 		text = tr("PROMPT_PIPE_BLOCKED") % GameState.pipe_stock
-	if is_instance_valid(player.target) and player.target.has_method(&"get_prompt") and "cell" in player.target:
+	var aimed_piece: bool = is_instance_valid(player.target) and player.target.has_method(&"get_prompt") and "cell" in player.target
+	if aimed_piece:
 		text = "%s · %s" % [text, tr("PROMPT_PIPE_REMOVE")]
 	player.prompt = text
-	if Input.is_action_just_pressed(&"use_tool") and valid:
-		GameState.place_pipe(target_cell)
+	# Clic : poser ; maintenu en glissant : poser une ligne.
+	if Input.is_action_just_pressed(&"use_tool"):
+		_drag_level = target_cell.y
+		_last_cell = Vector3i(1 << 20, 0, 0)
+	if Input.is_action_pressed(&"use_tool") and target_cell != _last_cell:
+		_last_cell = target_cell
+		if valid:
+			GameState.place_pipe(target_cell)
+	if not Input.is_action_pressed(&"use_tool"):
+		_drag_level = -1
+	# Clic droit sur une pièce : la reprendre.
+	if Input.is_action_just_pressed(&"use_tool_alt") and aimed_piece:
+		GameState.remove_pipe(player.target.cell)
 
 
 func _active() -> bool:

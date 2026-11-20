@@ -254,25 +254,119 @@ static func _center(points: PackedVector3Array) -> Vector3:
 	return c / maxf(points.size(), 1)
 
 
-## Une noix de coco : une petite boule à facettes, un peu bosselée, avec ses trois « yeux ».
+## Une noix de coco (0.1.10, remarque 2) : une coque brune à facettes couverte de fibres (des
+## petites mèches en triangles), et trois vrais trous creusés en haut (le sommet de la coque
+## s'enfonce, en brun très sombre), au lieu de trois boutons collés dessus. Un seul maillage.
 static func coconut(radius: float, rng_seed: int) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	mi.mesh = facet_sphere(radius, 7, 5, rng_seed, Vector3(1.0, 1.08, 1.0), 0.12)
-	mi.material_override = flat_material(COCONUT)
-	var eyes := MeshInstance3D.new()
-	var eye := SphereMesh.new()
-	eye.radius = radius * 0.13
-	eye.height = radius * 0.2
-	eye.radial_segments = 5
-	eye.rings = 2
-	eye.material = flat_material(Color(0.2, 0.12, 0.06))
-	for i in 3:
-		var e := MeshInstance3D.new()
-		e.mesh = eye
-		var a := TAU * i / 3.0
-		e.position = Vector3(cos(a) * radius * 0.28, radius * 1.0, sin(a) * radius * 0.28)
-		mi.add_child(e)
+	mi.mesh = coconut_mesh(radius, rng_seed)
+	mi.material_override = _vertex_color_material()
+	mi.set_meta("coconut", true)
 	return mi
+
+
+## Les trois « yeux » de la noix : leurs directions (autour du sommet).
+static func coconut_eyes() -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for i in 3:
+		var a := TAU * i / 3.0 + 0.4
+		out.append(Vector3(cos(a) * sin(0.42), cos(0.42), sin(a) * sin(0.42)).normalized())
+	return out
+
+
+static func coconut_mesh(radius: float, rng_seed: int) -> ArrayMesh:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var eyes := coconut_eyes()
+	var segments := 12
+	var rings := 8
+	var stretch := Vector3(1.0, 1.1, 1.0)
+	var grid := []
+	for r in rings + 1:
+		var row := []
+		var phi := PI * r / rings
+		for sg in segments:
+			var theta := TAU * sg / segments + (0.5 * TAU / segments if r % 2 == 1 else 0.0)
+			var d := Vector3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta))
+			var k := 1.0 + (rng.randf_range(-0.06, 0.06) if r > 0 and r < rings else 0.0)
+			row.append(d * radius * stretch * k)
+		grid.append(row)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var shell := COCONUT.lightened(0.12)
+	for r in rings:
+		for sg in segments:
+			var a: Vector3 = grid[r][sg]
+			var b: Vector3 = grid[r][(sg + 1) % segments]
+			var c: Vector3 = grid[r + 1][sg]
+			var d: Vector3 = grid[r + 1][(sg + 1) % segments]
+			var shade := shell.darkened(rng.randf_range(0.0, 0.1))
+			if r > 0:
+				_coconut_tri(st, a, b, c, shade)
+			if r < rings - 1:
+				_coconut_tri(st, b, d, c, shade)
+	# Les trous : un cône creux qui rentre dans la coque, avec un bord un peu plus clair.
+	var hole := Color(0.09, 0.05, 0.03)
+	for e in eyes:
+		var center := e * radius * stretch * 0.99
+		var t1 := e.cross(Vector3.UP if absf(e.y) < 0.95 else Vector3.RIGHT).normalized()
+		var t2 := e.cross(t1)
+		var rr := radius * 0.17
+		var bottom := center - e * radius * 0.24
+		var n := 7
+		for q in n:
+			var a1 := TAU * q / n
+			var a2 := TAU * (q + 1) / n
+			var p1 := center + (t1 * cos(a1) + t2 * sin(a1)) * rr
+			var p2 := center + (t1 * cos(a2) + t2 * sin(a2)) * rr
+			_coconut_tri(st, p1, bottom, p2, hole)
+			# Le bord : une couronne de facettes claires autour du trou.
+			var o1 := center + (t1 * cos(a1) + t2 * sin(a1)) * rr * 1.45 - e * radius * 0.02
+			var o2 := center + (t1 * cos(a2) + t2 * sin(a2)) * rr * 1.45 - e * radius * 0.02
+			_coconut_tri(st, o1, p1, o2, shell.lightened(0.12))
+			_coconut_tri(st, p1, p2, o2, shell.lightened(0.08))
+	# Les fibres : des mèches fines, couchées sur la coque, plus denses en bas.
+	var fibers := [Color(0.62, 0.45, 0.26), Color(0.52, 0.36, 0.2), Color(0.7, 0.53, 0.32)]
+	for f in 70:
+		var dir := Vector3(rng.randf_range(-1, 1), rng.randf_range(-1.0, 0.75), rng.randf_range(-1, 1)).normalized()
+		var near_eye := false
+		for e in eyes:
+			near_eye = near_eye or dir.angle_to(e) < 0.45
+		if near_eye:
+			continue
+		var base := dir * radius * stretch * 1.02
+		var t := dir.cross(Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1))).normalized()
+		var length := radius * rng.randf_range(0.35, 0.6)
+		var tip := base + (t * 0.85 + dir * 0.35).normalized() * length
+		var w := t.cross(dir).normalized() * radius * 0.05
+		_coconut_tri(st, base - w, tip, base + w, fibers[f % fibers.size()])
+	return st.commit()
+
+
+static func _coconut_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
+	var n := (b - a).cross(c - a).normalized()
+	if n.dot(a + b + c) < 0.0:  # la face vers l'extérieur
+		var tmp := b
+		b = c
+		c = tmp
+		n = -n
+	for v in [a, b, c]:
+		st.set_color(color)
+		st.set_normal(n)
+		st.add_vertex(v)
+
+
+static var _vc_material: StandardMaterial3D
+
+## Matériau à couleurs de sommets, sans face cachée (fibres fines vues des deux côtés).
+static func _vertex_color_material() -> StandardMaterial3D:
+	if _vc_material == null:
+		_vc_material = StandardMaterial3D.new()
+		_vc_material.vertex_color_use_as_albedo = true
+		_vc_material.vertex_color_is_srgb = true
+		_vc_material.roughness = 0.95
+		_vc_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _vc_material
 
 
 ## Une boule à facettes (normales plates), déformée au hasard de `wobble` (part du rayon).
@@ -318,6 +412,18 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	st.add_vertex(a)
 	st.add_vertex(c)
 	st.add_vertex(b)
+
+
+## Remplace tous les matériaux d'un modèle par un aplat de `color` (sans texture), partagé.
+static func flat_colored(model: Node3D, color: Color) -> void:
+	var key := "flat#" + color.to_html()
+	var m: StandardMaterial3D = _materials.get(key)
+	if m == null:
+		m = flat_material(color)
+		_materials[key] = m
+	for mi: MeshInstance3D in meshes_of(model):
+		for i in mi.mesh.get_surface_count():
+			mi.set_surface_override_material(i, m)
 
 
 static func flat_material(color: Color) -> StandardMaterial3D:
@@ -387,9 +493,11 @@ static func phone_booth() -> Node3D:
 	roof.rotation.y = PI / 4
 	roof.position = Vector3(0, h + 0.41, 0)
 	shake.add_child(roof)
-	shake.add_child(coconut(0.09, 3))  # un pompon en haut : une petite boule rouge
-	shake.get_child(-1).position = Vector3(0, h + 0.6, 0)
-	(shake.get_child(-1) as MeshInstance3D).material_override = flat_material(BOOTH_RED)
+	var pompon := MeshInstance3D.new()  # un pompon en haut : une petite boule rouge
+	pompon.mesh = facet_sphere(0.09, 7, 5, 3, Vector3(1.0, 1.08, 1.0), 0.12)
+	pompon.material_override = flat_material(BOOTH_RED)
+	pompon.position = Vector3(0, h + 0.6, 0)
+	shake.add_child(pompon)
 	# Les bandeaux « TÉLÉPHONE » sous le toit, sur les quatre côtés.
 	for i in 4:
 		var side := Node3D.new()

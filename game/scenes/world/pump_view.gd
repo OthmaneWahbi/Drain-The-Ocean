@@ -33,7 +33,7 @@ func setup(p: Dictionary) -> void:
 	_rate_label.font_size = 48
 	_rate_label.pixel_size = 0.005
 	_rate_label.outline_size = 10
-	_rate_label.position = Vector3(0, 5.2 if GameState.is_auto_pump(pump) else 1.9, 0)
+	_rate_label.position = Vector3(0, 5.6 if GameState.is_auto_pump(pump) else 1.9, 0)
 	_rate_label.visible = false
 	add_child(_rate_label)
 
