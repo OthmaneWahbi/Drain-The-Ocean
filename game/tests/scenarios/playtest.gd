@@ -152,7 +152,10 @@ func _run() -> void:
 	_step = "verser"
 	var basin: Dictionary = _gs.zones[0]
 	var bp: Vector3 = basin.position
-	_check(await _walk_to(bp, 2.4, 25.0), "on arrive à la cuvette")
+	var arrived := await _walk_to(bp, 2.4, 25.0)
+	_check(arrived, "on arrive à la cuvette")
+	if not arrived:
+		print("  info  [verser] joueur %s, cuvette %s" % [_player.global_position, bp])
 	_face(bp + Vector3(0, 0.1, 0))
 	await _frames(3)
 	_check(_player.target != null, "on vise la cuvette (cible : %s)" % [_player.target])

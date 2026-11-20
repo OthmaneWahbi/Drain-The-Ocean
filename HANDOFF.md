@@ -176,6 +176,12 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 
 ## Journal
 
+### 2026-11-20 — TEST ÉCHOUÉ — Robot : « on arrive à la cuvette » (2e CI de la PR #32)
+- Sur la CI, le robot n'est pas arrivé à la cuvette en 25 s après avoir puisé. Ici, 6 parties de suite passent : je n'arrive pas à le reproduire.
+- **Piste :** le nouveau sol (morceaux de collision) ou la nouvelle cuvette gênent la marche sur la machine plus lente de la CI.
+- **Pour trouver :** le robot écrit maintenant sa position et celle de la cuvette quand il n'arrive pas.
+- **Par :** Claude
+
 ### 2026-11-20 — TEST ÉCHOUÉ — Robot : la cuvette n'est pas reposée (CI de la PR #32)
 - **Échecs :** « on se place devant la cuvette », « reposée », puis « pièces posées en visant le sol : 0/3 ». Reproduit ici avec un dossier de données vide, une fois sur deux.
 - **Cause :** la nouvelle cuvette a une collision plus large (1,5 m) et plus basse. En ligne droite, le robot pouvait rester collé à son bord. Puis, en visant son bord, le point visé tombait pile sur une ligne de la grille : la cuvette tournée prenait la case du joueur (place rouge) et le clic ne posait rien. Le mode déplacement restait ouvert et bloquait ensuite la pose des tuyaux.
