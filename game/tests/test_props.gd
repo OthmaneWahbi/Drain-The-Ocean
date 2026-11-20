@@ -10,7 +10,7 @@ func _height(n: Node3D) -> float:
 func test_each_resource_pile_looks_like_its_content() -> void:
 	for r in Economy.RESOURCES:
 		var pile := Props.pile(r, 3)
-		assert_true(pile.get_child_count() > 5, "%s : un monticule et des morceaux" % r)
+		assert_true(Models.meshes_of(pile).size() > 4, "%s : un tas et des morceaux" % r)
 		var box := Models.bounds(Models.vertices(pile))
 		assert_almost(box.position.y, 0.0, 0.08, "%s posé au sol" % r)
 		assert_true(box.size.y > 0.25 and box.size.y < 0.7, "%s : hauteur %f" % [r, box.size.y])
@@ -55,6 +55,23 @@ func test_animated_parts_have_their_names() -> void:
 		z.free()
 	for n in [pump, mill, plane]:
 		n.free()
+
+
+func test_shell_heap_is_only_shells_and_bins_hold_piles() -> void:
+	var heap := Props.pile("coquillages", 3)
+	assert_true(Models.meshes_of(heap).size() >= 22, "une vingtaine de coquillages")
+	heap.free()
+	var b := Props.bin(0.84, 0.2)
+	var box := Models.bounds(Models.vertices(b))
+	assert_almost(box.size.x, 0.84, 0.02)
+	assert_true(box.size.y >= 0.2 and box.size.y < 0.25)
+	b.free()
+	var basin := Props.drying_zone("cuvette")
+	var rim := 0.0
+	for p: Vector2 in Props.BASIN_PROFILE:
+		rim = maxf(rim, p.y)
+	assert_true(float(basin.get_meta("water_max")) < rim, "l'eau reste sous le bourrelet")
+	basin.free()
 
 
 func test_animated_characters_are_measured_in_their_pose() -> void:

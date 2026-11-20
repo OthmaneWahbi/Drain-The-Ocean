@@ -18,7 +18,10 @@ var _label: Label3D
 func _ready() -> void:
 	# Un poteau en bois planté dans un tas de pierres, un cadran crème cerclé de laiton, une
 	# aiguille rouge et une plaque (0.1.4 : style du catalogue).
-	add_child(Props.box(Vector3(0.14, 1.65, 0.14), Props.WOOD_DARK, Vector3(0, 0.82, 0)))
+	# 0.1.10 (remarque 11) : le poteau passe DERRIÈRE le cadran et la plaque (avant, il les
+	# traversait et ses faces se battaient avec elles : le bois clignotait à travers le cadran).
+	add_child(Props.box(Vector3(0.14, 1.85, 0.12), Props.WOOD_DARK, Vector3(0, 0.92, -0.08)))
+	add_child(Props.box(Vector3(0.5, 0.5, 0.03), Props.WOOD_DARK, Vector3(0, 1.75, -0.025)))  # la planche qui tient le cadran
 	for i in 5:
 		var a := TAU * i / 5.0
 		add_child(Props.ball(0.13, Color(0.6, 0.58, 0.55), Vector3(cos(a) * 0.18, 0.04, sin(a) * 0.18), 60 + i, 0.2, Vector3(1, 0.6, 1)))

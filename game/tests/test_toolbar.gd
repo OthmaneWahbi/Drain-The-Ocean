@@ -1,5 +1,5 @@
 extends TestCase
-## La barre de 5 cases en main (M-27) : outils, matériaux portés (un par case), menu pour
+## La barre de 6 cases en main (M-27 ; la pelle en case 2 depuis 0.1.10) : outils, matériaux portés (un par case), menu pour
 ## réorganiser, et un tas par matériau à côté des zones de séchage.
 
 const GameStateScript := preload("res://core/game_state.gd")
@@ -24,14 +24,16 @@ func _slots() -> Array:
 
 # --- Choisir une case ------------------------------------------------------------------------
 
-func test_starts_with_the_bucket_and_four_empty_slots() -> void:
+func test_starts_with_the_bucket_the_shovel_and_four_empty_slots() -> void:
 	assert_eq(gs.current_tool(), "seau")
-	assert_eq(_slots(), ["seau", "", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
 
 
 func test_empty_slot_means_bare_hands() -> void:
 	gs.select_tool(1)
-	assert_eq(gs.toolbar.selected, 1)
+	assert_eq(gs.current_tool(), "pelle")
+	gs.select_tool(2)
+	assert_eq(gs.toolbar.selected, 2)
 	assert_eq(gs.current_tool(), "", "case vide = les mains")
 	gs.select_tool(0)
 	assert_eq(gs.current_tool(), "seau")
@@ -42,7 +44,7 @@ func test_empty_slot_means_bare_hands() -> void:
 
 func test_wheel_goes_round_all_slots() -> void:
 	gs.cycle_tool(-1)
-	assert_eq(gs.toolbar.selected, 4)
+	assert_eq(gs.toolbar.selected, 5)
 	gs.cycle_tool(1)
 	assert_eq(gs.toolbar.selected, 0)
 
@@ -67,18 +69,18 @@ func test_bought_tools_take_the_first_free_slot() -> void:
 	gs.stock = {"sel": 1000, "mineraux": 100}
 	gs.unlocked_tier = 2
 	gs.open_crates(gs.order(["rateau"]))
-	assert_eq(_slots(), ["seau", "rateau", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "rateau", "", "", ""])
 	gs.open_crates(gs.order(["tuyau"]))
-	assert_eq(_slots(), ["seau", "rateau", "tuyaux", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "rateau", "tuyaux", "", ""])
 
 
 # --- Les matériaux portés --------------------------------------------------------------------
 
 func test_each_carried_material_takes_one_slot() -> void:
 	gs.add_carried({"sel": 3})
-	assert_eq(_slots(), ["seau", "sel", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "sel", "", "", ""])
 	gs.add_carried({"sel": 2, "mineraux": 1})
-	assert_eq(_slots(), ["seau", "sel", "mineraux", "", ""], "le sel garde sa case")
+	assert_eq(_slots(), ["seau", "pelle", "sel", "mineraux", "", ""], "le sel garde sa case")
 	assert_eq(int(gs.carried.sel), 5)
 
 
@@ -96,10 +98,10 @@ func test_no_free_slot_means_the_material_stays_behind() -> void:
 
 func test_slot_is_freed_when_the_material_is_dropped_at_the_pallet() -> void:
 	gs.add_carried({"sel": 3, "mineraux": 1})
-	gs.select_tool(1)
+	gs.select_tool(2)
 	assert_eq(gs.current_tool(), "sel")
 	gs.unload_to_stock()
-	assert_eq(_slots(), ["seau", "", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
 	assert_eq(gs.current_tool(), "", "la case tenue est vide : les mains")
 
 
@@ -108,7 +110,7 @@ func test_slot_is_freed_when_the_material_is_spent_on_an_order() -> void:
 	gs.stock = {"sel": 5}
 	assert_eq(gs.order(["bache"]).size(), 1)  # 15 sel : ce qu'on porte d'abord, puis la palette
 	assert_false(gs.carried.has("sel"))
-	assert_eq(_slots(), ["seau", "", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
 
 
 func test_shell_needs_a_slot_to_be_picked_up() -> void:
@@ -139,7 +141,7 @@ func test_swap_slots_keeps_what_you_hold() -> void:
 	gs.add_carried({"sel": 2})
 	gs.select_tool(0)
 	assert_true(gs.swap_slots(0, 3))
-	assert_eq(_slots(), ["", "sel", "", "seau", ""])
+	assert_eq(_slots(), ["", "pelle", "sel", "seau", "", ""])
 	assert_eq(gs.toolbar.selected, 3, "la sélection suit le seau")
 	assert_eq(gs.current_tool(), "seau")
 	assert_false(gs.swap_slots(0, 0))
@@ -149,7 +151,7 @@ func test_swap_slots_keeps_what_you_hold() -> void:
 func test_new_material_goes_into_first_free_slot_after_a_swap() -> void:
 	gs.swap_slots(0, 4)
 	gs.add_carried({"sel": 1})
-	assert_eq(_slots(), ["sel", "", "", "", "seau"])
+	assert_eq(_slots(), ["sel", "pelle", "", "", "seau", ""])
 
 
 func test_toolbar_layout_is_saved() -> void:
@@ -179,7 +181,7 @@ func test_broken_or_old_saves_rebuild_the_bar() -> void:
 	assert_true(other.toolbar.index_of("mineraux") >= 0)
 	assert_eq(other.current_tool(), "seau")
 	# Une case qui annonce un râteau qu'on n'a pas : on la vide.
-	data["upgrades"]["toolbar"] = ["seau", "rateau", "", "", ""]
+	data["upgrades"]["toolbar"] = ["seau", "pelle", "rateau", "", "", ""]
 	other.load_dict(data)
 	assert_eq(other.toolbar.index_of("rateau"), -1)
 	other.free()
@@ -190,7 +192,7 @@ func test_new_game_gives_back_the_bucket() -> void:
 	gs.select_tool(1)
 	gs.new_game()
 	assert_eq(gs.current_tool(), "seau")
-	assert_eq(_slots(), ["seau", "", "", "", ""])
+	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
 
 
 func test_toolbar_logic_alone() -> void:

@@ -103,9 +103,9 @@ func _build_toolbar() -> void:
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(10, 0)
 	row.add_child(gap)
-	for i in 5:
+	for i in GameState.toolbar.slots.size():
 		var slot := PanelContainer.new()
-		slot.custom_minimum_size = Vector2(96, 76)
+		slot.custom_minimum_size = Vector2(90, 76)
 		var label := Label.new()
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -190,7 +190,7 @@ func _build_stamina_bar() -> void:
 func _refresh_ocean() -> void:
 	# Beaucoup de décimales : voir 100,0000000000 % est drôle en soi (PRD §8.2).
 	# Les litres retirés, eux, bougent dès le premier seau.
-	ocean_label.text = "%s : %.10f %% · %s : %s L" % [tr("HUD_OCEAN_REMAINING"), GameState.ocean.remaining_ratio() * 100.0, tr("HUD_REMOVED"), format_liters(GameState.ocean.removed_l)]
+	ocean_label.text = "%s : %.2f %% · %s : %s L" % [tr("HUD_OCEAN_REMAINING"), GameState.ocean.remaining_ratio() * 100.0, tr("HUD_REMOVED"), format_liters(GameState.ocean.removed_l)]
 
 
 func _refresh_items() -> void:

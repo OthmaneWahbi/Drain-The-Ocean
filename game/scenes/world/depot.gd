@@ -3,9 +3,11 @@ extends StaticBody3D
 ## Une grande palette avec un emplacement par ressource : chaque tas a sa couleur, sa hauteur
 ## et son compteur, pour voir d'un coup d'œil ce qu'on a (retour d'Othmane). Depuis 0.1.4, les
 ## tas ressemblent à ce qu'ils contiennent (Props.pile : sel, cailloux à cristaux, gemmes,
-## coquillages, perles).
+## coquillages, perles). 0.1.10 : deux palettes KayKit et un bac en bois par matériau.
 
 const SIZE := Vector3(3.6, 0.15, 1.6)
+## Hauteur des bacs posés sur la palette (0.1.10).
+const BIN_H := 0.2
 ## Hauteur du modèle de tas (Props.pile) à l'échelle 1.
 const PILE_MODEL_H := 0.45
 ## Largeur d'un tas à l'échelle 1 (diamètre du monticule).
@@ -16,22 +18,27 @@ var _labels: Dictionary = {}  # ressource -> Label3D
 
 
 func _ready() -> void:
-	add_child(Props.pallet(SIZE))
+	# 0.1.10 (remarque 7) : deux palettes en bois de KayKit (Resource Bits, CC0) côte à côte, et
+	# dessus un bac en bois par matériau, comme ceux des zones de séchage : le tas grossit DANS
+	# son bac, son nom est peint sur une planchette clouée devant, et le compteur flotte au-dessus.
+	for sx in [-1, 1]:
+		var pal := Props.fit_model("kaykit_pallet_wood", Vector3(SIZE.x / 2.0 - 0.04, SIZE.y, SIZE.z))
+		pal.position.x = sx * SIZE.x / 4.0
+		add_child(pal)
 	add_child(Greybox.box_collision(Vector3(SIZE.x, 0.5, SIZE.z), Vector3(0, 0.25, 0)))
 	var n := Economy.RESOURCES.size()
 	var slot := SIZE.x / n
-	# 0.1.8 : des cloisons basses entre les emplacements, comme un étal : chaque tas a sa case.
-	for i in range(1, n):
-		var x := -SIZE.x / 2.0 + slot * i
-		add_child(Props.box(Vector3(0.05, 0.16, SIZE.z * 0.92), Props.WOOD_DARK, Vector3(x, SIZE.y + 0.08, 0)))
 	for i in n:
 		var r: String = Economy.RESOURCES[i]
 		var x := -SIZE.x / 2.0 + slot * (i + 0.5)
+		var bin := Props.bin(slot * 0.92, BIN_H)
+		bin.position = Vector3(x, SIZE.y, 0)
+		add_child(bin)
 		var pile := Props.pile(r, 40 + i)
-		pile.position = Vector3(x, SIZE.y, 0)
+		pile.position = Vector3(x, SIZE.y + 0.03, 0)
 		add_child(pile)
 		_piles[r] = pile
-		# Le nombre au-dessus du tas (toujours face au joueur), le nom peint sur le devant de la palette.
+		# Le nombre au-dessus du tas (toujours face au joueur).
 		var label := Label3D.new()
 		label.position = Vector3(x, 0.3, 0)
 		label.font_size = 40
@@ -40,16 +47,17 @@ func _ready() -> void:
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		add_child(label)
 		_labels[r] = label
-		# Le nom, peint sur une petite planche crème clouée devant (plus lisible que sur le bois).
-		add_child(Props.box(Vector3(slot * 0.8, 0.13, 0.03), Props.CREAM, Vector3(x, SIZE.y / 2.0, SIZE.z / 2.0 + 0.015)))
+		# Le nom, peint sur une planchette crème clouée devant le bac.
+		var sign_z := slot * 0.46 + 0.012
+		add_child(Props.box(Vector3(slot * 0.78, 0.12, 0.02), Props.CREAM, Vector3(x, SIZE.y + BIN_H * 0.5, sign_z)))
 		var name_label := Label3D.new()
 		name_label.text = tr("RES_" + r.to_upper())
-		name_label.position = Vector3(x, SIZE.y / 2.0, SIZE.z / 2.0 + 0.035)
+		name_label.position = Vector3(x, SIZE.y + BIN_H * 0.5, sign_z + 0.012)
 		name_label.font_size = 18
 		name_label.pixel_size = 0.004
 		name_label.modulate = Color(0.12, 0.08, 0.04)
 		name_label.outline_size = 0
-		name_label.width = slot * 0.8 / 0.004
+		name_label.width = slot * 0.78 / 0.004
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_child(name_label)
 	GameState.stock_changed.connect(_refresh)
@@ -62,7 +70,7 @@ func _refresh() -> void:
 		var pile: Node3D = _piles[r]
 		pile.visible = count > 0
 		var h := pile_height(count)
-		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.88)  # entre les cloisons
+		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.86)  # dans son bac
 		var label: Label3D = _labels[r]
 		label.text = str(count)
 		label.position.y = SIZE.y + pile.scale.y * PILE_MODEL_H + 0.25  # juste au-dessus du vrai tas

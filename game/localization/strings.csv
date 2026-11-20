@@ -90,8 +90,8 @@ TOOL_SEAU,Seau,Bucket
 TOOL_MAINS,Mains,Hands
 TOOL_RATEAU,Râteau,Rake
 PIPE_NAME,Tuyau,Pipe
-PROMPT_PIPE_REMOVE,[E] Reprendre le tuyau,[E] Take the pipe back
-PROMPT_PIPE_PLACE,[Clic] Poser un tuyau (%d en stock),[Click] Place a pipe (%d left)
+PROMPT_PIPE_REMOVE,"[E, Clic droit] Reprendre le tuyau","[E, Right click] Take the pipe back"
+PROMPT_PIPE_PLACE,"[Clic] Poser, glisser pour une ligne (%d en stock)","[Click] Place, drag for a line (%d left)"
 PROMPT_PIPE_BLOCKED,Pas de tuyau ici (%d en stock),No pipe here (%d left)
 PROMPT_PIPE_EMPTY,Plus de tuyaux : commande-en au téléphone,No pipes left: order some by phone
 TOOL_TUYAUX,Tuyaux,Pipes
@@ -217,3 +217,13 @@ SLIDE_SIGN,ENVOI,SEND
 RATIONS_STAMP,RATIONS,RATIONS
 HUD_PER_SLOT,max %d par case,max %d per slot
 HUD_PIPES_IN_HAND,%d en main,%d in hand
+TOOL_PELLE,Pelle,Shovel
+PROMPT_GROUND_NOT_FLAT,"Sol pas plat : aplanis-le à la pelle · [R] Tourner · [G] Annuler","Ground not flat: level it with the shovel · [R] Rotate · [G] Cancel"
+PROMPT_DIG,"[Clic] Aplanir (glisser) · [Clic droit] Creuser · [Maj + Clic droit] Monter","[Click] Level (drag) · [Right click] Dig · [Shift + Right click] Raise"
+PROMPT_DIG_AIM,Vise le sable devant toi,Aim at the sand in front of you
+PROMPT_DIG_TOO_FAR,Trop loin pour la pelle,Too far for the shovel
+PROMPT_DIG_WATER,"Pas dans l'eau : le sable s'effondre","Not in the water: the sand collapses"
+PROMPT_DIG_BLOCKED,"Il y a quelque chose ici : déplace-le d'abord (G)","Something is here: move it first (G)"
+PROMPT_DIG_NEAR_OBJECT,Trop près d'un objet : il pencherait,Too close to an object: it would tilt
+PROMPT_PIPE_FEEDS,verse dans la zone,pours into the area
+PROMPT_PIPE_WET,"reliée à la pompe","connected to the pump"

@@ -188,26 +188,112 @@ static func _mesh(m: Mesh, color: Color, two_sided := false) -> MeshInstance3D:
 
 # --- Ressources : tas, coquillages, perles -----------------------------------------------------
 
-## Le tas d'une ressource : un monticule de sa couleur, couvert de ce qu'il contient (cristaux de
-## sel, cailloux à cristaux, gemmes, coquillages, perles). Rayon ~0,36 m, haut ~0,45 m : la vue
-## le met à l'échelle selon la quantité.
+## Le tas d'une ressource (0.1.10 : retravaillé, remarques 3 et 9). Rayon ~0,36 m, haut ~0,3 à
+## 0,45 m : la vue le met à l'échelle selon la quantité.
+##  - sel : un tas de neige de Kenney (Holiday Kit, CC0) teint en blanc crème, et des cristaux ;
+##  - minéraux : des pierres de Kenney (Survival Kit, CC0) en gris, sur un monticule de gravier ;
+##  - minéraux rares : le tas de gemmes de KayKit (Resource Bits, CC0), avec ses couleurs ;
+##  - coquillages : uniquement des coquillages (moules de Kenney, coquilles et conques par code),
+##    empilés en couronnes, sans monticule coloré visible ;
+##  - perles : des perles nacrées sur un coussin bleu nuit (inchangé).
 static func pile(resource: String, rng_seed := 7) -> Node3D:
 	var root := Node3D.new()
 	root.name = "Pile_" + resource
 	var rng := RandomNumberGenerator.new()
 	rng.seed = rng_seed
-	var mound := _mesh(dome(0.36, 0.3, 9, 3, rng_seed, 0.1), PILE_BASE.get(resource, SALT))
-	mound.name = "Mound"
-	root.add_child(mound)
-	var count := 12 if resource != "mineraux_rares" else 7
-	for i in count:
-		var t := (float(i) + 0.5) / count
-		var r := 0.3 * sqrt(1.0 - t)  # les premiers en bas, au bord ; les derniers au sommet
-		var a := i * 2.39996 + rng.randf_range(-0.2, 0.2)
-		var y := 0.3 * sqrt(maxf(1.0 - pow(r / 0.36, 2.0), 0.0))
-		var piece := pile_piece(resource, rng, i)
-		piece.position = Vector3(cos(a) * r, y - 0.02, sin(a) * r)
-		root.add_child(piece)
+	match resource:
+		"sel":
+			var snow := fit_model("kenney_snow_pile", Vector3(0.74, 0.3, 0.74))
+			Models.flat_colored(snow, Color(0.96, 0.95, 0.9))
+			root.add_child(snow)
+			for i in 9:
+				var a := i * 2.39996 + rng.randf_range(-0.2, 0.2)
+				var r := 0.26 * sqrt(1.0 - (float(i) + 0.5) / 9.0)
+				var piece := pile_piece(resource, rng, i)
+				piece.position = Vector3(cos(a) * r, 0.3 * sqrt(maxf(1.0 - pow(r / 0.37, 2.0), 0.0)) - 0.03, sin(a) * r)
+				root.add_child(piece)
+		"mineraux_rares":
+			root.add_child(fit_model("kaykit_gems_pile_small", Vector3(0.74, 0.42, 0.74)))
+			for i in 4:  # quelques cristaux qui dépassent
+				var a := i * 2.39996
+				var piece := pile_piece(resource, rng, i)
+				piece.position = Vector3(cos(a) * 0.2, 0.12 + 0.05 * (i % 2), sin(a) * 0.2)
+				root.add_child(piece)
+		"coquillages":
+			root.add_child(_shell_heap(rng))
+		_:
+			var mound := _mesh(dome(0.36, 0.3, 9, 3, rng_seed, 0.1), PILE_BASE.get(resource, SALT))
+			mound.name = "Mound"
+			root.add_child(mound)
+			var count := 12 if resource != "mineraux" else 9
+			for i in count:
+				var t := (float(i) + 0.5) / count
+				var r := 0.3 * sqrt(1.0 - t)  # les premiers en bas, au bord ; les derniers au sommet
+				var a := i * 2.39996 + rng.randf_range(-0.2, 0.2)
+				var y := 0.3 * sqrt(maxf(1.0 - pow(r / 0.36, 2.0), 0.0))
+				var piece := pile_piece(resource, rng, i)
+				piece.position = Vector3(cos(a) * r, y - 0.02, sin(a) * r)
+				root.add_child(piece)
+	return root
+
+
+## Un modèle CC0 mis à la taille `size` (largeur, hauteur, profondeur), centré, posé en y = 0.
+static func fit_model(model_name: String, size: Vector3) -> Node3D:
+	var holder := Node3D.new()
+	var m := Models.load_model(model_name)
+	var bb := Models.bounds(Models.vertices(m))
+	var k := Vector3(size.x / maxf(bb.size.x, 0.001), size.y / maxf(bb.size.y, 0.001), size.z / maxf(bb.size.z, 0.001))
+	m.scale = k
+	var c := bb.get_center()
+	m.position = Vector3(-c.x * k.x, -bb.position.y * k.y, -c.z * k.z)
+	holder.add_child(m)
+	return holder
+
+
+## Un tas fait seulement de coquillages : trois couronnes de plus en plus petites et une coquille
+## au sommet. Un petit cœur rose foncé dessous bouche les trous entre les coquilles.
+static func _shell_heap(rng: RandomNumberGenerator) -> Node3D:
+	var heap := Node3D.new()
+	heap.add_child(_mesh(dome(0.27, 0.2, 8, 2, 5, 0.1), Color(0.78, 0.55, 0.48)))
+	var colors := SHELL_COLORS + [Color(0.98, 0.93, 0.85), Color(0.95, 0.85, 0.72)]
+	var rings := [[10, 0.29, 0.03], [7, 0.19, 0.12], [4, 0.1, 0.2], [1, 0.0, 0.27]]
+	var n := 0
+	for ring in rings:
+		for q in int(ring[0]):
+			var a := TAU * q / float(ring[0]) + rng.randf_range(-0.2, 0.2) + float(ring[1]) * 3.0
+			var holder := Node3D.new()
+			holder.position = Vector3(cos(a) * float(ring[1]), float(ring[2]), sin(a) * float(ring[1]))
+			# Couché vers l'extérieur, comme glissé sur la pente du tas.
+			holder.rotation = Vector3(rng.randf_range(-0.25, 0.25), -a + PI / 2 + rng.randf_range(-0.6, 0.6), -0.45 if ring[1] > 0.0 else 0.0)
+			var color: Color = colors[(n * 3 + q) % colors.size()]
+			match n % 4:
+				0, 2:
+					var mussel := fit_model("kenney_mussel_open" if n % 4 == 0 else "kenney_mussel", Vector3(0.1, 0.06, 0.17))
+					Models.flat_colored(mussel, color)
+					holder.add_child(mussel)
+				1:
+					holder.add_child(scallop(0.13, color))
+				3:
+					holder.add_child(conch(0.15, color))
+			heap.add_child(holder)
+			n += 1
+	return heap
+
+
+## Le bac en bois où tombe ce qui sèche (0.1.10, remarque 9 : les tas sont dans de petits
+## contenants) : un fond et quatre planches basses, coins renforcés. Aussi en main (remarque 4).
+static func bin(size := 0.8, height := 0.2) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Bin"
+	var t := size * 0.06
+	root.add_child(box(Vector3(size, 0.03, size), WOOD_DARK, Vector3(0, 0.015, 0)))
+	for i in 4:
+		var side := Node3D.new()
+		side.rotation.y = i * PI / 2
+		root.add_child(side)
+		side.add_child(box(Vector3(size, height * 0.5, t), WOOD if i % 2 == 0 else WOOD_LIGHT, Vector3(0, height * 0.25, size / 2 - t / 2)))
+		side.add_child(box(Vector3(size, height * 0.5, t), WOOD_LIGHT if i % 2 == 0 else WOOD, Vector3(0, height * 0.75, size / 2 - t / 2)))
+		side.add_child(box(Vector3(t * 1.3, height * 1.05, t * 1.3), WOOD_DARK, Vector3(size / 2 - t / 2, height * 0.52, size / 2 - t / 2)))
 	return root
 
 
@@ -218,12 +304,16 @@ static func pile_piece(resource: String, rng: RandomNumberGenerator, i: int) -> 
 	match resource:
 		"sel":
 			# Des cristaux cubiques, blancs bleutés, de tailles différentes.
-			var s := rng.randf_range(0.06, 0.1)
+			var s := rng.randf_range(0.05, 0.08)
 			holder.add_child(box(Vector3(s, s, s), SALT if i % 3 else Color(0.88, 0.95, 1.0), Vector3(0, s * 0.3, 0)))
 		"mineraux":
-			if i % 4 == 0:
+			if i % 3 == 0:
+				var stone := fit_model("kenney_resource_stone_large", Vector3(0.2, 0.09, 0.18))
+				Models.flat_colored(stone, [Color(0.55, 0.53, 0.5), Color(0.62, 0.6, 0.56)][i % 2])
+				holder.add_child(stone)
+			elif i % 3 == 1:
 				var rock := Models.load_model("crystal_rock")
-				Models.fit_on_ground(rock, 0.16)
+				Models.fit_on_ground(rock, 0.15)
 				holder.add_child(rock)
 			else:
 				holder.add_child(ball(rng.randf_range(0.05, 0.08), [Color(0.5, 0.48, 0.46), Color(0.62, 0.58, 0.52), Color(0.42, 0.42, 0.44)][i % 3], Vector3(0, 0.03, 0), i, 0.25, Vector3(1, 0.7, 1)))
@@ -373,34 +463,43 @@ static func starfish(size: float, color: Color) -> MeshInstance3D:
 
 # --- Livraison : caisse, parachute, palette, sacs, avion ---------------------------------------
 
-## La caisse de l'Agence : planches clouées, cadre plus foncé, une croix sur deux faces et le
-## tampon « AGENCE » au pochoir rouge. Base en (0, 0, 0).
+## La caisse de l'Agence (0.1.10, remarque 12) : la caisse en planches du Pirate Kit de Kenney
+## (CC0), mise en cube de `size`, au lieu de la caisse faite par code. Le tampon « AGENCE » et
+## « Fragile » sont peints À PLAT sur le panneau du milieu de chaque face ±Z (avant, ils
+## flottaient devant la caisse et dépassaient de ses bords).
 static func crate(size := 0.9) -> Node3D:
 	var root := Node3D.new()
-	var h := size / 2
-	root.add_child(box(Vector3(size * 0.96, size * 0.96, size * 0.96), WOOD, Vector3(0, h, 0)))
-	# Les joints des planches : de fines rainures sombres sur les quatre côtés.
-	for k in [1, 2]:
-		var y := size * float(k) / 3.0
-		root.add_child(box(Vector3(size * 0.97, 0.012, size * 0.97), WOOD_DARK, Vector3(0, y, 0)))
-	# Le cadre : douze arêtes.
-	var e := size * 0.1
+	var model := Models.load_model("kenney_pirate_crate")
+	var pts := Models.vertices(model)
+	var bb := Models.bounds(pts)
+	var k := Vector3(size / bb.size.x, size / bb.size.y, size / bb.size.z)
+	model.scale = k
+	var c := bb.get_center()
+	model.position = Vector3(-c.x * k.x, -bb.position.y * k.y, -c.z * k.z)
+	root.add_child(model)
+	# La caisse du kit est ouverte en haut : on la ferme avec un couvercle cloué (trois planches
+	# et deux traverses), puisqu'elle arrive pleine.
+	for k2 in 3:
+		root.add_child(box(Vector3(size * 0.97, 0.04, size * 0.31), WOOD if k2 != 1 else WOOD_LIGHT, Vector3(0, size - 0.02, (k2 - 1) * size * 0.32)))
 	for sx in [-1, 1]:
-		for sz in [-1, 1]:
-			root.add_child(box(Vector3(e, size, e), WOOD_DARK, Vector3(sx * (h - e / 2), h, sz * (h - e / 2))))
-		for y in [e / 2, size - e / 2]:
-			root.add_child(box(Vector3(e, e, size), WOOD_DARK, Vector3(sx * (h - e / 2), y, 0)))
-			root.add_child(box(Vector3(size, e, e), WOOD_DARK, Vector3(0, y, sx * (h - e / 2))))
-	# La croix sur les côtés ±X, le tampon sur ±Z.
+		root.add_child(box(Vector3(size * 0.1, 0.03, size * 0.97), WOOD_DARK, Vector3(sx * size * 0.33, size + 0.015, 0)))
+	# Le panneau : le plus en avant des sommets du milieu de la face (hors cadre).
+	var panel := 0.0
+	for p in pts:
+		if absf(p.x - c.x) < bb.size.x * 0.2 and absf(p.y - c.y) < bb.size.y * 0.2:
+			panel = maxf(panel, absf(p.z - c.z) * k.z)
+	if panel <= 0.0:
+		panel = size / 2.0
+	var h := size / 2.0
 	for side in [-1.0, 1.0]:
-		var brace := box(Vector3(0.02, size * 1.15, e * 0.8), WOOD_LIGHT, Vector3(side * (h + 0.005), h, 0))
-		brace.rotation.x = PI / 4
-		root.add_child(brace)
-		var brace2 := box(Vector3(0.02, size * 1.15, e * 0.8), WOOD_LIGHT, Vector3(side * (h + 0.005), h, 0))
-		brace2.rotation.x = -PI / 4
-		root.add_child(brace2)
-		root.add_child(painted("CRATE_STAMP", RED, 64, Vector3(0, h, side * (h + 0.012)), 0.0 if side > 0 else PI))
-		root.add_child(painted("CRATE_FRAGILE", IRON, 28, Vector3(0, h - size * 0.2, side * (h + 0.012)), 0.0 if side > 0 else PI))
+		var stamp := painted("CRATE_STAMP", RED, 40, Vector3(0, h + size * 0.06, side * (panel + 0.004)), 0.0 if side > 0 else PI)
+		stamp.width = size * 0.8 / stamp.pixel_size
+		stamp.autowrap_mode = TextServer.AUTOWRAP_OFF
+		root.add_child(stamp)
+		var fragile := painted("CRATE_FRAGILE", IRON, 18, Vector3(0, h - size * 0.16, side * (panel + 0.004)), 0.0 if side > 0 else PI)
+		fragile.width = size * 0.8 / fragile.pixel_size
+		fragile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		root.add_child(fragile)
 	return root
 
 
@@ -540,18 +639,20 @@ static func drying_zone(kind: String) -> Node3D:
 	var root := Node3D.new()
 	match kind:
 		"cuvette":
-			# Un creux de sable mouillé entouré de galets (rochers CC0).
-			root.add_child(cyl(1.4, 1.45, 0.06, Color(0.72, 0.62, 0.45), Vector3(0, 0.03, 0), 14))
+			# 0.1.10 (remarque 9) : une vraie cuvette qui tient l'eau. Un bourrelet de sable tout
+			# autour (plus haut que l'eau), une paroi qui descend vers un fond de sable mouillé plus
+			# sombre, et quelques galets posés sur le bourrelet.
+			root.add_child(basin_mesh(18, 11))
 			var rng := RandomNumberGenerator.new()
 			rng.seed = 11
-			for i in 11:
-				var a := TAU * i / 11.0 + rng.randf_range(-0.1, 0.1)
-				var s := rng.randf_range(0.45, 0.7)
-				var rock := Models.rock("rock_small" if i % 3 else "rock_large", Vector3(s, s * 0.6, s * 0.8))
-				rock.position = Vector3(cos(a) * 1.25, -0.04, sin(a) * 1.25)
+			for i in 8:
+				var a := TAU * i / 8.0 + rng.randf_range(-0.15, 0.15)
+				var s := rng.randf_range(0.28, 0.42)
+				var rock := Models.rock("rock_small", Vector3(s, s * 0.55, s * 0.8))
+				rock.position = Vector3(cos(a) * 1.36, 0.16, sin(a) * 1.36)
 				rock.rotation.y = -a + rng.randf_range(-0.4, 0.4)
 				root.add_child(rock)
-			_add_water(root, Vector3(2.16, 0.02, 2.16), 0.07, 0.3, true)
+			_add_water(root, Vector3(2.24, 0.02, 2.24), 0.06, 0.22, true)
 		"bache":
 			# Une bâche bleue posée sur quatre rondins qui en relèvent les bords, piquets aux coins.
 			root.add_child(box(Vector3(2.3, 0.03, 2.3), TARP_BLUE, Vector3(0, 0.02, 0)))
@@ -584,6 +685,53 @@ static func drying_zone(kind: String) -> Node3D:
 				root.add_child(box(Vector3(size.x + 0.02, 0.04, 0.01), IRON, Vector3(0, 0.3, z)))
 			_add_water(root, Vector3(size.x - 0.16, 0.02, size.y - 0.16), 0.07, 0.36, false)
 	return root
+
+
+## Le profil de la cuvette : (rayon, hauteur) du centre vers l'extérieur, et la couleur de
+## chaque anneau (fond mouillé, paroi, haut du bourrelet, pente extérieure).
+const BASIN_PROFILE := [Vector2(0.0, 0.02), Vector2(0.9, 0.03), Vector2(1.14, 0.24), Vector2(1.32, 0.29), Vector2(1.55, 0.02)]
+const BASIN_COLORS := [Color(0.48, 0.4, 0.27), Color(0.58, 0.48, 0.32), Color(0.72, 0.62, 0.44), Color(0.68, 0.58, 0.4)]
+
+
+## Le sable de la cuvette : le profil BASIN_PROFILE tourné autour de l'axe, à facettes.
+static func basin_mesh(segments: int, rng_seed: int) -> Node3D:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var rings := []
+	for p: Vector2 in BASIN_PROFILE:
+		var row := []
+		for sg in segments:
+			var a := TAU * sg / segments
+			var wob := 1.0 + (rng.randf_range(-0.04, 0.04) if p.x > 0.0 else 0.0)
+			row.append(Vector3(cos(a) * p.x * wob, p.y + (rng.randf_range(-0.015, 0.015) if p.x > 0.0 else 0.0), sin(a) * p.x * wob))
+		rings.append(row)
+	var root := Node3D.new()
+	root.name = "Basin"
+	for k in BASIN_PROFILE.size() - 1:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for sg in segments:
+			var a: Vector3 = rings[k][sg]
+			var b: Vector3 = rings[k][(sg + 1) % segments]
+			var c: Vector3 = rings[k + 1][sg]
+			var d: Vector3 = rings[k + 1][(sg + 1) % segments]
+			_flat_tri(st, a, c, b)
+			_flat_tri(st, b, c, d)
+		root.add_child(_mesh(st.commit(), BASIN_COLORS[k]))
+	return root
+
+
+## Un triangle à normale plate, face vers le haut.
+static func _flat_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+	var n := (b - a).cross(c - a).normalized()
+	if n.y < 0.0:
+		var tmp := b
+		b = c
+		c = tmp
+		n = -n
+	for v in [a, b, c]:
+		st.set_normal(n)
+		st.add_vertex(v)
 
 
 static func _add_water(root: Node3D, size: Vector3, min_y: float, max_y: float, round: bool) -> void:
@@ -647,57 +795,35 @@ static func stilts(half: float) -> Node3D:
 	return s
 
 
-## Le moulin-pompe : une tour en treillis de bois, la tête rouge, la girouette crème au « A », et
-## huit pales (« Blades », tournent autour de Z) en rouge et crème.
+## Le moulin-pompe (0.1.10) : l'éolienne de ferme de Quaternius (Farm Buildings, CC0), à la place
+## de celle faite par code. Ses pales sont un nœud à part, recentré sur l'axe pour tourner :
+## « Blades », qui tourne autour de Z comme avant. Hauteur totale : `WINDMILL_HEIGHT`.
+const WINDMILL_HEIGHT := 5.0
+
 static func windmill() -> Node3D:
 	var root := Node3D.new()
-	var top := 4.1
-	var base := 0.75
-	var head := 0.22
-	var feet := []
-	var tops := []
-	for sx in [-1, 1]:
-		for sz in [-1, 1]:
-			feet.append(Vector3(sx * base, 0, sz * base))
-			tops.append(Vector3(sx * head, top, sz * head))
-	for i in 4:
-		root.add_child(beam(feet[i], tops[i], 0.1, WOOD))
-	# Les entretoises en croix sur chaque face, à deux étages.
-	var faces := [[0, 1], [1, 3], [3, 2], [2, 0]]
-	for f in faces:
-		for level in [[0.0, 0.45], [0.45, 0.85]]:
-			var a: Vector3 = (feet[f[0]] as Vector3).lerp(tops[f[0]], level[0])
-			var b: Vector3 = (feet[f[1]] as Vector3).lerp(tops[f[1]], level[1])
-			var c: Vector3 = (feet[f[1]] as Vector3).lerp(tops[f[1]], level[0])
-			var d: Vector3 = (feet[f[0]] as Vector3).lerp(tops[f[0]], level[1])
-			root.add_child(beam(a, b, 0.05, WOOD_LIGHT))
-			root.add_child(beam(c, d, 0.05, WOOD_LIGHT))
-	root.add_child(box(Vector3(0.6, 0.08, 0.6), WOOD_DARK, Vector3(0, top, 0)))
-	root.add_child(cyl(0.06, 0.06, top, METAL, Vector3(0, top / 2, 0), 6))  # la tige de pompe
-	root.add_child(box(Vector3(0.36, 0.36, 0.7), RED, Vector3(0, top + 0.25, 0)))
-	root.add_child(beam(Vector3(0, top + 0.25, 0.2), Vector3(0, top + 0.3, -1.1), 0.05, IRON))
-	var vane := box(Vector3(0.03, 0.55, 0.7), CREAM, Vector3(0, top + 0.35, -1.25))
-	root.add_child(vane)
-	for side in [-1.0, 1.0]:
-		var a := painted("PLANE_LETTER", RED, 72, Vector3(side * 0.02, top + 0.35, -1.25), side * PI / 2)
-		a.font = UiTheme.title_font()
-		root.add_child(a)
-	var blades := Node3D.new()
-	blades.name = "Blades"
-	blades.position = Vector3(0, top + 0.25, 0.45)
-	blades.add_child(cyl(0.1, 0.1, 0.12, IRON, Vector3.ZERO, 8))
-	blades.get_child(-1).rotation.x = PI / 2
-	for i in 8:
-		var arm := Node3D.new()
-		arm.rotation.z = i * TAU / 8.0
-		arm.add_child(box(Vector3(0.04, 0.9, 0.03), IRON, Vector3(0, 0.5, 0)))
-		var blade := box(Vector3(0.32, 0.75, 0.02), RED if i % 2 == 0 else CREAM, Vector3(0.06, 0.62, 0.02))
-		blade.rotation.y = 0.35
-		arm.add_child(blade)
-		blades.add_child(arm)
-	blades.add_child(torus(0.62, 0.68, IRON, Vector3.ZERO, 16))
-	blades.get_child(-1).rotation.x = PI / 2
-	root.add_child(blades)
+	var model := Models.load_model("quaternius_farm_windmill")
+	var bb := Models.bounds(Models.vertices(model))
+	var k := WINDMILL_HEIGHT / maxf(bb.size.y, 0.001)
+	model.scale = Vector3.ONE * k
+	# Centré sur son emprise (les pales débordent du même côté que la queue, c'est l'ensemble
+	# qu'on centre), posé au sol.
+	var c := bb.get_center()
+	model.position = Vector3(-c.x * k, -bb.position.y * k, -c.z * k)
+	root.add_child(model)
+	# Le pivot des pales, sur le moyeu, enfant direct de la racine (« Blades ») : on y déplace le
+	# maillage des pales, qui tourne alors autour de son axe.
+	var blades_mesh := model.get_node("Windmill_Blades") as MeshInstance3D
+	var hub := (blades_mesh.transform * blades_mesh.mesh.get_aabb()).get_center()
+	var pivot := Node3D.new()
+	pivot.name = "Blades"
+	pivot.position = model.position + hub * k
+	pivot.scale = Vector3.ONE * k
+	root.add_child(pivot)
+	var local := blades_mesh.transform
+	model.remove_child(blades_mesh)
+	pivot.add_child(blades_mesh)
+	blades_mesh.transform = Transform3D(local.basis, local.origin - hub)
 	return root
 
 
@@ -813,6 +939,22 @@ static func rake() -> Node3D:
 	return root
 
 
+## La pelle (0.1.10) : un manche en bois avec une poignée en T et une lame en métal un peu creuse.
+## Tenue en main, la lame vers l'avant (−Z).
+static func shovel() -> Node3D:
+	var root := Node3D.new()
+	root.add_child(box(Vector3(0.045, 0.045, 1.1), WOOD, Vector3(0, 0, -0.25)))
+	root.add_child(box(Vector3(0.2, 0.04, 0.04), WOOD_DARK, Vector3(0, 0, 0.3)))
+	root.add_child(cyl(0.035, 0.03, 0.12, METAL.darkened(0.2), Vector3(0, 0, -0.82), 6))
+	root.get_child(-1).rotation.x = PI / 2
+	var blade := box(Vector3(0.26, 0.025, 0.3), METAL, Vector3(0, -0.01, -1.0))
+	root.add_child(blade)
+	for sx in [-1, 1]:
+		root.add_child(box(Vector3(0.025, 0.06, 0.28), METAL.darkened(0.1), Vector3(sx * 0.125, 0.015, -1.0)))
+	root.add_child(box(Vector3(0.2, 0.026, 0.06), METAL.lightened(0.15), Vector3(0, -0.012, -1.17)))
+	return root
+
+
 ## La palanche : un bâton sur l'épaule et un seau à chaque bout (pour la photo du catalogue).
 static func yoke() -> Node3D:
 	var root := Node3D.new()
@@ -828,16 +970,18 @@ static func yoke() -> Node3D:
 
 # --- Stations ------------------------------------------------------------------------------------
 
-## Le condenseur : une bâche transparente en pente sur quatre piquets, un cercle de pierres et
+## Le condenseur : une toile tendue sur quatre piquets, un cercle de pierres et
 ## une gamelle où tombent les gouttes (les gouttes, la vue les ajoute).
 static func condenser() -> Node3D:
 	var root := Node3D.new()
 	for x in [-0.8, 0.8]:
 		for z in [-0.6, 0.6]:
 			root.add_child(cyl(0.035, 0.045, 0.95 + z * 0.15, WOOD_DARK, Vector3(x, (0.95 + z * 0.15) / 2, z), 6))
-	var sheet := box(Vector3(1.8, 0.02, 1.4), Color(0.78, 0.93, 1.0, 0.45), Vector3(0, 0.95, 0), Vector3(deg_to_rad(6), 0, 0))
-	root.add_child(sheet)
-	root.add_child(beam(Vector3(-0.8, 1.05, -0.6), Vector3(0.8, 1.05, -0.6), 0.03, ROPE, true))
+	# 0.1.10 : la toile tendue du Survival Kit de Kenney (CC0) sur les piquets, à la place de la
+	# plaque transparente.
+	var canvas := fit_model("kenney_tent_canvas", Vector3(1.75, 0.55, 1.35))
+	canvas.position.y = 0.62
+	root.add_child(canvas)
 	for i in 8:
 		var a := TAU * i / 8.0
 		root.add_child(ball(0.1, Color(0.55, 0.53, 0.5), Vector3(cos(a) * 0.5, 0.05, 0.45 + sin(a) * 0.3), 20 + i, 0.2, Vector3(1, 0.6, 1)))

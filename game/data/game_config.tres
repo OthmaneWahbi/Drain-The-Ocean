@@ -149,6 +149,6 @@ offer_chance_per_day = 0.7
 offer_price_factor = 0.5
 hold_music_s = 6.0
 tutorial_crate_item = "catalogue_papier"
-toolbar_slots = PackedStringArray("seau", "", "", "", "")
+toolbar_slots = PackedStringArray("seau", "pelle", "", "", "", "")
 rotation_step_deg = 90.0
 fixed_obstacles = PackedVector3Array(5, 1.5, 0.8, -10, -8, 0.6, -13, -3, 0.6, 11, -9, 0.6, 3, 22, 0.6, 19, 9, 1.6, -20, 12, 1.6)

@@ -50,6 +50,8 @@ signal ending_phase_changed(phase: int)
 signal run_finished
 ## Un réveil de plus après une noyade : un trait de plus sur le palmier (M-84).
 signal wakeups_changed
+## Le sable a été travaillé (pelle), ou la partie a changé : les coins du terrain qui ont bougé.
+signal terrain_changed(corners: Array)
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -176,6 +178,9 @@ func new_game() -> void:
 
 ## Remet tout à zéro (sans cuvette) et prévient les vues qu'elles doivent tout effacer.
 func _reset_state() -> void:
+	var old_corners := terrain.edits.keys() if terrain else []
+	if terrain:
+		terrain.edits = {}
 	ocean = OceanModel.new(config.total_ocean_volume_l, config.drain_threshold_ratio)
 	bucket = BucketLogic.new(config.starting_bucket_capacity_l, config.bucket_fill_time_s)
 	day = DayCycleLogic.new(config.day_length_s, config.start_hour)
@@ -218,6 +223,8 @@ func _reset_state() -> void:
 	_next_id = 1
 	_deliveries_count = 0
 	game_reset.emit()
+	if not old_corners.is_empty():
+		terrain_changed.emit(old_corners)
 
 
 func _process(delta: float) -> void:
@@ -381,7 +388,7 @@ func harvest(zone: Dictionary, resource: String = "") -> void:
 # --- Barre d'outils (M-27) --------------------------------------------------------------------
 
 ## Les outils, dans l'ordre où ils prennent une case quand on les obtient.
-const TOOLS: Array[String] = ["seau", "rateau", "tuyaux"]
+const TOOLS: Array[String] = ["seau", "pelle", "rateau", "tuyaux"]
 
 
 ## Ce que contient la case tenue : un outil ("seau", "rateau", "tuyaux"), un matériau porté
@@ -395,7 +402,7 @@ func owns_tool(tool: String) -> bool:
 	if Economy.RESOURCES.has(tool):
 		return int(carried.get(tool, 0)) > 0
 	match tool:
-		"", "seau":
+		"", "seau", "pelle":
 			return true
 		"rateau":
 			return has_rake
@@ -712,7 +719,9 @@ func _random_beach_spot() -> Vector3:
 		var angle := rng.randf() * TAU
 		var radius := rng.randf_range(config.beach_radius_min, config.beach_radius_max)
 		var spot := PlacementGrid.snap(Vector3(cos(angle) * radius, 0.52, sin(angle) * radius), config.grid_cell_m)
-		if PlacementGrid.is_valid(PlacementGrid.rect_shape(footprint_rect("coquillage", spot)), blockers, config.build_radius_m):
+		if PlacementGrid.is_valid(PlacementGrid.rect_shape(footprint_rect("coquillage", spot)), blockers, config.build_radius_m) \
+				and spot_ok("coquillage", spot, 0.0, blockers):
+			spot.y = terrain.height(spot.x, spot.z) + 0.02
 			return spot
 	return NO_SPOT
 
@@ -818,8 +827,34 @@ func inlet_rect(zone: Dictionary) -> Rect2:
 
 
 ## Vrai si cette pièce de tuyau verse dans la zone : un bloc au-dessus, vers le milieu du bac.
+## 0.1.10 : le niveau « un bloc au-dessus » suit la hauteur de la zone (posée sur du sable
+## creusé ou remonté à la pelle).
 func pipe_feeds(cell: Vector3i, zone: Dictionary) -> bool:
-	return PipeNetwork.feeds(cell, inlet_rect(zone), config.pour_level, config.grid_cell_m)
+	return PipeNetwork.feeds(cell, inlet_rect(zone), pour_level_for(zone), config.grid_cell_m)
+
+
+## Le niveau de tuyau qui verse dans cette zone : `pour_level` au-dessus de son sol.
+func pour_level_for(zone: Dictionary) -> int:
+	var y := (zone.position as Vector3).y
+	return maxi(config.pour_level + roundi((y - config.ground_y) / config.grid_cell_m), 0)
+
+
+## Ce que ferait une pièce posée en `cell` (pour le fantôme et le texte d'aide, 0.1.10) :
+## "feeds" (elle verserait dans une zone), "wet" (l'eau d'une pompe y passerait), ou "".
+func pipe_preview(cell: Vector3i) -> String:
+	for zone in zones:
+		if pipe_feeds(cell, zone):
+			return "feeds"
+	var wet := wet_pipes()
+	for d in PipeNetwork.DIRS:
+		if wet.has(cell + d):
+			return "wet"
+	for pump in pumps:
+		if cell.y == PipeNetwork.cell_of(pump.position, config.grid_cell_m).y:
+			var foot := pump_cells(pump).grow(1)
+			if foot.has_point(Vector2i(cell.x, cell.z)):
+				return "wet"
+	return ""
 
 
 ## Les pièces où passe l'eau d'au moins une pompe (pour les colorer).
@@ -1111,6 +1146,8 @@ func find_free_spot(kind: String, near: Vector3, rotation_deg: float = 0.0) -> V
 					continue
 				var p := start + Vector3(dx * cell, 0.0, dz * cell)
 				if spot_ok(kind, p, rotation_deg, blockers):
+					if not is_water_kind(kind):
+						p.y = ground_level(footprint_rect(kind, p, rotation_deg))
 					return p
 	return start
 
@@ -1139,8 +1176,39 @@ func placement_conflicts(item: Dictionary, pos: Vector3, rotation_deg: float) ->
 func spot_ok(kind: String, pos: Vector3, rotation_deg: float, blockers: Array) -> bool:
 	var shape := PlacementGrid.rect_shape(footprint_rect(kind, pos, rotation_deg))
 	if not is_water_kind(kind):
-		return PlacementGrid.is_valid(shape, blockers, config.build_radius_m)
+		# 0.1.10 : plus de cercle constructible fixe. Le sol sous l'emprise doit être plat et au même
+		# niveau (le plateau de départ, ou du sable aplani à la pelle).
+		if is_nan(ground_level(footprint_rect(kind, pos, rotation_deg))):
+			return false
+		return PlacementGrid.is_valid(shape, blockers, INF)
 	return is_water_spot(pos) and PlacementGrid.is_valid(shape, blockers, INF)
+
+
+## Le niveau du sol sous un rectangle (X, Z) si on peut y poser un objet, sinon NAN : chaque case
+## couverte est plate (TerrainLogic.cell_level), toutes au même niveau, et au-dessus de l'eau.
+func ground_level(rect: Rect2) -> float:
+	var c := config.grid_cell_m
+	var level := NAN
+	for j in range(floori(rect.position.y / c + 1e-4), ceili(rect.end.y / c - 1e-4)):
+		for i in range(floori(rect.position.x / c + 1e-4), ceili(rect.end.x / c - 1e-4)):
+			var l := terrain.cell_level(Vector2i(i, j))
+			if is_nan(l):
+				return NAN
+			if is_nan(level):
+				level = l
+			elif absf(l - level) > 0.03:
+				return NAN
+	if is_nan(level) or level < water_level_y() + config.dig_min_above_water_m:
+		return NAN
+	return level
+
+
+## Pourquoi on ne peut pas poser `kind` là (texte d'aide), ou "" si c'est possible.
+func placement_reason(item: Dictionary, pos: Vector3, rotation_deg: float) -> String:
+	var kind := item_kind(item)
+	if not is_water_kind(kind) and is_nan(ground_level(footprint_rect(kind, pos, rotation_deg))):
+		return "PROMPT_GROUND_NOT_FLAT"
+	return "" if can_place(item, pos, rotation_deg) else "PROMPT_CANT_PLACE"
 
 
 ## Les types qui se posent dans l'eau (les pompes).
@@ -1164,6 +1232,8 @@ func move_item(item: Dictionary, pos: Vector3, rotation_deg: float = NAN) -> boo
 	snapped.y = (item.position as Vector3).y
 	if not can_place(item, snapped, rot):
 		return false
+	if not is_water_kind(item_kind(item)):
+		snapped.y = ground_level(footprint_rect(item_kind(item), snapped, rot))  # posé sur ce sol
 	item.position = snapped
 	item.rotation_deg = rot
 	item_moved.emit(item)
@@ -1182,6 +1252,96 @@ func _load_rotation(item: Dictionary, src: Dictionary) -> void:
 		return
 	item.rotation_deg = PlacementGrid.wrap_deg(float(src.get("rotation_deg", 0.0)))
 	item_moved.emit(item)
+
+
+# --- Travailler le sable : la pelle (0.1.10) ----------------------------------------------
+
+enum Dig { FLATTEN, DIG, RAISE }
+
+
+## La hauteur arrondie au cran de pelle le plus proche (les terrasses tombent juste).
+func dig_snap(y: float) -> float:
+	var step := config.dig_step_m
+	return config.ground_y + roundf((y - config.ground_y) / step) * step
+
+
+## Le niveau que prendrait la case avec ce geste : aplanir (au niveau `ref`), creuser ou remblayer
+## d'un cran. Borné : jamais sous l'eau, jamais plus haut que `dig_max_above_ground_m`.
+func dig_target(cell: Vector2i, mode: int, ref := NAN) -> float:
+	var now := dig_snap(terrain.cell_mean(cell))
+	var y: float
+	match mode:
+		Dig.FLATTEN:
+			y = dig_snap(ref) if not is_nan(ref) else now
+		Dig.DIG:
+			y = now - config.dig_step_m
+		_:
+			y = now + config.dig_step_m
+	var lo := dig_snap(water_level_y() + config.dig_min_above_water_m + config.dig_step_m * 0.49)
+	return clampf(y, lo, config.ground_y + config.dig_max_above_ground_m)
+
+
+## Ce qui empêche de travailler cette case pour l'amener au niveau `y` ("" si rien) : une clé de
+## texte d'aide. On ne touche ni à la mer, ni sous un objet, ni à côté d'un objet si le coin
+## partagé devait bouger (l'objet flotterait ou s'enfoncerait).
+func dig_reason(cell: Vector2i, y: float) -> String:
+	var center := Vector2((cell.x + 0.5) * config.grid_cell_m, (cell.y + 0.5) * config.grid_cell_m)
+	var h := TerrainLogic.GRID_HALF - 1
+	if absi(cell.x) >= h or absi(cell.y) >= h:
+		return "PROMPT_DIG_TOO_FAR"
+	if center.length() > terrain.coast_at(atan2(center.y, center.x)) - 0.5:
+		return "PROMPT_DIG_WATER"
+	var blockers := _dig_blockers()
+	if _cell_blocked(cell, blockers):
+		return "PROMPT_DIG_BLOCKED"
+	for c in TerrainLogic.cell_corners(cell):
+		if absf(terrain.vertex(c.x, c.y).y - y) <= TerrainLogic.FLAT_TOLERANCE:
+			continue
+		for d in [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, -1)]:
+			if _cell_blocked(c + d, blockers):
+				return "PROMPT_DIG_NEAR_OBJECT"
+	return ""
+
+
+## Travaille une case : elle devient plate au niveau voulu (voir dig_target). Les coquillages
+## posés dessus suivent le sable. Renvoie vrai si le sol a changé.
+func work_cell(cell: Vector2i, mode: int, ref := NAN) -> bool:
+	var y := dig_target(cell, mode, ref)
+	if dig_reason(cell, y) != "":
+		return false
+	var changed := terrain.set_cell(cell, y)
+	if changed.is_empty():
+		return false
+	for p in pickups:
+		var pc := TerrainLogic.cell_of(p.position.x, p.position.z)
+		if absi(pc.x - cell.x) <= 1 and absi(pc.y - cell.y) <= 1:
+			p.position.y = terrain.height(p.position.x, p.position.z)
+			item_moved.emit(p)
+	terrain_changed.emit(changed)
+	return true
+
+
+## Les formes qui interdisent de toucher au sable : objets posés, caisses, palmiers, rochers,
+## noix de coco, tuyaux (tous niveaux : leurs piquets sont dans le sable).
+func _dig_blockers() -> Array:
+	var out := []
+	for other in movable_items():
+		out.append(PlacementGrid.rect_shape(item_rect(other)))
+	for c in crates:
+		out.append(PlacementGrid.rect_shape(footprint_rect("caisse", c.position)))
+	for o in config.fixed_obstacles:
+		out.append(PlacementGrid.circle_shape(Vector3(o.x, 0.0, o.y), o.z))
+	for spot in config.coconut_spots:
+		out.append(PlacementGrid.circle_shape(spot, config.coconut_radius_m))
+	for c: Vector3i in pipes:
+		out.append(PlacementGrid.circle_shape(PipeNetwork.cell_center(c, config.grid_cell_m, 0.0), config.pipe_radius_m))
+	return out
+
+
+func _cell_blocked(cell: Vector2i, blockers: Array) -> bool:
+	var c := config.grid_cell_m
+	var shape := PlacementGrid.rect_shape(Rect2(cell.x * c + 0.02, cell.y * c + 0.02, c - 0.04, c - 0.04))
+	return not PlacementGrid.conflicts(shape, blockers).is_empty()
 
 
 # --- Niveau de l'eau -----------------------------------------------------------------------
@@ -1278,6 +1438,7 @@ func to_dict() -> Dictionary:
 		"pumps": pumps.map(func(pu): return {"kind": pu.kind, "position": _v2a(pu.position), "rotation_deg": item_rotation(pu)}),
 		"pipes": pipes.keys().map(func(c: Vector3i): return [c.x, c.y, c.z]),
 		"pipe_stock": pipe_stock,
+		"terrain": terrain.edits_to_array(),
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
@@ -1293,6 +1454,10 @@ func to_dict() -> Dictionary:
 
 func load_dict(data: Dictionary) -> void:
 	_reset_state()
+	# Le sable travaillé d'abord : les objets posés dessus en dépendent.
+	terrain.edits_from_array(data.get("terrain", []))
+	if not terrain.edits.is_empty():
+		terrain_changed.emit(terrain.edits.keys())
 	ocean.load_dict(data.get("ocean", {}))
 	var up: Dictionary = data.get("upgrades", {})
 	# Anciennes sauvegardes (sans "upgrades") : la contenance du seau suffit.

@@ -23,6 +23,10 @@ var target: Node = null
 var prompt: String = ""
 var _bucket_node: Node3D
 var _rake_node: Node3D
+var _shovel_node: Node3D
+## Le matériau porté, montré en main : un petit bac avec son tas (0.1.10, remarque 4).
+var _carry_node: Node3D
+var _carry_kind := ""
 var _second_bucket: Node3D
 ## Le personnage vu en 3e personne (Kenney, Mini Characters), animé (0.1.4).
 var _body: Node3D
@@ -54,6 +58,39 @@ func _ready() -> void:
 	_build_bucket()
 	_build_fade()
 	_apply_view()
+	GameState.terrain_changed.connect(_on_terrain_changed)
+
+
+## Le matériau tenu (sel, minéraux…) : un petit bac porté à deux mains, avec un tas qui grossit
+## avec la quantité portée. Reconstruit quand on change de matériau.
+func _update_carry(tool: String) -> void:
+	var kind := tool if Economy.RESOURCES.has(tool) else ""
+	if kind != _carry_kind:
+		_carry_kind = kind
+		if _carry_node:
+			_carry_node.queue_free()
+			_carry_node = null
+		if kind != "":
+			_carry_node = Node3D.new()
+			_carry_node.position = Vector3(0.0, -0.36, -0.58)
+			_carry_node.rotation_degrees = Vector3(38, 0, 0)
+			_carry_node.add_child(Props.bin(0.36, 0.12))
+			var pile := Props.pile(kind, 90)
+			pile.name = "Pile"
+			pile.position.y = 0.02
+			_carry_node.add_child(pile)
+			head.add_child(_carry_node)
+	if _carry_node:
+		var ratio := float(GameState.carried.get(kind, 0)) / maxf(GameState.carry_capacity, 1.0)
+		var k := lerpf(0.32, 0.48, clampf(ratio, 0.0, 1.0))
+		(_carry_node.get_node("Pile") as Node3D).scale = Vector3(k, k, k)
+
+
+## Le sable a bougé (pelle) : si le sol monte sous nos pieds, on remonte avec lui.
+func _on_terrain_changed(_corners: Array) -> void:
+	var ground := GameState.terrain.height(global_position.x, global_position.z)
+	if global_position.y < ground + 0.02:
+		global_position.y = ground + 0.05
 
 
 func _build_bucket() -> void:
@@ -72,6 +109,11 @@ func _build_bucket() -> void:
 	_rake_node.position = Vector3(0.35, -0.35, -0.4)
 	_rake_node.rotation_degrees = Vector3(-30, 0, 0)
 	head.add_child(_rake_node)
+	# La pelle (0.1.10), tenue lame en avant, un peu baissée.
+	_shovel_node = Props.shovel()
+	_shovel_node.position = Vector3(0.32, -0.42, -0.85)
+	_shovel_node.rotation_degrees = Vector3(-32, 8, 0)
+	head.add_child(_shovel_node)
 	# Le corps en 3e personne : un petit personnage CC0 qui marche, court, saute (PRD §13).
 	body_mesh.visible = false
 	_body = Props.character("mini_male_a", 1.75, "idle")
@@ -336,14 +378,18 @@ func _update_head_bob(delta: float, speed: float) -> void:
 func _apply_view() -> void:
 	fp_camera.current = not third_person
 	tp_camera.current = third_person
-	# En 1re personne, on cache le corps (on verrait l'intérieur de la tête).
-	_body.visible = third_person
+	# En 1re personne, le corps ne se dessine pas (on verrait l'intérieur de la tête), mais il
+	# garde son ombre au sol (0.1.10, remarque 9 : le joueur a une ombre).
+	_body.visible = true
+	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_ON if third_person else GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	for mi in _body.find_children("*", "GeometryInstance3D", true, false):
+		(mi as GeometryInstance3D).cast_shadow = mode
 
 
-## Barre d'outils : 1-5 choisit une case, la molette passe à la suivante (M-18, M-27).
+## Barre d'outils : 1-6 choisit une case, la molette passe à la suivante (M-18, M-27).
 func _handle_toolbar_input(event: InputEvent) -> bool:
-	for i in 5:
-		if event.is_action_pressed(StringName("tool_%d" % (i + 1))):
+	for i in GameState.toolbar.slots.size():
+		if InputMap.has_action(StringName("tool_%d" % (i + 1))) and event.is_action_pressed(StringName("tool_%d" % (i + 1))):
 			GameState.select_tool(i)
 			return true
 	if event.is_action_pressed(&"tool_next"):
@@ -359,6 +405,8 @@ func _process(delta: float) -> void:
 	var tool := GameState.current_tool()
 	_bucket_node.visible = tool == "seau"
 	_rake_node.visible = tool == "rateau"
+	_shovel_node.visible = tool == "pelle"
+	_update_carry(tool)
 	_second_bucket.visible = tool == "seau" and GameState.bucket_count > 1
 	_update_bucket_water(delta)
 	_animate_body()

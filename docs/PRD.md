@@ -5,8 +5,8 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.40 (0.1.9 : seau et palette KayKit, tuyaux Kenney) |
-| Date | 2026-11-16 |
+| Version du document | 0.41 (0.1.10 : la pelle, les remarques d'Othmane, les modèles CC0, des tuyaux plus pratiques) |
+| Date | 2026-11-20 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
 
@@ -348,7 +348,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** La scène finale du drain bascule automatiquement en troisième personne (plan large) pour montrer le tourbillon, puis rend la main au joueur.
 - **[DÉCIDÉ]** On peut **déplacer les objets posés sur l'île**, avec une **grille** (Othmane, 2026-11-16, « Maybe a grid system would be good ? »).
   - **[PROPOSÉ]** Détails du prototype : l'île est découpée en cases de **1 m**. On vise un objet et on appuie sur **G** : l'objet suit le regard case par case, la grille s'affiche autour, et ~~un disque~~ (0.1.5 : les cases qu'il occupera) montre son **emprise** (vert = possible, rouge = impossible). **Clic** pour poser, **G** ou Échap pour annuler (l'objet revient à sa place).
-  - **[PROPOSÉ]** Un emplacement est valide si l'emprise (~~un cercle autour de l'objet~~ 0.1.5 : un rectangle de cases qui colle au modèle, voir [19.10](#1910-version-015--la-grille-de-placement-colle-aux-modèles)) tient entièrement sur le sable sec et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
+  - **[PROPOSÉ]** Un emplacement est valide si l'emprise (~~un cercle autour de l'objet~~ 0.1.5 : un rectangle de cases qui colle au modèle, voir [19.10](#1910-version-015--la-grille-de-placement-colle-aux-modèles)) tient entièrement sur le sable sec ~~et~~ (0.1.10 **[PROPOSÉ]** : sur des cases **plates et au même niveau**, le plateau de départ ou du sable aplani à la pelle, voir [19.15](#1915-version-0110--la-pelle-les-remarques-dothmane-les-modèles-cc0)) et ne touche ni un autre objet posé, ni un élément fixe (téléphone, palette, palmiers, rochers, repère de niveau d'eau).
   - **[DÉCIDÉ]** On peut **tourner** un objet pendant son déplacement (Othmane, 2026-11-16). **[PROPOSÉ]** Touche R, par quart de tour.
   - **[DÉCIDÉ]** La **palette** est déplaçable ; le **téléphone** reste fixe (Othmane, 2026-11-16).
   - **[DÉCIDÉ]** Tout ce qui apparaît tout seul (tas de sel et de minéraux, caisses livrées, objets sortis des caisses, coquillages) prend **une case de la grille** et ne tombe jamais sur un autre objet (Othmane, 2026-11-16). **[PROPOSÉ]** ~~Un seul tas de sel par zone~~ (v0.22). **[DÉCIDÉ]** Chaque matériau récolté a **son propre tas** à côté de la zone de séchage (Othmane, 2026-11-16). **[PROPOSÉ]** Les tas (sel, minéraux, minéraux rares) sont côte à côte, chacun sur sa case, à 2 ou 3 cases du centre, dans l'emprise de la zone (~~elle grandit : cuvette et bâche 3 m, bassin 4 m~~ 0.1.5 : une colonne de 3 cases à côté du bac) et tournent avec elle ; E ramasse 3 unités du tas visé, le râteau tout le tas ; une caisse ou un objet livré prend la case libre la plus proche de l'endroit prévu.
@@ -357,6 +357,7 @@ Autres cas à couvrir de la même façon : gilet de sauvetage (taille enfant), r
   - **[PROPOSÉ]** Objets déplaçables : cuvettes, bâches, bassins, miroirs, condenseur, caisse de rations, décors, palette.
 - **[PROPOSÉ]** Barre d'outils (M-27, M-18 ; prototype v0.21) : 5 cases en bas de l'écran, choisies avec 1-5 ou la molette. ~~Cases fixes (seau, mains, râteau…)~~ : remplacé en v0.23.
   - **[DÉCIDÉ]** Chaque matériau porté **prend une des 5 cases** en main ; un **menu** permet de **réorganiser** les 5 cases (Othmane, 2026-11-16).
+  - **[PROPOSÉ]** 0.1.10 : la barre passe à **6 cases** (touches 1 à 6), et la **pelle** est un outil de départ, en case 2 (voir [19.15](#1915-version-0110--la-pelle-les-remarques-dothmane-les-modèles-cc0)).
   - **[PROPOSÉ]** Détails (v0.23) : au départ, le seau et 4 cases vides (une case vide = les mains nues). Un outil acheté (râteau, tuyaux) prend la première case vide. Un matériau ramassé (sel, minéraux, coquillages…) prend une case vide, avec sa quantité (« Sel ×3 ») ; la même case garde ensuite tout ce matériau. Sans case libre, on ne peut pas le prendre (« Plus de case libre »). La case se libère quand on pose tout à la palette ou qu'on le dépense. ~~La limite de ce qu'on porte en tout (10, 40 avec la brouette) ne change pas.~~ Remplacé en 0.1.4 : plus de limite totale, chaque case porte jusqu'à **64** unités de son matériau (voir [19.9](#199-version-014--tous-les-modèles-64-par-case-pompes-dans-leau)). Un outil obtenu quand la barre est pleine prend la première case qui se libère.
   - **[PROPOSÉ]** Menu « Ranger la barre » : **Tab**. On clique une case puis une autre pour les échanger ; ce qu'on tenait reste en main. Tab ou Échap pour fermer. La disposition est sauvegardée.
   - Le seau ne sert (puiser, verser, vider) que s'il est en main. Les mains servent à ne rien renverser ; E et la pompe à bras marchent avec n'importe quel outil.
@@ -847,6 +848,28 @@ Détails **[PROPOSÉ]** :
 - **[PROPOSÉ]** Palette : des palettes KayKit posées côte à côte en damier. Une sur deux est tournée d'un quart de tour, pour que les planches se croisent. Les cloisons et les noms de la 0.1.8 restent.
 - **[PROPOSÉ]** Tuyaux : les pièces Kenney, réduites en travers à 35 %. Un tuyau droit est un tronçon d'un mètre. Un coude, un T ou une croix à plat utilisent le raccord Kenney, tourné vers les voisins, avec un tronçon jusqu'au bord de la case. Les montées et les pièces seules gardent une boule de jonction. Le bras vers la pompe, la descente vers une zone et les piquets restent faits par code. Le métal prend la couleur du réseau (gris sec, bleu mouillé).
 - **[PROPOSÉ]** Restent faits par code faute de modèle gratuit : coquillages, tas, perles, pompe, moulin, zones de séchage, bâche.
+
+### 19.15 Version 0.1.10 : la pelle, les remarques d'Othmane, les modèles CC0
+
+Décision d'Othmane (2026-11-20) **[DÉCIDÉ]** : intégrer **toutes** ses remarques (document « REmarks »), **ajouter les modèles CC0** trouvés par la recherche du 20 novembre (« ils ont l'air super bien ») et **faire mieux marcher les tuyaux**. La remarque la plus importante : pouvoir travailler le sable pour poser les objets où on veut.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **La pelle** (remarque 5) : un outil de départ, en case 2 de la barre (qui passe à 6 cases, touche 6). En visant le sable à moins de 4 m, un carreau montre la case de 1 m et le niveau qu'elle aura, vert si c'est possible, rouge sinon (le texte dit pourquoi). **Clic gauche maintenu** : aplanir, au niveau de la première case cliquée, en glissant sur les cases voisines. **Clic droit** : creuser d'un cran de 25 cm. **Maj + clic droit** : remonter d'un cran. Bornes : jamais à moins de 20 cm au-dessus de l'eau, jamais plus de 2,5 m au-dessus du sol de l'île. On ne travaille ni la mer, ni une case sous un objet (palmier, rocher, noix de coco, tuyau, objet posé, caisse), ni un coin partagé avec un objet si ce coin devait bouger. Les coquillages posés suivent le sable ; le joueur remonte si le sol monte sous lui. Le sable travaillé est un peu plus clair, en damier très léger. Il est sauvegardé ; Nouvelle partie remet l'île d'origine.
+- **[PROPOSÉ]** **Où poser** (remarque 5) : il n'y a plus de cercle constructible fixe. Un objet se pose sur des **cases plates, toutes au même niveau**, au-dessus de l'eau : le plateau de départ ou du sable aplani à la pelle, n'importe où sur l'île. L'objet se pose à ce niveau. Ailleurs, le texte dit « Sol pas plat : aplanis-le à la pelle ».
+- **[PROPOSÉ]** **Le sol de l'île** : une grille de sommets tous les mètres (les mêmes cases que le placement), un peu décalés au hasard pour le style low poly ; un sommet travaillé à la pelle n'est plus décalé. Tout ce qui se pose au sol lit la hauteur exacte du maillage.
+- **[PROPOSÉ]** **Décor posé au sol** (remarque 1) : palmiers, rochers, buissons, bois flotté et fleurs sont posés au point le plus bas du sol sous eux (plus rien ne flotte). Les fleurs ne poussent que sur les facettes d'herbe, sans déborder sur le sable. Le décor d'une case travaillée à la pelle disparaît (il revient si on recommence une partie).
+- **[PROPOSÉ]** **Noix de coco** (remarque 2) : une coque à facettes couverte de fibres, avec trois vrais trous creusés au sommet.
+- **[PROPOSÉ]** **Tas** (remarques 3 et 9) : le tas de coquillages n'est fait que de coquillages (moules de Kenney, coquilles et conques), en couronnes. Le sel est un tas de neige de Kenney teint en blanc crème, les minéraux des pierres de Kenney, les minéraux rares le tas de gemmes de KayKit. Chaque tas d'une zone est **dans un petit bac en bois**, toujours visible.
+- **[PROPOSÉ]** **Matériau en main** (remarque 4) : quand on tient du sel, des minéraux, des coquillages…, on porte un petit bac avec un tas qui grossit avec la quantité.
+- **[PROPOSÉ]** **Palette** (remarque 7) : deux palettes en bois de KayKit, et dessus un bac par matériau, comme dans les zones, avec le nom peint devant et le nombre au-dessus.
+- **[PROPOSÉ]** **Océan restant** (remarque 8) : affiché avec 2 décimales.
+- **[PROPOSÉ]** **Cuvette** (remarque 9) : un creux de sable avec un bourrelet tout autour, plus haut que l'eau, un fond mouillé plus sombre et des galets sur le bord.
+- **[PROPOSÉ]** **Ombres** (remarque 9) : le joueur a une ombre aussi à la 1re personne (son corps ne se dessine pas, mais son ombre oui). Les ombres du soleil sont plus nettes de près (distance d'ombre ramenée à 70 m).
+- **[PROPOSÉ]** **Téléphone** (remarque 10) : on peut entrer dans la cabine (trois murs, le côté ouvert vers le centre de l'île). Pendant l'appel, le combiné vient à l'oreille du joueur, relié par son fil, puis revient se raccrocher.
+- **[PROPOSÉ]** **Jauge** (remarque 11) : le poteau passe derrière le cadran et la plaque, il ne les traverse plus.
+- **[PROPOSÉ]** **Caisse** (remarque 12) : la caisse du Pirate Kit de Kenney, fermée d'un couvercle, avec « AGENCE » et « Fragile » peints à plat sur la face.
+- **[PROPOSÉ]** **Modèles CC0** : le moulin-pompe devient l'éolienne de ferme de Quaternius (ses pales tournent), le condenseur prend la toile tendue du Survival Kit de Kenney, la brouette du catalogue est celle de KayKit. Restent faits par code : la pompe à bras (rien de gratuit), la cabine, la bâche et le bassin en bois (le bac KayKit étiré à 4 × 3 m déformait ses planches).
+- **[PROPOSÉ]** **Tuyaux** : clic maintenu en glissant pour poser une ligne droite au niveau de la première pièce ; clic droit sur une pièce pour la reprendre (E marche toujours) ; le cube fantôme devient bleu si l'eau d'une pompe passera par là, bleu vif avec « verse dans la zone » si la pièce versera dans une zone. Le niveau qui verse (« un bloc au-dessus ») suit la hauteur de la zone, posée sur du sable creusé ou remonté.
 
 ## 20. Glossaire
 

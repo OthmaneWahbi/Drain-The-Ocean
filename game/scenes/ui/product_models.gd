@@ -45,14 +45,10 @@ static func build(id: String) -> Node3D:
 				n.add_child(sole)
 				n.add_child(_box(Vector3(0.3, 0.06, 0.05), UiTheme.YELLOW, Vector3(i * 0.5 - 0.25, 0.1, -0.05)))
 		"brouette":
-			n.add_child(_box(Vector3(0.8, 0.32, 0.6), UiTheme.TEAL, Vector3(0, 0.45, 0)))
-			n.add_child(_box(Vector3(0.7, 0.04, 0.5), Color(0.97, 0.97, 0.93), Vector3(0, 0.62, 0)))
-			var wheel := _cyl(0.2, 0.2, 0.1, Color(0.18, 0.18, 0.2), Vector3(0.5, 0.2, 0))
-			wheel.rotation.x = PI / 2
-			n.add_child(wheel)
-			for sz in [-1, 1]:
-				n.add_child(_box(Vector3(0.9, 0.05, 0.05), WOOD, Vector3(-0.45, 0.42, sz * 0.25)))
-				n.add_child(_box(Vector3(0.05, 0.3, 0.05), WOOD, Vector3(-0.2, 0.15, sz * 0.22)))
+			# 0.1.10 : la brouette de KayKit (Medieval Hexagon, CC0), longue de 1,1 m.
+			var wb := Props.fit_model("kaykit_wheelbarrow", Vector3(0.52, 0.42, 1.1))
+			wb.rotation.y = PI / 2
+			n.add_child(wb)
 		"rateau":
 			var r := Props.rake()
 			r.rotation = Vector3(-0.3, PI / 2, 0)

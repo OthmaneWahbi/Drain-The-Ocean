@@ -124,6 +124,8 @@ func _process(_delta: float) -> void:
 		player.prompt = tr("PROMPT_PLACE_TOO_FAR")
 	else:
 		player.prompt = tr("PROMPT_PLACE") if _valid else tr("PROMPT_PLACE_BLOCKED")
+		if not _valid and GameState.placement_reason(item, _target_pos, _rotation_deg) == "PROMPT_GROUND_NOT_FLAT":
+			player.prompt = tr("PROMPT_GROUND_NOT_FLAT")
 	if Input.is_action_just_pressed(&"use_tool") and _valid:
 		confirm()
 		player.prompt = ""
@@ -209,6 +211,11 @@ func _follow_aim(player: Node) -> void:
 	var aim := point - Vector3(center_off.x, 0.0, center_off.y)
 	var candidate := GameState.snap_item(kind, aim, _rotation_deg)
 	candidate.y = y
+	if not GameState.is_water_kind(kind):
+		# 0.1.10 : l'objet suit le sol travaillé à la pelle (posé au niveau des cases plates).
+		var g := GameState.ground_level(GameState.footprint_rect(kind, candidate, _rotation_deg))
+		if not is_nan(g):
+			candidate.y = g
 	# Un peu d'hystérésis : au ras d'une ligne de la grille, le balancement de la tête ne fait plus
 	# sauter l'objet d'une case à l'autre à chaque image.
 	if keep_target(_target_pos, candidate, aim, _rotation_deg == _shown_rotation):

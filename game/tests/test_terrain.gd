@@ -16,7 +16,9 @@ func _slope_deg(a: Vector3, b: Vector3) -> float:
 func test_build_plateau_stays_flat() -> void:
 	for i in 400:
 		var a := TAU * i / 400.0
-		var r := 24.0 * float(i % 20) / 19.0
+		# 0.1.10 : le sol est un maillage aux sommets un peu décalés ; les cases du bord du
+		# plateau penchent déjà vers la plage, donc on vérifie jusqu'à 22,5 m.
+		var r := 22.5 * float(i % 20) / 19.0
 		var h := t.height(cos(a) * r, sin(a) * r)
 		assert_true(absf(h - 0.5) <= 0.035, "plateau à %.1f m : %.3f" % [r, h])
 
@@ -112,3 +114,44 @@ func test_the_islet_sticks_out_of_the_water() -> void:
 	var isl: Vector3 = t.islets[0]
 	assert_true(t.height(isl.x, isl.y) > 0.4, "îlot au-dessus de l'eau")
 	assert_true(t.height(isl.x + isl.z * 2.0, isl.y) < -1.0, "entouré d'eau")
+
+
+# --- 0.1.10 : le décor posé sur le sol (remarque 1) ----------------------------------------
+
+func test_lowest_height_never_floats_above_the_ground() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	for n in 200:
+		var x := rng.randf_range(-35.0, 35.0)
+		var z := rng.randf_range(-35.0, 35.0)
+		var y := t.lowest_height(x, z, 0.4)
+		assert_true(y <= t.height(x, z) + 1e-5)
+		for k in 8:
+			var a := TAU * k / 8.0
+			assert_true(y <= t.height(x + cos(a) * 0.4, z + sin(a) * 0.4) + 1e-5)
+
+
+func test_grass_follows_the_facet_colour() -> void:
+	var seen := 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9
+	for n in 3000:
+		var x := rng.randf_range(-40.0, 40.0)
+		var z := rng.randf_range(-40.0, 40.0)
+		if not t.is_grass(x, z):
+			continue
+		seen += 1
+		var f := t.facet(x, z)
+		var y: float = (f[0].y + f[1].y + f[2].y) / 3.0
+		var n3: Vector3 = (f[1] - f[0]).cross(f[2] - f[0]).normalized()
+		var col := t.color(y, 1.0 - absf(n3.y), 0.0)
+		assert_true(col.g > col.r, "facette verte sous l'herbe en (%.1f, %.1f)" % [x, z])
+	assert_true(seen > 0, "il y a de l'herbe sur les dunes")
+	assert_false(t.is_grass(0.0, 10.0), "pas d'herbe sur le plateau de sable")
+
+
+func test_no_flower_on_worked_sand() -> void:
+	t.set_cell(Vector2i(0, 0), 0.5)
+	assert_false(IslandProps.decor_allowed(t, 0.5, 0.5, 0.1, "sand"))
+	assert_true(IslandProps.decor_allowed(t, 5.5, 5.5, 0.1, "sand"))
+	assert_false(IslandProps.decor_allowed(t, 5.5, 5.5, 0.1, "grass"), "pas de fleur sur le sable")

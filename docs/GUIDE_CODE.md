@@ -390,6 +390,25 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 
 ---
 
+### Travailler le sable : la pelle (0.1.10)
+
+- **Le sol (`TerrainLogic`)** : `base_height(x, z)` est l'ancienne forme idéale (bruits, plage, dunes). Le sol réel est une grille de sommets tous les `GRID_CELL` (1 m, les cases du placement) sur ±`GRID_HALF` : `vertex(i, j)` décale chaque sommet au hasard (`JITTER`, graine `hash01`) et lit sa hauteur sur `base_height`, sauf s'il est dans `edits` (coin → hauteur, travaillé à la pelle : pas de décalage). `cell_triangles(i, j)` découpe une case en deux triangles (diagonale alternée). `height(x, z)` cherche le triangle sous le point (`facet`) et interpole : tout ce qui pose des choses lit exactement ce qu'on voit. `lowest_height(x, z, r)` donne le plus bas sur un disque (décor jamais en l'air), `is_grass` la même règle que la couleur des facettes.
+- **Cases plates** : `cell_level(cell)` vaut le niveau si les 4 coins sont travaillés et égaux, `ground_y` pour une case du plateau jamais travaillée, sinon `NAN`. `set_cell(cell, y)` met les 4 coins à `y` et renvoie les coins changés. `edits_to_array` / `edits_from_array` pour la sauvegarde.
+- **Règles (`GameState`)** : `dig_snap` (crans de `dig_step_m` autour de `ground_y`), `dig_target(cell, Dig.FLATTEN | DIG | RAISE, ref)` (borné entre l'eau + `dig_min_above_water_m` et `ground_y + dig_max_above_ground_m`), `dig_reason(cell, y)` (une clé de texte : trop loin, eau, objet dessus, coin partagé avec un objet), `work_cell` (applique, recale les coquillages proches, émet `terrain_changed(coins)`). `_dig_blockers` réunit objets, caisses, éléments fixes, noix de coco et tuyaux.
+- **Placement** : `spot_ok` d'un objet au sol exige `ground_level(rect)` (toutes les cases plates, au même niveau, au-dessus de l'eau), `move_item` / `find_free_spot` posent l'objet à ce niveau, `placement_reason` donne « Sol pas plat » au mode G.
+- **Vues** : `TerrainView` construit des morceaux de `CHUNK` × `CHUNK` cases (`build_chunk_mesh`, collision `create_trimesh_shape`) et ne refait que ceux qui touchent les coins reçus par `terrain_changed`. `ShovelTool` (comme `PipeBuilder`) vise le terrain, dessine le carreau au niveau visé et appelle `work_cell` (glisser : un niveau de référence `drag_level`, au plus une case tous les `dig_drag_interval_s`). `IslandProps` garde son décor dans `_decor` et le recale ou le cache (`decor_allowed`) ; `PipesView` refait les piquets ; le joueur remonte si le sol monte sous lui.
+
+### Les retouches de la 0.1.10
+
+- **Tas** : `Props.pile` utilise `fit_model` (un modèle CC0 mis à une taille donnée) pour le sel (`kenney_snow_pile` en aplat via `Models.flat_colored`) et les minéraux rares (`kaykit_gems_pile_small`) ; `_shell_heap` empile des moules Kenney, coquilles et conques en couronnes. `Props.bin` est le bac en bois des zones (`SaltPile`), de la palette (`depot.gd`) et des mains (`player._update_carry`).
+- **Cuvette** : `Props.basin_mesh` tourne `BASIN_PROFILE` autour de l'axe (fond, paroi, bourrelet, pente), une couleur par anneau ; l'eau monte jusqu'à 0,22 m, sous le bourrelet.
+- **Noix de coco** : `Models.coconut_mesh` fait la coque, trois trous en cône (`coconut_eyes`) et 70 fibres en triangles, en couleurs de sommets (`_vertex_color_material`, deux faces).
+- **Moulin** : `Props.windmill` charge `quaternius_farm_windmill`, le met à `WINDMILL_HEIGHT` et déplace le maillage `Windmill_Blades` sous un pivot « Blades » placé sur son moyeu (`PumpView` le fait tourner autour de Z comme avant).
+- **Caisse** : `Props.crate` met `kenney_pirate_crate` en cube, ajoute un couvercle et cherche le panneau du milieu de la face (le sommet le plus en avant) pour y peindre le tampon à plat.
+- **Cabine** : `Phone.booth_walls()` donne trois murs et un toit (le côté ouvert regarde le centre) ; `_update_handset` interpole le combiné entre son crochet et un point devant la caméra 1re personne du joueur pendant `_in_call`, et étire `_cord` entre les deux.
+- **Ombres** : le corps du joueur reste dans la scène à la 1re personne en `SHADOW_CASTING_SETTING_SHADOWS_ONLY` ; le soleil a `directional_shadow_max_distance` = 70.
+- **Tuyaux** : `PipeBuilder` garde `_drag_level` pendant un glisser et appelle `place_pipe` à chaque nouvelle case ; clic droit (`use_tool_alt`) = `remove_pipe` sur la pièce visée. `GameState.pipe_preview(cell)` renvoie "feeds" / "wet" / "" pour la couleur du fantôme ; `pour_level_for(zone)` décale le niveau qui verse selon la hauteur de la zone.
+
 ## 4. Par version
 
 ### PR #2 — M0 : fondations
@@ -481,3 +500,6 @@ Aperçu en un maillage qui suit le relief (`draped_y`, `render_priority`), `bodi
 
 ### PR #31 — Version 0.1.9 : seau et palette KayKit, tuyaux Kenney
 `kaykit_bucket_empty` / `kaykit_pallet` / `space_pipe_*` (CC0), `Props.bucket` et `Props.pallet` sur modèles, `PipesView._draw_piece` / `_segment` / `_kenney` / `_yaw_matching`, 2 tests dans `test_props.gd`.
+
+### PR #32 — Version 0.1.10 : la pelle, les remarques d'Othmane, les modèles CC0
+Grille de sommets éditable (`TerrainLogic.edits`, `facet`, `cell_level`, `set_cell`), `TerrainView` en morceaux, `ShovelTool`, `GameState.work_cell` / `ground_level` / `placement_reason` / `pipe_preview` / `pour_level_for`, barre de 6 cases, `use_tool_alt`, `IslandProps._decor`, `Props.bin` / `basin_mesh` / `fit_model` / `_shell_heap` / `shovel`, `Models.coconut_mesh` / `flat_colored`, `Phone.booth_walls` / `_update_handset`, modèles CC0 Quaternius, KayKit et Kenney, `tools/models/`, `test_shovel.gd`.
