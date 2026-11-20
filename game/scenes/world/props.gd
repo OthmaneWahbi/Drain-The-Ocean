@@ -25,6 +25,9 @@ const WATER := Color(0.25, 0.62, 0.85, 0.82)
 const SKIN := Color(0.96, 0.76, 0.6)
 const BURLAP := Color(0.8, 0.68, 0.48)
 const GLASS := Color(0.75, 0.93, 1.0, 0.35)
+## Le sable des mottes et de la pelle (0.1.11) : la même teinte à l'écran que le sable sec du
+## terrain (sa couleur × l'exposition de sand.gdshader).
+const SAND := Color(0.48, 0.4, 0.25)
 ## La couleur du sable sous chaque tas (le « socle »), par ressource.
 const PILE_BASE := {
 	"sel": Color(0.93, 0.93, 0.9),
@@ -953,7 +956,32 @@ static func shovel() -> Node3D:
 	for sx in [-1, 1]:
 		root.add_child(box(Vector3(0.025, 0.06, 0.28), METAL.darkened(0.1), Vector3(sx * 0.125, 0.015, -1.0)))
 	root.add_child(box(Vector3(0.2, 0.026, 0.06), METAL.lightened(0.15), Vector3(0, -0.012, -1.17)))
+	# 0.1.11 : le sable porté sur la lame, qui grossit avec la charge (set_shovel_load).
+	var load := sand_clump(0.15, 11)
+	load.name = "SandLoad"
+	load.position = Vector3(0, 0.02, -1.02)
+	load.visible = false
+	root.add_child(load)
 	return root
+
+
+## Le sable sur la lame de la pelle (0..1 de la charge) : un petit tas qui monte et s'élargit.
+static func set_shovel_load(shovel_node: Node3D, ratio: float) -> void:
+	var load := shovel_node.get_node_or_null("SandLoad") as Node3D
+	if load == null:
+		return
+	ratio = clampf(ratio, 0.0, 1.0)
+	load.visible = ratio > 0.0
+	var k := lerpf(0.55, 1.0, ratio)
+	load.scale = Vector3(k, lerpf(0.35, 1.0, ratio), k * 1.1)
+
+
+## Une motte de sable (0.1.11) : une boule à facettes aplatie et bosselée, couleur sable.
+static func sand_clump(radius: float, rng_seed: int = 3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = Models.facet_sphere(radius, 7, 4, rng_seed, Vector3(1.0, 0.6, 1.0), 0.22)
+	mi.material_override = mat(SAND)
+	return mi
 
 
 ## La palanche : un bâton sur l'épaule et un seau à chaque bout (pour la photo du catalogue).

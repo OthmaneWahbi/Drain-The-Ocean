@@ -40,6 +40,8 @@ ITEM_WHEELBARROW,Brouette,Wheelbarrow
 ITEM_WHEELBARROW_DESC,128 par case au lieu de 64.,128 per slot instead of 64.
 ITEM_TONGS,Tongs,Flip-flops
 ITEM_TONGS_DESC,+20 % de vitesse de marche.,+20% walking speed.
+ITEM_SHOVEL,Pelle,Shovel
+ITEM_SHOVEL_DESC,"Creuse, aplanis et déplace le sable pour poser tes objets où tu veux.","Dig, level and move sand to place your things anywhere."
 ITEM_RAKE,Râteau à sel,Salt rake
 ITEM_RAKE_DESC,Récolte toute une zone d'un coup.,Harvests a whole area at once.
 ITEM_YOKE,Palanche,Yoke
@@ -194,6 +196,7 @@ ITEM_BIG_BUCKET_PITCH,Deux fois plus de seau. Même océan.,Twice the bucket. Sa
 ITEM_BOAT_PITCH,"Le rêve ! (Livré en bouteille, montage non fourni.)","The dream! (Delivered in a bottle, assembly not included.)"
 ITEM_WHEELBARROW_PITCH,Une roue. Zéro problème.,One wheel. Zero problems.
 ITEM_TONGS_PITCH,Le bruit « flip-flop » est offert.,"The ""flip-flop"" sound is free."
+ITEM_SHOVEL_PITCH,"Garantie un tas de sable par jour.","Guaranteed one sandpile a day."
 ITEM_RAKE_PITCH,Ratisse plus vite que son ombre.,Rakes faster than its shadow.
 ITEM_YOKE_PITCH,Vos épaules vont adorer. Ou pas.,Your shoulders will love it. Or not.
 ITEM_CONDENSER_PITCH,De l'eau douce avec de l'eau salée. Magie !,Fresh water from salt water. Magic!
@@ -219,7 +222,9 @@ HUD_PER_SLOT,max %d par case,max %d per slot
 HUD_PIPES_IN_HAND,%d en main,%d in hand
 TOOL_PELLE,Pelle,Shovel
 PROMPT_GROUND_NOT_FLAT,"Sol pas plat : aplanis-le à la pelle · [R] Tourner · [G] Annuler","Ground not flat: level it with the shovel · [R] Rotate · [G] Cancel"
-PROMPT_DIG,"[Clic] Aplanir (glisser) · [Clic droit] Creuser · [Maj + Clic droit] Monter","[Click] Level (drag) · [Right click] Dig · [Shift + Right click] Raise"
+PROMPT_DIG,"[Clic] Aplanir (glisser) · [Clic droit] Creuser · [Maj + Clic droit] Remblayer · Pelle : %d/%d","[Click] Level (drag) · [Right click] Dig · [Shift + Right click] Fill · Shovel: %d/%d"
+PROMPT_DIG_SHOVEL_FULL,"Pelle pleine : remblaie ailleurs (Maj + Clic droit)","Shovel full: fill somewhere else (Shift + Right click)"
+PROMPT_DIG_SHOVEL_EMPTY,"Pelle vide : creuse d'abord (Clic droit)","Shovel empty: dig first (Right click)"
 PROMPT_DIG_AIM,Vise le sable devant toi,Aim at the sand in front of you
 PROMPT_DIG_TOO_FAR,Trop loin pour la pelle,Too far for the shovel
 PROMPT_DIG_WATER,"Pas dans l'eau : le sable s'effondre","Not in the water: the sand collapses"

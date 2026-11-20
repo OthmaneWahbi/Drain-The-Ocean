@@ -8,7 +8,8 @@ extends SceneTree
 
 const ACTIONS := [&"move_forward", &"move_back", &"move_left", &"move_right", &"jump", &"sprint",
 	&"interact", &"toggle_view", &"move_object", &"rotate_object", &"use_tool", &"tool_next",
-	&"tool_prev", &"tool_1", &"tool_2", &"tool_3", &"tool_4", &"pause", &"toolbar_menu"]
+	&"tool_prev", &"tool_1", &"tool_2", &"tool_3", &"tool_4", &"tool_5", &"tool_6", &"pause", &"toolbar_menu",
+	&"use_tool_alt"]  # 0.1.11 : le clic droit (creuser à la pelle, reprendre un tuyau)
 
 var _gs: Node
 var _main: Node

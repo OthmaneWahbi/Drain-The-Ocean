@@ -37,16 +37,17 @@ func _add_decor(node: Node3D, x: float, z: float, radius: float, sink: float, ru
 	_decor.append([node, x, z, radius, sink, rule])
 
 
-## La pelle a bougé des coins : on recale le décor proche, et on cache ce qui n'a plus sa place.
+## La pelle a bougé des sommets : on recale le décor proche, et on cache ce qui n'a plus sa place.
 func _on_terrain_changed(corners: Array) -> void:
 	if corners.is_empty():
 		return
 	var terrain := GameState.terrain
 	var near := {}
-	for c: Vector2i in corners:
-		for dj in range(-2, 2):
-			for di in range(-2, 2):
-				near[c + Vector2i(di, dj)] = true
+	for c: Vector2i in corners:  # des sommets (0.1.11 : tous les 50 cm) -> les cases de 1 m voisines
+		for cell in TerrainLogic.cells_of_vertex(c):
+			for dj in range(-1, 2):
+				for di in range(-1, 2):
+					near[cell + Vector2i(di, dj)] = true
 	for d in _decor:
 		var cell := TerrainLogic.cell_of(d[1], d[2])
 		if not near.has(cell):

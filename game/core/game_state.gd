@@ -50,8 +50,15 @@ signal ending_phase_changed(phase: int)
 signal run_finished
 ## Un réveil de plus après une noyade : un trait de plus sur le palmier (M-84).
 signal wakeups_changed
-## Le sable a été travaillé (pelle), ou la partie a changé : les coins du terrain qui ont bougé.
+## Le sable a été travaillé (pelle), ou la partie a changé : les sommets du terrain qui ont bougé
+## (indices de sommet, tous les 50 cm depuis 0.1.11).
 signal terrain_changed(corners: Array)
+## Un coup de pelle (0.1.11), juste AVANT terrain_changed : la case, la hauteur d'avant de chaque
+## sommet qui bouge (Vector2i -> float), le niveau d'arrivée, et les pelletées prises (> 0) ou
+## posées (< 0). Pour l'animation (la pelle, le sable qui vole et qui glisse, la poussière).
+signal sand_moved(cell: Vector2i, before: Dictionary, to_y: float, scoops: int)
+## Le sable porté sur la pelle a changé (ou la pelle vient d'être achetée).
+signal shovel_changed
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -87,6 +94,9 @@ var bucket_count: int = 1
 var carry_capacity: int
 var speed_multiplier: float = 1.0
 var has_rake: bool = false
+## La pelle s'achète au catalogue (0.1.11), et porte `shovel_sand` pelletées de sable.
+var has_shovel: bool = false
+var shovel_sand: int = 0
 ## La barre d'outils de 5 cases : quel outil on tient (M-27).
 var toolbar: ToolbarLogic = ToolbarLogic.new()
 ## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
@@ -178,9 +188,7 @@ func new_game() -> void:
 
 ## Remet tout à zéro (sans cuvette) et prévient les vues qu'elles doivent tout effacer.
 func _reset_state() -> void:
-	var old_corners := terrain.edits.keys() if terrain else []
-	if terrain:
-		terrain.edits = {}
+	var old_corners := terrain.clear_edits() if terrain else []
 	ocean = OceanModel.new(config.total_ocean_volume_l, config.drain_threshold_ratio)
 	bucket = BucketLogic.new(config.starting_bucket_capacity_l, config.bucket_fill_time_s)
 	day = DayCycleLogic.new(config.day_length_s, config.start_hour)
@@ -198,6 +206,8 @@ func _reset_state() -> void:
 	carry_capacity = config.hand_carry_capacity
 	speed_multiplier = 1.0
 	has_rake = false
+	has_shovel = false
+	shovel_sand = 0
 	toolbar = ToolbarLogic.new(config.toolbar_slots)
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
@@ -402,8 +412,10 @@ func owns_tool(tool: String) -> bool:
 	if Economy.RESOURCES.has(tool):
 		return int(carried.get(tool, 0)) > 0
 	match tool:
-		"", "seau", "pelle":
+		"", "seau":
 			return true
+		"pelle":
+			return has_shovel
 		"rateau":
 			return has_rake
 		"tuyaux":
@@ -662,6 +674,10 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 		CatalogItem.Effect.RAKE:
 			has_rake = true
 			_sync_toolbar()  # le râteau prend une case
+		CatalogItem.Effect.SHOVEL:
+			has_shovel = true
+			_sync_toolbar()  # la pelle prend une case
+			shovel_changed.emit()
 		CatalogItem.Effect.STATION:
 			return add_station(item.effect_param, position)
 		CatalogItem.Effect.UNLOCK_TIER:
@@ -1281,12 +1297,18 @@ func dig_target(cell: Vector2i, mode: int, ref := NAN) -> float:
 	return clampf(y, lo, config.ground_y + config.dig_max_above_ground_m)
 
 
+## Pelletées de sable que ce geste prend (> 0) ou pose (< 0) pour amener la case au niveau `y`.
+func dig_scoops(cell: Vector2i, y: float) -> int:
+	return roundi((dig_snap(terrain.cell_mean(cell)) - y) / config.dig_step_m)
+
+
 ## Ce qui empêche de travailler cette case pour l'amener au niveau `y` ("" si rien) : une clé de
-## texte d'aide. On ne touche ni à la mer, ni sous un objet, ni à côté d'un objet si le coin
-## partagé devait bouger (l'objet flotterait ou s'enfoncerait).
+## texte d'aide. On ne touche ni à la mer, ni sous un objet, ni à côté d'un objet si un sommet
+## partagé devait bouger (l'objet flotterait ou s'enfoncerait). 0.1.11 : la pelle doit avoir la
+## place de prendre le sable (pleine sinon), ou en porter assez pour remblayer (vide sinon).
 func dig_reason(cell: Vector2i, y: float) -> String:
 	var center := Vector2((cell.x + 0.5) * config.grid_cell_m, (cell.y + 0.5) * config.grid_cell_m)
-	var h := TerrainLogic.GRID_HALF - 1
+	var h := TerrainLogic.GRID_HALF / TerrainLogic.SUB - 1
 	if absi(cell.x) >= h or absi(cell.y) >= h:
 		return "PROMPT_DIG_TOO_FAR"
 	if center.length() > terrain.coast_at(atan2(center.y, center.x)) - 0.5:
@@ -1294,29 +1316,43 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 	var blockers := _dig_blockers()
 	if _cell_blocked(cell, blockers):
 		return "PROMPT_DIG_BLOCKED"
-	for c in TerrainLogic.cell_corners(cell):
-		if absf(terrain.vertex(c.x, c.y).y - y) <= TerrainLogic.FLAT_TOLERANCE:
+	for v in TerrainLogic.cell_vertices(cell):
+		if absf(terrain.vertex(v.x, v.y).y - y) <= TerrainLogic.FLAT_TOLERANCE:
 			continue
-		for d in [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, -1)]:
-			if _cell_blocked(c + d, blockers):
+		for other in TerrainLogic.cells_of_vertex(v):
+			if other != cell and _cell_blocked(other, blockers):
 				return "PROMPT_DIG_NEAR_OBJECT"
+	var scoops := dig_scoops(cell, y)
+	if scoops > 0 and shovel_sand + scoops > config.shovel_capacity_scoops:
+		return "PROMPT_DIG_SHOVEL_FULL"
+	if scoops < 0 and shovel_sand + scoops < 0:
+		return "PROMPT_DIG_SHOVEL_EMPTY"
 	return ""
 
 
-## Travaille une case : elle devient plate au niveau voulu (voir dig_target). Les coquillages
-## posés dessus suivent le sable. Renvoie vrai si le sol a changé.
+## Travaille une case : elle devient plate au niveau voulu (voir dig_target). Le sable creusé va
+## sur la pelle, le sable remblayé en vient. Les coquillages posés dessus suivent le sable.
+## Renvoie vrai si le sol a changé.
 func work_cell(cell: Vector2i, mode: int, ref := NAN) -> bool:
 	var y := dig_target(cell, mode, ref)
 	if dig_reason(cell, y) != "":
 		return false
+	var before := {}
+	for v in TerrainLogic.cell_vertices(cell):
+		before[v] = terrain.vertex(v.x, v.y).y
+	var scoops := dig_scoops(cell, y)
 	var changed := terrain.set_cell(cell, y)
 	if changed.is_empty():
 		return false
+	if scoops != 0:
+		shovel_sand += scoops
+		shovel_changed.emit()
 	for p in pickups:
 		var pc := TerrainLogic.cell_of(p.position.x, p.position.z)
 		if absi(pc.x - cell.x) <= 1 and absi(pc.y - cell.y) <= 1:
 			p.position.y = terrain.height(p.position.x, p.position.z)
 			item_moved.emit(p)
+	sand_moved.emit(cell, before, y, scoops)
 	terrain_changed.emit(changed)
 	return true
 
@@ -1439,10 +1475,11 @@ func to_dict() -> Dictionary:
 		"pipes": pipes.keys().map(func(c: Vector3i): return [c.x, c.y, c.z]),
 		"pipe_stock": pipe_stock,
 		"terrain": terrain.edits_to_array(),
+		"terrain_sub": TerrainLogic.SUB,
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
-		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
+		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "has_shovel": has_shovel, "shovel_sand": shovel_sand, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 		"wakeups": wakeups,
@@ -1455,9 +1492,9 @@ func to_dict() -> Dictionary:
 func load_dict(data: Dictionary) -> void:
 	_reset_state()
 	# Le sable travaillé d'abord : les objets posés dessus en dépendent.
-	terrain.edits_from_array(data.get("terrain", []))
+	terrain.edits_from_array(data.get("terrain", []), int(data.get("terrain_sub", 1)))
 	if not terrain.edits.is_empty():
-		terrain_changed.emit(terrain.edits.keys())
+		terrain_changed.emit(terrain.edits.keys() + terrain.pinned_vertices())
 	ocean.load_dict(data.get("ocean", {}))
 	var up: Dictionary = data.get("upgrades", {})
 	# Anciennes sauvegardes (sans "upgrades") : la contenance du seau suffit.
@@ -1466,6 +1503,9 @@ func load_dict(data: Dictionary) -> void:
 	carry_capacity = maxi(int(up.get("carry_capacity", carry_capacity)), config.hand_carry_capacity)
 	speed_multiplier = maxf(float(up.get("speed_multiplier", 1.0)), 1.0)
 	has_rake = bool(up.get("has_rake", false))
+	# Avant 0.1.11, la pelle était donnée : une sauvegarde qui l'avait en barre la garde.
+	has_shovel = bool(up.get("has_shovel", Array(up.get("toolbar", [])).has("pelle")))
+	shovel_sand = clampi(int(up.get("shovel_sand", 0)), 0, config.shovel_capacity_scoops)
 	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))
@@ -1621,6 +1661,7 @@ func _emit_all() -> void:
 	stock_changed.emit()
 	carried_changed.emit()
 	bucket_changed.emit()
+	shovel_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

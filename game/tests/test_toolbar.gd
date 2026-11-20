@@ -1,6 +1,8 @@
 extends TestCase
 ## La barre de 6 cases en main (M-27 ; la pelle en case 2 depuis 0.1.10) : outils, matériaux portés (un par case), menu pour
 ## réorganiser, et un tas par matériau à côté des zones de séchage.
+## 0.1.11 : la pelle s'achète. Ici on l'achète d'abord (elle prend la case 2), sauf dans les tests
+## du tout début de partie.
 
 const GameStateScript := preload("res://core/game_state.gd")
 
@@ -12,6 +14,8 @@ func before_each() -> void:
 	var cfg: GameConfig = load("res://data/game_config.tres").duplicate()
 	cfg.total_ocean_volume_l = 1.0e6
 	gs.setup(cfg)
+	gs.has_shovel = true  # comme si on l'avait achetée
+	gs._sync_toolbar()
 
 
 func after_each() -> void:
@@ -24,8 +28,19 @@ func _slots() -> Array:
 
 # --- Choisir une case ------------------------------------------------------------------------
 
-func test_starts_with_the_bucket_the_shovel_and_four_empty_slots() -> void:
+func test_starts_with_the_bucket_and_five_empty_slots() -> void:
+	gs.new_game()
 	assert_eq(gs.current_tool(), "seau")
+	assert_eq(_slots(), ["seau", "", "", "", "", ""], "0.1.11 : la pelle n'est plus donnée")
+	assert_false(gs.owns_tool("pelle"))
+
+
+func test_the_bought_shovel_takes_the_second_slot() -> void:
+	gs.new_game()
+	gs.stock = {"sel": 100}
+	gs.open_crates(gs.order(["pelle"]))
+	assert_true(gs.has_shovel)
+	assert_eq(int(gs.stock.get("sel", 0)), 90, "10 sel")
 	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
 
 
@@ -192,7 +207,7 @@ func test_new_game_gives_back_the_bucket() -> void:
 	gs.select_tool(1)
 	gs.new_game()
 	assert_eq(gs.current_tool(), "seau")
-	assert_eq(_slots(), ["seau", "pelle", "", "", "", ""])
+	assert_eq(_slots(), ["seau", "", "", "", "", ""], "la pelle se rachète")
 
 
 func test_toolbar_logic_alone() -> void:

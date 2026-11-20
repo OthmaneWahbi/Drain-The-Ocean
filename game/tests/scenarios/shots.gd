@@ -38,6 +38,17 @@ func shot(name: String, at: Vector3, look: Vector3, third := false) -> void:
 	print("shot ", name)
 
 
+## Enregistre l'image après `game_s` secondes de jeu, sans bouger la caméra (une animation en cours).
+func snap(name: String, game_s: float) -> void:
+	var t := 0.0
+	while t < game_s:
+		await process_frame
+		t += root.get_process_delta_time()
+	var img := root.get_texture().get_image()
+	img.save_png("%s/%s.png" % [_dir, name])
+	print("shot ", name, " (", "%.2f" % t, " s)")
+
+
 func _run() -> void:
 	await _frames(10)
 	_player = _main.get_node("Player")

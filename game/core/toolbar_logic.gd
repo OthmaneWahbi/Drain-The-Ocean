@@ -11,7 +11,7 @@ var slots: PackedStringArray
 var selected: int = 0
 
 
-func _init(p_slots: PackedStringArray = PackedStringArray(["seau", "pelle", "", "", "", ""])) -> void:
+func _init(p_slots: PackedStringArray = PackedStringArray(["seau", "", "", "", "", ""])) -> void:
 	slots = p_slots.duplicate()
 
 
