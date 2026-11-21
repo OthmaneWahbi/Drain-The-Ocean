@@ -13,6 +13,9 @@ const OceanShader := preload("res://scenes/world/shaders/ocean.gdshader")
 const NEAR_SIZE := 160.0
 const NEAR_SUBDIV := 159
 const FAR_SIZE := 12000.0
+## La carte des terres (0.1.13) : MASK_PX × MASK_PX pixels sur ±MASK_HALF_M mètres.
+const MASK_PX := 256
+const MASK_HALF_M := 72.0
 
 var material: ShaderMaterial
 var _near: MeshInstance3D
@@ -22,6 +25,10 @@ var _far: MeshInstance3D
 func _ready() -> void:
 	material = ShaderMaterial.new()
 	material.shader = OceanShader
+	# 0.1.13 : l'eau ne se montre jamais à l'intérieur de l'île (un trou creusé près du niveau de
+	# la mer laissait passer le haut des vagues).
+	material.set_shader_parameter("land_mask", land_mask(GameState.terrain, GameState.config.sea_level_y + GameState.config.land_mask_above_sea_m))
+	material.set_shader_parameter("land_mask_half_m", MASK_HALF_M)
 	var near_mesh := PlaneMesh.new()
 	near_mesh.size = Vector2(NEAR_SIZE, NEAR_SIZE)
 	near_mesh.subdivide_width = NEAR_SUBDIV
@@ -53,3 +60,16 @@ func _process(_delta: float) -> void:
 		_near.position.z = snappedf(cam.global_position.z, 1.0)
 		_far.position.x = snappedf(cam.global_position.x, 100.0)
 		_far.position.z = snappedf(cam.global_position.z, 100.0)
+
+
+## La carte des terres : 1 là où le sol d'origine de l'île est plus haut que `above_y` (l'eau
+## n'y monte jamais, même avec les vagues), 0 ailleurs. Le shader de l'océan n'y dessine rien :
+## un trou creusé dans l'île ne montre pas la mer.
+static func land_mask(t: TerrainLogic, above_y: float) -> ImageTexture:
+	var img := Image.create(MASK_PX, MASK_PX, false, Image.FORMAT_R8)
+	for y in MASK_PX:
+		for x in MASK_PX:
+			var wx := (float(x) + 0.5) / MASK_PX * 2.0 * MASK_HALF_M - MASK_HALF_M
+			var wz := (float(y) + 0.5) / MASK_PX * 2.0 * MASK_HALF_M - MASK_HALF_M
+			img.set_pixel(x, y, Color(1, 1, 1) if t.base_height(wx, wz) > above_y else Color(0, 0, 0))
+	return ImageTexture.create_from_image(img)

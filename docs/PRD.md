@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.43 (0.1.12 : du vrai sable) |
+| Version du document | 0.44 (0.1.13 : finitions du sable) |
 | Date | 2026-11-20 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -893,6 +893,17 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **L'éboulement** : le sable sec ne tient pas plus raide que **34°** (la pente d'éboulement du vrai sable, 30 à 35°) ; le sable mouillé, à moins de 30 cm au-dessus de l'eau, tient jusqu'à **45°**. Après chaque geste, partout où c'est plus raide, le sable glisse vers le bas jusqu'à ce que tout tienne : un trou profond s'évase en entonnoir, un tas s'étale en cône, le bord d'une terrasse ou d'une butte s'éboule dans un trou creusé à son pied, et le sable posé en haut d'une pente coule le long. Rien ne se perd. Le sable sous un objet (et autour de ses bords) ne bouge pas : il le porte. On ne creuse jamais à moins de 20 cm au-dessus de l'eau, on n'entasse pas à plus de 2,5 m au-dessus du sol de l'île, comme avant ; près de ces bornes, la pelletée est plus petite (la pelle affiche ce qu'elle a vraiment pris). Méthode : l'« érosion thermique » des terrains de jeux et d'outils (Musgrave 1989, tas de sable de Houdini, From Dust), faite seulement autour du geste.
 - **[PROPOSÉ]** **L'animation** : la pelletée descend ou monte tout de suite, puis le sable qui s'éboule glisse de proche en proche en s'éloignant du point visé ; un peu de poussière là où il glisse le plus.
 - **[PROPOSÉ]** **Un sable de plage tropicale** : plus clair et plus doré ; les flancs d'un tas ou d'un trou prennent leur teinte en douceur, sommet par sommet (plus de triangles plus foncés), et l'éclairage est lissé sur le sable creusé (plus de facettes taillées). La motte de la pelle a la même couleur que le sable.
+
+### 19.18 Version 0.1.13 : finitions du sable
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]**, après avoir essayé la 0.1.12 : le sable sur la pelle doit être travaillé (couleur et forme) ; un **compteur du sable porté** dans la barre d'objets ; quand on creuse un peu, l'eau apparaît : il faut **cacher l'eau à l'intérieur de l'île** ; tester à fond « est-ce que je peux poser du sable ou non », qui paraissait capricieux ; et les **bords des zones nivelées** doivent être moins anguleux et se fondre dans le sable autour.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Le compteur** : la case de la pelle dans la barre affiche « Sable 1,5/3 », mis à jour à chaque pelletée.
+- **[PROPOSÉ]** **Le sable sur la pelle** : un petit dôme de sable (plus une boule), du même sable que l'île (même couleur, mêmes grains), qui grossit et monte avec la charge.
+- **[PROPOSÉ]** **L'eau cachée** : la mer n'est plus dessinée au-dessus de l'île d'origine là où le sol était à plus de 30 cm au-dessus de la mer. Avant, la crête des vagues (jusqu'à 26 cm) passait au-dessus du fond des trous (creusés jusqu'à 20 cm au-dessus de l'eau). Au bord de l'eau (sol de départ à moins de 30 cm), un trou peut encore se remplir d'eau, comme sur une vraie plage.
+- **[PROPOSÉ]** **Poser ou creuser : un texte clair** : la marque est verte si l'un des deux clics marche, et le texte dit ce qui empêche l'autre (« Pelle vide », « Pelle pleine », « Trop profond »…). Avant, il ne parlait que de creuser (« Pelle pleine » en rouge alors que poser marchait). Un coquillage ou un objet devant le sable ne bloque plus la visée.
+- **[PROPOSÉ]** **Les bords nivelés** : autour d'une case nivelée, deux rangées de sommets (1 m) se fondent en rampe douce vers le sable autour (au lieu d'une marche). Le sable de la rampe est compté (pris ou posé sur la pelle), et la rampe est plus petite si la pelle n'a pas la place ou pas assez de sable. Les traces de pelle et la teinte du sable travaillé s'effacent en douceur au bord de la case.
 
 ## 20. Glossaire
 

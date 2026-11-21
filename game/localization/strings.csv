@@ -220,6 +220,7 @@ SLIDE_SIGN,ENVOI,SEND
 RATIONS_STAMP,RATIONS,RATIONS
 HUD_PER_SLOT,max %d par case,max %d per slot
 HUD_PIPES_IN_HAND,%d en main,%d in hand
+HUD_SHOVEL_LOAD,Sable %s/%d,Sand %s/%d
 TOOL_PELLE,Pelle,Shovel
 PROMPT_GROUND_NOT_FLAT,"Sol pas plat : aplanis-le à la pelle · [R] Tourner · [G] Annuler","Ground not flat: level it with the shovel · [R] Rotate · [G] Cancel"
 PROMPT_DIG,"[Clic] Creuser · [Clic droit] Poser · [Maj + Clic] Lisser · [Maj + Clic droit] Niveler (glisser) · Pelle : %s/%d","[Click] Dig · [Right click] Drop · [Shift + Click] Smooth · [Shift + Right click] Level (drag) · Shovel: %s/%d"

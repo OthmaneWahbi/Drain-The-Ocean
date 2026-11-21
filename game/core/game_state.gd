@@ -1353,8 +1353,54 @@ func flatten_cell(cell: Vector2i, ref := NAN) -> bool:
 	for v in TerrainLogic.cell_vertices(cell):
 		target[v] = y
 		locked[v] = true
+	# 0.1.13 : le sable autour (deux rangs de sommets, hors des cases déjà nivelées) se fond en
+	# rampe douce vers la case, au lieu d'une marche aux bords nets. Ce sable-là aussi est compté
+	# sur la pelle ; s'il n'y a pas la place (ou pas assez de sable), le fondu est plus léger.
+	var ctx := _sand_context()
+	var ring := _blend_ring(cell, ctx)
+	if not ring.is_empty():
+		var read := func(k: Vector2i) -> float: return terrain.vertex(k.x, k.y).y
+		var blended := SandPhysics.blend(target.duplicate(), read, ring, config.level_blend_passes, 0.6)
+		var extra := 0.0
+		for v: Vector2i in blended:
+			extra += (terrain.vertex(v.x, v.y).y - float(blended[v])) * SandPhysics.AREA
+		extra /= config.dig_scoop_m3
+		var room_after := shovel_sand + scoops
+		var f := 1.0
+		if extra > 0.0:
+			f = clampf((config.shovel_capacity_scoops - room_after) / extra, 0.0, 1.0)
+		elif extra < 0.0:
+			f = clampf(room_after / -extra, 0.0, 1.0)
+		for v: Vector2i in blended:
+			var h0 := terrain.vertex(v.x, v.y).y
+			target[v] = lerpf(h0, float(blended[v]), f)
+		scoops += extra * f
 	var center := Vector3((cell.x + 0.5) * config.grid_cell_m, y, (cell.y + 0.5) * config.grid_cell_m)
-	return _move_sand(center, target, scoops, locked)
+	return _move_sand(center, target, scoops, locked, ctx)
+
+
+## Les sommets autour d'une case qu'on nivelle, que le fondu peut bouger : deux rangs autour de
+## ses 9 sommets, qui peuvent bouger, et qui ne sont pas sur une case déjà plate (nivelée à la
+## pelle, ou le plateau de départ : on ne défait jamais un sol où l'on peut poser).
+func _blend_ring(cell: Vector2i, ctx: Dictionary) -> Array:
+	var out := []
+	var o := cell * TerrainLogic.SUB
+	var r := config.level_blend_rings
+	for j in range(-r, TerrainLogic.SUB + r + 1):
+		for i in range(-r, TerrainLogic.SUB + r + 1):
+			if i >= 0 and i <= TerrainLogic.SUB and j >= 0 and j <= TerrainLogic.SUB:
+				continue
+			var v := o + Vector2i(i, j)
+			if not _vertex_movable(v, ctx):
+				continue
+			var on_level := false
+			for c in TerrainLogic.cells_of_vertex(v):
+				if not is_nan(terrain.cell_level(c)):  # nivelée, ou le plateau de départ
+					on_level = true
+					break
+			if not on_level:
+				out.append(v)
+	return out
 
 
 ## La pelletée : creuser (clic gauche, `dig` vrai) ou poser le sable porté (clic droit), autour du

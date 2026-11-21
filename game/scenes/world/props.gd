@@ -957,30 +957,99 @@ static func shovel() -> Node3D:
 		root.add_child(box(Vector3(0.025, 0.06, 0.28), METAL.darkened(0.1), Vector3(sx * 0.125, 0.015, -1.0)))
 	root.add_child(box(Vector3(0.2, 0.026, 0.06), METAL.lightened(0.15), Vector3(0, -0.012, -1.17)))
 	# 0.1.11 : le sable porté sur la lame, qui grossit avec la charge (set_shovel_load).
-	var load := sand_clump(0.15, 11)
+	# 0.1.13 : un dôme de sable qui tient dans la lame, du même sable que le sol, sans ombre.
+	var load := MeshInstance3D.new()
+	load.mesh = sand_heap_mesh(0.105, 0.135, 0.11, 11)
+	load.material_override = sand_material(true)
+	load.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	load.name = "SandLoad"
-	load.position = Vector3(0, 0.02, -1.02)
+	load.position = Vector3(0, 0.0, -1.0)
 	load.visible = false
 	root.add_child(load)
 	return root
 
 
 ## Le sable sur la lame de la pelle (0..1 de la charge) : un petit tas qui monte et s'élargit.
+## 0.1.13 : sa hauteur suit la charge (un tas plat au début, un dôme quand la pelle est pleine).
 static func set_shovel_load(shovel_node: Node3D, ratio: float) -> void:
 	var load := shovel_node.get_node_or_null("SandLoad") as Node3D
 	if load == null:
 		return
 	ratio = clampf(ratio, 0.0, 1.0)
-	load.visible = ratio > 0.0
-	var k := lerpf(0.55, 1.0, ratio)
-	load.scale = Vector3(k, lerpf(0.35, 1.0, ratio), k * 1.1)
+	load.visible = ratio > 0.01
+	var k := lerpf(0.7, 1.0, ratio)
+	load.scale = Vector3(k, lerpf(0.25, 1.0, ratio), k)
 
 
-## Une motte de sable (0.1.11) : une boule à facettes aplatie et bosselée, couleur sable.
+## Le matériau du sable des objets (0.1.13) : le shader du sol (grains, taches, lumière cartoon),
+## en couleur sable sec. `shadowless` : il ne reçoit pas d'ombre (la pelle tenue en main est
+## dans l'ombre du joueur, le tas paraissait noir).
+static func sand_material(shadowless: bool = false) -> ShaderMaterial:
+	var key := "sand_shadowless" if shadowless else "sand"
+	if _mats.has(key):
+		return _mats[key]
+	var shader: Shader = TerrainView.SAND_SHADER
+	if shadowless:
+		shader = Shader.new()
+		shader.code = TerrainView.SAND_SHADER.code.replace("render_mode cull_disabled, specular_disabled;", "render_mode cull_disabled, specular_disabled, shadows_disabled;")
+	var m := ShaderMaterial.new()
+	m.shader = shader
+	m.set_shader_parameter("on_object", true)
+	var c := TerrainLogic.DRY_SAND
+	m.set_shader_parameter("tint", Vector4(c.r, c.g, c.b, 1.0))
+	_mats[key] = m
+	return m
+
+
+## Un tas de sable (0.1.13) : un dôme bosselé, à facettes douces, de rayons `rx` × `rz` et de
+## hauteur `h` ; posé sur son socle (y = 0).
+static func sand_heap_mesh(rx: float, rz: float, h: float, rng_seed: int = 5) -> ArrayMesh:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var seg := 12
+	var rings := 4
+	var pts := []
+	for r in rings + 1:
+		var row := []
+		var t := float(r) / rings  # 0 : sommet, 1 : bord
+		for a in seg:
+			var ang := TAU * a / seg
+			var bump := 1.0 + (rng.randf() - 0.5) * 0.18 * t
+			var d := t * bump
+			var y := h * pow(maxf(1.0 - t * t, 0.0), 0.8) * (1.0 + (rng.randf() - 0.5) * 0.15 * (1.0 - t))
+			row.append(Vector3(cos(ang) * rx * d, y, sin(ang) * rz * d))
+		pts.append(row)
+	var tris := []
+	var top := Vector3(0, h, 0)
+	for a in seg:
+		var b := (a + 1) % seg
+		tris.append([top, pts[1][a], pts[1][b]])
+		for r in range(1, rings):
+			tris.append([pts[r][a], pts[r + 1][a], pts[r][b]])
+			tris.append([pts[r][b], pts[r + 1][a], pts[r + 1][b]])
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for tri in tris:
+		var p0: Vector3 = tri[0]
+		var p1: Vector3 = tri[1]
+		var p2: Vector3 = tri[2]
+		var n := (p1 - p0).cross(p2 - p0).normalized()
+		if n.y < 0.0:
+			n = -n  # toujours vers le haut et l'extérieur (un dôme)
+		for p: Vector3 in [p0, p1, p2]:
+			# Une normale de dôme lissée, mêlée à celle de la facette (facettes douces).
+			var smooth := Vector3(p.x / (rx * rx), 1.0 / maxf(h, 0.01), p.z / (rz * rz)).normalized()
+			st.set_normal(smooth.lerp(n, 0.35).normalized())
+			st.add_vertex(p)
+	return st.commit()
+
+
+## Une motte de sable (0.1.11) : une boule à facettes aplatie et bosselée, couleur sable
+## (0.1.13 : le même sable que le sol).
 static func sand_clump(radius: float, rng_seed: int = 3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	mi.mesh = Models.facet_sphere(radius, 7, 4, rng_seed, Vector3(1.0, 0.6, 1.0), 0.22)
-	mi.material_override = mat(SAND)
+	mi.mesh = Models.facet_sphere(radius, 8, 5, rng_seed, Vector3(1.0, 0.6, 1.0), 0.18)
+	mi.material_override = sand_material()
 	return mi
 
 

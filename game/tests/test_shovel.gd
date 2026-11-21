@@ -215,10 +215,11 @@ func test_flattening_counts_the_real_volume() -> void:
 	_real_shovel()
 	var cell := _beach_cell()
 	var y: float = gs.flatten_level(cell)
-	var need: float = gs.dig_scoops(cell, y)
-	gs.shovel_sand = 2.0
+	var o := cell * TerrainLogic.SUB + Vector2i(1, 1)
+	gs.shovel_sand = 1.5
+	var v0: float = _volume(o) + gs.shovel_sand * gs.config.dig_scoop_m3
 	assert_true(gs.flatten_cell(cell, y))
-	assert_almost(gs.shovel_sand, 2.0 + need, 1e-3, "le sable pris ou posé, au centième près")
+	assert_almost(_volume(o) + gs.shovel_sand * gs.config.dig_scoop_m3, v0, 0.05, "le sable pris ou posé est sur la pelle")
 	gs.shovel_sand = 0.0
 	assert_eq(gs.dig_reason(cell, y + 0.5), "PROMPT_DIG_SHOVEL_EMPTY", "remonter demande du sable")
 
@@ -357,6 +358,130 @@ func test_smoothing_keeps_the_height_and_flattens_the_sand() -> void:
 func test_shovel_load_text() -> void:
 	assert_eq(ShovelTool.load_text(2.0), "2")
 	assert_eq(ShovelTool.load_text(0.04), "0")
+
+
+# --- Finitions (0.1.13) ----------------------------------------------------------------------------
+
+## Des milliers de gestes au hasard (creuser, poser, lisser, niveler) sur le plateau, la plage et
+## autour de la cuvette : rien ne se crée ni ne se perd, les raisons de refus disent vrai, un
+## geste permis marche, le sable reste entre ses bornes et ne bouge jamais sous un objet.
+func test_thousands_of_random_shovel_gestures_keep_every_rule() -> void:
+	_fuzz(Vector2i(0, 16), 22, 1234)  # le plateau, vers la plage, la cuvette
+
+
+func test_random_shovel_gestures_at_the_water_edge() -> void:
+	_fuzz(Vector2i(0, 66), 14, 99)  # la plage du sud, jusque dans l'eau
+
+
+func _fuzz(center: Vector2i, r: int, rng_seed: int) -> void:
+	_real_shovel()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = rng_seed
+	var basin: Dictionary = gs.zones[0]
+	var brect: Rect2 = gs.item_rect(basin)
+	var under := TerrainLogic.nearest_vertex(brect.get_center().x, brect.get_center().y)
+	var under_h: float = gs.terrain.vertex(under.x, under.y).y
+	var total0: float = _volume(center, r + 8) + gs.shovel_sand * gs.config.dig_scoop_m3
+	var refused := {}
+	var done := 0
+	for step in 1500:
+		var v := center + Vector2i(rng.randi_range(-r, r), rng.randi_range(-r, r))
+		var kind := rng.randi_range(0, 9)
+		var before_sand: float = gs.shovel_sand
+		if kind <= 3 or kind <= 7:
+			var dig := kind <= 3
+			var why: String = gs.scoop_reason(v, dig)
+			var ok: bool = gs.shovel_scoop(v, dig)
+			if why == "":
+				assert_true(ok, "un geste permis marche (%s, %s)" % [v, "creuser" if dig else "poser"])
+				if dig:
+					assert_true(gs.shovel_sand > before_sand, "creuser remplit la pelle")
+				else:
+					assert_true(gs.shovel_sand < before_sand, "poser vide la pelle")
+				done += 1
+				# Juste après avoir creusé, on peut toujours reposer au même endroit.
+				if dig:
+					assert_eq(gs.scoop_reason(v, false), "", "reposer là où on vient de creuser (%s)" % v)
+			else:
+				assert_false(ok, "un geste refusé ne change rien")
+				assert_almost(gs.shovel_sand, before_sand, 1e-9)
+				refused[why] = int(refused.get(why, 0)) + 1
+				if why == "PROMPT_DIG_SHOVEL_EMPTY":
+					assert_true(before_sand < 0.05)
+				if why == "PROMPT_DIG_SHOVEL_FULL":
+					assert_true(before_sand > gs.config.shovel_capacity_scoops - 0.05)
+		elif kind == 8:
+			gs.smooth_sand(v)
+			assert_almost(gs.shovel_sand, before_sand, 1e-9, "lisser ne touche pas à la pelle")
+		else:
+			var cell := TerrainLogic.cell_of(TerrainLogic.vertex_xz(v).x, TerrainLogic.vertex_xz(v).y)
+			gs.flatten_cell(cell, gs.flatten_level(cell))
+		assert_true(gs.shovel_sand >= -1e-6 and gs.shovel_sand <= gs.config.shovel_capacity_scoops + 1e-6, "la pelle reste entre 0 et 3")
+	# Les bornes et le sable sous la cuvette.
+	for k: Vector2i in gs.terrain.edits:
+		var y := float(gs.terrain.edits[k])
+		assert_false(is_nan(y))
+		assert_true(y <= gs.dig_ceil_y() + 1e-4, "jamais plus haut que le plafond")
+	assert_almost(gs.terrain.vertex(under.x, under.y).y, under_h, 1e-6, "le sable sous la cuvette n'a pas bougé")
+	for k: Vector2i in gs.terrain.edits:
+		var p := TerrainLogic.vertex_xz(k)
+		assert_true(p.length() <= gs.terrain.coast_at(atan2(p.y, p.x)) - 0.5 + 1e-3, "le sable de la mer ne bouge pas")
+	# Le sable total (sol + pelle) n'a pas changé. La seule dérive : les sommets recalés sur la
+	# grille (on enlève leur petit décalage au hasard), quelques centimètres cubes.
+	var total1: float = _volume(center, r + 8) + gs.shovel_sand * gs.config.dig_scoop_m3
+	assert_almost(total1, total0, 0.6, "le sable ne se crée ni ne se perd")
+	assert_true(done > 150, "assez de gestes réussis (%d)" % done)
+	print("    gestes réussis : %d, refus : %s" % [done, refused])
+
+
+func test_level_blends_its_edges_into_the_sand_around() -> void:
+	_real_shovel()
+	var cell := _beach_cell()
+	var level: float = gs.flatten_level(cell) - gs.config.dig_step_m  # creusée d'un cran
+	var o := cell * TerrainLogic.SUB
+	var outside := [o + Vector2i(3, 1), o + Vector2i(-1, 1), o + Vector2i(1, 3), o + Vector2i(1, -1)]
+	var gap_before := 0.0
+	for v: Vector2i in outside:
+		gap_before += absf(gs.terrain.vertex(v.x, v.y).y - level)
+	var v0 := _volume(o + Vector2i(1, 1))
+	assert_true(gs.flatten_cell(cell, level))
+	var gap_after := 0.0
+	for v: Vector2i in outside:
+		gap_after += absf(gs.terrain.vertex(v.x, v.y).y - level)
+	assert_true(gap_after < gap_before - 0.05, "le sable autour descend vers la case : une rampe (%.2f -> %.2f)" % [gap_before, gap_after])
+	assert_almost(gs.terrain.cell_level(cell), level, 1e-4, "la case reste plate")
+	assert_almost(_volume(o + Vector2i(1, 1)) + gs.shovel_sand * gs.config.dig_scoop_m3, v0, 0.05, "le sable du fondu est compté sur la pelle")
+
+
+func test_level_drag_keeps_its_neighbour_flat() -> void:
+	_real_shovel()
+	gs.shovel_sand = 1.5
+	gs.flatten_cell(Vector2i(1, 6), 0.5)
+	gs.flatten_cell(Vector2i(2, 6), 0.5)
+	gs.flatten_cell(Vector2i(3, 6), 0.5)
+	for c in [Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6)]:
+		assert_almost(gs.terrain.cell_level(c), 0.5, 1e-4, "le fondu ne défait pas une case déjà nivelée")
+
+
+func test_the_shovel_load_is_shown_in_its_slot() -> void:
+	_real_shovel()
+	gs.shovel_sand = 1.5
+	assert_eq(ShovelTool.load_text(1.5).replace(",", "."), "1.5")
+
+
+func test_the_sea_is_hidden_inside_the_island() -> void:
+	var tex := OceanView.land_mask(gs.terrain, gs.config.sea_level_y + gs.config.land_mask_above_sea_m)
+	var img := tex.get_image()
+	var mid := OceanView.MASK_PX / 2
+	assert_true(img.get_pixel(mid, mid).r > 0.5, "au milieu de l'île : pas d'eau")
+	assert_true(img.get_pixel(2, 2).r < 0.5, "au large : l'eau")
+
+
+func test_sand_heap_on_the_shovel_is_a_dome() -> void:
+	var mesh := Props.sand_heap_mesh(0.1, 0.13, 0.11)
+	var aabb := mesh.get_aabb()
+	assert_almost(aabb.size.y, 0.11, 0.03, "hauteur du tas")
+	assert_true(aabb.position.y >= -1e-4, "posé sur la lame, pas dessous")
 
 
 # --- Les tuyaux suivent la hauteur des zones (0.1.10) -----------------------------------------

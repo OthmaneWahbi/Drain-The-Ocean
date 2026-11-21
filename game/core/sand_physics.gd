@@ -102,6 +102,26 @@ static func smooth(heights: Dictionary, weights: Dictionary, strength: float, sn
 	return out
 
 
+## Fondre un bord (0.1.13) : les sommets `free` prennent peu à peu la moyenne de leurs 4 voisins
+## (`iterations` passes de Jacobi, part `k`). Les autres voisins (lus dans `h` ou avec `read`)
+## servent de bord fixe : la pente entre une case nivelée et le sable autour devient une rampe
+## douce au lieu d'une marche. Renvoie les nouvelles hauteurs des sommets `free`.
+static func blend(h: Dictionary, read: Callable, free: Array, iterations: int, k: float) -> Dictionary:
+	var cur := {}
+	for v: Vector2i in free:
+		cur[v] = _height(v, h, read)
+	for _it in iterations:
+		var nxt := {}
+		for v: Vector2i in free:
+			var s := 0.0
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var n: Vector2i = v + d
+				s += float(cur[n]) if cur.has(n) else _height(n, h, read)
+			nxt[v] = lerpf(float(cur[v]), s / 4.0, k)
+		cur = nxt
+	return cur
+
+
 static func _room(h: float, dig: bool, floor_y: float, ceil_y: float) -> float:
 	return maxf(h - floor_y, 0.0) if dig else maxf(ceil_y - h, 0.0)
 

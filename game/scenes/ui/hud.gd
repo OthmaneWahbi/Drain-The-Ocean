@@ -37,6 +37,7 @@ func _ready() -> void:
 	GameState.bucket_changed.connect(refresh_toolbar)  # l'eau du seau, dans sa case
 	GameState.carried_changed.connect(refresh_toolbar)  # les quantités portées dans les cases
 	GameState.network_changed.connect(refresh_toolbar)  # les tuyaux en main (0.1.6)
+	GameState.shovel_changed.connect(refresh_toolbar)  # le sable sur la pelle (0.1.13)
 	refresh_toolbar()
 	_refresh_ocean()
 	_refresh_items()
@@ -138,6 +139,9 @@ func refresh_toolbar() -> void:
 			_toolbar_labels[i].text += "\n%d / %d L" % [int(GameState.bucket.water_l), int(GameState.bucket.capacity_l)]
 		elif tool == "tuyaux":
 			_toolbar_labels[i].text += "\n" + tr("HUD_PIPES_IN_HAND") % GameState.pipe_stock
+		elif tool == "pelle":
+			# 0.1.13 : le sable porté sur la pelle, toujours visible dans sa case.
+			_toolbar_labels[i].text += "\n" + tr("HUD_SHOVEL_LOAD") % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]
 		var picked := i == tb.selected
 		var style := UiTheme.paper(UiTheme.YELLOW if picked else Color(UiTheme.PAPER, 0.88), UiTheme.RED if picked else UiTheme.INK, 10, 4)
 		style.set_border_width_all(4 if picked else 2)

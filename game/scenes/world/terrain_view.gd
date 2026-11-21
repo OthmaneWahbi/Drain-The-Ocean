@@ -63,6 +63,7 @@ static func build_chunk_mesh(t: TerrainLogic, i0: int, j0: int, size: int, mater
 static func build_rect_mesh(t: TerrainLogic, rect: Rect2i, material: Material, skip: Array = [], heights: Dictionary = {}) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var leveled := {}  # case de 1 m -> nivelée ?
 	for j in range(rect.position.y, rect.end.y):
 		for i in range(rect.position.x, rect.end.x):
 			var hidden := false
@@ -82,10 +83,13 @@ static func build_rect_mesh(t: TerrainLogic, rect: Rect2i, material: Material, s
 			if not heights.is_empty():
 				for k in 6:
 					tri[k] = _with_height(tri[k], heights)
-			# Sable travaillé (traces de pelle) : seulement une case nivelée, plate (0.1.12 : un creux
-			# ou un tas arrondi garde l'aspect du sable, sinon la brosse se voyait en croix).
-			var big := Vector2i(floori(float(i) / TerrainLogic.SUB), floori(float(j) / TerrainLogic.SUB))
-			var worked := t.cell_worked(big) and not is_nan(t.cell_level(big))
+			# Sable travaillé (traces de pelle) : seulement sur les cases nivelées, plates (0.1.12 :
+			# un creux ou un tas arrondi garde l'aspect du sable). 0.1.13 : décidé par sommet, un
+			# sommet du bord d'une zone nivelée vaut 0 : les traces s'effacent en douceur vers le
+			# sable autour, plus de bord de rectangle net.
+			var worked: Array[float] = []
+			for k in 6:
+				worked.append(_vertex_leveled(t, ids[k], leveled))
 			_tri(st, t, tri, ids, normals, 0, TerrainLogic.hash01(i, j, 5) * 2.0 - 1.0, worked)
 			_tri(st, t, tri, ids, normals, 3, TerrainLogic.hash01(i, j, 6) * 2.0 - 1.0, worked)
 	st.set_material(material if material else make_material())
@@ -106,7 +110,19 @@ static func _with_height(v: Vector3, heights: Dictionary) -> Vector3:
 ## mouillé, herbe… selon sa hauteur et sa pente), nuancée un peu à chaque sommet (en douceur d'une
 ## facette à l'autre), et les normales lissées de ses sommets (le matériau garde une part de
 ## facette, voir sand.gdshader) ; `normals` vide : la normale de la facette (sable travaillé).
-static func _tri(st: SurfaceTool, t: TerrainLogic, tri: Array, ids: Array[Vector2i], normals: Array[Vector3], k: int, jitter: float, worked: bool) -> void:
+## 1 si toutes les cases de 1 m qui touchent ce sommet sont nivelées à la pelle, sinon 0.
+static func _vertex_leveled(t: TerrainLogic, v: Vector2i, cache: Dictionary) -> float:
+	if not t.edits.has(v):
+		return 0.0
+	for c in TerrainLogic.cells_of_vertex(v):
+		if not cache.has(c):
+			cache[c] = t.cell_worked(c) and not is_nan(t.cell_level(c))
+		if not cache[c]:
+			return 0.0
+	return 1.0
+
+
+static func _tri(st: SurfaceTool, t: TerrainLogic, tri: Array, ids: Array[Vector2i], normals: Array[Vector3], k: int, jitter: float, worked: Array[float]) -> void:
 	var order := [k, k + 1, k + 2]
 	var a: Vector3 = tri[k]
 	var b: Vector3 = tri[k + 1]
@@ -133,7 +149,7 @@ static func _tri(st: SurfaceTool, t: TerrainLogic, tri: Array, ids: Array[Vector
 			cv = TerrainLogic.dry_sand_color(1.0 - normals[idx].y)
 		# Le canal alpha dit au matériau si le sable a été nivelé à la pelle (1) ou non (0) : il y
 		# dessine des traces de pelle au lieu des rides du vent.
-		var w := 1.0 if worked and y > t.ground_y - 1.0 else 0.0
+		var w := worked[idx] if y > t.ground_y - 1.0 else 0.0
 		st.set_color(Color(cv.r * shade, cv.g * shade, cv.b * shade, w))
 		st.set_normal(normals[idx] if not normals.is_empty() else normal)
 		st.add_vertex(tri[idx])

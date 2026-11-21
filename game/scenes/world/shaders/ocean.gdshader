@@ -29,6 +29,10 @@ uniform vec4 wave_c = vec4(0.7, -0.8, 0.04, 5.0);
 uniform float wave_fade_distance = 70.0;
 
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest, repeat_disable;
+// 0.1.13 : la carte des terres de l'île (1 = l'eau n'y monte jamais) : on n'y dessine pas l'eau,
+// pour qu'un trou creusé près du niveau de la mer ne montre pas les vagues.
+uniform sampler2D land_mask : filter_linear, repeat_disable;
+uniform float land_mask_half_m = 72.0;
 
 varying vec3 world_pos;
 
@@ -59,6 +63,10 @@ void vertex() {
 }
 
 void fragment() {
+	vec2 muv = world_pos.xz / (2.0 * land_mask_half_m) + 0.5;
+	if (muv.x > 0.0 && muv.x < 1.0 && muv.y > 0.0 && muv.y < 1.0 && texture(land_mask, muv).r > 0.5) {
+		discard;
+	}
 	if (!FRONT_FACING) {
 		// Sous l'eau, on regarde la surface d'en dessous.
 		ALBEDO = under_color.rgb;

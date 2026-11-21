@@ -265,6 +265,13 @@ extends Resource
 @export var smooth_strength: float = 0.6
 ## Lisser maintenu : une passe toutes les … secondes.
 @export var smooth_repeat_s: float = 0.15
+## L'océan ne se dessine pas là où le sol d'origine de l'île est plus haut que la mer de
+## départ + … m (0.1.13 : au-dessus des plus hautes vagues ; un trou n'y montre pas l'eau).
+@export var land_mask_above_sea_m: float = 0.3
+## Niveler : combien de rangs de sommets (50 cm) autour de la case se fondent en rampe douce,
+## et en combien de passes (0.1.13 : plus de bords de rectangle nets).
+@export var level_blend_rings: int = 2
+@export var level_blend_passes: int = 6
 ## Pente d'éboulement du sable sec (degrés) : plus raide, il glisse (le vrai sable : 30 à 35°).
 @export var sand_repose_deg: float = 34.0
 ## Le sable mouillé (près de l'eau) tient plus raide.
