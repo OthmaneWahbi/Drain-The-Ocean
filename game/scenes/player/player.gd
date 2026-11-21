@@ -259,7 +259,8 @@ func _physics_process(delta: float) -> void:
 	GameState.player_position = global_position
 	var cfg := GameState.config
 	var water_y := GameState.water_level_y()
-	swimming = global_position.y < water_y - cfg.swim_depth_m
+	# 0.1.14 : au fond d'un trou à l'intérieur de l'île, il n'y a pas de mer (on ne nage pas).
+	swimming = global_position.y < water_y - cfg.swim_depth_m and GameState.sea_at(global_position.x, global_position.z)
 
 	var input := Vector2.ZERO
 	if not GameState.ui_open and not _drowning:
@@ -389,7 +390,7 @@ func find_free_spot(origin: Vector3, include_origin: bool) -> Variant:
 		if ground.is_empty():
 			continue  # pas de sol : on ne se jette pas à l'eau
 		var feet: Vector3 = ground.position
-		if feet.y < GameState.water_level_y() - 0.3:
+		if feet.y < GameState.water_level_y() - 0.3 and GameState.sea_at(feet.x, feet.z):
 			continue  # sous l'eau : pas une place de secours
 		query.transform = Transform3D(Basis.IDENTITY, feet + col.position + Vector3(0, UnstuckLogic.STEP_M, 0))
 		if not space.intersect_shape(query, 1).is_empty():
@@ -509,7 +510,7 @@ func _handle_tool(delta: float) -> void:
 
 ## Les pieds sont sous la surface de l'océan : on peut puiser (en marchant ou en nageant).
 func is_in_water() -> bool:
-	return global_position.y < GameState.water_level_y() - 0.05
+	return global_position.y < GameState.water_level_y() - 0.05 and GameState.sea_at(global_position.x, global_position.z)
 
 
 ## Rayon tiré depuis le centre de l'écran pour trouver ce que le joueur vise.

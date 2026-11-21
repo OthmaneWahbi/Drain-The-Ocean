@@ -39,7 +39,8 @@ func _process(_delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return
-	set_under(is_camera_under(cam.global_position.y, GameState.water_level_y()))
+	var p := cam.global_position
+	set_under(is_camera_under(p.y, GameState.water_level_y()) and GameState.sea_at(p.x, p.z))
 
 
 func set_under(value: bool) -> void:

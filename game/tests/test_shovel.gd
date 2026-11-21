@@ -249,13 +249,33 @@ func test_a_pile_spreads_into_a_cone() -> void:
 	assert_almost(_volume(SPOT) - v0, 20.0 * gs.config.dig_scoop_m3, 0.05, "aucun sable perdu dans l'éboulement")
 
 
-func test_digging_stops_above_the_water() -> void:
+func test_digging_inland_goes_deep() -> void:
+	# 0.1.14 (Othmane : « on doit pouvoir creuser bien plus loin ») : à l'intérieur de l'île, la
+	# mer est cachée et on creuse jusqu'à 3 m sous son niveau (avant : 30 cm sur le plateau).
+	var p := TerrainLogic.vertex_xz(SPOT)
+	assert_true(gs.terrain.inland(p.x, p.y))
+	assert_almost(gs.dig_floor_at(p.x, p.y), gs.config.sea_level_y - gs.config.dig_max_below_sea_m, 1e-6)
 	gs.shovel_sand = 0.0
-	for i in 40:
+	for i in 60:
 		gs.shovel_scoop(SPOT, true)
-	assert_true(gs.terrain.vertex(SPOT.x, SPOT.y).y >= gs.dig_floor_y() - 1e-4, "jamais sous l'eau")
-	if gs.shovel_sand < gs.config.shovel_capacity_scoops - 0.05:
-		assert_eq(gs.scoop_reason(SPOT, true), "PROMPT_DIG_TOO_DEEP")
+		gs.shovel_sand = 0.0  # on vide la pelle ailleurs
+	var y: float = gs.terrain.vertex(SPOT.x, SPOT.y).y
+	assert_true(y < gs.config.ground_y - 1.0, "un vrai trou, bien plus profond qu'avant (%.2f)" % y)
+	assert_true(y >= gs.dig_floor_at(p.x, p.y) - 1e-4, "jamais sous le plancher")
+	assert_false(gs.sea_at(p.x, p.y), "pas de mer au fond du trou")
+
+
+func test_digging_stops_above_the_water_at_the_shore() -> void:
+	# Au bord de la mer (hors de l'intérieur de l'île), le plancher reste juste au-dessus de l'eau.
+	for j in range(40, 80):
+		var v := Vector2i(0, j)
+		var p := TerrainLogic.vertex_xz(v)
+		if gs.terrain.inland(p.x, p.y) or gs._spot_reason(p) != "":
+			continue
+		assert_true(gs.sea_at(p.x, p.y))
+		assert_almost(gs.dig_floor_at(p.x, p.y), gs.dig_floor_y(), 1e-6)
+		if gs.terrain.base_height(p.x, p.y) < gs.dig_floor_y() - 0.1:
+			assert_eq(gs.scoop_reason(v, true), "PROMPT_DIG_TOO_DEEP", "le sable mouillé du rivage (%s)" % v)
 
 
 func test_sand_under_an_object_holds() -> void:
@@ -425,7 +445,7 @@ func _fuzz(center: Vector2i, r: int, rng_seed: int) -> void:
 	assert_almost(gs.terrain.vertex(under.x, under.y).y, under_h, 1e-6, "le sable sous la cuvette n'a pas bougé")
 	for k: Vector2i in gs.terrain.edits:
 		var p := TerrainLogic.vertex_xz(k)
-		assert_true(p.length() <= gs.terrain.coast_at(atan2(p.y, p.x)) - 0.5 + 1e-3, "le sable de la mer ne bouge pas")
+		assert_true(p.length() <= gs.terrain.coast_at(atan2(p.y, p.x)) - 0.5 + 1e-3, "le sable de la mer ne bouge pas (%s : %.2f m, côte %.2f m, %.2f)" % [k, p.length(), gs.terrain.coast_at(atan2(p.y, p.x)), float(gs.terrain.edits[k])])
 	# Le sable total (sol + pelle) n'a pas changé. La seule dérive : les sommets recalés sur la
 	# grille (on enlève leur petit décalage au hasard), quelques centimètres cubes.
 	var total1: float = _volume(center, r + 8) + gs.shovel_sand * gs.config.dig_scoop_m3
@@ -502,3 +522,87 @@ func test_pour_level_follows_the_zone_height() -> void:
 
 func test_pipe_preview_is_empty_far_from_everything() -> void:
 	assert_eq(gs.pipe_preview(Vector3i(-12, 0, -12)), "")
+
+
+# --- 0.1.14 : le sable fluide et profond ------------------------------------------------------
+
+func test_a_high_heap_of_sand_never_turns_green() -> void:
+	# Othmane : « le sable posé devient vert à partir d'une certaine hauteur ».
+	var heights := {}
+	for j in range(10, 18):
+		for i in range(-30, -22):
+			heights[Vector2i(i, j)] = gs.config.ground_y + 3.0
+	gs.terrain.set_vertices(heights)
+	var built := TerrainView.build_rect(gs.terrain, Rect2i(-29, 11, 6, 6), null)
+	var mesh: ArrayMesh = built.mesh
+	var cols: PackedColorArray = mesh.surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+	assert_true(cols.size() > 0)
+	for c in cols:
+		assert_true(c.g < c.r, "du sable, pas de l'herbe (%s)" % c)
+
+
+func test_redrawing_only_the_touched_cells_gives_the_same_terrain() -> void:
+	# Un coup de pelle ne refait que les cases touchées : le résultat doit être celui d'un
+	# morceau refait en entier.
+	var rect := Rect2i(-16, 16, TerrainView.CHUNK, TerrainView.CHUNK)
+	var data := TerrainView.new_arrays(rect, true)
+	TerrainView.fill(gs.terrain, rect, rect, [], {}, data)
+	var changed: Array = []
+	for k in 6:
+		gs.shovel_scoop(Vector2i(-4 + k, 24), k % 2 == 0)
+	for k: Vector2i in gs.terrain.edits:
+		changed.append(k)
+	changed.append_array(gs.terrain.pinned_vertices())
+	TerrainView.fill(gs.terrain, rect, TerrainView.dirty_rect(changed), [], {}, data)
+	var full := TerrainView.new_arrays(rect, true)
+	TerrainView.fill(gs.terrain, rect, rect, [], {}, full)
+	assert_eq(data.verts, full.verts, "mêmes sommets")
+	assert_eq(data.cols, full.cols, "mêmes couleurs")
+	assert_eq(data.faces, full.faces, "même collision")
+
+
+func test_a_hidden_cell_is_flat_but_keeps_its_collision() -> void:
+	var rect := Rect2i(0, 0, 4, 4)
+	var data := TerrainView.new_arrays(rect, true)
+	TerrainView.fill(gs.terrain, rect, rect, [Rect2i(1, 1, 1, 1)], {}, data)
+	var base := (1 * 4 + 1) * 6
+	for q in 6:
+		assert_eq(data.verts[base + q], data.verts[base], "case cachée : triangles plats")
+	var faces: PackedVector3Array = data.faces[0]
+	var fb := (1 * TerrainView.COL_BLOCK + 1) * 6  # la collision est rangée par blocs
+	assert_true(faces[fb] != faces[fb + 2], "la collision garde la case")
+
+
+func test_sea_is_only_outside_the_island() -> void:
+	assert_false(gs.sea_at(0.0, 0.0), "le centre de l'île")
+	assert_true(gs.sea_at(0.0, 60.0), "le large")
+
+
+func test_dragging_the_level_steps_through_every_cell() -> void:
+	var a := Vector2i(0, 0)
+	var path := []
+	while a != Vector2i(3, -2):
+		a = ShovelTool.step_toward(a, Vector2i(3, -2))
+		path.append(a)
+	assert_eq(path, [Vector2i(1, -1), Vector2i(2, -2), Vector2i(3, -2)])
+
+
+func test_pipes_are_redrawn_only_when_their_sand_moves() -> void:
+	var pipes := {Vector3i(5, 0, 5): true}
+	var pv: Script = load("res://scenes/world/pipes_view.gd")
+	assert_true(pv.pipes_touched(pipes, [Vector2i(10, 10)]), "un coin de sa case")
+	assert_false(pv.pipes_touched(pipes, [Vector2i(30, 30)]), "loin")
+
+
+func test_a_big_relax_stays_fast_and_exact() -> void:
+	# Un grand tas : 120 pelletées au même endroit (volume exact, pente tenue, en temps court).
+	gs.config.sand_wet_band_m = -10.0
+	var v0 := _volume(SPOT, 14)
+	var t0 := Time.get_ticks_msec()
+	for i in 120:
+		gs.shovel_sand = 1.0
+		gs.shovel_scoop(SPOT, false)
+	var dt := Time.get_ticks_msec() - t0
+	assert_almost(_volume(SPOT, 14) - v0, 120.0 * gs.config.dig_scoop_m3, 0.2, "rien ne se perd")
+	assert_true(_steepest_around(SPOT) <= tan(deg_to_rad(gs.config.sand_repose_deg)) + 0.05)
+	assert_true(dt < 120 * 40, "moins de 40 ms par pelletée en moyenne, même en CI (%d ms)" % dt)
