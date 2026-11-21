@@ -49,3 +49,24 @@ static func wrap_around(x: float, center: float, half: float) -> float:
 ## Battement d'ailes : angle en radians, entre -amplitude et +amplitude.
 static func flap(t: float, speed: float, amplitude: float) -> float:
 	return sin(t * speed) * amplitude
+
+
+## Inclinaison (rad) d'un oiseau qui tourne en rond : tan(angle) = v² / (g·r), plafonnée.
+static func bank_angle(radius: float, speed_m_s: float, max_rad := 0.6) -> float:
+	if radius <= 0.0:
+		return 0.0
+	return minf(atan(speed_m_s * speed_m_s / (9.8 * radius)), max_rad)
+
+
+## Battement d'une mouette (rad) : de courtes séries de battements (~1,2 s toutes les 4 s),
+## le reste du temps elle plane, ailes un peu relevées. Passe en douceur de l'un à l'autre.
+static func glide_flap(t: float, speed: float, amplitude: float, cycle_s := 4.0, flap_s := 1.2) -> float:
+	var u := fposmod(t, cycle_s)
+	var on := smoothstep(0.0, 0.25, u) * (1.0 - smoothstep(flap_s - 0.25, flap_s, u))
+	var glide := 0.12  # ailes relevées en planant
+	return lerpf(glide, sin(t * speed) * amplitude, on)
+
+
+## 1 loin du bord, 0 au bord de la zone où les nuages reviennent de l'autre côté (fondu).
+static func edge_fade(distance: float, half: float, fade_part := 0.2) -> float:
+	return 1.0 - smoothstep(half * (1.0 - fade_part), half, distance)

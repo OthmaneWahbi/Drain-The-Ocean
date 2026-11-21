@@ -81,14 +81,15 @@ func _fly_teaser_plane() -> void:
 	var dark := Color(0.08, 0.08, 0.1)
 	plane.add_child(Greybox.box(Vector3(2.7, 2.7, 12.0), dark))
 	plane.add_child(Greybox.box(Vector3(20.0, 0.3, 3.0), dark, Vector3(0, 0.3, 0.6)))
-	plane.add_child(Greybox.box(Vector3(0.3, 2.4, 1.8), dark, Vector3(0, 1.8, -5.4)))
+	# La dérive à l'ARRIÈRE (+Z : look_at fait voler vers −Z). Avant 0.1.17 elle était sur le nez.
+	plane.add_child(Greybox.box(Vector3(0.3, 2.4, 1.8), dark, Vector3(0, 1.8, 5.4)))
 	plane.add_child(Greybox.box(Vector3(0.6, 6.0, 0.6), dark, Vector3(-3, -4.5, 0)))  # mât d'éolienne
 	plane.add_child(Greybox.box(Vector3(5.0, 0.3, 0.3), dark, Vector3(-3, -1.5, 0)))
 	plane.add_child(Greybox.box(Vector3(3.0, 0.15, 2.0), dark, Vector3(0, -3.0, 2)))  # panneau solaire
 	plane.add_child(Greybox.box(Vector3(1.5, 1.5, 2.0), dark, Vector3(3, -3.2, -1)))  # pompe à moteur
 	world.add_child(plane)
-	var start := Vector3(-260, 45, 40)
-	var end := Vector3(260, 55, -40)
+	var start := Vector3(-260, 50, 40)
+	var end := Vector3(260, 50, -40)  # en palier (0.1.17)
 	plane.position = start
 	plane.look_at_from_position(start, end)
 	var t := plane.create_tween()
