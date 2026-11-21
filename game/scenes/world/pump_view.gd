@@ -13,6 +13,8 @@ var _phase: float = 0.0
 var _working: bool = false
 var _crank_frames: int = 0
 var _last_ocean_removed: float = 0.0
+var _turning_left: float = 0.0
+var _blade_speed: float = 0.3
 ## Le débit affiché au-dessus de la pompe quand on s'approche (L/s, lissé pour ne pas clignoter).
 var _rate_label: Label3D
 var _shown_lps: float = 0.0
@@ -72,12 +74,22 @@ func _process(delta: float) -> void:
 	_update_rate_label(delta)
 	if _blades:
 		# Les pales tournent quand de l'eau passe (le compteur des pompes automatiques monte).
-		var turning := GameState.auto_pumped_l > _last_ocean_removed
+		# 0.1.17 : la vitesse des pales monte et descend en douceur (avant, elle sautait de
+		# 0,3 à 2,5 rad/s d'une image à l'autre selon que le compteur avait bougé ou non).
+		if GameState.auto_pumped_l > _last_ocean_removed:
+			_turning_left = 0.6
 		_last_ocean_removed = GameState.auto_pumped_l
-		_blades.rotation.z -= delta * (2.5 if turning else 0.3)
+		_turning_left = maxf(_turning_left - delta, 0.0)
+		var want := 2.5 if _turning_left > 0.0 else 0.3
+		_blade_speed = lerpf(_blade_speed, want, clampf(delta * 1.2, 0.0, 1.0))
+		_blades.rotation.z -= delta * _blade_speed
 		return
 	if _working:
 		_phase += delta * 6.0
+	else:
+		# Lâché, le levier retombe en douceur à sa position de repos (avant : figé en l'air).
+		var rest := roundf(_phase / PI) * PI
+		_phase = move_toward(_phase, rest, delta * 4.0)
 	_lever.rotation.x = sin(_phase) * 0.35
 	# On garde « en marche » une image de plus : le joueur agit avant ou après cette vue selon l'ordre.
 	_crank_frames -= 1

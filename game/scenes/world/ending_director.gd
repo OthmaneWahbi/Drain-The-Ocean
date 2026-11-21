@@ -150,11 +150,10 @@ func _fly_ad_plane() -> void:
 		banner.add_child(text)
 	_plane.add_child(banner)
 	var over := _walker.position if _walker else Vector3(0, -3, -40)
-	var start := over + Vector3(-90, 14, 30)
-	var end := over + Vector3(90, 16, -30)
-	_plane.look_at_from_position(start, end)
-	var tw := _plane.create_tween()
-	tw.tween_property(_plane, "position", end, GameState.config.ending_durations.get("plane", 8.0))
+	# 0.1.17 : en palier, à vitesse constante (avant, il montait un peu en traversant).
+	var start := over + Vector3(-90, 15, 30)
+	var end := over + Vector3(90, 15, -30)
+	_plane.fly_line(start, end, GameState.config.ending_durations.get("plane", 8.0), false)
 
 
 func _build_overlay() -> void:

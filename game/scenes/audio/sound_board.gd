@@ -32,7 +32,8 @@ func _ready() -> void:
 	_waves.play()
 	GameState.milestone_reached.connect(func(_m): play("jingle"))
 	GameState.pickup_removed.connect(func(_p): play("pickup", -6.0))
-	GameState.crate_added.connect(func(_c, animate: bool): if animate: play("plane", -6.0))
+	# L'avion (0.1.17) porte son propre bruit de moteur, en 3D (DeliveryPlane) : il s'entend
+	# quand il passe, et plus au moment de la commande.
 	GameState.ending_phase_changed.connect(_on_ending_phase)
 	GameState.game_reset.connect(func(): _last_bucket_l = 0.0)
 	_last_bucket_l = GameState.bucket.water_l
@@ -78,8 +79,6 @@ func _on_ending_phase(phase: int) -> void:
 			_gurgle.play()
 		EndingLogic.Phase.WALK:
 			_gurgle.stop()
-		EndingLogic.Phase.PLANE:
-			play("plane")
 
 
 func _loop(name: String, volume_db: float) -> AudioStreamPlayer:

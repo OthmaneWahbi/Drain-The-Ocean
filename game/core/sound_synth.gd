@@ -7,9 +7,9 @@ extends RefCounted
 ## `samples(name)` rend les échantillons (-1..1) ; `stream(name)` les emballe dans un AudioStreamWAV.
 
 const RATE := 22050
-const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "gurgle", "waves"]
+const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves"]
 ## Les sons qui tournent en boucle.
-const LOOPS := ["waves", "gurgle"]
+const LOOPS := ["waves", "gurgle", "engine"]
 
 
 static func samples(name: String) -> PackedFloat32Array:
@@ -30,6 +30,8 @@ static func samples(name: String) -> PackedFloat32Array:
 			return _arpeggio([523.25, 659.25, 783.99, 1046.5], 0.11, 0.5)
 		"plane":  # l'avion : bourdonnement grave qui monte puis s'éloigne
 			return _drone(3.0, 95.0, 0.45)
+		"engine":  # le moteur de l'avion de livraison (boucle, joué en 3D sur l'avion, 0.1.17)
+			return _engine(1.0, 96.0, 0.4)
 		"gurgle":  # le glouglou : bruit grave modulé (boucle)
 			return _gurgle(rng, 2.0)
 		"waves":  # l'ambiance de la mer (boucle)
@@ -133,6 +135,20 @@ static func _drone(dur: float, f: float, gain: float) -> PackedFloat32Array:
 		var doppler := f * (1.08 - 0.16 * t / dur)
 		var saw := fmod(doppler * t, 1.0) * 2.0 - 1.0
 		out[i] = (saw * 0.6 + sin(TAU * doppler * 2.0 * t) * 0.4) * env * gain
+	return out
+
+
+## Un moteur qui tourne rond, en boucle sans couture : la durée contient un nombre entier de
+## périodes de chaque composante (f, 2f, et le « teuf-teuf » à 12 Hz).
+static func _engine(dur: float, f: float, gain: float) -> PackedFloat32Array:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := i / float(RATE)
+		var saw := fmod(f * t + 0.5, 1.0) * 2.0 - 1.0  # décalée d'une demi-période : part de 0, sans clic
+		var chug := 0.75 + 0.25 * sin(TAU * 12.0 * t)
+		out[i] = (saw * 0.55 + sin(TAU * f * 2.0 * t) * 0.45) * chug * gain
 	return out
 
 

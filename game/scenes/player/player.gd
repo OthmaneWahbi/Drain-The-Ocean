@@ -217,9 +217,10 @@ func _animate_body() -> void:
 	elif not is_on_floor():
 		Props.play(_body, "jump" if velocity.y > 0.0 else "fall")
 	elif flat > GameState.config.walk_speed * 1.2:
-		Props.play(_body, "sprint")
+		Props.play(_body, "sprint", clampf(flat / GameState.config.sprint_speed, 0.8, 1.5))
 	elif flat > 0.4:
-		Props.play(_body, "walk", 1.3)
+		# 0.1.17 : les pas suivent la vitesse (tongs, démarrage, arrêt) : les pieds ne glissent plus.
+		Props.play(_body, "walk", clampf(1.3 * flat / GameState.config.walk_speed, 0.5, 1.8))
 	else:
 		Props.play(_body, "idle")
 

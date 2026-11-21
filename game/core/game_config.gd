@@ -60,8 +60,20 @@ extends Resource
 @export_group("Livraison")
 ## Centre de la zone où les caisses sont larguées.
 @export var delivery_center: Vector3 = Vector3(4, 0.5, 13.5)
-## Durée totale entre la commande et l'atterrissage de la caisse (M-51).
-@export var delivery_time_s: float = 5.0
+## L'avion de livraison (0.1.17) : il passe en ligne droite, à altitude et vitesse constantes
+## (voir FlightPath). Vitesse (m/s, ~130 km/h), hauteur au-dessus de la
+## palette, distance parcourue avant d'arriver à la palette et après le largage.
+@export var plane_speed_m_s: float = 36.0
+@export var plane_altitude_m: float = 12.0
+@export var plane_approach_m: float = 100.0
+@export var plane_leave_m: float = 220.0
+## La corde du crochet : longueur repliée, angle de traîne derrière l'avion (rad), temps du treuil.
+@export var plane_rope_rest_m: float = 1.2
+@export var plane_rope_trail_rad: float = 0.2
+@export var plane_winch_s: float = 1.6
+## La caisse : chute libre avant que la voile s'ouvre (s), puis vitesse de descente (m/s).
+@export var chute_freefall_s: float = 0.4
+@export var chute_descent_m_s: float = 4.5
 
 @export_group("Océan visible")
 ## Surface du bassin, en m² : sert à convertir le volume retiré en baisse du niveau (PRD §8.3).

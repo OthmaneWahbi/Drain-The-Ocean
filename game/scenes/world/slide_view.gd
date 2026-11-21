@@ -26,25 +26,36 @@ func _on_sent(p_slide: Dictionary, items: Dictionary) -> void:
 	var n := clampi(Economy.count(items) / 5 + 1, 1, 4)
 	for i in n:
 		var bag := Props.sack(0.35, Props.RED, i)
-		bag.position = Vector3(0, 2.2, 0.2)
+		bag.visible = false  # 0.1.17 : avant, tous les sacs attendaient, empilés, en haut
 		add_child(bag)
 		var t := create_tween()
 		t.tween_interval(i * 0.35)
-		t.tween_property(bag, "position", Vector3(0, 0.25, 2.5), 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		t.tween_property(bag, "scale", Vector3.ONE * 0.01, 0.4)
+		t.tween_callback(func(): bag.visible = true)
+		# Il glisse SUR la goulotte, penché comme elle, en accélérant…
+		t.tween_method(_slide_bag.bind(bag), 0.0, 1.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		# …puis saute du bout de la goulotte, roule un peu et disparaît dans le sable.
+		t.tween_method(_hop_bag.bind(bag), 0.0, 1.0, 0.35)
+		t.tween_property(bag, "scale", Vector3.ONE * 0.01, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		t.tween_callback(bag.queue_free)
 
 
-func get_prompt(_player: Node) -> String:
-	var n := GameState.carried_count()
-	if n > 0:
-		return tr("PROMPT_SLIDE") % n
-	return tr("SLIDE_STATE") % GameState.zones_for_slide(slide).size()
+## Le haut et le bas de la goulotte (Props.slide : centre (0, 1.15, 1.4), pente de 38°, 2,7 m),
+## et sa normale ; le sac glisse 3 cm au-dessus de la planche.
+const CHUTE_TOP := Vector3(0, 1.98, 0.34)
+const CHUTE_BOTTOM := Vector3(0, 0.32, 2.46)
+const CHUTE_NORMAL := Vector3(0, 0.788, 0.616)
+const CHUTE_TILT := 0.663  # 38° en radians
 
 
-func interact(_player: Node) -> void:
-	GameState.slide_unload(slide)
+func _slide_bag(k: float, bag: Node3D) -> void:
+	bag.position = CHUTE_TOP.lerp(CHUTE_BOTTOM, k) + CHUTE_NORMAL * 0.07
+	bag.rotation = Vector3(CHUTE_TILT, 0.0, 0.0)
 
 
-func get_movable() -> Dictionary:
-	return slide
+func _hop_bag(k: float, bag: Node3D) -> void:
+	var from := CHUTE_BOTTOM + CHUTE_NORMAL * 0.07
+	var to := Vector3(0, 0.02, 3.2)
+	var p := from.lerp(to, k)
+	p.y += sin(PI * k) * 0.18
+	bag.position = p
+	bag.rotation = Vector3(lerpf(CHUTE_TILT, CHUTE_TILT + PI * 0.9, k), 0.0, 0.0)
