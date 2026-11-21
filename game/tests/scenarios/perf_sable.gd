@@ -103,6 +103,10 @@ func _run() -> void:
 	await _gesture("lisser", func() -> bool: return _gs.smooth_sand(Vector2i(-6, 30)))
 	for k in 4:
 		await _gesture("niveler %d" % k, func() -> bool: return _gs.flatten_cell(Vector2i(-4 + k, 20), 0.75))
+	# 0.1.15 : le carré de 3 × 3 m, au niveau choisi tout seul, en glissant (un carré par pas).
+	var lev := float(_gs.auto_level(Vector2i(-8, 24))[0])
+	for k in 4:
+		await _gesture("aplanir 3x3 %d" % k, func() -> bool: return _gs.flatten_area(Vector2i(-8 + k, 24), lev))
 	# Comme en jeu : clic maintenu, une pelletée toutes les dig_repeat_s, au fond d'un trou.
 	for phase in 2:
 		_frame_us.clear()

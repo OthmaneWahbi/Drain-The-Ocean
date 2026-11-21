@@ -31,6 +31,16 @@ func _on_sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoo
 		tip = player.shovel_tip()
 	var c := Vector2(center.x, center.z)
 	var top := _height_near(c, after)
+	if GameState.sand_gesture == GameState.Gesture.LEVEL:
+		# 0.1.15 : aplanir racle le sol : un peu de poussière, et une motte seulement si la pelle
+		# prend ou rend vraiment du sable (sinon une motte volait à chaque case survolée).
+		_burst(Vector3(center.x, top, center.z), 0.35)
+		if absf(scoops) >= 0.5:
+			if scoops > 0.0:
+				_fly(Vector3(center.x, top + 0.05, center.z), tip, DIG_FLIGHT_S, scoops, false)
+			else:
+				_fly(tip, Vector3(center.x, top + 0.05, center.z), FILL_FLIGHT_S, -scoops, true)
+		return
 	if scoops > 0.0:
 		_burst(Vector3(center.x, center.y, center.z), 1.0)
 		_fly(Vector3(center.x, top + 0.05, center.z), tip, DIG_FLIGHT_S, scoops, false)

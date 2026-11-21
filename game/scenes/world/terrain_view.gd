@@ -25,6 +25,10 @@ const ANIM_MIN_M := 0.005
 ## Le temps (µs) par image pour redessiner la queue d'un éboulement, et la taille d'une bande.
 const PENDING_BUDGET_US := 2500
 const PENDING_ROWS := 8
+## 0.1.15 : le dégradé du sable mouillé dans un trou de l'île (hauteurs en m, couleur).
+const WET_TOP_Y := 0.3
+const WET_FULL_Y := -0.3
+const WET_HOLE := Color(0.56, 0.45, 0.27)
 const SAND_SHADER := preload("res://scenes/world/sand.gdshader")
 
 var logic: TerrainLogic
@@ -59,6 +63,8 @@ func _ready() -> void:
 static func make_material() -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = SAND_SHADER
+	if GameState.config:
+		mat.set_shader_parameter(&"level_cell_m", GameState.config.grid_cell_m)  # les carreaux du sol aplani
 	return mat
 
 
@@ -276,6 +282,7 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 					fn = -fn
 				var y := (pa.y + pb.y + pc.y) / 3.0
 				var kind := t.ground_kind(y, 1.0 - fn.y, jitter)
+				var blend := false
 				# 0.1.14 : du sable travaillé n'est jamais de l'herbe (un tas posé haut devenait vert).
 				if edited[ka] == 1 or edited[kb] == 1 or edited[kc] == 1:
 					if kind <= TerrainLogic.Ground.DRY_GRASS:
@@ -283,11 +290,16 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 					elif kind > TerrainLogic.Ground.WET_SAND and t.inland(pa.x, pa.z):
 						# 0.1.14 : un trou profond dans l'île : du sable humide, pas le fond de la mer.
 						kind = TerrainLogic.Ground.WET_SAND
+					# 0.1.15 : dans un trou de l'île, le sable mouillé vient en dégradé, sommet par
+					# sommet : choisi par facette, il découpait une étoile de triangles autour du fond.
+					blend = (kind == TerrainLogic.Ground.DRY_SAND or kind == TerrainLogic.Ground.WET_SAND) and t.inland(pa.x, pa.z)
 				var dry := kind == TerrainLogic.Ground.DRY_SAND
 				var col := Color() if dry else TerrainLogic.kind_color(kind, 1.0 - fn.y)
 				var low := y <= ground_y - 1.0
 				for k: int in [ka, kb, kc]:
 					var cv := dry_col[k] if dry else col
+					if blend:
+						cv = dry_col[k].lerp(WET_HOLE, smoothstep(WET_TOP_Y, WET_FULL_Y, pos[k].y))
 					var sh := shade[k]
 					# Le canal alpha dit au matériau si le sable a été nivelé à la pelle (traces).
 					cols[nv] = Color(cv.r * sh, cv.g * sh, cv.b * sh, 0.0 if low else lev[k])
@@ -536,14 +548,22 @@ func _on_sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoo
 	_gesture_frame = Engine.get_process_frames()
 	# On pose : le sable monte quand la pelletée arrive (le temps qu'elle vole).
 	var start := SandFx.FILL_FLIGHT_S if scoops < 0.0 else 0.0
-	var delays := anim_delays(center, b, af, start)
+	# 0.1.15 : aplanir s'anime d'un seul mouvement, court et doux (tout le carré ensemble).
+	var level := GameState.sand_gesture == GameState.Gesture.LEVEL
+	var duration := GameState.config.level_anim_s if level else GameState.config.dig_anim_s
+	var delays := {}
+	if level:
+		for v: Vector2i in af:
+			delays[v] = 0.0
+	else:
+		delays = anim_delays(center, b, af, start)
 	var rect := anim_rect(af.keys())
 	# 0.1.14 : un coup sur du sable encore en mouvement reprend l'ancienne animation là où elle
 	# en est (au lieu de la finir d'un coup et de refaire ses cases dans le morceau, deux fois).
 	for a in _anims.duplicate() + _finishing.duplicate():
 		if not a.rect.intersects(rect.grow(1)):
 			continue
-		var cur := anim_heights(a.before, a.after, a.delays, a.t, GameState.config.dig_anim_s)
+		var cur := anim_heights(a.before, a.after, a.delays, a.t, a.duration, a.smooth)
 		for v: Vector2i in a.after:
 			if af.has(v):
 				b[v] = cur[v]  # on repart de ce qu'on voit
@@ -560,11 +580,11 @@ func _on_sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoo
 	mi.name = "SandAnim"
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
-	var a := {"rect": rect, "before": b, "after": af, "delays": delays, "t": 0.0, "mesh": mi}
+	var a := {"rect": rect, "before": b, "after": af, "delays": delays, "t": 0.0, "mesh": mi, "duration": duration, "smooth": level}
 	a.end = 0.0
 	for v in delays:
 		a.end = maxf(a.end, float(delays[v]))
-	a.end += maxf(GameState.config.dig_anim_s, 0.01)
+	a.end += maxf(duration, 0.01)
 	_anims.append(a)
 	_draw_anim(a)
 	# terrain_changed suit : les morceaux seront refaits avec le trou de l'animation.
@@ -587,11 +607,13 @@ func _process(delta: float) -> void:
 
 ## Les hauteurs animées au temps `t` (s) : chaque sommet glisse de l'ancienne hauteur à la
 ## nouvelle après son retard, en `duration` s, avec un petit rebond à la fin.
-static func anim_heights(before: Dictionary, after: Dictionary, delays: Dictionary, t: float, duration: float) -> Dictionary:
+## 0.1.15 : `smooth` (aplanir) : une courbe douce sans rebond (le sol se lisse, il ne saute pas).
+static func anim_heights(before: Dictionary, after: Dictionary, delays: Dictionary, t: float, duration: float, smooth := false) -> Dictionary:
 	var out := {}
 	for v: Vector2i in after:
 		var k := clampf((t - float(delays.get(v, 0.0))) / maxf(duration, 0.01), 0.0, 1.0)
-		out[v] = lerpf(float(before.get(v, after[v])), float(after[v]), ease_out_back(k))
+		var e := smoothstep(0.0, 1.0, k) if smooth else ease_out_back(k)
+		out[v] = lerpf(float(before.get(v, after[v])), float(after[v]), e)
 	return out
 
 
@@ -601,7 +623,7 @@ static func ease_out_back(t: float) -> float:
 
 
 func _draw_anim(a: Dictionary) -> void:
-	var heights := anim_heights(a.before, a.after, a.delays, a.t, GameState.config.dig_anim_s)
+	var heights := anim_heights(a.before, a.after, a.delays, a.t, a.duration, a.smooth)
 	if not a.has("data"):
 		a.data = new_arrays(a.rect, false)
 		a.frame = 0

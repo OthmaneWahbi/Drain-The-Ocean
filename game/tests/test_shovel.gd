@@ -243,7 +243,7 @@ func test_a_pile_spreads_into_a_cone() -> void:
 	var v0 := _volume(SPOT)
 	for i in 20:
 		gs.shovel_scoop(SPOT, false)
-	assert_true(_steepest_around(SPOT) <= limit + 0.05, "pas plus raide que la pente d'éboulement")
+	assert_true(_steepest_around(SPOT) <= limit + 0.05, "pas plus raide que la pente d'éboulement (%.3f > %.3f)" % [_steepest_around(SPOT), limit])
 	var far := SPOT + Vector2i(3, 0)  # à 1,5 m, hors de la pelletée
 	assert_true(gs.terrain.vertex(far.x, far.y).y > gs.config.ground_y + 0.05, "le tas s'étale")
 	assert_almost(_volume(SPOT) - v0, 20.0 * gs.config.dig_scoop_m3, 0.05, "aucun sable perdu dans l'éboulement")

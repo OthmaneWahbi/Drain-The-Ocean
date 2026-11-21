@@ -98,6 +98,10 @@ var has_rake: bool = false
 ## La pelle s'achète au catalogue (0.1.11), et porte `shovel_sand` pelletées de sable.
 var has_shovel: bool = false
 var shovel_sand: float = 0.0
+## 0.1.15 : le geste en cours, lu par les vues pendant sand_moved (l'aplanissement s'anime
+## autrement qu'une pelletée : court, sans rebond).
+enum Gesture { SCOOP, LEVEL }
+var sand_gesture: Gesture = Gesture.SCOOP
 ## La barre d'outils de 5 cases : quel outil on tient (M-27).
 var toolbar: ToolbarLogic = ToolbarLogic.new()
 ## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
@@ -1309,12 +1313,61 @@ func dig_ceil_y() -> float:
 	return config.ground_y + config.dig_max_above_ground_m
 
 
-## Le niveau d'aplanissement d'une case (au niveau `ref`, ou au sien), arrondi au cran, borné.
+## Le niveau d'aplanissement d'une case (au niveau `ref`, ou au sien), arrondi, borné.
+## 0.1.15 : arrondi au pas fin `level_step_m` (avant : au cran de pelle, 25 cm).
 func flatten_level(cell: Vector2i, ref := NAN) -> float:
-	var y := dig_snap(ref) if not is_nan(ref) else dig_snap(terrain.cell_mean(cell))
+	var y := level_snap(ref) if not is_nan(ref) else level_snap(terrain.cell_mean(cell))
 	var c := config.grid_cell_m
-	var lo := dig_snap(dig_floor_at((cell.x + 0.5) * c, (cell.y + 0.5) * c) + config.dig_step_m * 0.49)
+	var lo := level_snap(dig_floor_at((cell.x + 0.5) * c, (cell.y + 0.5) * c) + config.level_step_m * 0.49)
 	return clampf(y, lo, dig_ceil_y())
+
+
+## La hauteur arrondie au pas d'aplanissement (0.1.15).
+func level_snap(y: float) -> float:
+	var step := config.level_step_m
+	return config.ground_y + roundf((y - config.ground_y) / step) * step
+
+
+## 0.1.15 : les cases du carré d'aplanissement centré sur `cell` (level_brush_cells de côté).
+func level_area(cell: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var n := maxi(config.level_brush_cells, 1)
+	var lo := -(n - 1) / 2
+	for j in range(lo, lo + n):
+		for i in range(lo, lo + n):
+			out.append(cell + Vector2i(i, j))
+	return out
+
+
+## 0.1.15 (demande d'Othmane) : le niveau proposé pour aplanir autour de `cell`. Si un sol déjà
+## plat tout proche (nivelé, ou le plateau de départ) est à peu près à la hauteur moyenne du carré,
+## on prend exactement son niveau (les lots se raccordent) ; sinon, la hauteur moyenne du carré
+## (le sable pris d'un côté comble l'autre : la pelle n'a presque rien à porter).
+## Renvoie [niveau, vrai si c'est celui d'un sol voisin].
+func auto_level(cell: Vector2i) -> Array:
+	var area := level_area(cell)
+	var mean := 0.0
+	for c in area:
+		mean += terrain.cell_mean(c)
+	mean /= area.size()
+	var best := NAN
+	var best_d := INF
+	var r := config.level_snap_cells
+	var n := maxi(config.level_brush_cells, 1)
+	var lo := -(n - 1) / 2
+	for j in range(lo - r, lo + n + r):
+		for i in range(lo - r, lo + n + r):
+			var c := cell + Vector2i(i, j)
+			var lev := terrain.cell_level(c)
+			if is_nan(lev):
+				continue
+			var d := absf(lev - mean)
+			if d < best_d:
+				best_d = d
+				best = lev
+	if best_d <= config.level_snap_m:
+		return [flatten_level(cell, best), true]
+	return [flatten_level(cell, mean), false]
 
 
 ## Pelletées de sable qu'il faut prendre (> 0) ou poser (< 0) pour aplanir la case au niveau `y` :
@@ -1331,6 +1384,23 @@ func dig_scoops(cell: Vector2i, y: float) -> float:
 ## bouger (l'objet flotterait ou s'enfoncerait). La pelle doit avoir la place de prendre le sable,
 ## ou en porter assez.
 func dig_reason(cell: Vector2i, y: float) -> String:
+	var reason := _cell_reason(cell, y, _dig_blockers())
+	if reason != "":
+		return reason
+	return _load_reason(dig_scoops(cell, y))
+
+
+## La pelle peut-elle prendre (> 0) ou donner (< 0) ces pelletées ? ("" si oui)
+func _load_reason(scoops: float) -> String:
+	if scoops > 0.0 and shovel_sand + scoops > config.shovel_capacity_scoops + 0.01:
+		return "PROMPT_DIG_SHOVEL_FULL"
+	if scoops < 0.0 and shovel_sand + scoops < -0.01:
+		return "PROMPT_DIG_SHOVEL_EMPTY"
+	return ""
+
+
+## Ce qui empêche d'aplanir la case, sans compter la pelle (la mer, un objet dessus ou à côté).
+func _cell_reason(cell: Vector2i, y: float, blockers: Array) -> String:
 	var center := Vector2((cell.x + 0.5) * config.grid_cell_m, (cell.y + 0.5) * config.grid_cell_m)
 	var reason := _spot_reason(center)
 	if reason != "":
@@ -1340,7 +1410,6 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 		reason = _spot_reason(TerrainLogic.vertex_xz(v))
 		if reason != "":
 			return reason
-	var blockers := _dig_blockers()
 	if _cell_blocked(cell, blockers):
 		return "PROMPT_DIG_BLOCKED"
 	for v in TerrainLogic.cell_vertices(cell):
@@ -1349,12 +1418,53 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 		for other in TerrainLogic.cells_of_vertex(v):
 			if other != cell and _cell_blocked(other, blockers):
 				return "PROMPT_DIG_NEAR_OBJECT"
-	var scoops := dig_scoops(cell, y)
-	if scoops > 0.0 and shovel_sand + scoops > config.shovel_capacity_scoops + 0.01:
-		return "PROMPT_DIG_SHOVEL_FULL"
-	if scoops < 0.0 and shovel_sand + scoops < -0.01:
-		return "PROMPT_DIG_SHOVEL_EMPTY"
 	return ""
+
+
+## 0.1.15 : les cases du carré autour de `cell` qu'on peut aplanir au niveau `y` d'un seul geste,
+## et les pelletées que ça demande : [cases, pelletées, raison]. Les cases bloquées (la mer, un
+## objet) sont laissées ; si la pelle ne peut pas tout prendre ou tout donner, on garde les cases
+## les plus proches du centre qui tiennent. `raison` dit pourquoi aucune case ne va ("" sinon).
+func level_plan(cell: Vector2i, y: float) -> Array:
+	var blockers := _dig_blockers()
+	var cand: Array[Vector2i] = []
+	var first := ""
+	for c in level_area(cell):
+		var r := _cell_reason(c, y, blockers)
+		if r == "":
+			cand.append(c)
+		elif first == "" or c == cell:
+			first = r
+	cand.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return (a - cell).length_squared() < (b - cell).length_squared())
+	var cells: Array[Vector2i] = []
+	var seen := {}
+	var scoops := 0.0
+	for c in cand:
+		var add := 0.0
+		var mine: Array[Vector2i] = []
+		for v in TerrainLogic.cell_vertices(c):
+			if not seen.has(v):
+				mine.append(v)
+				add += (terrain.vertex(v.x, v.y).y - y) * SandPhysics.AREA
+		add /= config.dig_scoop_m3
+		var r := _load_reason(scoops + add)
+		if r != "":
+			if first == "" or cells.is_empty():
+				first = r
+			continue
+		scoops += add
+		cells.append(c)
+		for v in mine:
+			seen[v] = true
+	return [cells, scoops, "" if not cells.is_empty() else first]
+
+
+## 0.1.15 : aplanit le carré autour de `cell` au niveau `y`, en un seul geste. Vrai si le sol a changé.
+func flatten_area(cell: Vector2i, y: float) -> bool:
+	var plan := level_plan(cell, y)
+	if (plan[0] as Array).is_empty():
+		return false
+	return _flatten_cells(plan[0], y, float(plan[1]))
 
 
 ## Trop loin, ou dans l'eau ? (commun à toutes les actions de pelle)
@@ -1374,17 +1484,24 @@ func flatten_cell(cell: Vector2i, ref := NAN) -> bool:
 	var y := flatten_level(cell, ref)
 	if dig_reason(cell, y) != "":
 		return false
-	var scoops := dig_scoops(cell, y)
+	return _flatten_cells([cell], y, dig_scoops(cell, y))
+
+
+## Met les cases `cells` au niveau `y` (`scoops` : le sable que ça prend), avec le fondu autour.
+func _flatten_cells(cells: Array, y: float, scoops: float) -> bool:
 	var target := {}
 	var locked := {}
-	for v in TerrainLogic.cell_vertices(cell):
-		target[v] = y
-		locked[v] = true
+	var sum := Vector2.ZERO
+	for cell: Vector2i in cells:
+		sum += Vector2(cell.x + 0.5, cell.y + 0.5)
+		for v in TerrainLogic.cell_vertices(cell):
+			target[v] = y
+			locked[v] = true
 	# 0.1.13 : le sable autour (deux rangs de sommets, hors des cases déjà nivelées) se fond en
 	# rampe douce vers la case, au lieu d'une marche aux bords nets. Ce sable-là aussi est compté
 	# sur la pelle ; s'il n'y a pas la place (ou pas assez de sable), le fondu est plus léger.
 	var ctx := _sand_context()
-	var ring := _blend_ring(cell, ctx)
+	var ring := _blend_ring(cells, target, ctx)
 	if not ring.is_empty():
 		var read := func(k: Vector2i) -> float: return terrain.vertex(k.x, k.y).y
 		var blended := SandPhysics.blend(target.duplicate(), read, ring, config.level_blend_passes, 0.6)
@@ -1402,32 +1519,41 @@ func flatten_cell(cell: Vector2i, ref := NAN) -> bool:
 			var h0 := terrain.vertex(v.x, v.y).y
 			target[v] = lerpf(h0, float(blended[v]), f)
 		scoops += extra * f
-	var center := Vector3((cell.x + 0.5) * config.grid_cell_m, y, (cell.y + 0.5) * config.grid_cell_m)
-	return _move_sand(center, target, scoops, locked, ctx)
+	sum /= cells.size()
+	var center := Vector3(sum.x * config.grid_cell_m, y, sum.y * config.grid_cell_m)
+	sand_gesture = Gesture.LEVEL
+	var ok := _move_sand(center, target, scoops, locked, ctx)
+	sand_gesture = Gesture.SCOOP
+	return ok
 
 
-## Les sommets autour d'une case qu'on nivelle, que le fondu peut bouger : deux rangs autour de
-## ses 9 sommets, qui peuvent bouger, et qui ne sont pas sur une case déjà plate (nivelée à la
-## pelle, ou le plateau de départ : on ne défait jamais un sol où l'on peut poser).
-func _blend_ring(cell: Vector2i, ctx: Dictionary) -> Array:
+## Les sommets autour des cases qu'on nivelle, que le fondu peut bouger : deux rangs autour de
+## leurs sommets (`inner`), qui peuvent bouger, et qui ne sont pas sur une case déjà plate (nivelée
+## à la pelle, ou le plateau de départ : on ne défait jamais un sol où l'on peut poser).
+func _blend_ring(cells: Array, inner: Dictionary, ctx: Dictionary) -> Array:
 	var out := []
-	var o := cell * TerrainLogic.SUB
+	var seen := {}
 	var r := config.level_blend_rings
-	for j in range(-r, TerrainLogic.SUB + r + 1):
-		for i in range(-r, TerrainLogic.SUB + r + 1):
-			if i >= 0 and i <= TerrainLogic.SUB and j >= 0 and j <= TerrainLogic.SUB:
-				continue
-			var v := o + Vector2i(i, j)
-			if not _vertex_movable(v, ctx):
-				continue
-			var on_level := false
-			for c in TerrainLogic.cells_of_vertex(v):
-				if not is_nan(terrain.cell_level(c)):  # nivelée, ou le plateau de départ
-					on_level = true
-					break
-			if not on_level:
-				out.append(v)
+	for cell: Vector2i in cells:
+		var o := cell * TerrainLogic.SUB
+		for j in range(-r, TerrainLogic.SUB + r + 1):
+			for i in range(-r, TerrainLogic.SUB + r + 1):
+				var v := o + Vector2i(i, j)
+				if inner.has(v) or seen.has(v):
+					continue
+				seen[v] = true
+				if _ring_vertex_ok(v, ctx):
+					out.append(v)
 	return out
+
+
+func _ring_vertex_ok(v: Vector2i, ctx: Dictionary) -> bool:
+	if not _vertex_movable(v, ctx):
+		return false
+	for c in TerrainLogic.cells_of_vertex(v):
+		if not is_nan(terrain.cell_level(c)):  # nivelée, ou le plateau de départ
+			return false
+	return true
 
 
 ## La pelletée : creuser (clic gauche, `dig` vrai) ou poser le sable porté (clic droit), autour du
@@ -1549,6 +1675,22 @@ func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dict
 			seeds.append(k + d)
 	var wet := water_level_y() + config.sand_wet_band_m
 	var slid := SandPhysics.relax(h, read, can_move, seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked)
+	# 0.1.15 : un bord de trou ou de tas arrondi (plus de pointes en étoile ni leurs ombres).
+	# Seul l'éboulement est lissé : le fond creusé (ou le sommet posé) garde sa hauteur, sinon le
+	# lissage rebouche le trou à chaque pelletée.
+	var keep := locked.duplicate()
+	for k: Vector2i in target:
+		keep[k] = true
+	var soft := SandPhysics.soften(h, read, can_move, slid.keys(), config.sand_soften_passes, config.sand_soften_k, keep)
+	for k: Vector2i in soft:
+		slid[k] = true
+	# Le lissage peut raidir un peu la pente contre le fond (ou le sommet) qu'il ne touche pas :
+	# un dernier éboulement, depuis les sommets lissés et ceux du geste, garde la pente limite.
+	if not soft.is_empty():
+		var again := SandPhysics.relax(h, read, can_move, soft.keys() + seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked)
+		for k: Vector2i in again:
+			slid[k] = true
+	_drop_tiny_moves(h, slid, target, read)
 	var before := {}
 	var after := {}
 	for k: Vector2i in target:
@@ -1573,6 +1715,35 @@ func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dict
 	sand_moved.emit(center, before, after, scoops)
 	terrain_changed.emit(changed)
 	return true
+
+
+## 0.1.15 : les sommets que l'éboulement n'a bougés que de quelques millimètres restent intacts
+## (sinon ils comptaient comme « travaillés » et dessinaient une étoile à pointes fines autour du
+## trou). Leur sable va aux sommets qui ont vraiment bougé : le volume reste exact.
+func _drop_tiny_moves(h: Dictionary, slid: Dictionary, target: Dictionary, read: Callable) -> void:
+	var lost := 0.0
+	var kept: Array[Vector2i] = []
+	for k: Vector2i in slid.keys():
+		if target.has(k):
+			continue
+		var d := float(h[k]) - float(read.call(k))
+		if absf(d) < config.sand_min_move_m:
+			lost += d
+			h[k] = float(read.call(k))
+			slid.erase(k)
+		else:
+			kept.append(k)
+	if absf(lost) < 1e-9:
+		return
+	if kept.is_empty():
+		for k: Vector2i in target:
+			kept.append(k)
+	if kept.is_empty():
+		return
+	var share := lost / kept.size()
+	for k in kept:
+		h[k] = float(h[k]) + share
+		slid[k] = true
 
 
 ## Les formes qui interdisent de toucher au sable : objets posés, caisses, palmiers, rochers,
