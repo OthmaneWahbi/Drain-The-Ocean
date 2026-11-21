@@ -107,6 +107,8 @@ static func new_arrays(rect: Rect2i, with_faces: bool) -> Dictionary:
 	norms.resize(n)
 	var cols := PackedColorArray()
 	cols.resize(n)
+	var uvs := PackedVector2Array()  # 0.1.16 : x = terre, y = herbe (pour le matériau)
+	uvs.resize(n)
 	var faces := []  # un tableau de triangles par bloc de collision (COL_BLOCK × COL_BLOCK cases)
 	if with_faces:
 		var bx := ceili(float(rect.size.x) / COL_BLOCK)
@@ -115,7 +117,7 @@ static func new_arrays(rect: Rect2i, with_faces: bool) -> Dictionary:
 			var f := PackedVector3Array()
 			f.resize(COL_BLOCK * COL_BLOCK * 6)
 			faces.append(f)
-	return {"verts": verts, "norms": norms, "cols": cols, "faces": faces}
+	return {"verts": verts, "norms": norms, "cols": cols, "uvs": uvs, "faces": faces}
 
 
 ## Le maillage de ces tableaux (les cases cachées y sont des triangles plats, invisibles).
@@ -128,6 +130,7 @@ static func make_mesh(data: Dictionary, material: Material) -> ArrayMesh:
 	arrays[Mesh.ARRAY_VERTEX] = data.verts
 	arrays[Mesh.ARRAY_NORMAL] = data.norms
 	arrays[Mesh.ARRAY_COLOR] = data.cols
+	arrays[Mesh.ARRAY_TEX_UV] = data.uvs
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	mesh.surface_set_material(0, material if material else make_material())
 	return mesh
@@ -177,6 +180,11 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 	shade.resize(w * hgt)
 	var lev := PackedFloat32Array()
 	lev.resize(w * hgt)
+	# 0.1.16 : la matière de chaque sommet (sable, terre, terre avec herbe) et sa couleur.
+	var soil_col := PackedColorArray()
+	soil_col.resize(w * hgt)
+	var soil_uv := PackedVector2Array()
+	soil_uv.resize(w * hgt)
 	var leveled := {}  # case de 1 m -> nivelée ?
 	for jj in range(B, hgt - B):
 		for ii in range(B, w - B):
@@ -191,6 +199,16 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 				continue
 			dry_col[k] = TerrainLogic.dry_sand_color(1.0 - n.y)
 			shade[k] = 1.0 + (TerrainLogic.hash01(x0 + ii, y0 + jj, 5) * 2.0 - 1.0) * 0.05
+			var vkey := Vector2i(x0 + ii, y0 + jj)
+			if t.soil(vkey) == TerrainLogic.Soil.EARTH:
+				if edited[k] == 0 and t.grassy(vkey):
+					soil_col[k] = TerrainLogic.GRASS_DRY if bool(t.base_soil_info(vkey)[1]) else TerrainLogic.GRASS_GREEN
+					soil_uv[k] = Vector2(1.0, 1.0)
+				else:
+					soil_col[k] = earth_color(1.0 - n.y)
+					soil_uv[k] = Vector2(1.0, 0.0)
+			else:
+				soil_col[k] = dry_col[k]
 			if edited[k] == 1:
 				var all := 1.0
 				var gx := x0 + ii
@@ -215,9 +233,11 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 	var verts: PackedVector3Array = data.verts
 	var norms: PackedVector3Array = data.norms
 	var cols: PackedColorArray = data.cols
+	var uvs: PackedVector2Array = data.uvs
 	data.verts = PackedVector3Array()  # (une seule référence : on écrit sans copie)
 	data.norms = PackedVector3Array()
 	data.cols = PackedColorArray()
+	data.uvs = PackedVector2Array()
 	var blocks: Array = data.faces
 	var with_faces := not blocks.is_empty()
 	var bx := ceili(float(rect.size.x) / COL_BLOCK)
@@ -282,12 +302,13 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 					fn = -fn
 				var y := (pa.y + pb.y + pc.y) / 3.0
 				var kind := t.ground_kind(y, 1.0 - fn.y, jitter)
+				# 0.1.16 : l'herbe ne dépend plus de la hauteur ni de la pente actuelles : c'est la
+				# terre d'origine jamais travaillée, sommet par sommet (soil_col).
+				if kind <= TerrainLogic.Ground.DRY_GRASS:
+					kind = TerrainLogic.Ground.DRY_SAND
 				var blend := false
-				# 0.1.14 : du sable travaillé n'est jamais de l'herbe (un tas posé haut devenait vert).
 				if edited[ka] == 1 or edited[kb] == 1 or edited[kc] == 1:
-					if kind <= TerrainLogic.Ground.DRY_GRASS:
-						kind = TerrainLogic.Ground.DRY_SAND
-					elif kind > TerrainLogic.Ground.WET_SAND and t.inland(pa.x, pa.z):
+					if kind > TerrainLogic.Ground.WET_SAND and t.inland(pa.x, pa.z):
 						# 0.1.14 : un trou profond dans l'île : du sable humide, pas le fond de la mer.
 						kind = TerrainLogic.Ground.WET_SAND
 					# 0.1.15 : dans un trou de l'île, le sable mouillé vient en dégradé, sommet par
@@ -297,20 +318,29 @@ static func fill(t: TerrainLogic, rect: Rect2i, sub: Rect2i, skip: Array, height
 				var col := Color() if dry else TerrainLogic.kind_color(kind, 1.0 - fn.y)
 				var low := y <= ground_y - 1.0
 				for k: int in [ka, kb, kc]:
-					var cv := dry_col[k] if dry else col
+					var earth := soil_uv[k].x > 0.5
+					var cv := soil_col[k] if dry else (earth_color(1.0) * 0.8 if earth else col)
 					if blend:
-						cv = dry_col[k].lerp(WET_HOLE, smoothstep(WET_TOP_Y, WET_FULL_Y, pos[k].y))
+						var wet := smoothstep(WET_TOP_Y, WET_FULL_Y, pos[k].y)
+						cv = soil_col[k].lerp(soil_col[k] * 0.72, wet) if earth else dry_col[k].lerp(WET_HOLE, wet)
 					var sh := shade[k]
 					# Le canal alpha dit au matériau si le sable a été nivelé à la pelle (traces).
 					cols[nv] = Color(cv.r * sh, cv.g * sh, cv.b * sh, 0.0 if low else lev[k])
+					uvs[nv] = soil_uv[k]
 					norms[nv] = nor[k]
 					verts[nv] = pos[k]
 					nv += 1
 	data.verts = verts
 	data.norms = norms
 	data.cols = cols
+	data.uvs = uvs
 	if cur_block >= 0:
 		blocks[cur_block] = faces
+
+
+## La terre retournée selon la pente (0 plat … 1 vertical) : un peu plus sombre dans les pentes.
+static func earth_color(slope: float) -> Color:
+	return TerrainLogic.EARTH.lerp(TerrainLogic.EARTH * 0.85, smoothstep(0.15, 0.5, slope))
 
 
 ## Une case de 1 m dont les 9 sommets (à partir de l'indice local (ci, cj) de la grille) sont

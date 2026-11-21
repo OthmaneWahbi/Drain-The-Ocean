@@ -99,7 +99,7 @@ func _update_carry(tool: String) -> void:
 ## Le sable a bougé (pelle) : si le sol monte sous nos pieds, on remonte avec lui.
 ## Le sable porté sur la lame de la pelle (0.1.11).
 func _on_shovel_changed() -> void:
-	Props.set_shovel_load(_shovel_node, float(GameState.shovel_sand) / maxf(GameState.config.shovel_capacity_scoops, 1))
+	Props.set_shovel_load(_shovel_node, float(GameState.shovel_sand) / maxf(GameState.config.shovel_capacity_scoops, 1), GameState.shovel_soil == TerrainLogic.Soil.EARTH)
 
 
 ## Un coup de pelle (0.1.11, appelé par SandFx) : la pelle plonge vers le sable puis remonte

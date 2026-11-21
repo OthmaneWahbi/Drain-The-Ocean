@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.46 (0.1.15 : trous naturels, aplanir simple) |
+| Version du document | 0.47 (0.1.16 : terre et sable, aplanir plus beau) |
 | Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -924,6 +924,19 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Aplanir un carré de 3 × 3 m** (Maj + clic droit, maintenu en glissant) : la marque devient un carré de 3 m. Le **niveau est choisi tout seul** au début du geste : s'il y a un sol plat à moins de 2 m du carré (nivelé ou le plateau de départ) à moins de **30 cm** de la hauteur moyenne du carré, on prend **exactement** son niveau (le texte le dit : « au niveau du sol plat d'à côté ») ; sinon, la **hauteur moyenne** du carré (le sable pris d'un côté comble l'autre, la pelle a peu à porter). En glissant, tout le lot est mis à ce même niveau. Si la pelle ne peut pas tout prendre ou tout donner, on aplanit les cases du carré qui tiennent, en partant du centre.
 - **[PROPOSÉ]** **On voit le sol aplani** : une case aplanie montre ses **carreaux de 1 m** (des lignes fines), en plus des traces de pelle.
 - **[PROPOSÉ]** **Animation** : aplanir bouge tout le carré d'un seul mouvement doux de 0,16 s, sans rebond ; une motte ne vole que si la pelle prend ou rend au moins une demi-pelletée (avant : une motte à chaque case survolée).
+
+### 19.21 Version 0.1.16 : terre et sable, aplanir plus beau
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]**, après la 0.1.15 (« beaucoup mieux, on garde ») : le **sable aplani** n'est pas très beau, le rendre le plus beau possible ; en restant appuyé sur **Maj + clic**, l'animation va trop vite et aplanit trop vite : un **tout petit délai**, et l'animation doit suivre. Quand on creuse, aplanit ou pose du sable près du **vert**, tout le vert disparaît au hasard : les parties vertes deviennent des **zones isolées de terre** où l'on creuse de la terre et non du sable ; la terre se travaille comme le sable, avec d'autres textures, et on peut **mettre de la terre sur le sable et inversement**.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Pourquoi le vert disparaissait** : l'herbe était choisie par triangle selon sa hauteur et sa pente du moment, et l'éboulement à 34° faisait aussi s'écrouler les pentes naturelles des dunes plus raides : un coup de pelle pouvait « travailler » toute une dune. Maintenant l'herbe ne dépend que du sol de départ (elle reste tant qu'on ne touche pas l'endroit), et une pente d'origine ne s'éboule jamais d'elle-même.
+- **[PROPOSÉ]** **Où est la terre** : les zones vertes de l'île (les hauts plateaux, plus 1,4 m au-dessus du sol de la plage et peu pentus, et quelques plaques d'herbe sèche plus bas) sont de la terre couverte d'herbe. Le reste est du sable.
+- **[PROPOSÉ]** **Creuser de la terre** : on prend la matière de l'endroit visé. L'herbe ne disparaît que là où l'on a creusé ou posé ; dessous, la terre est brune. La terre tient plus raide que le sable (**50°**, contre 34° pour le sable sec).
+- **[PROPOSÉ]** **La pelle ne mélange pas** : elle porte du sable ou de la terre, jamais les deux. Si elle porte du sable, on ne peut pas creuser de terre (« La pelle porte du sable »), et inversement ; on vide d'abord la pelle. La barre dit « Sable 2/3 » ou « Terre 2/3 », et la charge sur la pelle a la couleur de ce qu'elle porte.
+- **[PROPOSÉ]** **Terre sur sable, sable sur terre** : ce qu'on pose recouvre le sol (de la terre posée sur la plage reste de la terre, du sable posé sur l'herbe reste du sable). Creuser jusqu'au sol de départ retrouve sa matière. Lisser et aplanir gardent la matière qui était là. C'est sauvegardé.
+- **[PROPOSÉ]** **Le sable aplani plus beau** : du sable tassé, lisse et un peu plus clair (crème), en dalles de 1 m aux joints fins (un creux sombre et un bord éclairé), chaque dalle d'un ton un rien différent, presque sans grains ni taches. La terre aplanie est ratissée (sillons parallèles).
+- **[PROPOSÉ]** **Un petit délai** : en glissant avec Maj + clic droit, un carré au plus toutes les **0,12 s** (avant : à chaque image) ; l'animation dure **0,2 s** (avant 0,16 s) et suit le geste. Lisser (Maj + clic gauche) : une passe toutes les 0,2 s (avant 0,08 s), avec la même animation douce.
 
 ## 20. Glossaire
 

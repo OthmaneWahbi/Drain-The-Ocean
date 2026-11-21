@@ -131,7 +131,9 @@ func test_lowest_height_never_floats_above_the_ground() -> void:
 			assert_true(y <= t.height(x + cos(a) * 0.4, z + sin(a) * 0.4) + 1e-5)
 
 
-func test_grass_follows_the_facet_colour() -> void:
+func test_grass_grows_on_untouched_earth_only() -> void:
+	# 0.1.16 : l'herbe est la terre d'origine (le haut des dunes) jamais travaillée, sommet par
+	# sommet ; elle ne dépend plus de la hauteur ni de la pente actuelles.
 	var seen := 0
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 9
@@ -141,11 +143,9 @@ func test_grass_follows_the_facet_colour() -> void:
 		if not t.is_grass(x, z):
 			continue
 		seen += 1
-		var f := t.facet(x, z)
-		var y: float = (f[0].y + f[1].y + f[2].y) / 3.0
-		var n3: Vector3 = (f[1] - f[0]).cross(f[2] - f[0]).normalized()
-		var col := t.color(y, 1.0 - absf(n3.y), 0.0)
-		assert_true(col.g > col.r, "facette verte sous l'herbe en (%.1f, %.1f)" % [x, z])
+		var v := TerrainLogic.nearest_vertex(x, z)
+		assert_eq(t.soil(v), TerrainLogic.Soil.EARTH, "de la terre sous l'herbe en (%.1f, %.1f)" % [x, z])
+		assert_true(t.base_vertex(v.x, v.y).y > t.ground_y + 0.9, "en hauteur")
 	assert_true(seen > 0, "il y a de l'herbe sur les dunes")
 	assert_false(t.is_grass(0.0, 10.0), "pas d'herbe sur le plateau de sable")
 

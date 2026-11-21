@@ -971,10 +971,12 @@ static func shovel() -> Node3D:
 
 ## Le sable sur la lame de la pelle (0..1 de la charge) : un petit tas qui monte et s'élargit.
 ## 0.1.13 : sa hauteur suit la charge (un tas plat au début, un dôme quand la pelle est pleine).
-static func set_shovel_load(shovel_node: Node3D, ratio: float) -> void:
-	var load := shovel_node.get_node_or_null("SandLoad") as Node3D
+## 0.1.16 : `earth` : la pelle porte de la terre (couleur et grain de la terre).
+static func set_shovel_load(shovel_node: Node3D, ratio: float, earth: bool = false) -> void:
+	var load := shovel_node.get_node_or_null("SandLoad") as GeometryInstance3D
 	if load == null:
 		return
+	load.material_override = sand_material(true, earth)
 	ratio = clampf(ratio, 0.0, 1.0)
 	load.visible = ratio > 0.01
 	var k := lerpf(0.7, 1.0, ratio)
@@ -984,8 +986,9 @@ static func set_shovel_load(shovel_node: Node3D, ratio: float) -> void:
 ## Le matériau du sable des objets (0.1.13) : le shader du sol (grains, taches, lumière cartoon),
 ## en couleur sable sec. `shadowless` : il ne reçoit pas d'ombre (la pelle tenue en main est
 ## dans l'ombre du joueur, le tas paraissait noir).
-static func sand_material(shadowless: bool = false) -> ShaderMaterial:
-	var key := "sand_shadowless" if shadowless else "sand"
+## 0.1.16 : `earth` : la même chose en terre.
+static func sand_material(shadowless: bool = false, earth: bool = false) -> ShaderMaterial:
+	var key := ("sand_shadowless" if shadowless else "sand") + ("_earth" if earth else "")
 	if _mats.has(key):
 		return _mats[key]
 	var shader: Shader = TerrainView.SAND_SHADER
@@ -995,8 +998,9 @@ static func sand_material(shadowless: bool = false) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = shader
 	m.set_shader_parameter("on_object", true)
-	var c := TerrainLogic.DRY_SAND
+	var c := TerrainLogic.EARTH if earth else TerrainLogic.DRY_SAND
 	m.set_shader_parameter("tint", Vector4(c.r, c.g, c.b, 1.0))
+	m.set_shader_parameter("object_earth", 1.0 if earth else 0.0)
 	_mats[key] = m
 	return m
 
@@ -1046,10 +1050,10 @@ static func sand_heap_mesh(rx: float, rz: float, h: float, rng_seed: int = 5) ->
 
 ## Une motte de sable (0.1.11) : une boule à facettes aplatie et bosselée, couleur sable
 ## (0.1.13 : le même sable que le sol).
-static func sand_clump(radius: float, rng_seed: int = 3) -> MeshInstance3D:
+static func sand_clump(radius: float, rng_seed: int = 3, earth: bool = false) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = Models.facet_sphere(radius, 8, 5, rng_seed, Vector3(1.0, 0.6, 1.0), 0.18)
-	mi.material_override = sand_material()
+	mi.material_override = sand_material(false, earth)
 	return mi
 
 

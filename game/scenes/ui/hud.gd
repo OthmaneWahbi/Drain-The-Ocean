@@ -141,7 +141,7 @@ func refresh_toolbar() -> void:
 			_toolbar_labels[i].text += "\n" + tr("HUD_PIPES_IN_HAND") % GameState.pipe_stock
 		elif tool == "pelle":
 			# 0.1.13 : le sable porté sur la pelle, toujours visible dans sa case.
-			_toolbar_labels[i].text += "\n" + tr("HUD_SHOVEL_LOAD") % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]
+			_toolbar_labels[i].text += "\n" + tr(shovel_load_key(GameState.shovel_sand, GameState.shovel_soil)) % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]
 		var picked := i == tb.selected
 		var style := UiTheme.paper(UiTheme.YELLOW if picked else Color(UiTheme.PAPER, 0.88), UiTheme.RED if picked else UiTheme.INK, 10, 4)
 		style.set_border_width_all(4 if picked else 2)
@@ -150,13 +150,20 @@ func refresh_toolbar() -> void:
 		toolbar_slots[i].modulate = Color.WHITE if available and tool != "" else Color(1, 1, 1, 0.55)
 
 
+## 0.1.16 : « Sable 2/3 » ou « Terre 2/3 » selon ce que porte la pelle (vide : « Sable 0/3 »).
+static func shovel_load_key(load: float, soil: int) -> String:
+	if load > 0.05 and soil == TerrainLogic.Soil.EARTH:
+		return "HUD_SHOVEL_LOAD_EARTH"
+	return "HUD_SHOVEL_LOAD"
+
+
 ## 0.1.14 : seul le texte de la case de la pelle change (refaire toute la barre à chaque pelletée
 ## coûtait ~0,4 ms).
 func _refresh_shovel_slot() -> void:
 	var i := GameState.toolbar.index_of("pelle")
 	if i < 0 or i >= toolbar_slots.size():
 		return
-	_toolbar_labels[i].text = "%d\n%s\n%s" % [i + 1, slot_text("pelle"), tr("HUD_SHOVEL_LOAD") % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]]
+	_toolbar_labels[i].text = "%d\n%s\n%s" % [i + 1, slot_text("pelle"), tr(shovel_load_key(GameState.shovel_sand, GameState.shovel_soil)) % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]]
 
 
 ## Le style du catalogue (UiTheme) : textes blancs cernés d'encre, en Fredoka ; l'océan restant

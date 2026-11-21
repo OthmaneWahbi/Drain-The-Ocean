@@ -84,7 +84,7 @@ static func slide_spot(c: Vector2, before: Dictionary, after: Dictionary, min_m:
 
 
 func _fly(from: Vector3, to: Vector3, duration: float, scoops: float, burst_at_end: bool) -> void:
-	var clump := Props.sand_clump(0.11 * pow(maxf(scoops, 0.2), 0.33), _flights.size() + 5)
+	var clump := Props.sand_clump(0.11 * pow(maxf(scoops, 0.2), 0.33), _flights.size() + 5, GameState.shovel_soil == TerrainLogic.Soil.EARTH)
 	clump.name = "SandClump"
 	clump.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(clump)
