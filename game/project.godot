@@ -30,6 +30,10 @@ window/size/mode=0
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom_font="res://assets/fonts/police_texte.tres"
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://localization/strings.fr.translation", "res://localization/strings.en.translation")

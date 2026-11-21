@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.47 (0.1.16 : terre et sable, aplanir plus beau) |
+| Version du document | 0.48 (nouvelles polices) |
 | Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -747,7 +747,7 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphonique et interface ; le catalogue accessible seulement face à la cabine, pas un objet posé au sol ; un catalogue drôle avec des images et des prix ; toute l'interface prend la direction artistique du catalogue (polices, couleurs) ; un système de dialogue avec sous-titres quand on parle à la cabine ; garder le "riiing" au-dessus de la cabine ». Ces points sont **[DÉCIDÉ]**. Les détails ci-dessous sont **[PROPOSÉ]**.
 
 - **[PROPOSÉ]** Modèles : palmiers, rochers, buissons des dunes et bois flotté du *Nature Kit* de Kenney (CC0), recolorés en cartoon au chargement ; couronne des palmiers doublée, noix de coco accrochées dessous. Aucune cabine téléphonique gratuite n'était accessible : la cabine (rouge, vitrée, bandeau « TÉLÉPHONE », téléphone mural, catalogue enchaîné sur une tablette) et les noix de coco sont faites en facettes par code. Crédits : `game/assets/CREDITS.md`.
-- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons).
+- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons). → remplacées le 2026-11-21 (voir 19.22).
 - **[PROPOSÉ]** Le Grand Catalogue de l'Agence : une double page. À gauche, les produits en vitrine (photo 3D qui tourne, nom, slogan drôle, description, prix sur étiquette, tampons « PROMO », « BIENTÔT », « DÉJÀ À VOUS ») ; à droite le bon de commande (ce qu'on a, le panier, le total).
 - **[PROPOSÉ]** Dialogues : Ginette, de l'Agence, au bout du fil. Sous-titres en bas de l'écran, texte qui s'écrit lettre par lettre, réponses au clic ou avec 1 à 4, Échap pour raccrocher. Trois conversations : premier appel, offre du jour (« Montrez-moi ça ! » ouvre le catalogue), appel normal (commander, demander s'il reste de l'eau, raccrocher). Les textes sont dans `data/dialogues.json`.
 - **[PROPOSÉ]** « Driiing ! Driiing ! » au-dessus de la cabine qui tremble ; la sonnerie se tait pendant la conversation.
@@ -937,6 +937,16 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Terre sur sable, sable sur terre** : ce qu'on pose recouvre le sol (de la terre posée sur la plage reste de la terre, du sable posé sur l'herbe reste du sable). Creuser jusqu'au sol de départ retrouve sa matière. Lisser et aplanir gardent la matière qui était là. C'est sauvegardé.
 - **[PROPOSÉ]** **Le sable aplani plus beau** : du sable tassé, lisse et un peu plus clair (crème), en dalles de 1 m aux joints fins (un creux sombre et un bord éclairé), chaque dalle d'un ton un rien différent, presque sans grains ni taches. La terre aplanie est ratissée (sillons parallèles).
 - **[PROPOSÉ]** **Un petit délai** : en glissant avec Maj + clic droit, un carré au plus toutes les **0,12 s** (avant : à chaque image) ; l'animation dure **0,2 s** (avant 0,16 s) et suit le geste. Lisser (Maj + clic gauche) : une passe toutes les 0,2 s (avant 0,08 s), avec la même animation douce.
+
+### 19.22 Nouvelles polices
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]** : les polices sont un point qu'il n'aime pas dans le jeu ; **changer toutes les polices**, après avoir cherché des références en ligne.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : les jeux « cozy » et cartoon (Animal Crossing, A Short Hike, Slime Rancher) prennent des lettres rondes, épaisses et très lisibles pour le texte, et gardent la fantaisie pour les titres ; les conseils de développeurs (PC Gamer, « How game developers pick their fonts ») : une police « expressive, mais pas trop », qui ne ralentit pas la lecture. 21 polices libres (SIL OFL ou Apache) comparées sur une planche, 12 combinaisons, puis 3 finalistes en jeu (captures dans `polices/` des fichiers du projet).
+- **[PROPOSÉ]** **Le choix** : **DynaPuff** (titres, lettres gonflées cartoon), **Nunito** (texte, arrondie et très lisible ; extra-grasse pour les boutons et le HUD), **Gochi Hand** (prix et tampons, écrits au feutre, plus lisible que Permanent Marker). Les autres finalistes : Bagel Fat One + Nunito + Gochi Hand ; Shrikhand (rétro « tiki ») + Nunito + Caveat Brush.
+- **[PROPOSÉ]** **Tout le jeu** : la police du texte devient la police par défaut du projet, donc aussi les textes 3D (compteurs de la palette, débit des pompes, textes de fin) qui prenaient la police de Godot. Les symboles (♪, ▮, ★, ✓, →) viennent d'un petit morceau de M PLUS Rounded 1c, arrondi comme le reste.
+- **[PROPOSÉ]** Les textes « au feutre » sont agrandis de 30 % (Gochi Hand dessine plus petit) pour garder la même place.
 
 ## 20. Glossaire
 

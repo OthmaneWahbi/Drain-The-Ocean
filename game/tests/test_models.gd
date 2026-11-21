@@ -114,6 +114,10 @@ func test_ui_theme_fonts_load_and_keep_symbols() -> void:
 		assert_true(f != null)
 		assert_true(f.has_char("é".unicode_at(0)), "accents")
 		assert_false(f.fallbacks.is_empty(), "les symboles (♪, ▮) viennent d'une police de secours")
+		for sym in "♪▮★✓→":
+			assert_true(f.fallbacks[0].has_char(sym.unicode_at(0)), "symbole " + sym)
+	assert_eq(ProjectSettings.get_setting("gui/theme/custom_font"), UiTheme.body_font().resource_path,
+		"la police du texte est la police par défaut de tout le projet (Label3D compris)")
 	var t := UiTheme.theme()
 	assert_eq(t.default_font, UiTheme.body_font())
 	assert_true(t.has_stylebox("normal", "Button"))
