@@ -82,9 +82,10 @@ static func build_rect_mesh(t: TerrainLogic, rect: Rect2i, material: Material, s
 			if not heights.is_empty():
 				for k in 6:
 					tri[k] = _with_height(tri[k], heights)
-			# Sable travaillé : les 4 coins de la petite case (pas les pentes autour d'une case creusée).
-			var worked := t.edits.has(Vector2i(i, j)) and t.edits.has(Vector2i(i + 1, j)) \
-				and t.edits.has(Vector2i(i, j + 1)) and t.edits.has(Vector2i(i + 1, j + 1))
+			# Sable travaillé (traces de pelle) : seulement une case nivelée, plate (0.1.12 : un creux
+			# ou un tas arrondi garde l'aspect du sable, sinon la brosse se voyait en croix).
+			var big := Vector2i(floori(float(i) / TerrainLogic.SUB), floori(float(j) / TerrainLogic.SUB))
+			var worked := t.cell_worked(big) and not is_nan(t.cell_level(big))
 			_tri(st, t, tri, ids, normals, 0, TerrainLogic.hash01(i, j, 5) * 2.0 - 1.0, worked)
 			_tri(st, t, tri, ids, normals, 3, TerrainLogic.hash01(i, j, 6) * 2.0 - 1.0, worked)
 	st.set_material(material if material else make_material())
@@ -130,9 +131,9 @@ static func _tri(st: SurfaceTool, t: TerrainLogic, tri: Array, ids: Array[Vector
 		var cv := col
 		if dry and not normals.is_empty():
 			cv = TerrainLogic.dry_sand_color(1.0 - normals[idx].y)
-		# Le canal alpha dit au matériau si le sable a été travaillé (1) ou non (0), sommet par
-		# sommet (en douceur) : il y dessine des traces de pelle au lieu des rides du vent.
-		var w := 1.0 if worked and t.edits.has(id) and y > t.ground_y - 1.0 else 0.0
+		# Le canal alpha dit au matériau si le sable a été nivelé à la pelle (1) ou non (0) : il y
+		# dessine des traces de pelle au lieu des rides du vent.
+		var w := 1.0 if worked and y > t.ground_y - 1.0 else 0.0
 		st.set_color(Color(cv.r * shade, cv.g * shade, cv.b * shade, w))
 		st.set_normal(normals[idx] if not normals.is_empty() else normal)
 		st.add_vertex(tri[idx])
