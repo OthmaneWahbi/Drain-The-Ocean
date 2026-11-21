@@ -26,6 +26,15 @@ const AREA := TerrainLogic.VERTEX_STEP * TerrainLogic.VERTEX_STEP
 const N8: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]
 const N8_DIST: Array[float] = [0.5, 0.5, 0.5, 0.5, 0.70710678, 0.70710678, 0.70710678, 0.70710678]
+## 0.1.15 : l'éboulement regarde aussi les 8 voisins « en L » (un pas et deux pas), à 1,12 m :
+## avec seulement 8 voisins, la pente d'un trou formait un octogone à pans plats et à arêtes
+## vives (les « triangles » qu'Othmane voyait) ; avec 16, le bord est presque rond.
+const N16: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1),
+	Vector2i(2, 1), Vector2i(-2, 1), Vector2i(2, -1), Vector2i(-2, -1),
+	Vector2i(1, 2), Vector2i(-1, 2), Vector2i(1, -2), Vector2i(-1, -2)]
+const N16_DIST: Array[float] = [0.5, 0.5, 0.5, 0.5, 0.70710678, 0.70710678, 0.70710678, 0.70710678,
+	1.11803399, 1.11803399, 1.11803399, 1.11803399, 1.11803399, 1.11803399, 1.11803399, 1.11803399]
 ## En dessous de cet excès (m), une pente est considérée comme stable.
 const EPS := 0.01
 
@@ -161,10 +170,10 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 	var off := PackedInt32Array()
 	var lim_dry := PackedFloat64Array()
 	var lim_wet := PackedFloat64Array()
-	for k in 8:
-		off.append(N8[k].y * w + N8[k].x)
-		lim_dry.append(tan_dry * N8_DIST[k])
-		lim_wet.append(tan_wet * N8_DIST[k])
+	for k in 16:
+		off.append(N16[k].y * w + N16[k].x)
+		lim_dry.append(tan_dry * N16_DIST[k])
+		lim_wet.append(tan_wet * N16_DIST[k])
 	var queue := PackedInt32Array()
 	for sd: Vector2i in seeds:
 		var idx := (sd.y - lo.y) * w + (sd.x - lo.x)
@@ -172,9 +181,9 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 			queued[idx] = 1
 			queue.append(idx)
 	var ns := PackedInt32Array()
-	ns.resize(8)
+	ns.resize(16)
 	var ds := PackedFloat64Array()
-	ds.resize(8)
+	ds.resize(16)
 	var i := 0
 	while i < queue.size() and i < max_ops:
 		var vi := queue[i]
@@ -186,13 +195,13 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 			continue
 		var vx := vi % w
 		var vy := vi / w
-		if vx == 0 or vy == 0 or vx == w - 1 or vi >= n - w:
+		if vx < 2 or vy < 2 or vx > w - 3 or vi >= n - 2 * w:
 			continue  # le bord de la fenêtre ne bouge pas
 		var hv := hs[vi]
 		var cnt := 0
 		var total := 0.0
 		var most := 0.0
-		for k in 8:
+		for k in 16:
 			var ni := vi + off[k]
 			if st[ni] == 0:
 				_load(ni, w, lo, hs, st, h, read, can_move, locked)
@@ -221,7 +230,7 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 		hs[vi] = hv
 		moved[vi] = 1
 		# v a baissé : ses voisins plus hauts peuvent maintenant être trop raides, et lui encore.
-		for k in 8:
+		for k in 16:
 			var ni := vi + off[k]
 			if queued[ni] == 0:
 				queued[ni] = 1
@@ -247,6 +256,51 @@ static func _load(idx: int, w: int, lo: Vector2i, hs: PackedFloat64Array, st: Pa
 	var y: Variant = h.get(v)
 	hs[idx] = float(y) if y != null else float(read.call(v))
 	st[idx] = 1 if (not locked.has(v) and bool(can_move.call(v))) else 2
+
+
+## Adoucir (0.1.15) : après l'éboulement, `passes` passes de diffusion entre voisins (4 directs,
+## et les diagonales à moitié) : chaque paire échange `k` × leur différence de hauteur, donc le
+## volume ne change pas. Seuls les sommets de `region` (et leurs voisins) qui peuvent bouger
+## échangent. L'éboulement à 8 voisins laisse des bords en étoile (des pointes, et leurs ombres) :
+## ce lissage les arrondit, comme du vrai sable qui roule. Renvoie les sommets qui ont bougé.
+static func soften(h: Dictionary, read: Callable, can_move: Callable, region: Array, passes: int, k: float, locked: Dictionary = {}) -> Dictionary:
+	var changed := {}
+	if region.is_empty() or passes <= 0 or k <= 0.0:
+		return changed
+	var area := {}
+	for v: Vector2i in region:
+		area[v] = true
+		for d in N8:
+			area[v + d] = true
+	var movable := {}
+	var verts: Array[Vector2i] = []
+	for v: Vector2i in area:
+		if not locked.has(v) and _movable(v, can_move, movable):
+			verts.append(v)
+			_height(v, h, read)
+	var free := {}
+	for v in verts:
+		free[v] = true
+	# Les paires (chacune une fois) : droite, bas, et les deux diagonales vers le bas.
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(-1, 1)]
+	var wts: Array[float] = [1.0, 1.0, 0.5, 0.5]
+	for _p in passes:
+		var delta := {}
+		for v in verts:
+			var hv := float(h[v])
+			for q in 4:
+				var n: Vector2i = v + dirs[q]
+				if not free.has(n):
+					continue
+				var f := k * wts[q] * (float(h[n]) - hv)
+				delta[v] = float(delta.get(v, 0.0)) + f
+				delta[n] = float(delta.get(n, 0.0)) - f
+		for v: Vector2i in delta:
+			var dv := float(delta[v])
+			if absf(dv) > 1e-7:
+				h[v] = float(h[v]) + dv
+				changed[v] = true
+	return changed
 
 
 static func _height(v: Vector2i, h: Dictionary, read: Callable) -> float:

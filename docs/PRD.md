@@ -5,8 +5,8 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.45 (0.1.14 : le sable, cœur du jeu) |
-| Date | 2026-11-20 |
+| Version du document | 0.46 (0.1.15 : trous naturels, aplanir simple) |
+| Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
 
@@ -914,6 +914,16 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Le sable reste du sable** : du sable travaillé à la pelle n'est jamais dessiné en herbe, quelle que soit sa hauteur.
 - **[PROPOSÉ]** **Fluide** : un geste de pelle coûte environ 3 ms (avant ~60 ms, plus ~27 ms à la fin de l'animation) ; seules les cases touchées sont redessinées, juste après le geste et étalées sur les images suivantes ; la queue d'un éboulement (quelques millimètres) suit un peu après.
 - **[PROPOSÉ]** **Niveler plus vite** : en glissant (Maj + clic droit), toutes les cases traversées sont nivelées (plus de case sautée quand on va vite), jusqu'à deux par image ; une case toutes les 0,03 s au plus (avant 0,08 s). Lisser (Maj + clic gauche) va deux fois plus vite (une passe toutes les 0,08 s, plus forte).
+
+### 19.20 Version 0.1.15 : trous naturels, aplanir simple
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]**, après la 0.1.14 (« beaucoup beaucoup mieux ») : les **triangles** qui apparaissent autour d'un trou ne font pas naturel (les enlever, ou les rendre beaucoup moins pointus). **Aplanir** doit être plus simple : quand un sol voisin est à un niveau proche, aplanir à ce niveau (on ne peut pas juger à l'œil si on est exactement au même niveau) ; le but est de préparer la terre pour y poser quelque chose, donc on doit **voir clairement** que la terre est aplanie, et préparer **tout un lot** ne doit pas prendre trop de temps. L'animation d'aplanissement n'était pas bonne.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Plus de triangles** : c'était le sable humide du fond des trous, choisi triangle par triangle, qui dessinait une étoile à pointes autour du fond. Il vient maintenant en **dégradé** (du sec au bord vers le mouillé au fond, entre 30 cm au-dessus et 30 cm sous le niveau de départ de la mer). Le sable qui s'éboule regarde 16 directions au lieu de 8 (un trou est presque rond au lieu d'un octogone à arêtes vives), puis son bord est un peu arrondi (le volume reste exact). La lumière passe en douceur de l'ombre au soleil (plus de palier net qui découpait les pentes douces).
+- **[PROPOSÉ]** **Aplanir un carré de 3 × 3 m** (Maj + clic droit, maintenu en glissant) : la marque devient un carré de 3 m. Le **niveau est choisi tout seul** au début du geste : s'il y a un sol plat à moins de 2 m du carré (nivelé ou le plateau de départ) à moins de **30 cm** de la hauteur moyenne du carré, on prend **exactement** son niveau (le texte le dit : « au niveau du sol plat d'à côté ») ; sinon, la **hauteur moyenne** du carré (le sable pris d'un côté comble l'autre, la pelle a peu à porter). En glissant, tout le lot est mis à ce même niveau. Si la pelle ne peut pas tout prendre ou tout donner, on aplanit les cases du carré qui tiennent, en partant du centre.
+- **[PROPOSÉ]** **On voit le sol aplani** : une case aplanie montre ses **carreaux de 1 m** (des lignes fines), en plus des traces de pelle.
+- **[PROPOSÉ]** **Animation** : aplanir bouge tout le carré d'un seul mouvement doux de 0,16 s, sans rebond ; une motte ne vole que si la pelle prend ou rend au moins une demi-pelletée (avant : une motte à chaque case survolée).
 
 ## 20. Glossaire
 

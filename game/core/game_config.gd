@@ -242,6 +242,11 @@ extends Resource
 ## 0.1.14 : à l'intérieur de l'île (là où la mer est cachée), on creuse jusqu'à cette profondeur
 ## sous le niveau de départ de la mer.
 @export var dig_max_below_sea_m: float = 3.0
+## 0.1.15 : après l'éboulement, passes de lissage du sable qui a bougé, et leur force (0 … 0,25).
+@export var sand_soften_passes: int = 6
+@export var sand_soften_k: float = 0.2
+## En dessous de ce déplacement (m), un sommet touché par l'éboulement reste intact (0.1.15).
+@export var sand_min_move_m: float = 0.006
 ## On ne monte jamais le sable plus haut que le sol de l'île + cette hauteur.
 @export var dig_max_above_ground_m: float = 4.0
 ## Portée de la pelle (distance joueur → case visée), en mètres.
@@ -255,6 +260,8 @@ extends Resource
 @export var shovel_capacity_scoops: int = 3
 ## Durée de l'animation d'un coup de pelle (le sable glisse vers son nouveau niveau).
 @export var dig_anim_s: float = 0.3
+## 0.1.15 : la durée de l'animation d'aplanissement (s), d'un seul mouvement doux.
+@export var level_anim_s: float = 0.16
 
 @export_group("Sable (0.1.12)")
 ## Le volume d'une pelletée (m³). 0,25 = une case de 1 m sur 25 cm, comme avant.
@@ -275,6 +282,16 @@ extends Resource
 ## et en combien de passes (0.1.13 : plus de bords de rectangle nets).
 @export var level_blend_rings: int = 2
 @export var level_blend_passes: int = 6
+## 0.1.15 (« aplanir plus simple ») : le pinceau d'aplanissement, en cases de 1 m de côté (3 : un
+## carré de 3 × 3 m, assez pour préparer un lot en quelques gestes).
+@export var level_brush_cells: int = 3
+## Le niveau choisi est arrondi à ce pas (m) : fin, pour que la moyenne du sol tienne dans la pelle.
+@export var level_step_m: float = 0.05
+## Un sol déjà plat (nivelé ou le plateau) à moins de `level_snap_cells` cases du carré, et à moins
+## de `level_snap_m` de la hauteur moyenne du carré, donne son niveau : les lots voisins se raccordent
+## exactement sans qu'on ait à juger les hauteurs à l'œil.
+@export var level_snap_cells: int = 2
+@export var level_snap_m: float = 0.3
 ## Pente d'éboulement du sable sec (degrés) : plus raide, il glisse (le vrai sable : 30 à 35°).
 @export var sand_repose_deg: float = 34.0
 ## Le sable mouillé (près de l'eau) tient plus raide.

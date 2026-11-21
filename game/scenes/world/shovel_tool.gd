@@ -9,14 +9,15 @@ extends Node3D
 ## - **Clic droit** : poser une pelletée du sable porté. Maintenu : pareil.
 ## - **Maj + clic gauche** (maintenu) : lisser. Le sable sous la pelle se rapproche de sa hauteur
 ##   moyenne : même hauteur, même volume, mais plus plat (demande d'Othmane, 0.1.12).
-## - **Maj + clic droit maintenu** : niveler (la marque devient le carreau de 1 m) ; la première
-##   case donne le niveau, chaque case survolée en gardant le clic est mise à ce niveau.
+## - **Maj + clic droit maintenu** : aplanir (0.1.15 : la marque devient un carré de 3 × 3 m). Le
+##   niveau est choisi tout seul au début (un sol plat voisin proche, sinon la moyenne du carré) ;
+##   chaque carré survolé en gardant le clic est mis à ce niveau.
 ## Autour, le sable trop raide s'éboule (SandPhysics). Les règles sont dans GameState
 ## (scoop_reason, shovel_scoop, dig_reason, flatten_cell). L'animation est dans SandFx et TerrainView.
 
 const OK_COLOR := Color(0.3, 0.95, 0.35, 0.9)
-## Cases nivelées au plus par image pendant un glisser (0.1.14).
-const LEVEL_CELLS_PER_FRAME := 2
+## Carrés aplanis au plus par image pendant un glisser (0.1.14 ; 0.1.15 : un carré de 3 × 3).
+const LEVEL_CELLS_PER_FRAME := 1
 ## Les raisons (« Pelle pleine »…) sont gardées ce temps-là tant que rien ne change (0.1.14 : les
 ## recalculer à chaque image coûtait ~0,6 ms).
 const REASON_TTL_S := 0.2
@@ -28,6 +29,8 @@ var target_cell: Vector2i
 var has_target: bool = false
 ## Le niveau d'aplanissement du glisser en cours (NAN hors glisser).
 var drag_level := NAN
+## Le niveau proposé avant d'appuyer : [niveau, vrai si c'est celui d'un sol voisin] (0.1.15).
+var _level_preview: Array = [0.0, false]
 var _drag_t := 0.0
 var _repeat_t := 0.0
 var _last_cell := Vector2i(1 << 20, 0)
@@ -97,24 +100,29 @@ func _process(delta: float) -> void:
 	var c := GameState.config.grid_cell_m
 	var reason: String
 	if leveling:
-		# Maj + clic droit maintenu : niveler au niveau de la première case (pour poser un objet).
-		var level := drag_level if not is_nan(drag_level) else GameState.dig_snap(GameState.terrain.cell_mean(target_cell))
-		var y := GameState.flatten_level(target_cell, level)
-		reason = _cached_reason("level", func() -> String: return GameState.dig_reason(target_cell, y))
-		_place_mark(Vector3((target_cell.x + 0.5) * c, y, (target_cell.y + 0.5) * c), c, _square_tex)
+		# Maj + clic droit maintenu : aplanir un carré de 3 × 3 m (0.1.15). Le niveau est choisi au
+		# début du geste (celui d'un sol plat voisin s'il est proche, sinon la moyenne du carré)
+		# et gardé pendant tout le glisser : tout le lot finit au même niveau.
+		if is_nan(drag_level):
+			var auto := GameState.auto_level(target_cell)
+			_level_preview = auto
+		var level: float = drag_level if not is_nan(drag_level) else float(_level_preview[0])
+		reason = _cached_reason("level", func() -> String: return String(GameState.level_plan(target_cell, level)[2]))
+		var n := GameState.config.level_brush_cells
+		var off := float(1 - n % 2) * 0.5  # un carré pair est décalé d'une demi-case
+		_place_mark(Vector3((target_cell.x + 0.5 - off) * c, level, (target_cell.y + 0.5 - off) * c), c * n, _square_tex)
 		if is_nan(drag_level):
 			drag_level = level
 			_last_cell = Vector2i(1 << 20, 0)
-		# 0.1.14 (« niveler plus vite ») : on nivelle aussi les cases entre la dernière et celle
-		# visée (un glisser rapide n'en saute plus), au plus LEVEL_CELLS_PER_FRAME par image.
+		# On aplanit aussi les carrés entre le dernier et celui visé (un glisser rapide n'en saute
+		# plus), au plus LEVEL_CELLS_PER_FRAME par image.
 		if _drag_t <= 0.0 and _last_cell != target_cell:
 			for _k in LEVEL_CELLS_PER_FRAME:
 				if _last_cell == target_cell:
 					break
 				var next := target_cell if _last_cell.x >= 1 << 19 else step_toward(_last_cell, target_cell)
 				_last_cell = next
-				if GameState.dig_reason(next, GameState.flatten_level(next, drag_level)) == "":
-					GameState.flatten_cell(next, drag_level)
+				if GameState.flatten_area(next, drag_level):
 					_reasons.clear()
 			_drag_t = GameState.config.dig_drag_interval_s
 	elif shift:
@@ -150,6 +158,10 @@ func _process(delta: float) -> void:
 		_both = []
 		return
 	_decal.modulate = OK_COLOR if reason == "" else BLOCKED_COLOR
+	if leveling and reason == "":
+		var key := "PROMPT_LEVEL_MATCH" if bool(_level_preview[1]) else "PROMPT_LEVEL_NEW"
+		player.prompt = tr(key) % [load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]
+		return
 	player.prompt = tr("PROMPT_DIG") % [load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops] if reason == "" else tr(reason)
 
 

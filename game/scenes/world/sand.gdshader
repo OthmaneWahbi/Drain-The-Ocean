@@ -9,7 +9,9 @@ shader_type spatial;
 //    (`facet_amount`) : on voit encore le low poly sans les gros pans plats.
 render_mode cull_disabled, specular_disabled;
 
-uniform float facet_amount : hint_range(0.0, 1.0) = 0.15;
+uniform float level_cell_m = 1.0;
+uniform float level_line_strength : hint_range(0.0, 1.0) = 0.18;
+uniform float facet_amount : hint_range(0.0, 1.0) = 0.08;
 uniform float grain_strength : hint_range(0.0, 0.5) = 0.12;
 uniform float grain_scale = 9.0;
 uniform float blotch_strength : hint_range(0.0, 0.5) = 0.07;
@@ -100,6 +102,11 @@ void fragment() {
 	col *= 1.0 - marks * shovel_strength * 1.6;
 	// Le sable travaillé est un peu plus frais (un rien plus foncé et plus chaud).
 	col *= mix(vec3(1.0), vec3(0.96, 0.93, 0.88), worked * dry);
+	// 0.1.15 : le sol aplani montre ses carreaux de 1 m (on voit d'un coup d'œil ce qui est prêt
+	// pour poser quelque chose, et que deux lots voisins sont au même niveau).
+	vec2 g = abs(fract(p / level_cell_m + 0.5) - 0.5) * level_cell_m;
+	float tile = (1.0 - smoothstep(0.012, 0.04, min(g.x, g.y))) * smoothstep(0.6, 0.95, worked) * flat_top;
+	col *= 1.0 - tile * level_line_strength;
 	ALBEDO = col;
 	ROUGHNESS = 1.0;
 	// Des facettes à demi lissées : la normale du maillage (lissée) et celle de la facette.
@@ -113,6 +120,8 @@ void fragment() {
 void light() {
 	// Deux paliers adoucis (style cartoon) ; dans l'ombre, un reflet teinté plutôt que du gris.
 	float ndl = dot(NORMAL, LIGHT);
-	float lit = (smoothstep(-0.05, 0.15, ndl) * 0.55 + smoothstep(0.12, 0.4, ndl) * 0.45) * ATTENUATION;
+	// 0.1.15 : une rampe continue, sans palier : avec un soleil bas, une pente très douce
+	// passait d'un coup dans le palier sombre et dessinait des pointes en étoile autour des trous.
+	float lit = smoothstep(-0.2, 0.6, ndl) * ATTENUATION;
 	DIFFUSE_LIGHT += LIGHT_COLOR / PI * (vec3(lit) + shadow_tint * 0.12 * (1.0 - lit));
 }
