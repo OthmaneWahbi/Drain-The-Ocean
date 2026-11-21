@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.48 (nouvelles polices) |
+| Version du document | 0.49 (polices choisies) |
 | Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -944,7 +944,7 @@ Demande d'Othmane (2026-11-21) **[DÉCIDÉ]** : les polices sont un point qu'il 
 
 Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Références** : les jeux « cozy » et cartoon (Animal Crossing, A Short Hike, Slime Rancher) prennent des lettres rondes, épaisses et très lisibles pour le texte, et gardent la fantaisie pour les titres ; les conseils de développeurs (PC Gamer, « How game developers pick their fonts ») : une police « expressive, mais pas trop », qui ne ralentit pas la lecture. 21 polices libres (SIL OFL ou Apache) comparées sur une planche, 12 combinaisons, puis 3 finalistes en jeu (captures dans `polices/` des fichiers du projet).
-- **[PROPOSÉ]** **Le choix** : **DynaPuff** (titres, lettres gonflées cartoon), **Nunito** (texte, arrondie et très lisible ; extra-grasse pour les boutons et le HUD), **Gochi Hand** (prix et tampons, écrits au feutre, plus lisible que Permanent Marker). Les autres finalistes : Bagel Fat One + Nunito + Gochi Hand ; Shrikhand (rétro « tiki ») + Nunito + Caveat Brush.
+- **[DÉCIDÉ]** (Othmane, 2026-11-21, parmi les 3 finalistes) **Le choix** : **DynaPuff** (titres, lettres gonflées cartoon), **Nunito** (texte, arrondie et très lisible ; extra-grasse pour les boutons et le HUD), **Gochi Hand** (prix et tampons, écrits au feutre, plus lisible que Permanent Marker). Les autres finalistes : Bagel Fat One + Nunito + Gochi Hand ; Shrikhand (rétro « tiki ») + Nunito + Caveat Brush.
 - **[PROPOSÉ]** **Tout le jeu** : la police du texte devient la police par défaut du projet, donc aussi les textes 3D (compteurs de la palette, débit des pompes, textes de fin) qui prenaient la police de Godot. Les symboles (♪, ▮, ★, ✓, →) viennent d'un petit morceau de M PLUS Rounded 1c, arrondi comme le reste.
 - **[PROPOSÉ]** Les textes « au feutre » sont agrandis de 30 % (Gochi Hand dessine plus petit) pour garder la même place.
 
