@@ -2,7 +2,8 @@ extends SceneTree
 ## Lanceur de tests en ligne de commande :
 ##   godot --headless --path game -s res://tests/run_tests.gd
 ## Code de sortie 0 si tout passe, 1 sinon.
-## TESTS_ONLY="test_a,test_b" (variable d'environnement) : ne lance que ces méthodes.
+## TESTS_ONLY="test_a,test_b" (variable d'environnement) : ne lance que ces méthodes ;
+## TESTS_FILE="test_soil.gd" : que ce fichier.
 
 const TEST_DIR := "res://tests"
 
@@ -11,10 +12,13 @@ func _initialize() -> void:
 	var total := 0
 	var failed: Array[String] = []
 	var only := OS.get_environment("TESTS_ONLY").split(",", false)
+	var only_file := OS.get_environment("TESTS_FILE")
 	var files := DirAccess.get_files_at(TEST_DIR)
 	files.sort()
 	for file in files:
 		if not (file.begins_with("test_") and file.ends_with(".gd")) or file == "test_case.gd":
+			continue
+		if only_file != "" and file != only_file:
 			continue
 		var script: GDScript = load("%s/%s" % [TEST_DIR, file])
 		# Un fichier de tests qui ne compile pas est un échec, pas un fichier ignoré.

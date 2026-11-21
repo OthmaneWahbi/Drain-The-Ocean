@@ -124,7 +124,7 @@ func _process(delta: float) -> void:
 				_last_cell = next
 				if GameState.flatten_area(next, drag_level):
 					_reasons.clear()
-			_drag_t = GameState.config.dig_drag_interval_s
+			_drag_t = GameState.config.level_drag_interval_s
 	elif shift:
 		# Maj + clic gauche (maintenu) : lisser, à la même hauteur.
 		reason = _cached_reason("smooth", func() -> String: return GameState.smooth_reason(target_vertex))

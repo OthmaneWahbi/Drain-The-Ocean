@@ -221,12 +221,15 @@ RATIONS_STAMP,RATIONS,RATIONS
 HUD_PER_SLOT,max %d par case,max %d per slot
 HUD_PIPES_IN_HAND,%d en main,%d in hand
 HUD_SHOVEL_LOAD,Sable %s/%d,Sand %s/%d
+HUD_SHOVEL_LOAD_EARTH,Terre %s/%d,Earth %s/%d
 TOOL_PELLE,Pelle,Shovel
 PROMPT_GROUND_NOT_FLAT,"Sol pas plat : aplanis-le à la pelle · [R] Tourner · [G] Annuler","Ground not flat: level it with the shovel · [R] Rotate · [G] Cancel"
 PROMPT_DIG,"[Clic] Creuser · [Clic droit] Poser · [Maj + Clic] Lisser · [Maj + Clic droit] Niveler (glisser) · Pelle : %s/%d","[Click] Dig · [Right click] Drop · [Shift + Click] Smooth · [Shift + Right click] Level (drag) · Shovel: %s/%d"
 PROMPT_LEVEL_MATCH,"Aplanir 3 × 3 m au niveau du sol plat d'à côté (glisser pour tout le lot) · Pelle : %s/%d","Level 3 × 3 m to the flat ground next to it (drag for the whole plot) · Shovel: %s/%d"
 PROMPT_LEVEL_NEW,"Aplanir 3 × 3 m à la hauteur moyenne (glisser pour tout le lot) · Pelle : %s/%d","Level 3 × 3 m at the average height (drag for the whole plot) · Shovel: %s/%d"
 PROMPT_DIG_SHOVEL_FULL,"Pelle pleine : pose le sable ailleurs (Clic droit)","Shovel full: drop the sand somewhere else (Right click)"
+PROMPT_SHOVEL_HAS_SAND,"La pelle porte du sable : pose-le d'abord (Clic droit)","The shovel carries sand: drop it first (Right click)"
+PROMPT_SHOVEL_HAS_EARTH,"La pelle porte de la terre : pose-la d'abord (Clic droit)","The shovel carries earth: drop it first (Right click)"
 PROMPT_DIG_SHOVEL_EMPTY,"Pelle vide : creuse d'abord (Clic)","Shovel empty: dig first (Click)"
 PROMPT_DIG_TOO_DEEP,"Trop près de l'eau : on ne creuse pas plus bas","Too close to the water: no digging deeper"
 PROMPT_DIG_TOO_HIGH,Le tas est assez haut ici,The pile is high enough here

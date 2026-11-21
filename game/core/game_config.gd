@@ -261,7 +261,9 @@ extends Resource
 ## Durée de l'animation d'un coup de pelle (le sable glisse vers son nouveau niveau).
 @export var dig_anim_s: float = 0.3
 ## 0.1.15 : la durée de l'animation d'aplanissement (s), d'un seul mouvement doux.
-@export var level_anim_s: float = 0.16
+@export var level_anim_s: float = 0.2
+## 0.1.16 (« un tout petit délai ») : un carré aplani au plus toutes les … s en glissant (avant 0,03 s).
+@export var level_drag_interval_s: float = 0.12
 
 @export_group("Sable (0.1.12)")
 ## Le volume d'une pelletée (m³). 0,25 = une case de 1 m sur 25 cm, comme avant.
@@ -274,7 +276,8 @@ extends Resource
 ## moyenne sous la pelle (au centre ; moins au bord).
 @export var smooth_strength: float = 0.85
 ## Lisser maintenu : une passe toutes les … secondes.
-@export var smooth_repeat_s: float = 0.08
+## 0.1.16 : une passe toutes les 0,2 s (avant 0,08) : l'animation (level_anim_s) a le temps de suivre.
+@export var smooth_repeat_s: float = 0.2
 ## L'océan ne se dessine pas là où le sol d'origine de l'île est plus haut que la mer de
 ## départ + … m (0.1.13 : au-dessus des plus hautes vagues ; un trou n'y montre pas l'eau).
 @export var land_mask_above_sea_m: float = 0.3
@@ -295,6 +298,8 @@ extends Resource
 ## Pente d'éboulement du sable sec (degrés) : plus raide, il glisse (le vrai sable : 30 à 35°).
 @export var sand_repose_deg: float = 34.0
 ## Le sable mouillé (près de l'eau) tient plus raide.
+## 0.1.16 : la terre tient plus raide que le sable (elle se tasse, ses racines la retiennent).
+@export var earth_repose_deg: float = 50.0
 @export var sand_wet_repose_deg: float = 45.0
 ## Jusqu'à combien de mètres au-dessus de l'eau le sable est mouillé.
 @export var sand_wet_band_m: float = 0.3

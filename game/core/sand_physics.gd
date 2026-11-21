@@ -142,7 +142,10 @@ static func _room(h: float, dig: bool, floor_y: float, ceil_y: float) -> float:
 ## si un sommet peut bouger ; ceux de `locked` ne bougent pas non plus (sable tassé à la pelle).
 ## La pente limite est `tan_dry` (sable sec), ou `tan_wet` vers un sommet plus bas que
 ## `wet_below_y` (le sable mouillé tient plus raide). Renvoie les sommets qui ont bougé (un set).
-static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Array, tan_dry: float, tan_wet: float, wet_below_y: float, locked: Dictionary = {}, max_ops: int = 60000) -> Dictionary:
+## 0.1.16 : `land.call(v)` (facultatif) rend Vector2(hauteur d'origine, 1 si terre) : une pente
+## de l'île d'origine tient telle qu'elle est (avant, un coup de pelle sur une dune faisait
+## s'ébouler toute la dune, et son herbe disparaissait), et la terre tient plus raide (`tan_earth`).
+static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Array, tan_dry: float, tan_wet: float, wet_below_y: float, locked: Dictionary = {}, max_ops: int = 60000, land: Callable = Callable(), tan_earth: float = 0.0) -> Dictionary:
 	# 0.1.14 : sur une grille dense autour du geste (tableaux), plus vite qu'avec des dictionnaires
 	# et des appels de fonction à chaque voisin : un trou de 3 m ou un gros tas restent fluides.
 	# Hors de cette fenêtre (RELAX_MARGIN sommets autour des graines), le sable ne bouge pas.
@@ -170,10 +173,18 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 	var off := PackedInt32Array()
 	var lim_dry := PackedFloat64Array()
 	var lim_wet := PackedFloat64Array()
+	var lim_earth := PackedFloat64Array()
 	for k in 16:
 		off.append(N16[k].y * w + N16[k].x)
 		lim_dry.append(tan_dry * N16_DIST[k])
 		lim_wet.append(tan_wet * N16_DIST[k])
+		lim_earth.append(tan_earth * N16_DIST[k])
+	var has_land := land.is_valid()
+	var bs := PackedFloat64Array()  # hauteur d'origine
+	var ea := PackedByteArray()  # 1 : terre
+	if has_land:
+		bs.resize(n)
+		ea.resize(n)
 	var queue := PackedInt32Array()
 	for sd: Vector2i in seeds:
 		var idx := (sd.y - lo.y) * w + (sd.x - lo.x)
@@ -190,7 +201,7 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 		i += 1
 		queued[vi] = 0
 		if st[vi] == 0:
-			_load(vi, w, lo, hs, st, h, read, can_move, locked)
+			_load(vi, w, lo, hs, st, h, read, can_move, locked, land, bs, ea)
 		if st[vi] != 1:
 			continue
 		var vx := vi % w
@@ -204,11 +215,16 @@ static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Arra
 		for k in 16:
 			var ni := vi + off[k]
 			if st[ni] == 0:
-				_load(ni, w, lo, hs, st, h, read, can_move, locked)
+				_load(ni, w, lo, hs, st, h, read, can_move, locked, land, bs, ea)
 			if st[ni] != 1:
 				continue
 			var hn := hs[ni]
-			var d := hv - hn - (lim_wet[k] if hn < wet_below_y else lim_dry[k])
+			var lim := lim_wet[k] if hn < wet_below_y else lim_dry[k]
+			if has_land:
+				if ea[vi] == 1 or ea[ni] == 1:
+					lim = maxf(lim, lim_earth[k])
+				lim = maxf(lim, bs[vi] - bs[ni])
+			var d := hv - hn - lim
 			if d > EPS:
 				ns[cnt] = ni
 				ds[cnt] = d
@@ -251,11 +267,15 @@ const RELAX_MARGIN := 40
 
 
 ## Lit un sommet de la fenêtre de relax() : sa hauteur et s'il peut bouger.
-static func _load(idx: int, w: int, lo: Vector2i, hs: PackedFloat64Array, st: PackedByteArray, h: Dictionary, read: Callable, can_move: Callable, locked: Dictionary) -> void:
+static func _load(idx: int, w: int, lo: Vector2i, hs: PackedFloat64Array, st: PackedByteArray, h: Dictionary, read: Callable, can_move: Callable, locked: Dictionary, land: Callable = Callable(), bs: PackedFloat64Array = PackedFloat64Array(), ea: PackedByteArray = PackedByteArray()) -> void:
 	var v := Vector2i(lo.x + idx % w, lo.y + idx / w)
 	var y: Variant = h.get(v)
 	hs[idx] = float(y) if y != null else float(read.call(v))
 	st[idx] = 1 if (not locked.has(v) and bool(can_move.call(v))) else 2
+	if land.is_valid():
+		var l: Vector2 = land.call(v)
+		bs[idx] = l.x
+		ea[idx] = 1 if l.y > 0.5 else 0
 
 
 ## Adoucir (0.1.15) : après l'éboulement, `passes` passes de diffusion entre voisins (4 directs,

@@ -98,6 +98,8 @@ var has_rake: bool = false
 ## La pelle s'achète au catalogue (0.1.11), et porte `shovel_sand` pelletées de sable.
 var has_shovel: bool = false
 var shovel_sand: float = 0.0
+## 0.1.16 : ce que porte la pelle (TerrainLogic.Soil : sable ou terre ; compte quand elle n'est pas vide).
+var shovel_soil: int = TerrainLogic.Soil.SAND
 ## 0.1.15 : le geste en cours, lu par les vues pendant sand_moved (l'aplanissement s'anime
 ## autrement qu'une pelletée : court, sans rebond).
 enum Gesture { SCOOP, LEVEL }
@@ -214,6 +216,7 @@ func _reset_state() -> void:
 	has_rake = false
 	has_shovel = false
 	shovel_sand = 0.0
+	shovel_soil = TerrainLogic.Soil.SAND
 	toolbar = ToolbarLogic.new(config.toolbar_slots)
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
@@ -1387,7 +1390,19 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 	var reason := _cell_reason(cell, y, _dig_blockers())
 	if reason != "":
 		return reason
-	return _load_reason(dig_scoops(cell, y))
+	var scoops := dig_scoops(cell, y)
+	reason = _load_reason(scoops)
+	if reason != "":
+		return reason
+	return _soil_reason(_cut_soil(_level_heights(TerrainLogic.cell_vertices(cell), y)), scoops)
+
+
+## Les sommets mis à la hauteur `y` (pour _cut_soil).
+func _level_heights(vertices: Array, y: float) -> Dictionary:
+	var out := {}
+	for v: Vector2i in vertices:
+		out[v] = y
+	return out
 
 
 ## La pelle peut-elle prendre (> 0) ou donner (< 0) ces pelletées ? ("" si oui)
@@ -1456,6 +1471,11 @@ func level_plan(cell: Vector2i, y: float) -> Array:
 		cells.append(c)
 		for v in mine:
 			seen[v] = true
+	if not cells.is_empty():
+		var soil_reason := _soil_reason(_cut_soil(_level_heights(seen.keys(), y)), scoops)
+		if soil_reason != "":
+			var none: Array[Vector2i] = []
+			return [none, 0.0, soil_reason]
 	return [cells, scoops, "" if not cells.is_empty() else first]
 
 
@@ -1521,8 +1541,11 @@ func _flatten_cells(cells: Array, y: float, scoops: float) -> bool:
 		scoops += extra * f
 	sum /= cells.size()
 	var center := Vector3(sum.x * config.grid_cell_m, y, sum.y * config.grid_cell_m)
+	# Ce qui est raboté comble les creux ; ce que la pelle donne est ce qu'elle porte.
+	var cut := _cut_soil(target)
+	var deposit := shovel_soil if scoops < -0.01 or cut < 0 else cut
 	sand_gesture = Gesture.LEVEL
-	var ok := _move_sand(center, target, scoops, locked, ctx)
+	var ok := _move_sand(center, target, scoops, locked, ctx, deposit, cut)
 	sand_gesture = Gesture.SCOOP
 	return ok
 
@@ -1572,7 +1595,30 @@ func scoop_reason(v: Vector2i, dig: bool) -> String:
 	var plan := _plan_scoop(v, dig, ctx)
 	if float(plan.volume) < 0.05 * config.dig_scoop_m3:
 		return "PROMPT_DIG_TOO_DEEP" if dig else "PROMPT_DIG_TOO_HIGH"
+	if dig:
+		return _soil_reason(terrain.soil(v), 1.0)
 	return ""
+
+
+## 0.1.16 : la matière qu'un geste enlève (TerrainLogic.Soil), celle de la plupart du volume
+## enlevé (`heights` : les nouvelles hauteurs) ; -1 si rien ne descend.
+func _cut_soil(heights: Dictionary) -> int:
+	var amount := [0.0, 0.0]
+	for k: Vector2i in heights:
+		var d := terrain.vertex(k.x, k.y).y - float(heights[k])
+		if d > 0.0:
+			amount[terrain.soil(k)] += d
+	if amount[0] <= 0.0 and amount[1] <= 0.0:
+		return -1
+	return TerrainLogic.Soil.EARTH if amount[1] > amount[0] else TerrainLogic.Soil.SAND
+
+
+## 0.1.16 : la pelle ne mélange pas : si elle porte du sable, elle ne prend pas de terre (et
+## l'inverse). "" si la matière `cut` peut aller sur la pelle (`scoops` > 0 : on en prend).
+func _soil_reason(cut: int, scoops: float) -> String:
+	if scoops <= 0.01 or cut < 0 or shovel_sand <= 0.05 or cut == shovel_soil:
+		return ""
+	return "PROMPT_SHOVEL_HAS_EARTH" if shovel_soil == TerrainLogic.Soil.EARTH else "PROMPT_SHOVEL_HAS_SAND"
 
 
 ## Creuse (ou pose) une pelletée autour du sommet `v`, puis laisse le sable s'ébouler.
@@ -1585,7 +1631,10 @@ func shovel_scoop(v: Vector2i, dig: bool) -> bool:
 	var scoops := float(plan.volume) / config.dig_scoop_m3
 	var p := TerrainLogic.vertex_xz(v)
 	var center := Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y)
-	return _move_sand(center, plan.heights, scoops if dig else -scoops, {}, ctx)
+	if dig:
+		# 0.1.16 : on prend la matière du sommet visé (le centre de la pelletée, le plus creusé).
+		return _move_sand(center, plan.heights, scoops, {}, ctx, -1, terrain.soil(v))
+	return _move_sand(center, plan.heights, -scoops, {}, ctx, shovel_soil)
 
 
 ## Lisser (Maj + clic gauche, 0.1.12, demande d'Othmane) : le sable sous la brosse se rapproche
@@ -1615,7 +1664,12 @@ func smooth_sand(v: Vector2i) -> bool:
 			weights.erase(k)
 	var target := SandPhysics.smooth(heights, weights, config.smooth_strength, TerrainLogic.FLAT_TOLERANCE * 0.75)
 	var p := TerrainLogic.vertex_xz(v)
-	return _move_sand(Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y), target, 0.0, {}, ctx)
+	# Ce qui est raboté comble les creux (de la terre reste de la terre).
+	# 0.1.16 : animé comme l'aplanissement (doux, sans rebond, le temps d'une passe).
+	sand_gesture = Gesture.LEVEL
+	var ok := _move_sand(Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y), target, 0.0, {}, ctx, _cut_soil(target))
+	sand_gesture = Gesture.SCOOP
+	return ok
 
 
 ## Ce que ferait une pelletée : {"heights": nouvelles hauteurs de la brosse, "volume": m³}.
@@ -1662,7 +1716,9 @@ func _vertex_movable(v: Vector2i, ctx: Dictionary) -> bool:
 
 ## Pose les hauteurs `target` (Vector2i -> m), laisse le sable s'ébouler autour, met la pelle à
 ## jour (`scoops` pris > 0, posés < 0), et prévient les vues. Vrai si le sol a changé.
-func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dictionary, ctx: Dictionary = {}) -> bool:
+## 0.1.16 : `deposit` : la matière posée sur les sommets qui montent (-1 : rien de neuf) ;
+## `taken` : celle qui va sur la pelle quand on en prend (elle devient ce que porte la pelle).
+func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dictionary, ctx: Dictionary = {}, deposit: int = -1, taken: int = -1) -> bool:
 	if ctx.is_empty():
 		ctx = _sand_context()
 	var h := target.duplicate()
@@ -1674,7 +1730,9 @@ func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dict
 		for d in SandPhysics.N8:
 			seeds.append(k + d)
 	var wet := water_level_y() + config.sand_wet_band_m
-	var slid := SandPhysics.relax(h, read, can_move, seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked)
+	var land := func(k: Vector2i) -> Vector2: return Vector2(terrain.base_vertex(k.x, k.y).y, 1.0 if terrain.soil(k) == TerrainLogic.Soil.EARTH else 0.0)
+	var tan_earth := tan(deg_to_rad(config.earth_repose_deg))
+	var slid := SandPhysics.relax(h, read, can_move, seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked, 60000, land, tan_earth)
 	# 0.1.15 : un bord de trou ou de tas arrondi (plus de pointes en étoile ni leurs ombres).
 	# Seul l'éboulement est lissé : le fond creusé (ou le sommet posé) garde sa hauteur, sinon le
 	# lissage rebouche le trou à chaque pelletée.
@@ -1687,7 +1745,7 @@ func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dict
 	# Le lissage peut raidir un peu la pente contre le fond (ou le sommet) qu'il ne touche pas :
 	# un dernier éboulement, depuis les sommets lissés et ceux du geste, garde la pente limite.
 	if not soft.is_empty():
-		var again := SandPhysics.relax(h, read, can_move, soft.keys() + seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked)
+		var again := SandPhysics.relax(h, read, can_move, soft.keys() + seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked, 60000, land, tan_earth)
 		for k: Vector2i in again:
 			slid[k] = true
 	_drop_tiny_moves(h, slid, target, read)
@@ -1702,7 +1760,10 @@ func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dict
 	var changed := terrain.set_vertices(after)
 	if changed.is_empty():
 		return false
+	terrain.update_soil(before, after, deposit)
 	if absf(scoops) > 0.0001:
+		if scoops > 0.0 and taken >= 0 and shovel_sand <= 0.05:
+			shovel_soil = taken
 		shovel_sand = clampf(shovel_sand + scoops, 0.0, config.shovel_capacity_scoops)
 		shovel_changed.emit()
 	var touched := {}
@@ -1865,10 +1926,11 @@ func to_dict() -> Dictionary:
 		"pipe_stock": pipe_stock,
 		"terrain": terrain.edits_to_array(),
 		"terrain_sub": TerrainLogic.SUB,
+		"soil_cover": terrain.cover_to_array(),
 		"auto_pumped_l": auto_pumped_l,
 		"demo_done": demo_done,
 		"depot": {"position": _v2a(depot.position), "rotation_deg": item_rotation(depot)},
-		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "has_shovel": has_shovel, "shovel_sand": shovel_sand, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
+		"upgrades": {"unlocked_tier": unlocked_tier, "bucket_unit_l": bucket_unit_l, "bucket_count": bucket_count, "carry_capacity": carry_capacity, "speed_multiplier": speed_multiplier, "has_rake": has_rake, "has_shovel": has_shovel, "shovel_sand": shovel_sand, "shovel_soil": shovel_soil, "tool": toolbar.selected, "toolbar": Array(toolbar.slots)},
 		"deliveries_count": _deliveries_count,
 		"play_time_s": play_time_s,
 		"wakeups": wakeups,
@@ -1882,6 +1944,7 @@ func load_dict(data: Dictionary) -> void:
 	_reset_state()
 	# Le sable travaillé d'abord : les objets posés dessus en dépendent.
 	terrain.edits_from_array(data.get("terrain", []), int(data.get("terrain_sub", 1)))
+	terrain.cover_from_array(data.get("soil_cover", []))
 	if not terrain.edits.is_empty():
 		terrain_changed.emit(terrain.edits.keys() + terrain.pinned_vertices())
 	ocean.load_dict(data.get("ocean", {}))
@@ -1895,6 +1958,7 @@ func load_dict(data: Dictionary) -> void:
 	# Avant 0.1.11, la pelle était donnée : une sauvegarde qui l'avait en barre la garde.
 	has_shovel = bool(up.get("has_shovel", Array(up.get("toolbar", [])).has("pelle")))
 	shovel_sand = clampf(float(up.get("shovel_sand", 0.0)), 0.0, config.shovel_capacity_scoops)
+	shovel_soil = TerrainLogic.Soil.EARTH if int(up.get("shovel_soil", 0)) == TerrainLogic.Soil.EARTH else TerrainLogic.Soil.SAND
 	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))

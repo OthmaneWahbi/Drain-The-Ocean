@@ -63,6 +63,11 @@ const FLAT_TOLERANCE := 0.02
 var edits: Dictionary = {}
 ## Les sommets non travaillés déjà calculés (la forme idéale ne change jamais).
 var _vcache: Dictionary = {}
+## 0.1.16 : la terre. Les zones vertes de l'île sont de la terre (herbe dessus), le reste du sable.
+## `cover` : la matière en surface d'un sommet quand elle n'est pas celle d'origine (Vector2i ->
+## Soil), par exemple du sable posé sur de la terre. Sauvegardé avec la partie.
+var cover: Dictionary = {}
+var _soil_cache: Dictionary = {}
 ## 0.1.11 : les sommets voisins d'un sommet travaillé ne sont plus décalés au hasard (ils gardent
 ## la hauteur naturelle). Sans ça, le pied d'une pente de pelle zigzague et ses facettes forment
 ## des dents de scie. Se déduit toujours de `edits` (rien à sauvegarder).
@@ -170,6 +175,101 @@ func inland(x: float, z: float) -> bool:
 	return base_height(x, z) > inland_above_y
 
 
+## 0.1.16 : la matière du sol d'un sommet. La terre se creuse, se porte et se pose comme le
+## sable ; elle n'a pas la même couleur, et l'herbe ne pousse que sur de la terre jamais travaillée.
+enum Soil { SAND, EARTH }
+
+## La terre retournée (sans herbe) et les deux herbes (dunes, touffes sèches des terrasses).
+const EARTH := Color(0.42, 0.3, 0.19)
+const GRASS_GREEN := Color(0.34, 0.5, 0.2)
+const GRASS_DRY := Color(0.44, 0.54, 0.24)
+
+
+## Le sommet (i, j) tel que l'île l'a créé (sans la pelle).
+func base_vertex(i: int, j: int) -> Vector3:
+	var key := Vector2i(i, j)
+	var cached: Variant = _vcache.get(key)
+	if cached != null:
+		return cached
+	var x := i * VERTEX_STEP
+	var z := j * VERTEX_STEP
+	if absi(i) < GRID_HALF and absi(j) < GRID_HALF:
+		x += (hash01(i, j, 1) * 2.0 - 1.0) * JITTER * VERTEX_STEP
+		z += (hash01(i, j, 2) * 2.0 - 1.0) * JITTER * VERTEX_STEP
+	var v := Vector3(x, base_height(x, z), z)
+	_vcache[key] = v
+	return v
+
+
+## La matière d'origine d'un sommet : de la terre là où l'île était verte (le haut des dunes, et
+## des plaques de touffes sèches sur les terrasses), du sable ailleurs. Ne dépend que de l'île
+## d'origine : creuser ou poser à côté ne la change jamais (0.1.16 : avant, la couleur suivait la
+## hauteur et la pente actuelles, et le vert disparaissait au hasard autour d'un coup de pelle).
+## Renvoie [Soil, herbe sèche ?].
+func base_soil_info(v: Vector2i) -> Array:
+	var cached: Variant = _soil_cache.get(v)
+	if cached != null:
+		return cached
+	var c := base_vertex(v.x, v.y)
+	var n := (base_vertex(v.x, v.y + 1) - base_vertex(v.x, v.y - 1)).cross(base_vertex(v.x + 1, v.y) - base_vertex(v.x - 1, v.y)).normalized()
+	var sl := 1.0 - absf(n.y)
+	var out := [Soil.SAND, false]
+	if c.y > ground_y + 1.4 and sl < 0.3:
+		out = [Soil.EARTH, false]
+	elif c.y > ground_y + 0.9 and sl < 0.12 and hash01(floori(v.x / 2.0), floori(v.y / 2.0), 11) > 0.6:
+		out = [Soil.EARTH, true]
+	_soil_cache[v] = out
+	return out
+
+
+func base_soil(v: Vector2i) -> int:
+	return int(base_soil_info(v)[0])
+
+
+## La matière en surface d'un sommet (celle qu'on creuse).
+func soil(v: Vector2i) -> int:
+	var c: Variant = cover.get(v)
+	return int(c) if c != null else base_soil(v)
+
+
+## Vrai si l'herbe pousse sur ce sommet : de la terre d'origine, jamais travaillée.
+func grassy(v: Vector2i) -> bool:
+	return not edits.has(v) and not cover.has(v) and base_soil(v) == Soil.EARTH
+
+
+## Change la matière en surface après un geste : les sommets qui montent reçoivent `deposit`
+## (ce qui a été posé, -1 : rien) ; ceux qui descendent sous leur hauteur d'origine retrouvent la
+## matière d'origine (on a creusé à travers ce qui avait été posé).
+func update_soil(before: Dictionary, after: Dictionary, deposit: int) -> void:
+	for v: Vector2i in after:
+		var b := float(before.get(v, after[v]))
+		var a := float(after[v])
+		if a > b + 0.002 and deposit >= 0:
+			if deposit == base_soil(v) and a <= base_vertex(v.x, v.y).y + 0.02:
+				cover.erase(v)
+			else:
+				cover[v] = deposit
+		elif a < b - 0.002 and a <= base_vertex(v.x, v.y).y + 0.005:
+			cover.erase(v)
+
+
+## La couverture, pour la sauvegarde : [[i, j, soil], …].
+func cover_to_array() -> Array:
+	var out := []
+	for v: Vector2i in cover:
+		out.append([v.x, v.y, int(cover[v])])
+	return out
+
+
+func cover_from_array(a: Variant) -> void:
+	cover.clear()
+	if not a is Array:
+		return
+	for e in a:
+		if e is Array and e.size() >= 3 and int(e[2]) in [Soil.SAND, Soil.EARTH]:
+			cover[Vector2i(int(e[0]), int(e[1]))] = int(e[2])
+
+
 ## Les catégories de sol (0.1.12 : le sable sec se nuance ensuite sommet par sommet).
 enum Ground { GRASS, DRY_GRASS, DRY_SAND, WET_SAND, UNDERWATER, SEABED }
 
@@ -244,17 +344,7 @@ func vertex(i: int, j: int) -> Vector3:
 		return Vector3(i * VERTEX_STEP, float(edits[key]), j * VERTEX_STEP)
 	if _pinned.has(key):
 		return Vector3(i * VERTEX_STEP, base_height(i * VERTEX_STEP, j * VERTEX_STEP), j * VERTEX_STEP)
-	var cached: Variant = _vcache.get(key)
-	if cached != null:
-		return cached
-	var x := i * VERTEX_STEP
-	var z := j * VERTEX_STEP
-	if absi(i) < GRID_HALF and absi(j) < GRID_HALF:
-		x += (hash01(i, j, 1) * 2.0 - 1.0) * JITTER * VERTEX_STEP
-		z += (hash01(i, j, 2) * 2.0 - 1.0) * JITTER * VERTEX_STEP
-	var v := Vector3(x, base_height(x, z), z)
-	_vcache[key] = v
-	return v
+	return base_vertex(i, j)
 
 
 ## Les deux triangles de la petite case dont le coin bas est le sommet (i, j) : 6 sommets, dans l'ordre.
@@ -349,18 +439,12 @@ func slope(x: float, z: float, d := 0.3) -> float:
 	return 1.0 - n.y
 
 
-## Vrai si la facette sous (x, z) est peinte en herbe : exactement la règle de couleur des
-## facettes (hauteur moyenne et pente du triangle), et jamais sur du sable travaillé.
+## Vrai si l'herbe pousse en (x, z) : les 4 sommets de la petite case (0.1.16 : la terre d'origine
+## jamais travaillée, voir grassy).
 func is_grass(x: float, z: float) -> bool:
-	var f := facet(x, z)
-	if f.is_empty() or cell_worked(cell_of(x, z)):
-		return false
-	var a: Vector3 = f[0]
-	var b: Vector3 = f[1]
-	var c: Vector3 = f[2]
-	var n := (b - a).cross(c - a).normalized()
-	var y := (a.y + b.y + c.y) / 3.0
-	return y > ground_y + 1.4 and 1.0 - absf(n.y) < 0.3
+	var i := floori(x / VERTEX_STEP)
+	var j := floori(z / VERTEX_STEP)
+	return grassy(Vector2i(i, j)) and grassy(Vector2i(i + 1, j)) and grassy(Vector2i(i, j + 1)) and grassy(Vector2i(i + 1, j + 1))
 
 
 ## Vrai si (x, z) et tout un petit disque autour sont dans l'herbe (une fleur ne déborde pas
@@ -507,6 +591,7 @@ func clear_edits() -> Array:
 	var touched: Array = edits.keys() + _pinned.keys()
 	edits.clear()
 	_pinned.clear()
+	cover.clear()
 	return touched
 
 
