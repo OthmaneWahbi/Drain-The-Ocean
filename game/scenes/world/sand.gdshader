@@ -22,6 +22,12 @@ uniform float sea_y = 0.0;
 // fort que la lumière du soleil (le sable n'est plus « brûlé » en blanc-jaune). 0.1.12 : un peu
 // plus clair et plus saturé (une plage tropicale).
 uniform float exposure = 0.8;
+// 0.1.13 : le même sable sur un objet (la motte, le tas sur la pelle) : une couleur fixe (`tint`,
+// le maillage n'a pas de couleurs) et le motif lié à l'objet (il ne « glisse » pas quand l'objet
+// bouge), sans rides ni traces de pelle.
+uniform bool on_object = false;
+uniform vec4 tint = vec4(1.0);
+uniform float object_pattern_scale = 4.0;
 
 varying vec3 world_pos;
 varying vec4 facet_color;
@@ -62,6 +68,11 @@ float speckles(vec2 p, float scale, float density) {
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	facet_color = COLOR;
+	if (on_object) {
+		// Le motif suit l'objet ; ni rides ni traces de pelle, et du sable sec.
+		world_pos = vec3(VERTEX.x + VERTEX.y * 0.7, 10.0, VERTEX.z - VERTEX.y * 0.4) * object_pattern_scale;
+		facet_color = vec4(tint.rgb, 0.0);
+	}
 }
 
 void fragment() {
@@ -76,7 +87,7 @@ void fragment() {
 	// Les rides du vent : des vagues un peu tordues par le bruit, sur le sable sec non travaillé.
 	float warp = value_noise(p * 0.6) * 2.4;
 	float ripple = sin((p.x * 0.8 + p.y * 0.6) * ripple_scale + warp * 2.0);
-	ripple = smoothstep(0.55, 0.95, ripple) * dry * (1.0 - worked);
+	ripple = smoothstep(0.55, 0.95, ripple) * dry * (1.0 - worked) * (on_object ? 0.0 : 1.0);
 	// Les traces de pelle : de petites bandes parallèles, dans chaque case travaillée.
 	// (sur le dessus plat des cases seulement : pas de rayures dans les pentes).
 	vec3 world_n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
