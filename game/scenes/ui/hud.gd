@@ -37,7 +37,7 @@ func _ready() -> void:
 	GameState.bucket_changed.connect(refresh_toolbar)  # l'eau du seau, dans sa case
 	GameState.carried_changed.connect(refresh_toolbar)  # les quantités portées dans les cases
 	GameState.network_changed.connect(refresh_toolbar)  # les tuyaux en main (0.1.6)
-	GameState.shovel_changed.connect(refresh_toolbar)  # le sable sur la pelle (0.1.13)
+	GameState.shovel_changed.connect(_refresh_shovel_slot)  # le sable sur la pelle (0.1.13)
 	refresh_toolbar()
 	_refresh_ocean()
 	_refresh_items()
@@ -148,6 +148,15 @@ func refresh_toolbar() -> void:
 		style.shadow_offset = Vector2(3, 3)
 		toolbar_slots[i].add_theme_stylebox_override("panel", style)
 		toolbar_slots[i].modulate = Color.WHITE if available and tool != "" else Color(1, 1, 1, 0.55)
+
+
+## 0.1.14 : seul le texte de la case de la pelle change (refaire toute la barre à chaque pelletée
+## coûtait ~0,4 ms).
+func _refresh_shovel_slot() -> void:
+	var i := GameState.toolbar.index_of("pelle")
+	if i < 0 or i >= toolbar_slots.size():
+		return
+	_toolbar_labels[i].text = "%d\n%s\n%s" % [i + 1, slot_text("pelle"), tr("HUD_SHOVEL_LOAD") % [ShovelTool.load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops]]
 
 
 ## Le style du catalogue (UiTheme) : textes blancs cernés d'encre, en Fredoka ; l'océan restant

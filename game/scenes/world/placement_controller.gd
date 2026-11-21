@@ -299,7 +299,8 @@ static func draped_y(terrain: Object, water_y: float, floor_y: float, x: float, 
 
 
 func _y(x: float, z: float, lift: float) -> float:
-	return draped_y(GameState.terrain, GameState.water_level_y(), _floor_y, x, z, lift)
+	var water := GameState.water_level_y() if GameState.sea_at(x, z) else -INF
+	return draped_y(GameState.terrain, water, _floor_y, x, z, lift)
 
 
 ## Un rectangle posé sur le relief, en carreaux de DRAPE_STEP (rentré de 2 cm sur chaque bord).

@@ -175,6 +175,7 @@ func setup(config_override: GameConfig = null) -> void:
 	catalog = load(CATALOG_PATH) as CatalogDatabase
 	# La forme de l'île (0.1.1) : la même pour le rendu, la collision et les décors.
 	terrain = TerrainLogic.new(config.ground_y, config.build_radius_m, config.seabed_y)
+	terrain.inland_above_y = config.sea_level_y + config.land_mask_above_sea_m
 	dialogues = DialogueLogic.load_file()
 	rng.randomize()
 	new_game()
@@ -1215,7 +1216,11 @@ func ground_level(rect: Rect2) -> float:
 				level = l
 			elif absf(l - level) > 0.03:
 				return NAN
-	if is_nan(level) or level < water_level_y() + config.dig_min_above_water_m:
+	if is_nan(level):
+		return NAN
+	# 0.1.14 : au fond d'un trou à l'intérieur de l'île, pas d'eau : on peut y poser.
+	var mid := rect.get_center()
+	if level < water_level_y() + config.dig_min_above_water_m and sea_at(mid.x, mid.y):
 		return NAN
 	return level
 
@@ -1279,9 +1284,25 @@ func dig_snap(y: float) -> float:
 	return config.ground_y + roundf((y - config.ground_y) / step) * step
 
 
-## Le plus bas où l'on creuse (jamais trop près de l'eau) et le plus haut où l'on entasse.
+## Le plus bas où l'on creuse au bord de l'eau (jamais trop près de l'eau) et le plus haut où
+## l'on entasse.
 func dig_floor_y() -> float:
 	return water_level_y() + config.dig_min_above_water_m
+
+
+## 0.1.14 : le plus bas où l'on creuse en (x, z) : à l'intérieur de l'île, bien plus profond
+## (`dig_max_below_sea_m` sous la mer de départ) ; au bord de l'eau, comme avant.
+func dig_floor_at(x: float, z: float) -> float:
+	var f := dig_floor_y()
+	if terrain.inland(x, z):
+		f = minf(f, config.sea_level_y - config.dig_max_below_sea_m)
+	return f
+
+
+## Vrai si la mer est au-dessus de ce point quand il est sous son niveau (hors de l'intérieur de
+## l'île, où elle est cachée) : on y nage, on y puise.
+func sea_at(x: float, z: float) -> bool:
+	return terrain == null or not terrain.inland(x, z)
 
 
 func dig_ceil_y() -> float:
@@ -1291,7 +1312,8 @@ func dig_ceil_y() -> float:
 ## Le niveau d'aplanissement d'une case (au niveau `ref`, ou au sien), arrondi au cran, borné.
 func flatten_level(cell: Vector2i, ref := NAN) -> float:
 	var y := dig_snap(ref) if not is_nan(ref) else dig_snap(terrain.cell_mean(cell))
-	var lo := dig_snap(dig_floor_y() + config.dig_step_m * 0.49)
+	var c := config.grid_cell_m
+	var lo := dig_snap(dig_floor_at((cell.x + 0.5) * c, (cell.y + 0.5) * c) + config.dig_step_m * 0.49)
 	return clampf(y, lo, dig_ceil_y())
 
 
@@ -1313,6 +1335,11 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 	var reason := _spot_reason(center)
 	if reason != "":
 		return reason
+	# 0.1.14 : chaque coin de la case aussi (une case à cheval sur le rivage touchait la mer).
+	for v in TerrainLogic.cell_corners(cell):
+		reason = _spot_reason(TerrainLogic.vertex_xz(v))
+		if reason != "":
+			return reason
 	var blockers := _dig_blockers()
 	if _cell_blocked(cell, blockers):
 		return "PROMPT_DIG_BLOCKED"
@@ -1476,7 +1503,11 @@ func _plan_scoop(v: Vector2i, dig: bool, ctx: Dictionary) -> Dictionary:
 			weights.erase(k)
 	var room := config.shovel_capacity_scoops - shovel_sand if dig else shovel_sand
 	var volume := minf(1.0, maxf(room, 0.0)) * config.dig_scoop_m3
-	return SandPhysics.carve(heights, weights, volume, dig, dig_floor_y(), dig_ceil_y())
+	var floors := {}
+	for k: Vector2i in heights:
+		var p := TerrainLogic.vertex_xz(k)
+		floors[k] = dig_floor_at(p.x, p.y)
+	return SandPhysics.carve(heights, weights, volume, dig, dig_floor_y(), dig_ceil_y(), floors)
 
 
 ## Ce qu'il faut pour savoir quels sommets le sable peut bouger (calculé une fois par geste).

@@ -160,6 +160,16 @@ static func terrace(h: float, step: float) -> float:
 	return (level + smoothstep(0.45, 1.0, frac)) * step
 
 
+## 0.1.14 : l'intérieur de l'île (le sol d'origine à plus de `inland_above_y`) n'a jamais la mer
+## au-dessus de lui, même creusé sous son niveau : la mer y est cachée (OceanView), on n'y nage
+## pas, et on peut y creuser profond. GameState règle ce seuil (mer de départ + marge).
+var inland_above_y := 0.3
+
+
+func inland(x: float, z: float) -> bool:
+	return base_height(x, z) > inland_above_y
+
+
 ## Les catégories de sol (0.1.12 : le sable sec se nuance ensuite sommet par sommet).
 enum Ground { GRASS, DRY_GRASS, DRY_SAND, WET_SAND, UNDERWATER, SEABED }
 
@@ -189,24 +199,27 @@ static func dry_sand_color(slope: float) -> Color:
 	return DRY_SAND.lerp(SLOPE_SAND, smoothstep(0.15, 0.5, slope))
 
 
+## La couleur d'une catégorie de sol (la pente nuance le sable sec).
+static func kind_color(kind: int, slope: float) -> Color:
+	match kind:
+		Ground.GRASS:
+			return Color(0.34, 0.5, 0.2)
+		Ground.DRY_GRASS:
+			return Color(0.44, 0.54, 0.24)
+		Ground.DRY_SAND:
+			return dry_sand_color(slope)
+		Ground.WET_SAND:
+			return Color(0.56, 0.45, 0.27)  # sable mouillé
+		Ground.UNDERWATER:
+			return Color(0.5, 0.45, 0.29)  # sable sous l'eau
+	return Color(0.36, 0.38, 0.30)  # fond marin
+
+
 ## Couleur d'une facette selon sa hauteur moyenne, sa pente (0 plat … 1 vertical) et un peu de hasard.
 ## `vary` faux : la couleur de la catégorie seule (0.1.11 : le terrain varie par sommet, en douceur,
 ## au lieu d'un damier de facettes).
 func color(y: float, slope: float, jitter: float, sea_y: float = 0.0, vary: bool = true) -> Color:
-	var c: Color
-	match ground_kind(y, slope, jitter, sea_y):
-		Ground.GRASS:
-			c = Color(0.34, 0.5, 0.2)
-		Ground.DRY_GRASS:
-			c = Color(0.44, 0.54, 0.24)
-		Ground.DRY_SAND:
-			c = dry_sand_color(slope)
-		Ground.WET_SAND:
-			c = Color(0.56, 0.45, 0.27)  # sable mouillé
-		Ground.UNDERWATER:
-			c = Color(0.5, 0.45, 0.29)  # sable sous l'eau
-		_:
-			c = Color(0.36, 0.38, 0.30)  # fond marin
+	var c := kind_color(ground_kind(y, slope, jitter, sea_y), slope)
 	if not vary:
 		return c
 	var k := 1.0 + jitter * 0.06

@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.44 (0.1.13 : finitions du sable) |
+| Version du document | 0.45 (0.1.14 : le sable, cœur du jeu) |
 | Date | 2026-11-20 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -904,6 +904,16 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **L'eau cachée** : la mer n'est plus dessinée au-dessus de l'île d'origine là où le sol était à plus de 30 cm au-dessus de la mer. Avant, la crête des vagues (jusqu'à 26 cm) passait au-dessus du fond des trous (creusés jusqu'à 20 cm au-dessus de l'eau). Au bord de l'eau (sol de départ à moins de 30 cm), un trou peut encore se remplir d'eau, comme sur une vraie plage.
 - **[PROPOSÉ]** **Poser ou creuser : un texte clair** : la marque est verte si l'un des deux clics marche, et le texte dit ce qui empêche l'autre (« Pelle vide », « Pelle pleine », « Trop profond »…). Avant, il ne parlait que de creuser (« Pelle pleine » en rouge alors que poser marchait). Un coquillage ou un objet devant le sable ne bloque plus la visée.
 - **[PROPOSÉ]** **Les bords nivelés** : autour d'une case nivelée, deux rangées de sommets (1 m) se fondent en rampe douce vers le sable autour (au lieu d'une marche). Le sable de la rampe est compté (pris ou posé sur la pelle), et la rampe est plus petite si la pelle n'a pas la place ou pas assez de sable. Les traces de pelle et la teinte du sable travaillé s'effacent en douceur au bord de la case.
+
+### 19.19 Version 0.1.14 : le sable, cœur du jeu
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]**, après avoir essayé la 0.1.13 (« bien mieux ») : creuser et façonner le sable doit devenir **une grande partie de la façon dont le joueur construit son île**, donc très bon et amusant. À corriger : le sable posé **devient vert** à partir d'une certaine hauteur ; on ne peut **pas creuser assez profond** ; creuser, poser et niveler **font ramer** le jeu (« ça doit être parfait, ce sont des gestes répétés très souvent ») ; **niveler plus vite**.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Creuser profond** : à l'intérieur de l'île (là où le sol d'origine est à plus de 30 cm au-dessus de la mer), on creuse jusqu'à **3 m sous le niveau de départ de la mer** (avant : 20 cm au-dessus de l'eau, soit 30 cm de trou sur le plateau). Il n'y a pas de mer dans ces trous (elle y est cachée), on n'y nage pas et on peut poser des objets au fond, sur une case nivelée. Au bord de la mer, le plancher reste juste au-dessus de l'eau. Le fond d'un trou profond est du sable humide (plus foncé), qui tient plus raide (45°). On entasse jusqu'à **4 m** au-dessus du sol de l'île (avant 2,5 m).
+- **[PROPOSÉ]** **Le sable reste du sable** : du sable travaillé à la pelle n'est jamais dessiné en herbe, quelle que soit sa hauteur.
+- **[PROPOSÉ]** **Fluide** : un geste de pelle coûte environ 3 ms (avant ~60 ms, plus ~27 ms à la fin de l'animation) ; seules les cases touchées sont redessinées, juste après le geste et étalées sur les images suivantes ; la queue d'un éboulement (quelques millimètres) suit un peu après.
+- **[PROPOSÉ]** **Niveler plus vite** : en glissant (Maj + clic droit), toutes les cases traversées sont nivelées (plus de case sautée quand on va vite), jusqu'à deux par image ; une case toutes les 0,03 s au plus (avant 0,08 s). Lisser (Maj + clic gauche) va deux fois plus vite (une passe toutes les 0,08 s, plus forte).
 
 ## 20. Glossaire
 

@@ -25,10 +25,37 @@ const JUNCTIONS := {
 
 func _ready() -> void:
 	GameState.network_changed.connect(rebuild)
-	GameState.item_moved.connect(func(_it): rebuild())
+	# 0.1.14 : un coquillage que le sable déplace ne refait pas les tuyaux (saccade à la pelle).
+	GameState.item_moved.connect(_on_item_moved)
 	GameState.game_reset.connect(rebuild)
-	GameState.terrain_changed.connect(func(_c): rebuild())  # les piquets suivent le sable (0.1.10)
+	GameState.terrain_changed.connect(_on_terrain_changed)  # les piquets suivent le sable (0.1.10)
 	rebuild()
+
+
+func _on_item_moved(item: Dictionary) -> void:
+	if not GameState.pickups.has(item):
+		rebuild()
+
+
+## 0.1.14 : on ne refait les tuyaux que si le sable a bougé sous l'un d'eux (avant : à chaque
+## coup de pelle, partout sur l'île, une saccade quand il y a beaucoup de tuyaux).
+func _on_terrain_changed(corners: Array) -> void:
+	if GameState.pipes.is_empty():
+		return
+	if pipes_touched(GameState.pipes, corners):
+		rebuild()
+
+
+## Vrai si un de ces sommets touche la case d'un tuyau (statique, pour les tests).
+static func pipes_touched(pipes: Dictionary, corners: Array) -> bool:
+	var cells := {}
+	for p: Vector3i in pipes:
+		cells[Vector2i(p.x, p.z)] = true
+	for v: Vector2i in corners:
+		for c in TerrainLogic.cells_of_vertex(v):
+			if cells.has(c):
+				return true
+	return false
 
 
 func rebuild() -> void:

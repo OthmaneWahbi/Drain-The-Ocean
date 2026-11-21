@@ -15,6 +15,11 @@ extends Node3D
 ## (scoop_reason, shovel_scoop, dig_reason, flatten_cell). L'animation est dans SandFx et TerrainView.
 
 const OK_COLOR := Color(0.3, 0.95, 0.35, 0.9)
+## Cases nivelées au plus par image pendant un glisser (0.1.14).
+const LEVEL_CELLS_PER_FRAME := 2
+## Les raisons (« Pelle pleine »…) sont gardées ce temps-là tant que rien ne change (0.1.14 : les
+## recalculer à chaque image coûtait ~0,6 ms).
+const REASON_TTL_S := 0.2
 const BLOCKED_COLOR := Color(1.0, 0.25, 0.2, 0.9)
 
 ## Le sommet visé (pelletée) et la case visée (aplanir).
@@ -31,6 +36,9 @@ var _round_tex: ImageTexture
 var _square_tex: ImageTexture
 ## Les raisons [creuser, poser] de la pelletée visée cette image (vide hors pelletée).
 var _both: Array = []
+## Le cache des raisons : nom -> [clé, raison] ; vidé à chaque geste et toutes les REASON_TTL_S.
+var _reasons := {}
+var _reason_t := 0.0
 
 
 func _ready() -> void:
@@ -80,6 +88,10 @@ func _process(delta: float) -> void:
 		return
 	_drag_t -= delta
 	_repeat_t -= delta
+	_reason_t -= delta
+	if _reason_t <= 0.0:
+		_reasons.clear()
+		_reason_t = REASON_TTL_S
 	var shift := Input.is_key_pressed(KEY_SHIFT)
 	var leveling := (shift and Input.is_action_pressed(&"use_tool_alt")) or not is_nan(drag_level)
 	var c := GameState.config.grid_cell_m
@@ -88,30 +100,38 @@ func _process(delta: float) -> void:
 		# Maj + clic droit maintenu : niveler au niveau de la première case (pour poser un objet).
 		var level := drag_level if not is_nan(drag_level) else GameState.dig_snap(GameState.terrain.cell_mean(target_cell))
 		var y := GameState.flatten_level(target_cell, level)
-		reason = GameState.dig_reason(target_cell, y)
+		reason = _cached_reason("level", func() -> String: return GameState.dig_reason(target_cell, y))
 		_place_mark(Vector3((target_cell.x + 0.5) * c, y, (target_cell.y + 0.5) * c), c, _square_tex)
 		if is_nan(drag_level):
 			drag_level = level
 			_last_cell = Vector2i(1 << 20, 0)
-		if target_cell != _last_cell and _drag_t <= 0.0:
-			_last_cell = target_cell
+		# 0.1.14 (« niveler plus vite ») : on nivelle aussi les cases entre la dernière et celle
+		# visée (un glisser rapide n'en saute plus), au plus LEVEL_CELLS_PER_FRAME par image.
+		if _drag_t <= 0.0 and _last_cell != target_cell:
+			for _k in LEVEL_CELLS_PER_FRAME:
+				if _last_cell == target_cell:
+					break
+				var next := target_cell if _last_cell.x >= 1 << 19 else step_toward(_last_cell, target_cell)
+				_last_cell = next
+				if GameState.dig_reason(next, GameState.flatten_level(next, drag_level)) == "":
+					GameState.flatten_cell(next, drag_level)
+					_reasons.clear()
 			_drag_t = GameState.config.dig_drag_interval_s
-			if reason == "":
-				GameState.flatten_cell(target_cell, drag_level)
 	elif shift:
 		# Maj + clic gauche (maintenu) : lisser, à la même hauteur.
-		reason = GameState.smooth_reason(target_vertex)
+		reason = _cached_reason("smooth", func() -> String: return GameState.smooth_reason(target_vertex))
 		_place_mark(hit, GameState.config.dig_brush_radius_m * 1.6, _round_tex)
 		if Input.is_action_just_pressed(&"use_tool") or (Input.is_action_pressed(&"use_tool") and _repeat_t <= 0.0):
 			_repeat_t = GameState.config.smooth_repeat_s
 			if reason == "":
 				GameState.smooth_sand(target_vertex)
+				_reasons.clear()
 	else:
 		var dig := not Input.is_action_pressed(&"use_tool_alt")
 		# 0.1.13 : on dit pour les deux boutons ce qui est possible (avant, le texte et la marque
 		# ne parlaient que de creuser : « Pelle pleine » en rouge alors que poser marchait).
-		var dig_reason := GameState.scoop_reason(target_vertex, true)
-		var drop_reason := GameState.scoop_reason(target_vertex, false)
+		var dig_reason := _cached_reason("dig", func() -> String: return GameState.scoop_reason(target_vertex, true))
+		var drop_reason := _cached_reason("drop", func() -> String: return GameState.scoop_reason(target_vertex, false))
 		reason = dig_reason if dig else drop_reason
 		_both = [dig_reason, drop_reason]
 		_place_mark(hit, GameState.config.dig_brush_radius_m * 1.6, _round_tex)
@@ -121,6 +141,7 @@ func _process(delta: float) -> void:
 			_repeat_t = GameState.config.dig_repeat_s
 			if reason == "":
 				GameState.shovel_scoop(target_vertex, dig)
+				_reasons.clear()
 	if not _both.is_empty():
 		# Pelletée : vert si l'un des deux boutons marche, et le texte dit pourquoi l'autre non.
 		var ok: bool = _both[0] == "" or _both[1] == ""
@@ -130,6 +151,22 @@ func _process(delta: float) -> void:
 		return
 	_decal.modulate = OK_COLOR if reason == "" else BLOCKED_COLOR
 	player.prompt = tr("PROMPT_DIG") % [load_text(GameState.shovel_sand), GameState.config.shovel_capacity_scoops] if reason == "" else tr(reason)
+
+
+## Une raison gardée tant que la cible, la charge et le mode ne changent pas (voir REASON_TTL_S).
+func _cached_reason(mode: String, compute: Callable) -> String:
+	var key := [target_vertex, target_cell, GameState.shovel_sand, -999.0 if is_nan(drag_level) else drag_level]
+	var hit: Array = _reasons.get(mode, [])
+	if not hit.is_empty() and hit[0] == key:
+		return hit[1]
+	var r: String = compute.call()
+	_reasons[mode] = [key, r]
+	return r
+
+
+## Un pas d'une case vers `to` (en ligne droite, diagonales comprises).
+static func step_toward(from: Vector2i, to: Vector2i) -> Vector2i:
+	return from + Vector2i(signi(to.x - from.x), signi(to.y - from.y))
 
 
 ## Le texte d'aide de la pelletée : les gestes, la charge, et ce qui empêche creuser ou poser.

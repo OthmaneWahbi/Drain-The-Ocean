@@ -27,7 +27,7 @@ const N8: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Ve
 	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]
 const N8_DIST: Array[float] = [0.5, 0.5, 0.5, 0.5, 0.70710678, 0.70710678, 0.70710678, 0.70710678]
 ## En dessous de cet excès (m), une pente est considérée comme stable.
-const EPS := 0.004
+const EPS := 0.01
 
 
 ## La brosse ronde d'une pelletée : sommet -> poids (1 au centre, 0 au bord du rayon).
@@ -49,7 +49,9 @@ static func brush(center: Vector2i, radius_m: float) -> Dictionary:
 ## pelletée est plus petite (on ne reporte pas sur les autres : le trou resterait rond, pas en
 ## croix à fond plat).
 ## Renvoie {"heights": nouvelles hauteurs, "volume": volume vraiment déplacé (m³)}.
-static func carve(heights: Dictionary, weights: Dictionary, volume_m3: float, dig: bool, floor_y: float, ceil_y: float) -> Dictionary:
+## `floors` (0.1.14) : un plancher par sommet, à la place de `floor_y` (on creuse plus profond à
+## l'intérieur de l'île qu'au bord de l'eau).
+static func carve(heights: Dictionary, weights: Dictionary, volume_m3: float, dig: bool, floor_y: float, ceil_y: float, floors: Dictionary = {}) -> Dictionary:
 	var out := heights.duplicate()
 	var wsum := 0.0
 	for v in weights:
@@ -62,7 +64,7 @@ static func carve(heights: Dictionary, weights: Dictionary, volume_m3: float, di
 	for v in weights:
 		if not out.has(v):
 			continue
-		var dh := minf(float(weights[v]) * depth, _room(out[v], dig, floor_y, ceil_y))
+		var dh := minf(float(weights[v]) * depth, _room(out[v], dig, float(floors.get(v, floor_y)), ceil_y))
 		if dh <= 0.0:
 			continue
 		out[v] = float(out[v]) - dh if dig else float(out[v]) + dh
@@ -131,64 +133,120 @@ static func _room(h: float, dig: bool, floor_y: float, ceil_y: float) -> float:
 ## si un sommet peut bouger ; ceux de `locked` ne bougent pas non plus (sable tassé à la pelle).
 ## La pente limite est `tan_dry` (sable sec), ou `tan_wet` vers un sommet plus bas que
 ## `wet_below_y` (le sable mouillé tient plus raide). Renvoie les sommets qui ont bougé (un set).
-static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Array, tan_dry: float, tan_wet: float, wet_below_y: float, locked: Dictionary = {}, max_ops: int = 30000) -> Dictionary:
+static func relax(h: Dictionary, read: Callable, can_move: Callable, seeds: Array, tan_dry: float, tan_wet: float, wet_below_y: float, locked: Dictionary = {}, max_ops: int = 60000) -> Dictionary:
+	# 0.1.14 : sur une grille dense autour du geste (tableaux), plus vite qu'avec des dictionnaires
+	# et des appels de fonction à chaque voisin : un trou de 3 m ou un gros tas restent fluides.
+	# Hors de cette fenêtre (RELAX_MARGIN sommets autour des graines), le sable ne bouge pas.
 	var changed := {}
-	var movable := {}
-	var queue: Array[Vector2i] = []
-	var queued := {}
-	for s: Vector2i in seeds:
-		if not queued.has(s):
-			queued[s] = true
-			queue.append(s)
+	if seeds.is_empty():
+		return changed
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := -lo
+	for sd: Vector2i in seeds:
+		lo = Vector2i(mini(lo.x, sd.x), mini(lo.y, sd.y))
+		hi = Vector2i(maxi(hi.x, sd.x), maxi(hi.y, sd.y))
+	lo -= Vector2i(RELAX_MARGIN, RELAX_MARGIN)
+	hi += Vector2i(RELAX_MARGIN, RELAX_MARGIN)
+	var w := hi.x - lo.x + 1
+	var n := w * (hi.y - lo.y + 1)
+	var hs := PackedFloat64Array()
+	hs.resize(n)
+	# État d'un sommet : 0 inconnu ; 1 lu, peut bouger ; 2 lu, fixe.
+	var st := PackedByteArray()
+	st.resize(n)
+	var queued := PackedByteArray()
+	queued.resize(n)
+	var moved := PackedByteArray()
+	moved.resize(n)
+	var off := PackedInt32Array()
+	var lim_dry := PackedFloat64Array()
+	var lim_wet := PackedFloat64Array()
+	for k in 8:
+		off.append(N8[k].y * w + N8[k].x)
+		lim_dry.append(tan_dry * N8_DIST[k])
+		lim_wet.append(tan_wet * N8_DIST[k])
+	var queue := PackedInt32Array()
+	for sd: Vector2i in seeds:
+		var idx := (sd.y - lo.y) * w + (sd.x - lo.x)
+		if queued[idx] == 0:
+			queued[idx] = 1
+			queue.append(idx)
+	var ns := PackedInt32Array()
+	ns.resize(8)
+	var ds := PackedFloat64Array()
+	ds.resize(8)
 	var i := 0
-	var ns: Array[Vector2i] = []
-	var ds: Array[float] = []
 	while i < queue.size() and i < max_ops:
-		var v: Vector2i = queue[i]
+		var vi := queue[i]
 		i += 1
-		queued.erase(v)
-		if locked.has(v) or not _movable(v, can_move, movable):
+		queued[vi] = 0
+		if st[vi] == 0:
+			_load(vi, w, lo, hs, st, h, read, can_move, locked)
+		if st[vi] != 1:
 			continue
-		var hv := _height(v, h, read)
-		ns.clear()
-		ds.clear()
+		var vx := vi % w
+		var vy := vi / w
+		if vx == 0 or vy == 0 or vx == w - 1 or vi >= n - w:
+			continue  # le bord de la fenêtre ne bouge pas
+		var hv := hs[vi]
+		var cnt := 0
 		var total := 0.0
 		var most := 0.0
 		for k in 8:
-			var n: Vector2i = v + N8[k]
-			if locked.has(n) or not _movable(n, can_move, movable):
+			var ni := vi + off[k]
+			if st[ni] == 0:
+				_load(ni, w, lo, hs, st, h, read, can_move, locked)
+			if st[ni] != 1:
 				continue
-			var hn := _height(n, h, read)
-			var limit := (tan_wet if hn < wet_below_y else tan_dry) * N8_DIST[k]
-			var d := hv - hn - limit
+			var hn := hs[ni]
+			var d := hv - hn - (lim_wet[k] if hn < wet_below_y else lim_dry[k])
 			if d > EPS:
-				ns.append(n)
-				ds.append(d)
+				ns[cnt] = ni
+				ds[cnt] = d
+				cnt += 1
 				total += d
 				most = maxf(most, d)
-		if ns.is_empty():
+		if cnt == 0:
 			continue
 		var move := 0.5 * most
-		for k in ns.size():
+		for k in cnt:
+			var ni := ns[k]
 			var amt := move * ds[k] / total
-			h[ns[k]] = float(h[ns[k]]) + amt
+			hs[ni] += amt
 			hv -= amt
-			changed[ns[k]] = true
-			if not queued.has(ns[k]):
-				queued[ns[k]] = true
-				queue.append(ns[k])
-		h[v] = hv
-		changed[v] = true
+			moved[ni] = 1
+			if queued[ni] == 0:
+				queued[ni] = 1
+				queue.append(ni)
+		hs[vi] = hv
+		moved[vi] = 1
 		# v a baissé : ses voisins plus hauts peuvent maintenant être trop raides, et lui encore.
 		for k in 8:
-			var n: Vector2i = v + N8[k]
-			if not queued.has(n):
-				queued[n] = true
-				queue.append(n)
-		if not queued.has(v):
-			queued[v] = true
-			queue.append(v)
+			var ni := vi + off[k]
+			if queued[ni] == 0:
+				queued[ni] = 1
+				queue.append(ni)
+		if queued[vi] == 0:
+			queued[vi] = 1
+			queue.append(vi)
+	for idx in n:
+		if moved[idx] == 1:
+			var v := Vector2i(lo.x + idx % w, lo.y + idx / w)
+			h[v] = hs[idx]
+			changed[v] = true
 	return changed
+
+
+## La fenêtre de l'éboulement autour des sommets touchés (sommets ; 0.1.14).
+const RELAX_MARGIN := 40
+
+
+## Lit un sommet de la fenêtre de relax() : sa hauteur et s'il peut bouger.
+static func _load(idx: int, w: int, lo: Vector2i, hs: PackedFloat64Array, st: PackedByteArray, h: Dictionary, read: Callable, can_move: Callable, locked: Dictionary) -> void:
+	var v := Vector2i(lo.x + idx % w, lo.y + idx / w)
+	var y: Variant = h.get(v)
+	hs[idx] = float(y) if y != null else float(read.call(v))
+	st[idx] = 1 if (not locked.has(v) and bool(can_move.call(v))) else 2
 
 
 static func _height(v: Vector2i, h: Dictionary, read: Callable) -> float:

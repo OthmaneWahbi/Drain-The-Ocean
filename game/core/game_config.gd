@@ -237,14 +237,17 @@ extends Resource
 @export_group("Pelle (0.1.10)")
 ## Pas de hauteur de la pelle : on creuse ou on monte le sable par marches de cette hauteur.
 @export var dig_step_m: float = 0.25
-## On ne creuse jamais plus bas que l'eau + cette marge (pas de trou qui se remplit).
+## Au bord de l'eau, on ne creuse jamais plus bas que l'eau + cette marge (pas de trou qui se remplit).
 @export var dig_min_above_water_m: float = 0.2
+## 0.1.14 : à l'intérieur de l'île (là où la mer est cachée), on creuse jusqu'à cette profondeur
+## sous le niveau de départ de la mer.
+@export var dig_max_below_sea_m: float = 3.0
 ## On ne monte jamais le sable plus haut que le sol de l'île + cette hauteur.
-@export var dig_max_above_ground_m: float = 2.5
+@export var dig_max_above_ground_m: float = 4.0
 ## Portée de la pelle (distance joueur → case visée), en mètres.
 @export var dig_reach_m: float = 4.0
 ## Pendant un glisser (lisser), une case de plus toutes les … secondes au plus.
-@export var dig_drag_interval_s: float = 0.08
+@export var dig_drag_interval_s: float = 0.03
 
 @export_group("Pelle (0.1.11)")
 ## Pelletées de sable que la pelle peut porter (0.1.12 : 3, on la vide plus souvent). Creuser
@@ -262,9 +265,9 @@ extends Resource
 @export var dig_repeat_s: float = 0.35
 ## Lisser (Maj + clic) : à chaque passe, le sable fait ce pourcentage du chemin vers la hauteur
 ## moyenne sous la pelle (au centre ; moins au bord).
-@export var smooth_strength: float = 0.6
+@export var smooth_strength: float = 0.85
 ## Lisser maintenu : une passe toutes les … secondes.
-@export var smooth_repeat_s: float = 0.15
+@export var smooth_repeat_s: float = 0.08
 ## L'océan ne se dessine pas là où le sol d'origine de l'île est plus haut que la mer de
 ## départ + … m (0.1.13 : au-dessus des plus hautes vagues ; un trou n'y montre pas l'eau).
 @export var land_mask_above_sea_m: float = 0.3
