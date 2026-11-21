@@ -27,7 +27,7 @@ const BURLAP := Color(0.8, 0.68, 0.48)
 const GLASS := Color(0.75, 0.93, 1.0, 0.35)
 ## Le sable des mottes et de la pelle (0.1.11) : la même teinte à l'écran que le sable sec du
 ## terrain (sa couleur × l'exposition de sand.gdshader).
-const SAND := Color(0.48, 0.4, 0.25)
+const SAND := Color(0.7, 0.56, 0.32)
 ## La couleur du sable sous chaque tas (le « socle »), par ressource.
 const PILE_BASE := {
 	"sel": Color(0.93, 0.93, 0.9),

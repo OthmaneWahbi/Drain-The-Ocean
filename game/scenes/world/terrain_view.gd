@@ -23,7 +23,7 @@ var logic: TerrainLogic
 ## Vector2i (morceau) -> [MeshInstance3D, CollisionShape3D]
 var _chunks: Dictionary = {}
 var _material: Material
-## Les coups de pelle en cours d'animation : {cell, rect (petites cases), before, to, t, delay, mesh}.
+## Les coups de pelle en cours d'animation : {rect (petites cases), before, after, delays, t, end, mesh}.
 var _anims: Array[Dictionary] = []
 
 
@@ -74,20 +74,18 @@ static func build_rect_mesh(t: TerrainLogic, rect: Rect2i, material: Material, s
 				continue
 			var tri := t.cell_triangles(i, j)
 			var ids := TerrainLogic.cell_triangle_ids(i, j)
-			# Près du sable travaillé, des facettes nettes : les normales lissées y dessineraient
-			# des dents de scie sur les pentes d'une case creusée ou remontée.
-			var near_work := t.edits.has(Vector2i(i, j)) or t.edits.has(Vector2i(i + 1, j)) \
-				or t.edits.has(Vector2i(i, j + 1)) or t.edits.has(Vector2i(i + 1, j + 1))
+			# Des normales lissées partout (0.1.12 : le sable creusé est arrondi, il s'éboule en
+			# pentes douces ; les facettes nettes de 0.1.11 le faisaient paraître taillé).
 			var normals: Array[Vector3] = []
-			if not near_work:
-				for k in 6:
-					normals.append(t.vertex_normal(ids[k].x, ids[k].y))
+			for k in 6:
+				normals.append(t.vertex_normal(ids[k].x, ids[k].y))
 			if not heights.is_empty():
 				for k in 6:
 					tri[k] = _with_height(tri[k], heights)
-			# Sable travaillé : les 4 coins de la petite case (pas les pentes autour d'une case creusée).
-			var worked := t.edits.has(Vector2i(i, j)) and t.edits.has(Vector2i(i + 1, j)) \
-				and t.edits.has(Vector2i(i, j + 1)) and t.edits.has(Vector2i(i + 1, j + 1))
+			# Sable travaillé (traces de pelle) : seulement une case nivelée, plate (0.1.12 : un creux
+			# ou un tas arrondi garde l'aspect du sable, sinon la brosse se voyait en croix).
+			var big := Vector2i(floori(float(i) / TerrainLogic.SUB), floori(float(j) / TerrainLogic.SUB))
+			var worked := t.cell_worked(big) and not is_nan(t.cell_level(big))
 			_tri(st, t, tri, ids, normals, 0, TerrainLogic.hash01(i, j, 5) * 2.0 - 1.0, worked)
 			_tri(st, t, tri, ids, normals, 3, TerrainLogic.hash01(i, j, 6) * 2.0 - 1.0, worked)
 	st.set_material(material if material else make_material())
@@ -124,13 +122,19 @@ static func _tri(st: SurfaceTool, t: TerrainLogic, tri: Array, ids: Array[Vector
 		normal = -normal
 	var y := (a.y + b.y + c.y) / 3.0
 	var col := t.color(y, 1.0 - normal.y, jitter, 0.0, false)
-	# Le canal alpha dit au matériau si le sable a été travaillé (1) ou non (0) : il y dessine
-	# des traces de pelle au lieu des rides du vent.
-	col.a = 1.0 if worked and y > t.ground_y - 1.0 else 0.0
+	# 0.1.12 : le sable sec prend la pente de chaque sommet (plus de triangles plus foncés sur
+	# les flancs d'un tas ou d'un trou).
+	var dry := t.ground_kind(y, 1.0 - normal.y, jitter) == TerrainLogic.Ground.DRY_SAND
 	for idx: int in order:
 		var id := ids[idx]
 		var shade := 1.0 + (TerrainLogic.hash01(id.x, id.y, 5) * 2.0 - 1.0) * 0.05
-		st.set_color(Color(col.r * shade, col.g * shade, col.b * shade, col.a))
+		var cv := col
+		if dry and not normals.is_empty():
+			cv = TerrainLogic.dry_sand_color(1.0 - normals[idx].y)
+		# Le canal alpha dit au matériau si le sable a été nivelé à la pelle (1) ou non (0) : il y
+		# dessine des traces de pelle au lieu des rides du vent.
+		var w := 1.0 if worked and y > t.ground_y - 1.0 else 0.0
+		st.set_color(Color(cv.r * shade, cv.g * shade, cv.b * shade, w))
 		st.set_normal(normals[idx] if not normals.is_empty() else normal)
 		st.add_vertex(tri[idx])
 
@@ -182,11 +186,18 @@ func _chunks_of_corners(corners: Array) -> Dictionary:
 
 func _chunks_of_rect(rect: Rect2i) -> Dictionary:
 	var out := {}
-	for p in [rect.position, Vector2i(rect.end.x - 1, rect.position.y), Vector2i(rect.position.x, rect.end.y - 1), rect.end - Vector2i.ONE]:
-		var ch := _chunk_of_small_cell(p)
-		if ch.x >= 0:
-			out[ch] = true
+	var a := _chunk_of_small_cell_clamped(rect.position)
+	var b := _chunk_of_small_cell_clamped(rect.end - Vector2i.ONE)
+	for cj in range(a.y, b.y + 1):
+		for ci in range(a.x, b.x + 1):
+			out[Vector2i(ci, cj)] = true
 	return out
+
+
+func _chunk_of_small_cell_clamped(cell: Vector2i) -> Vector2i:
+	var n := TerrainLogic.GRID_HALF * 2 / CHUNK
+	var h := TerrainLogic.GRID_HALF
+	return Vector2i(clampi(floori(float(cell.x + h) / CHUNK), 0, n - 1), clampi(floori(float(cell.y + h) / CHUNK), 0, n - 1))
 
 
 func _chunk_of_small_cell(cell: Vector2i) -> Vector2i:
@@ -202,27 +213,52 @@ func _on_terrain_changed(corners: Array) -> void:
 		_build_chunk(ch)
 
 
-# --- L'animation d'un coup de pelle (0.1.11) ---------------------------------------------------
+# --- L'animation d'un coup de pelle (0.1.11, 0.1.12 : le sable s'éboule) ----------------------
 
-## Les petites cases redessinées pendant l'animation : la case de 1 m et une couronne autour
-## (les pentes qui la bordent bougent avec elle).
-static func anim_rect(cell: Vector2i) -> Rect2i:
-	var sub := TerrainLogic.SUB
-	return Rect2i(cell * sub - Vector2i.ONE, Vector2i(sub + 2, sub + 2))
+## Les petites cases redessinées pendant l'animation : toutes celles qui touchent un sommet qui
+## bouge (la pelletée et le sable qui s'éboule autour), et une couronne de plus.
+static func anim_rect(vertices: Array) -> Rect2i:
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := -lo
+	for v: Vector2i in vertices:
+		lo = Vector2i(mini(lo.x, v.x), mini(lo.y, v.y))
+		hi = Vector2i(maxi(hi.x, v.x), maxi(hi.y, v.y))
+	if hi.x < lo.x:
+		return Rect2i()
+	return Rect2i(lo - Vector2i(2, 2), hi - lo + Vector2i(4, 4))
 
 
-func _on_sand_moved(cell: Vector2i, before: Dictionary, to_y: float, scoops: int) -> void:
-	var rect := anim_rect(cell)
-	# Un coup sur une case déjà en mouvement (ou à côté) : on termine d'abord l'ancien.
+## Le retard de chaque sommet (s) : la pelletée bouge tout de suite, le sable qui s'éboule suit,
+## de proche en proche depuis le point visé (on le voit glisser).
+static func anim_delays(center: Vector3, before: Dictionary, after: Dictionary, start: float) -> Dictionary:
+	var out := {}
+	var c := Vector2(center.x, center.z)
+	for v: Vector2i in after:
+		var d := TerrainLogic.vertex_xz(v).distance_to(c)
+		out[v] = start + maxf(d - 0.9, 0.0) * 0.12
+	return out
+
+
+func _on_sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoops: float) -> void:
+	var rect := anim_rect(after.keys())
+	if rect.size == Vector2i.ZERO:
+		return
+	# Un coup sur du sable encore en mouvement : on termine d'abord l'ancien.
 	for a in _anims.duplicate():
 		if a.rect.intersects(rect):
 			_finish(a)
 	var mi := MeshInstance3D.new()
 	mi.name = "SandAnim"
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
-	# On remblaie : le sable monte quand la pelletée arrive (le temps qu'elle vole).
-	var delay := 0.16 if scoops < 0 else 0.0
-	var a := {"cell": cell, "rect": rect, "before": before, "to": to_y, "t": 0.0, "delay": delay, "mesh": mi}
+	# On pose : le sable monte quand la pelletée arrive (le temps qu'elle vole).
+	var start := SandFx.FILL_FLIGHT_S if scoops < 0.0 else 0.0
+	var delays := anim_delays(center, before, after, start)
+	var a := {"rect": rect, "before": before, "after": after, "delays": delays, "t": 0.0, "mesh": mi}
+	a.end = 0.0
+	for v in delays:
+		a.end = maxf(a.end, float(delays[v]))
+	a.end += maxf(GameState.config.dig_anim_s, 0.01)
 	_anims.append(a)
 	_draw_anim(a)
 	# terrain_changed suit : les morceaux seront refaits avec le trou de l'animation.
@@ -231,24 +267,21 @@ func _on_sand_moved(cell: Vector2i, before: Dictionary, to_y: float, scoops: int
 func _process(delta: float) -> void:
 	if _anims.is_empty():
 		return
-	var duration := maxf(GameState.config.dig_anim_s, 0.01)
 	for a in _anims.duplicate():
-		if a.delay > 0.0:
-			a.delay -= delta
-			continue
-		a.t += delta / duration
-		if a.t >= 1.0:
+		a.t += delta
+		if a.t >= a.end:
 			_finish(a)
 		else:
 			_draw_anim(a)
 
 
-## Les hauteurs animées : de l'ancienne à la nouvelle, avec un petit rebond à la fin.
-static func anim_heights(before: Dictionary, to_y: float, t: float) -> Dictionary:
-	var k := ease_out_back(clampf(t, 0.0, 1.0))
+## Les hauteurs animées au temps `t` (s) : chaque sommet glisse de l'ancienne hauteur à la
+## nouvelle après son retard, en `duration` s, avec un petit rebond à la fin.
+static func anim_heights(before: Dictionary, after: Dictionary, delays: Dictionary, t: float, duration: float) -> Dictionary:
 	var out := {}
-	for v: Vector2i in before:
-		out[v] = lerpf(float(before[v]), to_y, k)
+	for v: Vector2i in after:
+		var k := clampf((t - float(delays.get(v, 0.0))) / maxf(duration, 0.01), 0.0, 1.0)
+		out[v] = lerpf(float(before.get(v, after[v])), float(after[v]), ease_out_back(k))
 	return out
 
 
@@ -258,7 +291,7 @@ static func ease_out_back(t: float) -> float:
 
 
 func _draw_anim(a: Dictionary) -> void:
-	var heights := anim_heights(a.before, a.to, a.t)
+	var heights := anim_heights(a.before, a.after, a.delays, a.t, GameState.config.dig_anim_s)
 	(a.mesh as MeshInstance3D).mesh = build_rect_mesh(logic, a.rect, _material, [], heights)
 
 

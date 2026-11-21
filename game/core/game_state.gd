@@ -53,10 +53,11 @@ signal wakeups_changed
 ## Le sable a été travaillé (pelle), ou la partie a changé : les sommets du terrain qui ont bougé
 ## (indices de sommet, tous les 50 cm depuis 0.1.11).
 signal terrain_changed(corners: Array)
-## Un coup de pelle (0.1.11), juste AVANT terrain_changed : la case, la hauteur d'avant de chaque
-## sommet qui bouge (Vector2i -> float), le niveau d'arrivée, et les pelletées prises (> 0) ou
-## posées (< 0). Pour l'animation (la pelle, le sable qui vole et qui glisse, la poussière).
-signal sand_moved(cell: Vector2i, before: Dictionary, to_y: float, scoops: int)
+## Un coup de pelle (0.1.11), juste AVANT terrain_changed : le point visé (m), la hauteur d'avant
+## et d'après de chaque sommet qui bouge (Vector2i -> float ; 0.1.12 : avec le sable qui s'éboule
+## autour), et les pelletées prises (> 0) ou posées (< 0). Pour l'animation (la pelle, le sable
+## qui vole et qui glisse, la poussière).
+signal sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoops: float)
 ## Le sable porté sur la pelle a changé (ou la pelle vient d'être achetée).
 signal shovel_changed
 
@@ -96,7 +97,7 @@ var speed_multiplier: float = 1.0
 var has_rake: bool = false
 ## La pelle s'achète au catalogue (0.1.11), et porte `shovel_sand` pelletées de sable.
 var has_shovel: bool = false
-var shovel_sand: int = 0
+var shovel_sand: float = 0.0
 ## La barre d'outils de 5 cases : quel outil on tient (M-27).
 var toolbar: ToolbarLogic = ToolbarLogic.new()
 ## Endurance du personnage (pas sauvegardée : elle est pleine au chargement).
@@ -207,7 +208,7 @@ func _reset_state() -> void:
 	speed_multiplier = 1.0
 	has_rake = false
 	has_shovel = false
-	shovel_sand = 0
+	shovel_sand = 0.0
 	toolbar = ToolbarLogic.new(config.toolbar_slots)
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
@@ -1270,10 +1271,7 @@ func _load_rotation(item: Dictionary, src: Dictionary) -> void:
 	item_moved.emit(item)
 
 
-# --- Travailler le sable : la pelle (0.1.10) ----------------------------------------------
-
-enum Dig { FLATTEN, DIG, RAISE }
-
+# --- Travailler le sable : la pelle (0.1.10, 0.1.12 : du vrai sable) ------------------------
 
 ## La hauteur arrondie au cran de pelle le plus proche (les terrasses tombent juste).
 func dig_snap(y: float) -> float:
@@ -1281,38 +1279,40 @@ func dig_snap(y: float) -> float:
 	return config.ground_y + roundf((y - config.ground_y) / step) * step
 
 
-## Le niveau que prendrait la case avec ce geste : aplanir (au niveau `ref`), creuser ou remblayer
-## d'un cran. Borné : jamais sous l'eau, jamais plus haut que `dig_max_above_ground_m`.
-func dig_target(cell: Vector2i, mode: int, ref := NAN) -> float:
-	var now := dig_snap(terrain.cell_mean(cell))
-	var y: float
-	match mode:
-		Dig.FLATTEN:
-			y = dig_snap(ref) if not is_nan(ref) else now
-		Dig.DIG:
-			y = now - config.dig_step_m
-		_:
-			y = now + config.dig_step_m
-	var lo := dig_snap(water_level_y() + config.dig_min_above_water_m + config.dig_step_m * 0.49)
-	return clampf(y, lo, config.ground_y + config.dig_max_above_ground_m)
+## Le plus bas où l'on creuse (jamais trop près de l'eau) et le plus haut où l'on entasse.
+func dig_floor_y() -> float:
+	return water_level_y() + config.dig_min_above_water_m
 
 
-## Pelletées de sable que ce geste prend (> 0) ou pose (< 0) pour amener la case au niveau `y`.
-func dig_scoops(cell: Vector2i, y: float) -> int:
-	return roundi((dig_snap(terrain.cell_mean(cell)) - y) / config.dig_step_m)
+func dig_ceil_y() -> float:
+	return config.ground_y + config.dig_max_above_ground_m
 
 
-## Ce qui empêche de travailler cette case pour l'amener au niveau `y` ("" si rien) : une clé de
-## texte d'aide. On ne touche ni à la mer, ni sous un objet, ni à côté d'un objet si un sommet
-## partagé devait bouger (l'objet flotterait ou s'enfoncerait). 0.1.11 : la pelle doit avoir la
-## place de prendre le sable (pleine sinon), ou en porter assez pour remblayer (vide sinon).
+## Le niveau d'aplanissement d'une case (au niveau `ref`, ou au sien), arrondi au cran, borné.
+func flatten_level(cell: Vector2i, ref := NAN) -> float:
+	var y := dig_snap(ref) if not is_nan(ref) else dig_snap(terrain.cell_mean(cell))
+	var lo := dig_snap(dig_floor_y() + config.dig_step_m * 0.49)
+	return clampf(y, lo, dig_ceil_y())
+
+
+## Pelletées de sable qu'il faut prendre (> 0) ou poser (< 0) pour aplanir la case au niveau `y` :
+## le vrai volume entre le sol et ce niveau (une pelletée = dig_scoop_m3).
+func dig_scoops(cell: Vector2i, y: float) -> float:
+	var v := 0.0
+	for c in TerrainLogic.cell_vertices(cell):
+		v += (terrain.vertex(c.x, c.y).y - y) * SandPhysics.AREA
+	return v / config.dig_scoop_m3
+
+
+## Ce qui empêche d'aplanir cette case au niveau `y` ("" si rien) : une clé de texte d'aide.
+## On ne touche ni à la mer, ni sous un objet, ni à côté d'un objet si un sommet partagé devait
+## bouger (l'objet flotterait ou s'enfoncerait). La pelle doit avoir la place de prendre le sable,
+## ou en porter assez.
 func dig_reason(cell: Vector2i, y: float) -> String:
 	var center := Vector2((cell.x + 0.5) * config.grid_cell_m, (cell.y + 0.5) * config.grid_cell_m)
-	var h := TerrainLogic.GRID_HALF / TerrainLogic.SUB - 1
-	if absi(cell.x) >= h or absi(cell.y) >= h:
-		return "PROMPT_DIG_TOO_FAR"
-	if center.length() > terrain.coast_at(atan2(center.y, center.x)) - 0.5:
-		return "PROMPT_DIG_WATER"
+	var reason := _spot_reason(center)
+	if reason != "":
+		return reason
 	var blockers := _dig_blockers()
 	if _cell_blocked(cell, blockers):
 		return "PROMPT_DIG_BLOCKED"
@@ -1323,36 +1323,177 @@ func dig_reason(cell: Vector2i, y: float) -> String:
 			if other != cell and _cell_blocked(other, blockers):
 				return "PROMPT_DIG_NEAR_OBJECT"
 	var scoops := dig_scoops(cell, y)
-	if scoops > 0 and shovel_sand + scoops > config.shovel_capacity_scoops:
+	if scoops > 0.0 and shovel_sand + scoops > config.shovel_capacity_scoops + 0.01:
 		return "PROMPT_DIG_SHOVEL_FULL"
-	if scoops < 0 and shovel_sand + scoops < 0:
+	if scoops < 0.0 and shovel_sand + scoops < -0.01:
 		return "PROMPT_DIG_SHOVEL_EMPTY"
 	return ""
 
 
-## Travaille une case : elle devient plate au niveau voulu (voir dig_target). Le sable creusé va
-## sur la pelle, le sable remblayé en vient. Les coquillages posés dessus suivent le sable.
-## Renvoie vrai si le sol a changé.
-func work_cell(cell: Vector2i, mode: int, ref := NAN) -> bool:
-	var y := dig_target(cell, mode, ref)
+## Trop loin, ou dans l'eau ? (commun à toutes les actions de pelle)
+func _spot_reason(p: Vector2) -> String:
+	var h := (TerrainLogic.GRID_HALF - TerrainLogic.SUB) * TerrainLogic.VERTEX_STEP
+	if absf(p.x) >= h or absf(p.y) >= h:
+		return "PROMPT_DIG_TOO_FAR"
+	if p.length() > terrain.coast_at(atan2(p.y, p.x)) - 0.5:
+		return "PROMPT_DIG_WATER"
+	return ""
+
+
+## Aplanit une case au niveau `ref` (Maj + clic gauche, en glissant) : ses 9 sommets prennent ce
+## niveau. Le sable en trop va sur la pelle, ce qui manque en vient. Le sable tassé de la case tient
+## (il ne s'éboule pas pendant ce geste) ; autour, le sable trop raide s'éboule. Vrai si le sol a changé.
+func flatten_cell(cell: Vector2i, ref := NAN) -> bool:
+	var y := flatten_level(cell, ref)
 	if dig_reason(cell, y) != "":
 		return false
-	var before := {}
-	for v in TerrainLogic.cell_vertices(cell):
-		before[v] = terrain.vertex(v.x, v.y).y
 	var scoops := dig_scoops(cell, y)
-	var changed := terrain.set_cell(cell, y)
+	var target := {}
+	var locked := {}
+	for v in TerrainLogic.cell_vertices(cell):
+		target[v] = y
+		locked[v] = true
+	var center := Vector3((cell.x + 0.5) * config.grid_cell_m, y, (cell.y + 0.5) * config.grid_cell_m)
+	return _move_sand(center, target, scoops, locked)
+
+
+## La pelletée : creuser (clic gauche, `dig` vrai) ou poser le sable porté (clic droit), autour du
+## sommet `v`. Ce qui empêche le geste ("" si rien), en clé de texte d'aide.
+func scoop_reason(v: Vector2i, dig: bool) -> String:
+	var reason := _spot_reason(TerrainLogic.vertex_xz(v))
+	if reason != "":
+		return reason
+	var ctx := _sand_context()
+	if not _vertex_movable(v, ctx):
+		return "PROMPT_DIG_BLOCKED"
+	if dig and shovel_sand > config.shovel_capacity_scoops - 0.05:
+		return "PROMPT_DIG_SHOVEL_FULL"
+	if not dig and shovel_sand < 0.05:
+		return "PROMPT_DIG_SHOVEL_EMPTY"
+	var plan := _plan_scoop(v, dig, ctx)
+	if float(plan.volume) < 0.05 * config.dig_scoop_m3:
+		return "PROMPT_DIG_TOO_DEEP" if dig else "PROMPT_DIG_TOO_HIGH"
+	return ""
+
+
+## Creuse (ou pose) une pelletée autour du sommet `v`, puis laisse le sable s'ébouler.
+## Vrai si le sol a changé.
+func shovel_scoop(v: Vector2i, dig: bool) -> bool:
+	if scoop_reason(v, dig) != "":
+		return false
+	var ctx := _sand_context()
+	var plan := _plan_scoop(v, dig, ctx)
+	var scoops := float(plan.volume) / config.dig_scoop_m3
+	var p := TerrainLogic.vertex_xz(v)
+	var center := Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y)
+	return _move_sand(center, plan.heights, scoops if dig else -scoops, {}, ctx)
+
+
+## Lisser (Maj + clic gauche, 0.1.12, demande d'Othmane) : le sable sous la brosse se rapproche
+## de sa hauteur moyenne. Il garde la même hauteur (le même volume : rien ne va sur la pelle ni
+## n'en vient) mais devient plus plat ; en insistant, il devient tout à fait plat (posable).
+## Ce qui empêche le geste ("" si rien).
+func smooth_reason(v: Vector2i) -> String:
+	var reason := _spot_reason(TerrainLogic.vertex_xz(v))
+	if reason != "":
+		return reason
+	if not _vertex_movable(v, _sand_context()):
+		return "PROMPT_DIG_BLOCKED"
+	return ""
+
+
+## Lisse le sable autour du sommet `v`. Vrai si le sol a changé.
+func smooth_sand(v: Vector2i) -> bool:
+	if smooth_reason(v) != "":
+		return false
+	var ctx := _sand_context()
+	var weights := SandPhysics.brush(v, config.dig_brush_radius_m)
+	var heights := {}
+	for k: Vector2i in weights.keys():
+		if _vertex_movable(k, ctx):
+			heights[k] = terrain.vertex(k.x, k.y).y
+		else:
+			weights.erase(k)
+	var target := SandPhysics.smooth(heights, weights, config.smooth_strength, TerrainLogic.FLAT_TOLERANCE * 0.75)
+	var p := TerrainLogic.vertex_xz(v)
+	return _move_sand(Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y), target, 0.0, {}, ctx)
+
+
+## Ce que ferait une pelletée : {"heights": nouvelles hauteurs de la brosse, "volume": m³}.
+func _plan_scoop(v: Vector2i, dig: bool, ctx: Dictionary) -> Dictionary:
+	var weights := SandPhysics.brush(v, config.dig_brush_radius_m)
+	var heights := {}
+	for k: Vector2i in weights.keys():
+		if _vertex_movable(k, ctx):
+			heights[k] = terrain.vertex(k.x, k.y).y
+		else:
+			weights.erase(k)
+	var room := config.shovel_capacity_scoops - shovel_sand if dig else shovel_sand
+	var volume := minf(1.0, maxf(room, 0.0)) * config.dig_scoop_m3
+	return SandPhysics.carve(heights, weights, volume, dig, dig_floor_y(), dig_ceil_y())
+
+
+## Ce qu'il faut pour savoir quels sommets le sable peut bouger (calculé une fois par geste).
+func _sand_context() -> Dictionary:
+	return {"blockers": _dig_blockers(), "cells": {}, "vertices": {}}
+
+
+## Un sommet que le sable peut bouger : sur l'île (pas dans la mer, pas au bord de la grille), et
+## aucune de ses cases n'est sous un objet (l'objet le retient : il ne flotte ni ne s'enfonce).
+func _vertex_movable(v: Vector2i, ctx: Dictionary) -> bool:
+	var cache: Dictionary = ctx.vertices
+	if cache.has(v):
+		return cache[v]
+	var ok := _spot_reason(TerrainLogic.vertex_xz(v)) == ""
+	if ok:
+		var cells: Dictionary = ctx.cells
+		for c in TerrainLogic.cells_of_vertex(v):
+			if not cells.has(c):
+				cells[c] = _cell_blocked(c, ctx.blockers)
+			if cells[c]:
+				ok = false
+				break
+	cache[v] = ok
+	return ok
+
+
+## Pose les hauteurs `target` (Vector2i -> m), laisse le sable s'ébouler autour, met la pelle à
+## jour (`scoops` pris > 0, posés < 0), et prévient les vues. Vrai si le sol a changé.
+func _move_sand(center: Vector3, target: Dictionary, scoops: float, locked: Dictionary, ctx: Dictionary = {}) -> bool:
+	if ctx.is_empty():
+		ctx = _sand_context()
+	var h := target.duplicate()
+	var read := func(k: Vector2i) -> float: return terrain.vertex(k.x, k.y).y
+	var can_move := func(k: Vector2i) -> bool: return _vertex_movable(k, ctx)
+	var seeds: Array = []
+	for k: Vector2i in target:
+		seeds.append(k)
+		for d in SandPhysics.N8:
+			seeds.append(k + d)
+	var wet := water_level_y() + config.sand_wet_band_m
+	var slid := SandPhysics.relax(h, read, can_move, seeds, tan(deg_to_rad(config.sand_repose_deg)), tan(deg_to_rad(config.sand_wet_repose_deg)), wet, locked)
+	var before := {}
+	var after := {}
+	for k: Vector2i in target:
+		after[k] = h[k]
+	for k: Vector2i in slid:
+		after[k] = h[k]
+	for k: Vector2i in after:
+		before[k] = terrain.vertex(k.x, k.y).y
+	var changed := terrain.set_vertices(after)
 	if changed.is_empty():
 		return false
-	if scoops != 0:
-		shovel_sand += scoops
+	if absf(scoops) > 0.0001:
+		shovel_sand = clampf(shovel_sand + scoops, 0.0, config.shovel_capacity_scoops)
 		shovel_changed.emit()
-	for p in pickups:
-		var pc := TerrainLogic.cell_of(p.position.x, p.position.z)
-		if absi(pc.x - cell.x) <= 1 and absi(pc.y - cell.y) <= 1:
-			p.position.y = terrain.height(p.position.x, p.position.z)
-			item_moved.emit(p)
-	sand_moved.emit(cell, before, y, scoops)
+	var touched := {}
+	for k: Vector2i in after:
+		touched[k] = true
+	for pk in pickups:
+		if touched.has(TerrainLogic.nearest_vertex(pk.position.x, pk.position.z)):
+			pk.position.y = terrain.height(pk.position.x, pk.position.z)
+			item_moved.emit(pk)
+	sand_moved.emit(center, before, after, scoops)
 	terrain_changed.emit(changed)
 	return true
 
@@ -1505,7 +1646,7 @@ func load_dict(data: Dictionary) -> void:
 	has_rake = bool(up.get("has_rake", false))
 	# Avant 0.1.11, la pelle était donnée : une sauvegarde qui l'avait en barre la garde.
 	has_shovel = bool(up.get("has_shovel", Array(up.get("toolbar", [])).has("pelle")))
-	shovel_sand = clampi(int(up.get("shovel_sand", 0)), 0, config.shovel_capacity_scoops)
+	shovel_sand = clampf(float(up.get("shovel_sand", 0.0)), 0.0, config.shovel_capacity_scoops)
 	unlocked_tier = maxi(int(up.get("unlocked_tier", 1)), 1)
 	bucket.capacity_l = bucket_unit_l * bucket_count
 	bucket.load_dict(data.get("bucket", {}))

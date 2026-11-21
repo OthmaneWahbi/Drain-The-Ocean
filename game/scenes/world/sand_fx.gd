@@ -1,6 +1,7 @@
 class_name SandFx
 extends Node3D
-## L'animation d'un coup de pelle (0.1.11), à chaque GameState.sand_moved :
+## L'animation d'un coup de pelle (0.1.11 ; 0.1.12 : et la poussière du sable qui s'éboule),
+## à chaque GameState.sand_moved :
 ##  - la pelle du joueur plonge (creuser) ou bascule (remblayer) : Player.swing_shovel ;
 ##  - une motte de sable vole en arc entre la case et la lame (du sol vers la pelle quand on
 ##    creuse, de la pelle vers le sol quand on remblaie), plus grosse s'il y a plusieurs pelletées ;
@@ -22,29 +23,58 @@ func _ready() -> void:
 	GameState.game_reset.connect(_clear)
 
 
-func _on_sand_moved(cell: Vector2i, before: Dictionary, to_y: float, scoops: int) -> void:
-	var c := GameState.config.grid_cell_m
-	var from_y := 0.0
-	for v in before:
-		from_y += float(before[v])
-	from_y /= maxf(before.size(), 1)
-	var ground := Vector3((cell.x + 0.5) * c, maxf(from_y, to_y), (cell.y + 0.5) * c)
+func _on_sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoops: float) -> void:
 	var player := get_tree().get_first_node_in_group(&"player")
-	var tip := ground + Vector3(0, 1.0, 0)
+	var tip := center + Vector3(0, 1.0, 0)
 	if player and player.has_method(&"swing_shovel"):
-		player.swing_shovel(scoops >= 0)
+		player.swing_shovel(scoops >= 0.0)
 		tip = player.shovel_tip()
-	if scoops > 0:
-		_burst(Vector3(ground.x, from_y, ground.z), 1.0)
-		_fly(Vector3(ground.x, from_y + 0.05, ground.z), tip, DIG_FLIGHT_S, scoops, false)
-	elif scoops < 0:
-		_fly(tip, Vector3(ground.x, to_y + 0.05, ground.z), FILL_FLIGHT_S, -scoops, true)
+	var c := Vector2(center.x, center.z)
+	var top := _height_near(c, after)
+	if scoops > 0.0:
+		_burst(Vector3(center.x, center.y, center.z), 1.0)
+		_fly(Vector3(center.x, top + 0.05, center.z), tip, DIG_FLIGHT_S, scoops, false)
+	elif scoops < 0.0:
+		_fly(tip, Vector3(center.x, top + 0.05, center.z), FILL_FLIGHT_S, -scoops, true)
 	else:
-		_burst(Vector3(ground.x, to_y, ground.z), 0.6)  # on lisse sans prendre ni poser
+		_burst(Vector3(center.x, top, center.z), 0.6)  # on lisse sans prendre ni poser
+	# Le sable qui s'éboule plus loin fait un peu de poussière là où il glisse le plus.
+	var slide := slide_spot(c, before, after, GameState.config.sand_slide_fx_min_m)
+	if not slide.is_empty():
+		var delay: float = TerrainView.anim_delays(center, {}, {slide.v: 0.0}, 0.0)[slide.v]
+		get_tree().create_timer(float(delay) + 0.1).timeout.connect(_burst.bind(slide.pos, 0.5))
 
 
-func _fly(from: Vector3, to: Vector3, duration: float, scoops: int, burst_at_end: bool) -> void:
-	var clump := Props.sand_clump(0.11 * pow(float(scoops), 0.33), _flights.size() + 5)
+## La hauteur d'arrivée du sommet le plus proche du point visé.
+static func _height_near(c: Vector2, after: Dictionary) -> float:
+	var best := INF
+	var y := 0.0
+	for v: Vector2i in after:
+		var d := TerrainLogic.vertex_xz(v).distance_squared_to(c)
+		if d < best:
+			best = d
+			y = float(after[v])
+	return y
+
+
+## Là où le sable s'éboule le plus, loin de la pelletée : {v, pos}, ou {} s'il n'y a pas
+## d'éboulement d'au moins `min_m`.
+static func slide_spot(c: Vector2, before: Dictionary, after: Dictionary, min_m: float) -> Dictionary:
+	var best := min_m
+	var out := {}
+	for v: Vector2i in after:
+		var p := TerrainLogic.vertex_xz(v)
+		if p.distance_to(c) < 1.3:
+			continue
+		var d := absf(float(after[v]) - float(before.get(v, after[v])))
+		if d >= best:
+			best = d
+			out = {"v": v, "pos": Vector3(p.x, float(after[v]), p.y)}
+	return out
+
+
+func _fly(from: Vector3, to: Vector3, duration: float, scoops: float, burst_at_end: bool) -> void:
+	var clump := Props.sand_clump(0.11 * pow(maxf(scoops, 0.2), 0.33), _flights.size() + 5)
 	clump.name = "SandClump"
 	clump.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(clump)
