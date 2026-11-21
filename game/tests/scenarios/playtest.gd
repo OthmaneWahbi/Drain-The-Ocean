@@ -321,7 +321,7 @@ func _run() -> void:
 	# On marche contre les tuyaux : ils sont solides, on ne passe pas au travers (on peut sauter).
 	await _select_tool("seau")
 
-	# 8 bis. La pelle (0.1.11) : l'acheter, creuser une case, reposer le sable sur une autre.
+	# 8 bis. La pelle (0.1.11, 0.1.12) : l'acheter, creuser, reposer le sable ailleurs, aplanir.
 	_step = "pelle"
 	_gs.stock["sel"] = int(_gs.stock.get("sel", 0)) + 10
 	_check(_gs.order(["pelle"]).size() > 0, "pelle commandée")
@@ -335,28 +335,44 @@ func _run() -> void:
 	_face(Vector3(dig_cell.x + 0.5, 0.45, dig_cell.y + 0.5))
 	await _frames(4)
 	var shovel: Node = _main.find_child("ShovelTool", true, false)
-	print("  info  [pelle] joueur %s, case visée %s (%s)" % [_player.global_position, shovel.target_cell, shovel.has_target])
-	var before_y: float = _gs.terrain.cell_mean(dig_cell)
-	await _tap(&"use_tool_alt")
+	print("  info  [pelle] joueur %s, sommet visé %s (%s)" % [_player.global_position, shovel.target_vertex, shovel.has_target])
+	# 0.1.12 : clic gauche = creuser une pelletée, clic droit = la reposer.
+	var dug: Vector2i = shovel.target_vertex
+	var before_y: float = _gs.terrain.vertex(dug.x, dug.y).y
+	await _tap(&"use_tool")
 	await _wait(0.6)
-	_check(_gs.shovel_sand == 1, "une pelletée sur la pelle (%d)" % _gs.shovel_sand)
-	_check(_gs.terrain.cell_mean(dig_cell) < before_y - 0.1, "la case est creusée")
+	_check(absf(_gs.shovel_sand - 1.0) < 0.01, "une pelletée sur la pelle (%.2f)" % _gs.shovel_sand)
+	_check(_gs.terrain.vertex(dug.x, dug.y).y < before_y - 0.1, "le sable est creusé")
 	var fill_cell := Vector2i(-8, -1)
 	_face(Vector3(fill_cell.x + 0.5, 0.45, fill_cell.y + 0.5))
 	await _frames(4)
+	var dropped: Vector2i = shovel.target_vertex
+	var drop_y: float = _gs.terrain.vertex(dropped.x, dropped.y).y
+	await _tap(&"use_tool_alt")
+	await _wait(0.6)
+	_check(_gs.shovel_sand < 0.01, "le sable est reposé ailleurs (%.2f)" % _gs.shovel_sand)
+	_check(_gs.terrain.vertex(dropped.x, dropped.y).y > drop_y + 0.1, "un petit tas là où on l'a posé")
+	# Maj + clic : lisser (le tas s'aplatit, à la même hauteur moyenne, sans toucher à la pelle).
 	var shift := InputEventKey.new()
 	shift.keycode = KEY_SHIFT
 	shift.physical_keycode = KEY_SHIFT
 	shift.pressed = true
 	Input.parse_input_event(shift)
 	await _frames(2)
+	var peak: float = _gs.terrain.vertex(dropped.x, dropped.y).y
+	await _tap(&"use_tool")
+	await _wait(0.4)
+	_check(_gs.terrain.vertex(dropped.x, dropped.y).y < peak - 0.02, "Maj + clic lisse le tas")
+	_check(_gs.shovel_sand < 0.01, "lisser ne prend pas de sable (%.2f)" % _gs.shovel_sand)
+	# Maj + clic droit : niveler la case visée (pour y poser un objet).
+	var flat_cell: Vector2i = shovel.target_cell
 	await _tap(&"use_tool_alt")
+	await _wait(0.4)
 	shift = shift.duplicate()
 	shift.pressed = false
 	Input.parse_input_event(shift)
-	await _wait(0.6)
-	_check(_gs.shovel_sand == 0, "le sable est reposé ailleurs (%d)" % _gs.shovel_sand)
-	_check(_gs.terrain.cell_level(fill_cell) > _gs.config.ground_y + 0.1, "la case remblayée est montée")
+	await _wait(0.4)
+	_check(not is_nan(_gs.terrain.cell_level(flat_cell)), "Maj + clic droit nivelle la case")
 	var tv: Node = _main.find_child("Terrain", true, false)
 	_check(tv == null or not tv.call("is_animating"), "les animations sont finies")
 	await _select_tool("seau")

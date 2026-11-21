@@ -222,9 +222,11 @@ HUD_PER_SLOT,max %d par case,max %d per slot
 HUD_PIPES_IN_HAND,%d en main,%d in hand
 TOOL_PELLE,Pelle,Shovel
 PROMPT_GROUND_NOT_FLAT,"Sol pas plat : aplanis-le à la pelle · [R] Tourner · [G] Annuler","Ground not flat: level it with the shovel · [R] Rotate · [G] Cancel"
-PROMPT_DIG,"[Clic] Aplanir (glisser) · [Clic droit] Creuser · [Maj + Clic droit] Remblayer · Pelle : %d/%d","[Click] Level (drag) · [Right click] Dig · [Shift + Right click] Fill · Shovel: %d/%d"
-PROMPT_DIG_SHOVEL_FULL,"Pelle pleine : remblaie ailleurs (Maj + Clic droit)","Shovel full: fill somewhere else (Shift + Right click)"
-PROMPT_DIG_SHOVEL_EMPTY,"Pelle vide : creuse d'abord (Clic droit)","Shovel empty: dig first (Right click)"
+PROMPT_DIG,"[Clic] Creuser · [Clic droit] Poser · [Maj + Clic] Lisser · [Maj + Clic droit] Niveler (glisser) · Pelle : %s/%d","[Click] Dig · [Right click] Drop · [Shift + Click] Smooth · [Shift + Right click] Level (drag) · Shovel: %s/%d"
+PROMPT_DIG_SHOVEL_FULL,"Pelle pleine : pose le sable ailleurs (Clic droit)","Shovel full: drop the sand somewhere else (Right click)"
+PROMPT_DIG_SHOVEL_EMPTY,"Pelle vide : creuse d'abord (Clic)","Shovel empty: dig first (Click)"
+PROMPT_DIG_TOO_DEEP,"Trop près de l'eau : on ne creuse pas plus bas","Too close to the water: no digging deeper"
+PROMPT_DIG_TOO_HIGH,Le tas est assez haut ici,The pile is high enough here
 PROMPT_DIG_AIM,Vise le sable devant toi,Aim at the sand in front of you
 PROMPT_DIG_TOO_FAR,Trop loin pour la pelle,Too far for the shovel
 PROMPT_DIG_WATER,"Pas dans l'eau : le sable s'effondre","Not in the water: the sand collapses"

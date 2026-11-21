@@ -19,8 +19,9 @@ uniform float shovel_strength : hint_range(0.0, 0.5) = 0.06;
 uniform vec3 shadow_tint : source_color = vec3(0.62, 0.55, 0.72);
 uniform float sea_y = 0.0;
 // Les couleurs du maillage sont choisies à l'œil : on les prend telles quelles, un peu moins
-// fort que la lumière du soleil (le sable n'est plus « brûlé » en blanc-jaune).
-uniform float exposure = 0.72;
+// fort que la lumière du soleil (le sable n'est plus « brûlé » en blanc-jaune). 0.1.12 : un peu
+// plus clair et plus saturé (une plage tropicale).
+uniform float exposure = 0.8;
 
 varying vec3 world_pos;
 varying vec4 facet_color;

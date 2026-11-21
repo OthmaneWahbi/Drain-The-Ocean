@@ -160,25 +160,53 @@ static func terrace(h: float, step: float) -> float:
 	return (level + smoothstep(0.45, 1.0, frac)) * step
 
 
+## Les catégories de sol (0.1.12 : le sable sec se nuance ensuite sommet par sommet).
+enum Ground { GRASS, DRY_GRASS, DRY_SAND, WET_SAND, UNDERWATER, SEABED }
+
+## Le sable sec d'une plage tropicale (0.1.12 : plus clair et plus saturé), et celui des pentes.
+const DRY_SAND := Color(0.74, 0.6, 0.34)
+const SLOPE_SAND := Color(0.7, 0.53, 0.3)
+
+
+## La catégorie d'une facette selon sa hauteur moyenne, sa pente (0 plat … 1 vertical) et un peu
+## de hasard.
+func ground_kind(y: float, slope: float, jitter: float, sea_y: float = 0.0) -> int:
+	if y > ground_y + 1.4 and slope < 0.3:
+		return Ground.GRASS  # herbe sur le haut des dunes (les flancs restent en sable)
+	if y > ground_y + 0.9 and slope < 0.12 and jitter > 0.2:
+		return Ground.DRY_GRASS  # touffes d'herbe sèche sur les terrasses
+	if y > sea_y + 0.12:
+		return Ground.DRY_SAND
+	if y > sea_y - 0.5:
+		return Ground.WET_SAND
+	if y > seabed_y + 0.5:
+		return Ground.UNDERWATER
+	return Ground.SEABED
+
+
+## Le sable sec selon la pente, en douceur (un ton plus chaud dans les pentes).
+static func dry_sand_color(slope: float) -> Color:
+	return DRY_SAND.lerp(SLOPE_SAND, smoothstep(0.15, 0.5, slope))
+
+
 ## Couleur d'une facette selon sa hauteur moyenne, sa pente (0 plat … 1 vertical) et un peu de hasard.
 ## `vary` faux : la couleur de la catégorie seule (0.1.11 : le terrain varie par sommet, en douceur,
 ## au lieu d'un damier de facettes).
 func color(y: float, slope: float, jitter: float, sea_y: float = 0.0, vary: bool = true) -> Color:
 	var c: Color
-	if y > ground_y + 1.4 and slope < 0.3:
-		c = Color(0.34, 0.46, 0.21)  # herbe sur le haut des dunes (les flancs restent en sable)
-	elif y > ground_y + 0.9 and slope < 0.12 and jitter > 0.2:
-		c = Color(0.42, 0.5, 0.25)  # touffes d'herbe sèche sur les terrasses
-	elif y > sea_y + 0.12:
-		c = Color(0.64, 0.54, 0.34)  # sable sec
-		if slope > 0.25:
-			c = Color(0.58, 0.46, 0.28)  # sable des pentes, un ton plus chaud
-	elif y > sea_y - 0.5:
-		c = Color(0.50, 0.42, 0.27)  # sable mouillé
-	elif y > seabed_y + 0.5:
-		c = Color(0.46, 0.42, 0.29)  # sable sous l'eau
-	else:
-		c = Color(0.36, 0.38, 0.30)  # fond marin
+	match ground_kind(y, slope, jitter, sea_y):
+		Ground.GRASS:
+			c = Color(0.34, 0.5, 0.2)
+		Ground.DRY_GRASS:
+			c = Color(0.44, 0.54, 0.24)
+		Ground.DRY_SAND:
+			c = dry_sand_color(slope)
+		Ground.WET_SAND:
+			c = Color(0.56, 0.45, 0.27)  # sable mouillé
+		Ground.UNDERWATER:
+			c = Color(0.5, 0.45, 0.29)  # sable sous l'eau
+		_:
+			c = Color(0.36, 0.38, 0.30)  # fond marin
 	if not vary:
 		return c
 	var k := 1.0 + jitter * 0.06
@@ -419,6 +447,29 @@ func set_cell(cell: Vector2i, y: float) -> Array[Vector2i]:
 		for c in cell_vertices(cell):
 			changed.append_array(_pin_around(c))
 	return changed
+
+
+## Met chaque sommet de `heights` (Vector2i -> float) à sa hauteur (0.1.12 : la pelle et le sable
+## qui s'éboule touchent des sommets un par un). Renvoie les sommets changés et les voisins recalés.
+func set_vertices(heights: Dictionary) -> Array[Vector2i]:
+	var changed: Array[Vector2i] = []
+	for v: Vector2i in heights:
+		var y := float(heights[v])
+		if edits.has(v) and absf(float(edits[v]) - y) <= 0.0001:
+			continue
+		changed.append(v)
+		edits[v] = y
+		_pinned.erase(v)
+	var pinned: Array[Vector2i] = []
+	for v in changed:
+		pinned.append_array(_pin_around(v))
+	changed.append_array(pinned)
+	return changed
+
+
+## Le sommet le plus proche d'un point (x, z), en indices.
+static func nearest_vertex(x: float, z: float) -> Vector2i:
+	return Vector2i(roundi(x / VERTEX_STEP), roundi(z / VERTEX_STEP))
 
 
 ## Recale sur la grille les voisins non travaillés d'un sommet travaillé. Renvoie les nouveaux.

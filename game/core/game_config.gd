@@ -247,8 +247,29 @@ extends Resource
 @export var dig_drag_interval_s: float = 0.08
 
 @export_group("Pelle (0.1.11)")
-## Pelletées de sable que la pelle peut porter. Une pelletée = une case de 1 m creusée d'un cran
-## (dig_step_m). Creuser remplit la pelle, remblayer la vide : le sable se déplace, il ne se crée pas.
-@export var shovel_capacity_scoops: int = 6
+## Pelletées de sable que la pelle peut porter (0.1.12 : 3, on la vide plus souvent). Creuser
+## remplit la pelle, poser la vide : le sable se déplace, il ne se crée pas.
+@export var shovel_capacity_scoops: int = 3
 ## Durée de l'animation d'un coup de pelle (le sable glisse vers son nouveau niveau).
 @export var dig_anim_s: float = 0.3
+
+@export_group("Sable (0.1.12)")
+## Le volume d'une pelletée (m³). 0,25 = une case de 1 m sur 25 cm, comme avant.
+@export var dig_scoop_m3: float = 0.25
+## Le rayon de la pelletée (m) : le sable est pris (ou posé) en rond, plus au centre qu'au bord.
+@export var dig_brush_radius_m: float = 1.2
+## Clic maintenu : une pelletée toutes les … secondes.
+@export var dig_repeat_s: float = 0.35
+## Lisser (Maj + clic) : à chaque passe, le sable fait ce pourcentage du chemin vers la hauteur
+## moyenne sous la pelle (au centre ; moins au bord).
+@export var smooth_strength: float = 0.6
+## Lisser maintenu : une passe toutes les … secondes.
+@export var smooth_repeat_s: float = 0.15
+## Pente d'éboulement du sable sec (degrés) : plus raide, il glisse (le vrai sable : 30 à 35°).
+@export var sand_repose_deg: float = 34.0
+## Le sable mouillé (près de l'eau) tient plus raide.
+@export var sand_wet_repose_deg: float = 45.0
+## Jusqu'à combien de mètres au-dessus de l'eau le sable est mouillé.
+@export var sand_wet_band_m: float = 0.3
+## Sous cette hauteur de glissement (m), un sommet éboulé ne fait pas de poussière.
+@export var sand_slide_fx_min_m: float = 0.05
