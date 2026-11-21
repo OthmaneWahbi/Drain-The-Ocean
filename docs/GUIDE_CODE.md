@@ -588,5 +588,5 @@ Sable mouillé en dégradé par sommet (`TerrainView.fill`), `SandPhysics.N16` e
 ### PR #38 — Version 0.1.16 : terre et sable, aplanir plus beau
 `TerrainLogic.Soil` / `cover` / `base_vertex` / `soil` / `grassy` / `update_soil`, `SandPhysics.relax` avec `land` et `tan_earth` (pentes d'origine gardées, terre à 50°), `GameState.shovel_soil` / `_cut_soil` / `_soil_reason`, UV de matière dans `TerrainView.fill`, sable aplani en dalles crème et terre ratissée dans `sand.gdshader`, charge de pelle en terre, `level_drag_interval_s`, `test_soil.gd`, `TESTS_FILE`, plan de captures `terre`.
 
-### PR #39 — Version 0.1.17 : l'avion et les animations
+### PR #40 — Version 0.1.17 : l'avion et les animations
 `FlightPath` (ligne droite, altitude et vitesse constantes, treuil, chute libre puis descente constante), `DeliveryPlane.fly(path)` / `fly_line`, moteur 3D (`SoundSynth` « engine »), `Props.crate` refaite par code, `Props.parachute` (confluence, « Canopy », « Slings »), `CrateView.drop_from_y` (pendule, ouverture, atterrissage), toboggan, moulin, levier, tas, mouettes, crabe, nuages, corps du joueur, avion du teaser, `test_flight.gd`, plan de captures `livraison`.
