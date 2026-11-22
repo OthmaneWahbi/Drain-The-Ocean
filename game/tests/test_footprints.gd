@@ -68,8 +68,14 @@ func _model(kind: String) -> Node3D:
 			root.add_child(IslandLife.hammock())
 		"vitrine":
 			root.add_child(IslandLife.shelf(5, 3))
-		"parasol", "flamant_sel", "saliere", "bouee_canard", "nain_coquillages":
+		"parasol", "flamant_sel", "saliere", "bouee_canard", "nain_coquillages", "longue_vue", "feu_de_camp", "dalle", "cloture", "lampion", "tapis", "coquillage_geant":
 			root.add_child(DecorView.model(kind))
+		"nid":
+			root.add_child(IslandGoods.nest())
+		"pousse":
+			root.add_child(IslandGoods.sapling())
+		"epave":
+			root.add_child(IslandGoods.wreck_crate())
 	return root
 
 

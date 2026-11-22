@@ -72,6 +72,7 @@ func _process(_delta: float) -> void:
 			_ring.play()
 	elif _ring.playing:
 		_ring.stop()
+	_detector_beep(_delta)
 	# La mer se tait quand l'océan est parti.
 	_waves.volume_db = -10.0 if GameState.ending_drop_m < 2.0 else -40.0
 
@@ -97,6 +98,30 @@ static func tink_pitch(resource: String) -> float:
 		"mineraux_rares":
 			return 1.5
 	return 1.0
+
+
+## 0.1.23 : le détecteur en main bipe, de plus en plus vite près de ce qui est enterré.
+var _beep_t := 0.0
+
+
+func _detector_beep(delta: float) -> void:
+	if GameState.current_tool() != "detecteur" or GameState.ui_open:
+		_beep_t = 0.0
+		return
+	var sig := GameState.detector_signal(GameState.player_position)
+	if sig <= 0.0:
+		_beep_t = 0.0
+		return
+	_beep_t -= delta
+	if _beep_t <= 0.0:
+		_beep_t = beep_interval(sig)
+		play("tink", -10.0)
+		_players[(_next - 1 + _players.size()) % _players.size()].pitch_scale = 1.6 + sig * 0.6
+
+
+## Le temps entre deux bips : 1 s au bord de la portée, 0,1 s juste au-dessus.
+static func beep_interval(sig: float) -> float:
+	return lerpf(1.0, 0.1, clampf(sig, 0.0, 1.0))
 
 
 func _on_ending_phase(phase: int) -> void:

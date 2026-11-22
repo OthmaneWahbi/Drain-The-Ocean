@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.54 (0.1.22 : le temps qu'il fait ; cuvette de départ corrigée) |
+| Version du document | 0.55 (0.1.23 : explorer et vivre sur l'île) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -1055,10 +1055,10 @@ Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du d
 
 ### 19.30 Version 0.1.23 : explorer et vivre sur l'île
 
-- **[PROPOSÉ]** **Marais en série** (comme à Guérande) : deux marais à **1 case** ou moins l'un de l'autre sont reliés. L'eau passe du plus haut au plus bas : au-dessus de **50 %** de remplissage, un marais en envoie **2 L/s** au suivant. Le **dernier** marais d'une série d'au moins 2 donne **2×** plus de chances de minéraux et **3×** plus de minéraux rares.
+- **[PROPOSÉ]** **Marais en série** (comme à Guérande) : deux marais séparés par **2 cases** ou moins (un muret de sable) sont reliés. (À 1 case, la case du milieu se retrouve creusée elle aussi, entre les deux fonds, et les deux trous n'en font plus qu'un : il faut un muret.) L'eau passe du plus haut au plus bas : au-dessus de **50 %** de remplissage, un marais en envoie **2 L/s** au suivant. Le **dernier** marais d'une série d'au moins 2 donne **2×** plus de chances de minéraux et **3×** plus de minéraux rares.
 - **[PROPOSÉ]** **Bouteilles à la mer** : environ **tous les 2 jours**, une bouteille s'échoue sur la plage. E l'ouvre : un **dessin sans texte** sur papier crème, plein écran (clic pour fermer), puis la bouteille entre dans la collection. **4 dessins** : une **carte** de l'île avec une croix (le trésor du détecteur, voir plus bas), quelqu'un qui **tire une chaîne** au fond de la mer, l'**avion** de l'agence qui emmène quelqu'un (le gag final, en douce), un **crabe** avec un chapeau.
 - **[PROPOSÉ]** **Épaves qui dérivent** : chaque jour vers une heure tirée au sort, une **caisse d'un autre naufragé** (sans logo de l'agence) apparaît au large et **dérive** vers la plage à 0,6 m/s. Une fois échouée, E l'ouvre : **5 à 15 sel**, **0 à 3 minéraux**, **0 à 2 coquillages**, et **5 %** de chance d'une perle.
-- **[PROPOSÉ]** **Longue-vue** (catalogue, palier 1, **25 sel + 2 minéraux**, unique, à poser, 1 × 1 case) : E pour regarder dedans ; la souris vise, la molette zoome (×4 à ×12), Échap pour sortir. À l'horizon : **3 autres îles** lointaines (silhouettes, l'une avec une cabine d'une autre couleur), les avions de l'agence, le **petit tourbillon** du drain (§11), et plus tard baleines et dauphins.
+- **[PROPOSÉ]** **Longue-vue** (catalogue, palier 1, **25 sel + 2 minéraux**, unique, à poser, 1 × 1 case) : E pour regarder dedans : on se place derrière, un cercle noir entoure la vue (sans HUD) ; la souris vise, la molette zoome (×4 à ×12), Échap ou E pour sortir. À l'horizon : **3 autres îles** lointaines (silhouettes, l'une avec une cabine d'une autre couleur), les avions de l'agence, le **petit tourbillon** du drain (§11), et plus tard baleines et dauphins.
 - **[PROPOSÉ]** **Détecteur de métaux** (catalogue, palier 1, **40 sel + 5 minéraux**, unique, outil de la barre) : en main, il **bipe** de plus en plus vite près d'un objet enterré (à moins de **6 m**). Creuser à la pelle à moins de **1 m** de l'objet le fait sortir. Il y a toujours **3 objets enterrés** sur l'île (un nouveau chaque matin à la place d'un trouvé) : **pièce ancienne** (collection, la première fois, sinon 5 minéraux), **perle**, **ferraille** (3 minéraux). Le trésor de la carte en bouteille (**3 perles** + un **coffre** pour la collection) est enterré une seule fois, là où la croix l'indique.
 - **[PROPOSÉ]** **Tortues qui pondent** : certaines nuits (**25 %**), une tortue sort de la mer vers 22 h, creuse et pond sur la plage, puis repart. Le **nid** (petit monticule et deux brindilles) bloque sa case : on ne peut ni y creuser ni y poser (« Un nid de tortue »). **3 nuits** plus tard, **5 petites tortues** courent vers la mer. La première éclosion vue ajoute l'**œuf de tortue** à la collection.
 - **[PROPOSÉ]** **Feu de camp** (catalogue, palier 1, **15 sel**, unique, à poser, 1 × 1 case) : il brûle la nuit (lumière orange qui vacille, braises) et s'éteint le jour. Une **noix de coco mangée à moins de 4 m d'un feu allumé** est **grillée** : elle nourrit **50 %** de plus.

@@ -127,6 +127,37 @@ static func build(id: String) -> Node3D:
 			n.add_child(SaltGoods.salt_flamingo())
 		"saliere":
 			n.add_child(SaltGoods.salt_shaker())
+		"longue_vue":
+			var sg := IslandGoods.spyglass()
+			sg.scale = Vector3.ONE * 0.6
+			n.add_child(sg)
+		"detecteur":
+			var det := IslandGoods.detector()
+			det.rotation = Vector3(0.9, 0.6, 0)
+			det.position.y = 0.6
+			n.add_child(det)
+			var c := IslandGoods.coin()
+			c.position = Vector3(0.45, 0, 0.2)
+			n.add_child(c)
+		"feu_de_camp":
+			n.add_child(IslandGoods.campfire())
+		"dalles":
+			for k in 3:
+				var tile := IslandGoods.path_tile()
+				tile.position = Vector3(-0.35 + k * 0.35, k * 0.06, 0.1 - k * 0.1)
+				tile.rotation.y = k * 0.3
+				tile.scale = Vector3.ONE * 0.7
+				n.add_child(tile)
+		"cloture":
+			n.add_child(IslandGoods.fence())
+		"lampion":
+			n.add_child(IslandGoods.lantern())
+		"tapis":
+			var m := IslandGoods.mat()
+			m.scale = Vector3.ONE * 0.6
+			n.add_child(m)
+		"coquillage_geant":
+			n.add_child(IslandGoods.giant_shell())
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)

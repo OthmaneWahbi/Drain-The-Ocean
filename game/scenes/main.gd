@@ -75,6 +75,13 @@ func _ready() -> void:
 	weather.name = "Weather"
 	weather.setup(sun, world_env.environment, ocean.material, props.palms)
 	add_child(weather)
+	# 0.1.23 : épaves, tortues, cocotiers plantés, l'horizon (îles lointaines, tourbillon).
+	var events := IslandEventsView.new()
+	events.name = "IslandEvents"
+	add_child(events)
+	var note := BottleNote.new()
+	note.name = "BottleNote"
+	add_child(note)
 	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
 		add_child(extra)
 	GameState.game_reset.connect(_clear_views)

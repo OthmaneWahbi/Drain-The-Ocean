@@ -24,6 +24,15 @@ var prompt: String = ""
 var _bucket_node: Node3D
 var _rake_node: Node3D
 var _shovel_node: Node3D
+## 0.1.23 : le détecteur et la noix de coco tenus en main.
+var _detector_node: Node3D
+var _nut_node: Node3D
+## 0.1.23 : la longue-vue. Vrai tant qu'on y regarde (on ne bouge plus, la molette zoome).
+var spying := false
+var _spy_zoom := 4.0
+var _spy_was_third := false
+var _spy_exit_frame := -1
+var _spy_overlay: SpyglassOverlay
 ## Le coup de pelle en cours (0..1, -1 sans coup) et son sens (creuser ou remblayer).
 var _swing_t := -1.0
 var _swing_dig := true
@@ -160,6 +169,13 @@ func _build_bucket() -> void:
 	_shovel_node.position = SHOVEL_REST
 	_shovel_node.rotation_degrees = SHOVEL_REST_ROT
 	head.add_child(_shovel_node)
+	_detector_node = IslandGoods.detector()
+	# Tenu à droite, le disque devant soi au ras du sable (à ~20° sous l'horizon : dans le champ).
+	_detector_node.position = Vector3(0.32, -0.3, -0.5)
+	head.add_child(_detector_node)
+	_nut_node = Models.coconut(0.065, 3)
+	_nut_node.position = Vector3(0.24, -0.22, -0.62)
+	head.add_child(_nut_node)
 	# Le corps en 3e personne : un petit personnage CC0 qui marche, court, saute (PRD §13).
 	body_mesh.visible = false
 	_body = Props.character("mini_male_a", 1.75, "idle")
@@ -237,6 +253,73 @@ func _build_fade() -> void:
 	layer.add_child(_fade)
 
 
+## 0.1.23 : regarder dans la longue-vue posée en `eye` (le point de vue, dans le monde).
+## Le joueur se place derrière, passe en 1re personne et zoome (champ de vision).
+func enter_spyglass(eye: Vector3) -> void:
+	if spying:
+		return
+	spying = true
+	_spy_was_third = third_person
+	third_person = false
+	_apply_view()
+	_spy_zoom = GameState.config.spyglass_zoom_min
+	fp_camera.fov = spy_fov(Settings.data.fov, _spy_zoom)
+	# Les pieds sous l'œil de la longue-vue, un pas en arrière dans la direction où l'on regarde.
+	var back := global_transform.basis.z
+	back.y = 0.0
+	velocity = Vector3.ZERO
+	global_position = Vector3(eye.x, global_position.y, eye.z) + back.normalized() * 0.45
+	if _spy_overlay == null:
+		_spy_overlay = SpyglassOverlay.new()
+		add_child(_spy_overlay)
+	_spy_overlay.visible = true
+
+
+func exit_spyglass() -> void:
+	if not spying:
+		return
+	spying = false
+	fp_camera.fov = Settings.data.fov
+	third_person = _spy_was_third
+	_apply_view()
+	_spy_overlay.visible = false
+	_spy_exit_frame = Engine.get_process_frames()
+
+
+## Le champ de vision pour un grossissement `zoom` (×4 = un angle 4 fois plus étroit).
+static func spy_fov(base_fov: float, zoom: float) -> float:
+	return rad_to_deg(2.0 * atan(tan(deg_to_rad(base_fov) * 0.5) / maxf(zoom, 1.0)))
+
+
+## Pendant la longue-vue, Échap et E en sortent (avant le menu pause), la molette zoome.
+func _input(event: InputEvent) -> void:
+	if not spying:
+		return
+	if event.is_action_pressed(&"ui_cancel") or event.is_action_pressed(&"interact"):
+		exit_spyglass()
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseButton and event.pressed:
+		var cfg := GameState.config
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_spy_zoom = minf(_spy_zoom * 1.25, cfg.spyglass_zoom_max)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_spy_zoom = maxf(_spy_zoom / 1.25, cfg.spyglass_zoom_min)
+		else:
+			return
+		fp_camera.fov = spy_fov(Settings.data.fov, _spy_zoom)
+		get_viewport().set_input_as_handled()
+
+
+## La petite lampe du détecteur clignote au rythme du bip.
+func _blink_detector() -> void:
+	if not _detector_node.visible:
+		return
+	var sig := GameState.detector_signal(global_position)
+	var led := _detector_node.get_node("Led") as Node3D
+	led.visible = sig > 0.0 and fmod(Time.get_ticks_msec() / 1000.0, SoundBoard.beep_interval(sig)) < 0.08
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if GameState.ui_open:
 		return
@@ -247,7 +330,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not GameState.placing and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and _handle_toolbar_input(event):
 		return
 	# Échap ouvre le menu pause (PauseMenu), qui libère la souris.
-	if event.is_action_pressed(&"toggle_view"):
+	if event.is_action_pressed(&"toggle_view") and not spying:
 		third_person = not third_person
 		_apply_view()
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -266,6 +349,8 @@ func _physics_process(delta: float) -> void:
 	var input := Vector2.ZERO
 	if not GameState.ui_open and not _drowning:
 		input = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
+	if spying:
+		input = Vector2.ZERO
 	var direction := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
 	var stamina := GameState.stamina
 	var wants_sprint := Input.is_action_pressed(&"sprint") and input != Vector2.ZERO and not swimming
@@ -282,7 +367,7 @@ func _physics_process(delta: float) -> void:
 			# Fin de l'escalade du rivage : on continue de se hisser tant que les pieds sont dans l'eau.
 			if is_on_wall() and input.y < 0.0 and global_position.y < water_y:
 				velocity.y = cfg.swim_climb_velocity
-		elif Input.is_action_just_pressed(&"jump") and not GameState.ui_open and not _drowning:
+		elif Input.is_action_just_pressed(&"jump") and not GameState.ui_open and not _drowning and not spying:
 			velocity.y = jump_velocity
 
 	var target_velocity := direction * speed
@@ -428,7 +513,8 @@ func _teleport(spot: Vector3) -> void:
 ## Balancement de la tête en marchant sur la terre ferme (M-21, désactivable dans les options).
 ## Le champ de vision des options est appliqué ici aussi.
 func _update_head_bob(delta: float, speed: float) -> void:
-	fp_camera.fov = Settings.data.fov
+	# 0.1.23 : dans la longue-vue, l'angle est resserré du grossissement choisi.
+	fp_camera.fov = spy_fov(Settings.data.fov, _spy_zoom) if spying else Settings.data.fov
 	var ground_speed := Vector2(velocity.x, velocity.z).length()
 	var ratio := ground_speed / maxf(speed, 0.01) if is_on_floor() and not swimming else 0.0
 	if ratio > 0.1:
@@ -475,6 +561,9 @@ func _process(delta: float) -> void:
 	_bucket_node.visible = tool == "seau"
 	_rake_node.visible = tool == "rateau"
 	_shovel_node.visible = tool == "pelle"
+	_detector_node.visible = tool == "detecteur"
+	_nut_node.visible = tool == "noix_de_coco"
+	_blink_detector()
 	_animate_shovel(delta)
 	_update_carry(tool)
 	_second_bucket.visible = tool == "seau" and GameState.bucket_count > 1
@@ -488,12 +577,16 @@ func _process(delta: float) -> void:
 		GameState.bucket.cancel_fill()
 		prompt = ""
 		return
+	if spying:
+		target = null
+		prompt = ""  # l'aide est dessinée sur le cercle noir (SpyglassOverlay)
+		return
 	target = _find_target()
 	prompt = target.get_prompt(self) if target else ""
 	if target and target.has_method(&"get_movable"):
 		prompt = tr("PROMPT_MOVE") if prompt == "" else "%s · %s" % [prompt, tr("PROMPT_MOVE")]
 	_handle_tool(delta)
-	if Input.is_action_just_pressed(&"interact") and target and target.has_method(&"interact"):
+	if Input.is_action_just_pressed(&"interact") and target and target.has_method(&"interact") and Engine.get_process_frames() != _spy_exit_frame:
 		target.interact(self)
 
 
@@ -510,6 +603,15 @@ func _handle_tool(delta: float) -> void:
 		bucket.cancel_fill()
 		if Input.is_action_just_pressed(&"use_tool"):
 			target.use(self)
+		return
+	# 0.1.23 : la noix de coco en main, visée sur la terre : on la plante.
+	if GameState.current_tool() == "noix_de_coco":
+		bucket.cancel_fill()
+		if aim_on_terrain and prompt == "":
+			var why := GameState.plant_reason(aim_point)
+			prompt = tr(why) if why != "" else tr("PROMPT_PLANT")
+			if why == "" and Input.is_action_just_pressed(&"use_tool"):
+				GameState.plant_coconut(aim_point)
 		return
 	# Puiser et vider : seulement avec le seau en main.
 	if GameState.current_tool() != "seau":
@@ -563,3 +665,39 @@ func _find_target() -> Node:
 
 func spring_length() -> float:
 	return ($Head/SpringArm as SpringArm3D).spring_length
+
+
+## 0.1.23 : le cercle noir de la longue-vue (tout est noir hors d'un disque au centre).
+class SpyglassOverlay extends CanvasLayer:
+	func _ready() -> void:
+		layer = 12  # au-dessus du HUD et de la barre d'outils (couche 11)
+		var c := Ring.new()
+		c.set_anchors_preset(Control.PRESET_FULL_RECT)
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(c)
+
+	class Ring extends Control:
+		func _notification(what: int) -> void:
+			if what == NOTIFICATION_RESIZED:
+				queue_redraw()
+
+		func _draw() -> void:
+			var s := size
+			var r := minf(s.x, s.y) * 0.46
+			var c := s * 0.5
+			var black := Color(0, 0, 0)
+			# Hors du carré qui contient le disque.
+			draw_rect(Rect2(0, 0, c.x - r, s.y), black)
+			draw_rect(Rect2(c.x + r, 0, s.x - c.x - r, s.y), black)
+			draw_rect(Rect2(c.x - r, 0, 2 * r, c.y - r), black)
+			draw_rect(Rect2(c.x - r, c.y + r, 2 * r, s.y - c.y - r), black)
+			# Les coins du carré : un anneau épais qui part du bord du disque.
+			var w := r * 0.5
+			draw_arc(c, r + w * 0.5, 0.0, TAU, 96, black, w, true)
+			# Le liseré du tube.
+			draw_arc(c, r, 0.0, TAU, 96, Color(0.1, 0.08, 0.05), 6.0, true)
+			# L'aide, dans le noir sous le cercle.
+			var font := ThemeDB.fallback_font
+			var hint := tr("HINT_SPYGLASS")
+			var tw := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+			draw_string(font, Vector2(c.x - tw / 2.0, minf(c.y + r + 26.0, s.y - 8.0)), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(1, 1, 1, 0.85))

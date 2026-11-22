@@ -110,7 +110,17 @@ footprints = {
 "flamant_sel": [-0.5, -0.5, 0.5, 0.5],
 "saliere": [-0.5, -0.5, 0.5, 0.5],
 "bouee_canard": [-0.5, -0.5, 0.5, 0.5],
-"nain_coquillages": [-0.5, -0.5, 0.5, 0.5]
+"nain_coquillages": [-0.5, -0.5, 0.5, 0.5],
+"longue_vue": [-0.5, -0.5, 0.5, 0.5],
+"feu_de_camp": [-0.5, -0.5, 0.5, 0.5],
+"dalle": [-0.5, -0.5, 0.5, 0.5],
+"cloture": [-0.5, -0.5, 0.5, 0.5],
+"lampion": [-0.5, -0.5, 0.5, 0.5],
+"tapis": [-1.0, -0.5, 1.0, 0.5],
+"coquillage_geant": [-0.5, -0.5, 0.5, 0.5],
+"nid": [-0.5, -0.5, 0.5, 0.5],
+"pousse": [-0.5, -0.5, 0.5, 0.5],
+"epave": [-0.5, -0.5, 0.5, 0.5]
 }
 pile_offset_cells = {
 "bache": 2,
@@ -305,3 +315,42 @@ flower_weather = "calme"
 flower_chance_per_salt = 0.2
 rose_min_earth_ratio = 0.5
 rose_chance_per_salt = 0.3
+marsh_link_gap_cells = 2
+marsh_link_above_ratio = 0.5
+marsh_link_lps = 2.0
+marsh_last_mineral_mult = 2.0
+marsh_last_rare_mult = 3.0
+bottle_chance_per_morning = 0.5
+bottle_drawings = PackedStringArray("carte", "chaine", "avion", "crabe")
+treasure_spot = Vector2(-14, 10)
+wreck_hour_min = 8.0
+wreck_hour_max = 17.0
+wreck_start_offshore_m = 45.0
+wreck_speed_mps = 0.6
+wreck_loot = {
+"coquillages": [0, 2],
+"mineraux": [0, 3],
+"sel": [5, 15]
+}
+wreck_pearl_chance = 0.05
+spyglass_zoom_min = 4.0
+spyglass_zoom_max = 12.0
+detector_range_m = 6.0
+detector_dig_m = 1.0
+buried_count = 3
+buried_weights = {
+"ferraille": 2,
+"perle": 1,
+"piece": 1
+}
+buried_scrap_minerals = 3
+buried_coin_minerals = 5
+treasure_pearls = 3
+turtle_night_chance = 0.25
+turtle_hour = 22.0
+turtle_hatch_nights = 3
+turtle_babies = 5
+campfire_radius_m = 4.0
+grilled_food_mult = 1.5
+planted_palm_days = 2
+planted_palm_max = 10

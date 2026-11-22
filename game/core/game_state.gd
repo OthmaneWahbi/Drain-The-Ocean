@@ -84,6 +84,18 @@ signal weather_changed
 signal resources_discovered
 ## 0.1.22 : la commande de l'agence a changé (nouvelle, ou envoyée).
 signal agency_order_changed
+## 0.1.23 : une bouteille à la mer est ouverte : son dessin (« carte », « chaine »…).
+signal bottle_opened(drawing: String)
+## 0.1.23 : une épave apparaît au large, ou disparaît (ouverte).
+signal wreck_added(wreck: Dictionary)
+signal wreck_removed(wreck: Dictionary)
+## 0.1.23 : la pelle a sorti un objet enterré (« piece », « perle », « ferraille », « tresor »).
+signal dug_up(kind: String, position: Vector3)
+## 0.1.23 : une tortue a pondu (nouveau nid), ou les petites tortues sont sorties.
+signal turtle_laid(nest: Dictionary)
+signal turtles_hatched(nest: Dictionary)
+## 0.1.23 : les cocotiers plantés ont changé (planté, poussé), ou la noix en main.
+signal planted_changed
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -156,6 +168,19 @@ var discovered: Dictionary = {}
 ## {id, sent: bool}. Vide s'il n'y en a pas.
 var agency_orders: Array = []
 var agency_order: Dictionary = {}
+## 0.1.23 : les épaves qui dérivent : {id, position, target, landed}.
+var wrecks: Array[Dictionary] = []
+## 0.1.23 : l'heure de l'épave du jour (−1 : déjà venue).
+var wreck_hour: float = -1.0
+## 0.1.23 : les objets enterrés : {kind, position}. Le trésor de la carte n'est enterré qu'une fois.
+var buried: Array[Dictionary] = []
+var treasure_buried: bool = false
+## 0.1.23 : les nids de tortue : {id, position, laid_day}.
+var nests: Array[Dictionary] = []
+var _turtle_day: int = -1
+## 0.1.23 : les cocotiers plantés : {id, position, planted_day} ; les noix de coco en main.
+var planted: Array[Dictionary] = []
+var coconuts_held: int = 0
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -243,6 +268,7 @@ func new_game() -> void:
 	_morning_refill()
 	_refill_reef()
 	_new_agency_order()
+	_refill_buried()
 	_emit_all()
 
 
@@ -280,6 +306,14 @@ func _reset_state() -> void:
 	weather = WeatherLogic.DEFAULT
 	discovered = {}
 	agency_order = {}
+	wrecks = []
+	wreck_hour = -1.0
+	buried = []
+	treasure_buried = false
+	nests = []
+	_turtle_day = -1
+	planted = []
+	coconuts_held = 0
 	pickups = []
 	stations = []
 	mirrors = []
@@ -328,6 +362,7 @@ func simulate(delta: float) -> void:
 		_new_weather()
 		if agency_order.is_empty() or agency_order.get("sent", false):
 			_new_agency_order()
+		_island_morning()
 		_pet_morning_gift()
 		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
 			phone_changed.emit()
@@ -346,6 +381,9 @@ func simulate(delta: float) -> void:
 					_discover(String(k))
 					salt_dropped.emit(zone, String(k), n)
 	_run_tides(delta)
+	_run_marsh_series(delta)
+	_run_wrecks(delta)
+	_run_turtles()
 	for st in stations:
 		(st.logic as StationLogic).step(delta)
 	_run_auto_pumps(delta)
@@ -491,7 +529,7 @@ func harvest(zone: Dictionary, resource: String = "") -> void:
 # --- Barre d'outils (M-27) --------------------------------------------------------------------
 
 ## Les outils, dans l'ordre où ils prennent une case quand on les obtient.
-const TOOLS: Array[String] = ["seau", "pelle", "rateau", "tuyaux"]
+const TOOLS: Array[String] = ["seau", "pelle", "rateau", "tuyaux", "detecteur", "noix_de_coco"]
 
 
 ## Ce que contient la case tenue : un outil ("seau", "rateau", "tuyaux"), un matériau porté
@@ -513,6 +551,10 @@ func owns_tool(tool: String) -> bool:
 			return has_rake
 		"tuyaux":
 			return pipe_stock > 0 or not pipes.is_empty()
+		"detecteur":
+			return has_gear("detecteur")
+		"noix_de_coco":
+			return coconuts_held > 0
 	return false
 
 
@@ -1209,6 +1251,314 @@ func send_agency_order() -> Dictionary:
 	return crate
 
 
+# --- Explorer et vivre sur l'île (0.1.23, PRD §19.30) ---------------------------------------
+
+## Chaque matin : une bouteille peut-être, l'heure de l'épave du jour, un objet enterré de plus,
+## et une noix de coco au pied de chaque cocotier planté devenu palmier.
+func _island_morning() -> void:
+	if rng.randf() < config.bottle_chance_per_morning:
+		var spot := _random_beach_spot()
+		if spot.is_finite():
+			add_pickup("bottle", spot)
+	wreck_hour = rng.randf_range(config.wreck_hour_min, config.wreck_hour_max)
+	_refill_buried()
+	for pl in planted:
+		if is_grown(pl):
+			var spot: Vector3 = pl.position + Vector3(0.6, 0.0, 0.4)
+			if not _has_pickup_at("coconut", spot):
+				spot.y = terrain.height(spot.x, spot.z) + 0.02
+				add_pickup("coconut", spot)
+	planted_changed.emit()
+
+
+# Marais en série --------------------------------------------------------------------------
+
+## Deux marais sont reliés si une case de l'un est à `marsh_link_gap_cells` case(s) ou moins
+## d'une case de l'autre (des cases vides entre les deux).
+func marshes_linked(a: Dictionary, b: Dictionary) -> bool:
+	var gap := config.marsh_link_gap_cells + 1
+	for ca: Vector2i in a.cells:
+		for cb: Vector2i in b.cells:
+			if maxi(absi(ca.x - cb.x), absi(ca.y - cb.y)) <= gap:
+				return true
+	return false
+
+
+## Pour chaque marais, celui (plus bas) vers lequel son eau descend ({} s'il n'y en a pas) :
+## le plus bas des marais reliés et plus bas que lui.
+func marsh_flow_targets() -> Dictionary:
+	var out := {}
+	var list := marshes()
+	for a in list:
+		var best: Dictionary = {}
+		for b in list:
+			if b == a or float(b.position.y) >= float(a.position.y) - 0.01 or not marshes_linked(a, b):
+				continue
+			if best.is_empty() or float(b.position.y) < float(best.position.y):
+				best = b
+		out[a.id] = best
+	return out
+
+
+## Le dernier marais d'une série : il reçoit l'eau d'un autre et n'en envoie à aucun.
+func is_last_of_series(zone: Dictionary, targets: Dictionary) -> bool:
+	if not (targets.get(zone.id, {}) as Dictionary).is_empty():
+		return false
+	for k in targets:
+		var t: Dictionary = targets[k]
+		if not t.is_empty() and t.id == zone.id:
+			return true
+	return false
+
+
+func _run_marsh_series(delta: float) -> void:
+	var list := marshes()
+	if list.size() < 2:
+		for m in list:
+			(m.logic as DryingLogic).mineral_chance = config.mineral_chance
+			(m.logic as DryingLogic).rare_mineral_chance = config.rare_mineral_chance
+		return
+	var targets := marsh_flow_targets()
+	for m in list:
+		var logic: DryingLogic = m.logic
+		var last := is_last_of_series(m, targets)
+		logic.mineral_chance = config.mineral_chance * (config.marsh_last_mineral_mult if last else 1.0)
+		logic.rare_mineral_chance = config.rare_mineral_chance * (config.marsh_last_rare_mult if last else 1.0)
+		var t: Dictionary = targets.get(m.id, {})
+		if t.is_empty() or logic.fill_ratio() <= config.marsh_link_above_ratio:
+			continue
+		var move := minf(config.marsh_link_lps * delta, logic.water_l - logic.capacity_l * config.marsh_link_above_ratio)
+		var accepted := (t.logic as DryingLogic).add_water(maxf(move, 0.0))
+		logic.water_l -= accepted
+
+
+# Bouteilles à la mer ----------------------------------------------------------------------
+
+## Le dessin de la prochaine bouteille : d'abord ceux qu'on n'a pas, dans l'ordre ; puis au hasard.
+func next_bottle_drawing() -> String:
+	for d in config.bottle_drawings:
+		if not has_found("bouteille_" + d):
+			return d
+	return config.bottle_drawings[rng.randi_range(0, config.bottle_drawings.size() - 1)]
+
+
+func _open_bottle() -> void:
+	var d := next_bottle_drawing()
+	add_to_collection("bouteille_" + d)
+	if d == "carte" and not treasure_buried:
+		treasure_buried = true
+		buried.append({"kind": "tresor", "position": Vector3(config.treasure_spot.x, terrain.height(config.treasure_spot.x, config.treasure_spot.y), config.treasure_spot.y)})
+	bottle_opened.emit(d)
+
+
+# Épaves ------------------------------------------------------------------------------------
+
+func _add_wreck(position: Vector3, target: Vector3, landed: bool) -> Dictionary:
+	var w := {"id": _new_id("wreck"), "position": position, "target": target, "landed": landed}
+	wrecks.append(w)
+	wreck_added.emit(w)
+	return w
+
+
+## Une épave part au large, face à une plage libre, et dérive vers elle.
+func spawn_wreck() -> Dictionary:
+	var target := _random_beach_spot()
+	if not target.is_finite():
+		return {}
+	var a := atan2(target.z, target.x)
+	var start_r := terrain.coast_at(a) + config.wreck_start_offshore_m
+	var start := Vector3(cos(a) * start_r, config.sea_level_y, sin(a) * start_r)
+	return _add_wreck(start, target, false)
+
+
+func _run_wrecks(delta: float) -> void:
+	if wreck_hour >= 0.0 and day.hour() >= wreck_hour and day.is_day():
+		wreck_hour = -1.0
+		spawn_wreck()
+	for w in wrecks:
+		if w.landed:
+			continue
+		var to: Vector3 = w.target - w.position
+		to.y = 0.0
+		var step := config.wreck_speed_mps * delta
+		if to.length() <= step:
+			w.position = w.target
+			w.landed = true
+		else:
+			w.position += to.normalized() * step
+			w.position.y = maxf(water_level_y(), terrain.height(w.position.x, w.position.z))
+
+
+## Ouvre une épave échouée : son contenu va dans les bras, le reste sur la palette.
+func open_wreck(w: Dictionary) -> Dictionary:
+	if not wrecks.has(w) or not w.landed:
+		return {}
+	var loot := {}
+	for k in config.wreck_loot:
+		var r: Array = config.wreck_loot[k]
+		var n := rng.randi_range(int(r[0]), int(r[1]))
+		if n > 0:
+			loot[String(k)] = n
+	if rng.randf() < config.wreck_pearl_chance:
+		loot["perles"] = 1
+	_give(loot)
+	wrecks.erase(w)
+	wreck_removed.emit(w)
+	return loot
+
+
+## Donne des ressources : dans les bras ce qui rentre, le reste sur la palette.
+func _give(items: Dictionary) -> void:
+	var leftover := add_carried(items)
+	if not leftover.is_empty():
+		Economy.add(stock, leftover)
+		for r in leftover:
+			_discover(String(r))
+		stock_changed.emit()
+
+
+# Détecteur de métaux et objets enterrés ----------------------------------------------------
+
+## Toujours `buried_count` objets enterrés (le trésor de la carte en plus).
+func _refill_buried() -> void:
+	var count := buried.filter(func(b): return b.kind != "tresor").size()
+	for i in maxi(config.buried_count - count, 0):
+		var spot := _random_beach_spot()
+		if spot.is_finite():
+			buried.append({"kind": _pick_weighted(config.buried_weights, "ferraille"), "position": spot})
+
+
+## Le signal du détecteur à `pos` : 0 (rien à portée) à 1 (juste dessus).
+func detector_signal(pos: Vector3) -> float:
+	var best := 0.0
+	for b in buried:
+		var d := Vector2(pos.x - b.position.x, pos.z - b.position.z).length()
+		if d < config.detector_range_m:
+			best = maxf(best, 1.0 - d / config.detector_range_m)
+	return best
+
+
+## Le geste de pelle en `pos` sort ce qui est enterré à moins de `detector_dig_m`.
+func _check_buried(pos: Vector3) -> void:
+	for b in buried.duplicate():
+		if Vector2(pos.x - b.position.x, pos.z - b.position.z).length() <= config.detector_dig_m:
+			buried.erase(b)
+			_reward_buried(String(b.kind))
+			dug_up.emit(String(b.kind), b.position)
+
+
+func _reward_buried(kind: String) -> void:
+	match kind:
+		"piece":
+			if not has_found("piece_ancienne"):
+				add_to_collection("piece_ancienne")
+			else:
+				_give({"mineraux": config.buried_coin_minerals})
+		"perle":
+			_give({"perles": 1})
+		"ferraille":
+			_give({"mineraux": config.buried_scrap_minerals})
+		"tresor":
+			_give({"perles": config.treasure_pearls})
+			add_to_collection("coffre")
+
+
+# Tortues ------------------------------------------------------------------------------------
+
+## Vers 22 h, une fois par nuit : peut-être une tortue qui pond ; les nids de 3 nuits éclosent.
+func _run_turtles() -> void:
+	if day.hour() < config.turtle_hour or _turtle_day == day.day_index:
+		return
+	_turtle_day = day.day_index
+	for n in nests.duplicate():
+		if day.day_index - int(n.laid_day) >= config.turtle_hatch_nights:
+			nests.erase(n)
+			if not has_found("oeuf_tortue"):
+				add_to_collection("oeuf_tortue")
+			turtles_hatched.emit(n)
+	if rng.randf() < config.turtle_night_chance:
+		lay_nest()
+
+
+## Une tortue pond sur une case libre de la plage.
+func lay_nest() -> Dictionary:
+	var spot := _random_beach_spot()
+	if not spot.is_finite():
+		return {}
+	var n := {"id": _new_id("nest"), "position": spot, "laid_day": day.day_index}
+	nests.append(n)
+	turtle_laid.emit(n)
+	return n
+
+
+func _vertex_in_nest(v: Vector2i) -> bool:
+	var p := TerrainLogic.vertex_xz(v)
+	for n in nests:
+		if footprint_rect("nid", n.position).grow(0.01).has_point(p):
+			return true
+	return false
+
+
+# Feu de camp ----------------------------------------------------------------------------------
+
+## Vrai la nuit à moins de `campfire_radius_m` d'un feu de camp (il ne brûle que la nuit).
+func is_near_lit_fire(pos: Vector3) -> bool:
+	if day.is_day():
+		return false
+	for d in decor:
+		if d.kind == "feu_de_camp" and Vector2(pos.x - d.position.x, pos.z - d.position.z).length() <= config.campfire_radius_m:
+			return true
+	return false
+
+
+# Cocotiers plantés ------------------------------------------------------------------------
+
+## Mains vides + clic sur une noix de coco : elle va dans la barre (au lieu d'être mangée).
+func pick_coconut(p: Dictionary) -> bool:
+	if not pickups.has(p) or p.kind != "coconut" or current_tool() != "":
+		return false
+	if toolbar.index_of("noix_de_coco") < 0 and toolbar.first_free() < 0:
+		return false
+	pickups.erase(p)
+	pickup_removed.emit(p)
+	coconuts_held += 1
+	_sync_toolbar()
+	planted_changed.emit()
+	return true
+
+
+## Ce qui empêche de planter en `pos` ("" si rien).
+func plant_reason(pos: Vector3) -> String:
+	if coconuts_held <= 0:
+		return "PROMPT_PLANT_NO_NUT"
+	if planted.size() >= config.planted_palm_max:
+		return "PROMPT_PLANT_MAX"
+	var spot := snap_item("pousse", pos)
+	if terrain.soil(TerrainLogic.nearest_vertex(spot.x, spot.z)) != TerrainLogic.Soil.EARTH:
+		return "PROMPT_PLANT_EARTH"
+	# Un cocotier pousse aussi sur une pente : on ne demande pas un sol plat, juste la place.
+	if not PlacementGrid.is_valid(PlacementGrid.rect_shape(footprint_rect("pousse", spot)), _blockers_except({}), INF):
+		return "PROMPT_PLANT_BLOCKED"
+	return ""
+
+
+func plant_coconut(pos: Vector3) -> Dictionary:
+	if plant_reason(pos) != "":
+		return {}
+	var spot := snap_item("pousse", pos)
+	spot.y = terrain.height(spot.x, spot.z)
+	var pl := {"id": _new_id("palm"), "position": spot, "planted_day": day.day_index}
+	planted.append(pl)
+	coconuts_held -= 1
+	_sync_toolbar()
+	planted_changed.emit()
+	return pl
+
+
+func is_grown(pl: Dictionary) -> bool:
+	return day.day_index - int(pl.planted_day) >= config.planted_palm_days
+
+
 # --- Catalogue et livraison ----------------------------------------------------------------
 
 func cart_price(item_ids: Array) -> Dictionary:
@@ -1357,9 +1707,12 @@ func open_crate(crate: Dictionary) -> void:
 	for id in crate.items:
 		var item := catalog.find(StringName(id))
 		if item:
-			var obj := apply_item(item, crate.position)
-			if not obj.is_empty():
-				placed.append(obj)
+			# 0.1.23 : un lot de décor (les dalles par 5) pose plusieurs objets.
+			var n := maxi(int(item.effect_value), 1) if item.effect == CatalogItem.Effect.DECOR else 1
+			for k in n:
+				var obj := apply_item(item, crate.position)
+				if not obj.is_empty():
+					placed.append(obj)
 	crate_removed.emit(crate)
 	# Chaque objet à poser passe en mode déplacement, l'un après l'autre.
 	for obj in placed:
@@ -1424,6 +1777,7 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 		CatalogItem.Effect.GEAR:
 			gear[item.effect_param] = true
 			_apply_gear()
+			_sync_toolbar()  # 0.1.23 : le détecteur prend une case
 		CatalogItem.Effect.GIFT:
 			# 0.1.22 : un lot de ressources de la caisse surprise, posé sur la palette.
 			var lot := gift_contents(item.effect_param)
@@ -1502,9 +1856,12 @@ func take_pickup(p: Dictionary) -> bool:
 		return false
 	match p.kind:
 		"coconut":
-			survival.eat(config.coconut_food)
+			# 0.1.23 : grillée près d'un feu de camp allumé, elle nourrit plus.
+			survival.eat(config.coconut_food * (config.grilled_food_mult if is_near_lit_fire(player_position) else 1.0))
 			survival.drink(config.coconut_water)
 			survival_changed.emit()
+		"bottle":
+			_open_bottle()
 		"shell":
 			if not can_carry("coquillages"):
 				return false
@@ -1919,6 +2276,14 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 	for pk in pickups:
 		if pk != item and pk.kind != "coconut":  # les noix sont déjà comptées par leur place
 			out.append(PlacementGrid.rect_shape(footprint_rect("coquillage", pk.position)))
+	# 0.1.23 : les nids de tortue, les cocotiers plantés et les épaves échouées.
+	for n in nests:
+		out.append(PlacementGrid.rect_shape(footprint_rect("nid", n.position)))
+	for pl in planted:
+		out.append(PlacementGrid.rect_shape(footprint_rect("pousse", pl.position)))
+	for w in wrecks:
+		if w.landed:
+			out.append(PlacementGrid.rect_shape(footprint_rect("epave", w.position)))
 	out.append(PlacementGrid.circle_shape(player_position, config.player_radius_m))
 	# Les tuyaux au sol gênent tout, zones de séchage comprises : depuis 0.1.6, un tuyau verse d'un
 	# bloc au-dessus du bac, jamais posé dedans.
@@ -2366,6 +2731,8 @@ func scoop_reason(v: Vector2i, dig: bool) -> String:
 		return reason
 	if _vertex_in_full_marsh(v):
 		return "PROMPT_MARSH_NOT_EMPTY"
+	if _vertex_in_nest(v):
+		return "PROMPT_TURTLE_NEST"
 	var ctx := _sand_context()
 	if not _vertex_movable(v, ctx):
 		return "PROMPT_DIG_BLOCKED"
@@ -2414,7 +2781,10 @@ func shovel_scoop(v: Vector2i, dig: bool) -> bool:
 	var center := Vector3(p.x, terrain.vertex(v.x, v.y).y, p.y)
 	if dig:
 		# 0.1.16 : on prend la matière du sommet visé (le centre de la pelletée, le plus creusé).
-		return _move_sand(center, plan.heights, scoops, {}, ctx, -1, terrain.soil(v))
+		var done := _move_sand(center, plan.heights, scoops, {}, ctx, -1, terrain.soil(v))
+		if done:
+			_check_buried(center)  # 0.1.23 : la pelle sort ce qui est enterré tout près
+		return done
 	return _move_sand(center, plan.heights, -scoops, {}, ctx, shovel_soil)
 
 
@@ -2727,6 +3097,14 @@ func to_dict() -> Dictionary:
 		"weather": weather,
 		"discovered": discovered.keys(),
 		"agency_order": agency_order.duplicate(),
+		"wrecks": wrecks.map(func(w): return {"position": _v2a(w.position), "target": _v2a(w.target), "landed": w.landed}),
+		"wreck_hour": wreck_hour,
+		"buried": buried.map(func(b): return {"kind": b.kind, "position": _v2a(b.position)}),
+		"treasure_buried": treasure_buried,
+		"nests": nests.map(func(n): return {"position": _v2a(n.position), "laid_day": n.laid_day}),
+		"turtle_day": _turtle_day,
+		"planted": planted.map(func(pl): return {"position": _v2a(pl.position), "planted_day": pl.planted_day}),
+		"coconuts_held": coconuts_held,
 		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
@@ -2841,6 +3219,27 @@ func load_dict(data: Dictionary) -> void:
 		agency_order = {"id": String(ao.id), "sent": bool(ao.get("sent", false))}
 	elif not data.has("agency_order"):
 		_new_agency_order()
+	for w in wrecks:
+		wreck_removed.emit(w)
+	wrecks = []
+	for w in data.get("wrecks", []):
+		_add_wreck(_a2v(w.get("position", [])), _a2v(w.get("target", [])), bool(w.get("landed", false)))
+	wreck_hour = float(data.get("wreck_hour", -1.0))
+	buried = []
+	for b in data.get("buried", []):
+		if config.buried_weights.has(String(b.get("kind", ""))) or String(b.get("kind", "")) == "tresor":
+			buried.append({"kind": String(b.kind), "position": _a2v(b.get("position", []))})
+	treasure_buried = bool(data.get("treasure_buried", false))
+	if not data.has("buried"):
+		_refill_buried()
+	nests = []
+	for n in data.get("nests", []):
+		nests.append({"id": _new_id("nest"), "position": _a2v(n.get("position", [])), "laid_day": int(n.get("laid_day", 0))})
+	_turtle_day = int(data.get("turtle_day", -1))
+	planted = []
+	for pl in data.get("planted", []):
+		planted.append({"id": _new_id("palm"), "position": _a2v(pl.get("position", [])), "planted_day": int(pl.get("planted_day", 0))})
+	coconuts_held = int(data.get("coconuts_held", 0))
 	reef_shells = []
 	if data.has("reef_shells"):
 		for r in data.get("reef_shells", []):
@@ -2981,6 +3380,7 @@ func _emit_all() -> void:
 	weather_changed.emit()
 	resources_discovered.emit()
 	agency_order_changed.emit()
+	planted_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

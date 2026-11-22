@@ -192,6 +192,7 @@ extends Resource
 	"coquillage": [-0.25, -0.25, 0.25, 0.25], "pompe_bras": [-0.5, -0.5, 0.5, 1.5], "moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
 	"hamac": [-1.5, -0.5, 1.5, 0.5], "vitrine": [-1.0, -0.5, 1.0, 0.5],
 	"parasol": [-1.0, -1.0, 1.0, 1.0], "flamant_sel": [-0.5, -0.5, 0.5, 0.5], "saliere": [-0.5, -0.5, 0.5, 0.5], "bouee_canard": [-0.5, -0.5, 0.5, 0.5], "nain_coquillages": [-0.5, -0.5, 0.5, 0.5],
+	"longue_vue": [-0.5, -0.5, 0.5, 0.5], "feu_de_camp": [-0.5, -0.5, 0.5, 0.5], "dalle": [-0.5, -0.5, 0.5, 0.5], "cloture": [-0.5, -0.5, 0.5, 0.5], "lampion": [-0.5, -0.5, 0.5, 0.5], "tapis": [-1.0, -0.5, 1.0, 0.5], "coquillage_geant": [-0.5, -0.5, 0.5, 0.5], "nid": [-0.5, -0.5, 0.5, 0.5], "pousse": [-0.5, -0.5, 0.5, 0.5], "epave": [-0.5, -0.5, 0.5, 0.5],
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -419,3 +420,50 @@ extends Resource
 ## Un marais dont au moins cette part du fond est en terre donne du sel rose, pour cette part des sels.
 @export var rose_min_earth_ratio: float = 0.5
 @export var rose_chance_per_salt: float = 0.3
+
+# --- 0.1.23 : explorer et vivre sur l'île (PRD §19.30) --------------------------------------
+## Marais en série : reliés à `marsh_link_gap_cells` case(s) ou moins (2 : un muret de sable entre
+## les deux ; à 1 case, la case du milieu est creusée elle aussi et les trous se rejoignent) ; au-dessus de cette part
+## de remplissage, un marais envoie `marsh_link_lps` L/s au suivant (plus bas). Le dernier d'une
+## série a plus de chances de minéraux (×) et de minéraux rares (×).
+@export var marsh_link_gap_cells: int = 2
+@export var marsh_link_above_ratio: float = 0.5
+@export var marsh_link_lps: float = 2.0
+@export var marsh_last_mineral_mult: float = 2.0
+@export var marsh_last_rare_mult: float = 3.0
+## Bouteilles à la mer : chance chaque matin, et les dessins (dans l'ordre où on les trouve).
+@export var bottle_chance_per_morning: float = 0.5
+@export var bottle_drawings: PackedStringArray = PackedStringArray(["carte", "chaine", "avion", "crabe"])
+## Où est enterré le trésor de la carte (x, z) : la croix du dessin.
+@export var treasure_spot: Vector2 = Vector2(-14.0, 10.0)
+## Épaves : une par jour à une heure tirée entre ces deux heures ; elle part à cette distance
+## au large du rivage et dérive à cette vitesse (m/s). Ce qu'elle contient : [min, max].
+@export var wreck_hour_min: float = 8.0
+@export var wreck_hour_max: float = 17.0
+@export var wreck_start_offshore_m: float = 45.0
+@export var wreck_speed_mps: float = 0.6
+@export var wreck_loot: Dictionary = {"sel": [5, 15], "mineraux": [0, 3], "coquillages": [0, 2]}
+@export var wreck_pearl_chance: float = 0.05
+## 0.1.23 : le grossissement de la longue-vue (molette), du plus faible au plus fort.
+@export var spyglass_zoom_min: float = 4.0
+@export var spyglass_zoom_max: float = 12.0
+## Détecteur de métaux : il entend à cette distance ; la pelle sort l'objet à cette distance.
+@export var detector_range_m: float = 6.0
+@export var detector_dig_m: float = 1.0
+## Toujours ce nombre d'objets enterrés (poids de chaque sorte).
+@export var buried_count: int = 3
+@export var buried_weights: Dictionary = {"piece": 1, "perle": 1, "ferraille": 2}
+@export var buried_scrap_minerals: int = 3
+@export var buried_coin_minerals: int = 5
+@export var treasure_pearls: int = 3
+## Tortues : chance par nuit, heure, nuits avant l'éclosion, petites tortues.
+@export var turtle_night_chance: float = 0.25
+@export var turtle_hour: float = 22.0
+@export var turtle_hatch_nights: int = 3
+@export var turtle_babies: int = 5
+## Feu de camp : une noix de coco mangée à moins de … m d'un feu allumé nourrit … fois plus.
+@export var campfire_radius_m: float = 4.0
+@export var grilled_food_mult: float = 1.5
+## Cocotiers plantés : jours avant de devenir palmiers ; au plus tant.
+@export var planted_palm_days: int = 2
+@export var planted_palm_max: int = 10

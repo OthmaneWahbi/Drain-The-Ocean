@@ -1,8 +1,50 @@
 {
 	"_comment": "La vitrine de collection (0.1.21, PRD §19.28) : une rangée par catégorie, une case par trouvaille, dans l'ordre. Les ids sont ceux de GameState.collection et de Finds.model.",
 	"rows": [
-		{"id": "coquillages", "items": ["coq_petoncle", "coq_bigorneau", "coq_couteau", "coq_conque", "coq_nautile"]},
-		{"id": "bord_de_mer", "items": ["etoile_de_mer", "oursin", "bernard_ermite", "perle"]},
-		{"id": "poissons", "items": ["poisson_clown", "chirurgien_bleu", "poisson_perroquet", "raie"]}
+		{
+			"id": "coquillages",
+			"items": [
+				"coq_petoncle",
+				"coq_bigorneau",
+				"coq_couteau",
+				"coq_conque",
+				"coq_nautile"
+			]
+		},
+		{
+			"id": "bord_de_mer",
+			"items": [
+				"etoile_de_mer",
+				"oursin",
+				"bernard_ermite",
+				"perle"
+			]
+		},
+		{
+			"id": "poissons",
+			"items": [
+				"poisson_clown",
+				"chirurgien_bleu",
+				"poisson_perroquet",
+				"raie"
+			]
+		},
+		{
+			"id": "bouteilles",
+			"items": [
+				"bouteille_carte",
+				"bouteille_chaine",
+				"bouteille_avion",
+				"bouteille_crabe"
+			]
+		},
+		{
+			"id": "tresors",
+			"items": [
+				"piece_ancienne",
+				"coffre",
+				"oeuf_tortue"
+			]
+		}
 	]
 }

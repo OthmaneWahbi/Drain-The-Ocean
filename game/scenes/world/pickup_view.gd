@@ -27,12 +27,23 @@ func setup(p: Dictionary) -> void:
 			shell.transform = t
 			add_child(shell)
 			add_child(Greybox.cylinder_collision(0.3, 0.3))
+		"bottle":
+			# 0.1.23 : une bouteille à la mer échouée, à moitié dans le sable.
+			var b := IslandGoods.bottle()
+			b.rotation.y = p.position.x
+			add_child(b)
+			add_child(Greybox.cylinder_collision(0.3, 0.3))
 
 
 func get_prompt(_player: Node) -> String:
 	match pickup.kind:
 		"coconut":
+			# 0.1.23 : mains vides, un clic la garde (pour la planter) ; E la mange toujours.
+			if GameState.current_tool() == "":
+				return "%s · %s" % [tr("PROMPT_COCONUT"), tr("PROMPT_PICK_COCONUT")]
 			return tr("PROMPT_COCONUT")
+		"bottle":
+			return tr("PROMPT_BOTTLE")
 		"shell":
 			if not GameState.has_slot_for("coquillages"):
 				return tr("PROMPT_NO_SLOT") % tr("RES_COQUILLAGES")
@@ -42,3 +53,9 @@ func get_prompt(_player: Node) -> String:
 
 func interact(_player: Node) -> void:
 	GameState.take_pickup(pickup)
+
+
+## Clic, mains vides, sur une noix de coco : elle va dans la barre (0.1.23).
+func use(_player: Node) -> void:
+	if pickup.kind == "coconut":
+		GameState.pick_coconut(pickup)
