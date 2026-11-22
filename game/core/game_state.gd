@@ -60,6 +60,10 @@ signal terrain_changed(corners: Array)
 signal sand_moved(center: Vector3, before: Dictionary, after: Dictionary, scoops: float)
 ## Le sable porté sur la pelle a changé (ou la pelle vient d'être achetée).
 signal shovel_changed
+## 0.1.19 : le crabe de compagnie a changé (faim, affection, croquettes, accessoires)…
+signal pet_changed
+## …ou réagit à quelque chose (CrabPose.Anim : mange, refuse, est content) : la vue l'anime.
+signal pet_reacted(anim: int)
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -110,6 +114,10 @@ var toolbar: ToolbarLogic = ToolbarLogic.new()
 var stamina: StaminaLogic
 ## Faim et soif (sauvegardées).
 var survival: SurvivalLogic
+## Le crabe de compagnie (0.1.19) : sa faim, son affection, ses croquettes et ses accessoires.
+var pet: CrabPetLogic
+## Où il se trouve (mis à jour par sa vue) : son cadeau du matin tombe près de lui.
+var pet_position: Vector3 = FAR_AWAY
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -220,6 +228,7 @@ func _reset_state() -> void:
 	toolbar = ToolbarLogic.new(config.toolbar_slots)
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
+	pet = CrabPetLogic.new(config)
 	pickups = []
 	stations = []
 	mirrors = []
@@ -264,6 +273,7 @@ func _process(delta: float) -> void:
 func simulate(delta: float) -> void:
 	if day.step(delta):
 		_morning_refill()
+		_pet_morning_gift()
 		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
 			phone_changed.emit()
 		new_morning.emit()
@@ -276,6 +286,7 @@ func simulate(delta: float) -> void:
 	_run_slides(delta)
 	check_milestones()
 	survival.step(delta)
+	pet.step(delta)
 	stamina.set_max(survival.stamina_cap())
 	survival_changed.emit()
 
@@ -706,6 +717,14 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 			# Le catalogue ne se pose pas au sol : il part tout seul dans la cabine.
 			catalogue_delivered = true
 			phone_changed.emit()
+		CatalogItem.Effect.PET:
+			# 0.1.19 : des croquettes pour le crabe, ou un accessoire qu'il porte tout de suite.
+			if item.effect_param == "croquettes":
+				pet.add_treats(maxi(int(item.effect_value), 1))
+			else:
+				pet.give_accessory(item.effect_param)
+			pet_changed.emit()
+			pet_reacted.emit(CrabPose.Anim.HAPPY)
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -790,6 +809,59 @@ func take_pickup(p: Dictionary) -> bool:
 	pickups.erase(p)
 	pickup_removed.emit(p)
 	return true
+
+
+# --- Le crabe de compagnie (0.1.19) ---------------------------------------------------------
+
+## E sur le crabe : une croquette s'il a faim et qu'il en reste, sinon une caresse.
+## Renvoie l'animation jouée (CrabPose.Anim).
+func interact_pet() -> int:
+	if pet.wants_food() and pet.treats > 0:
+		return feed_pet()
+	pet_crab()
+	return CrabPose.Anim.HAPPY
+
+
+## Lui donner une croquette. Renvoie l'animation jouée : il mange, ou refuse (repu, ou sachet vide).
+func feed_pet() -> int:
+	var result := pet.feed()
+	var anim := CrabPose.Anim.EAT if result == CrabPetLogic.Feed.FED else CrabPose.Anim.REFUSE
+	pet_changed.emit()
+	pet_reacted.emit(anim)
+	return anim
+
+
+## Une caresse (la première du jour compte en affection). Il est toujours content.
+func pet_crab() -> bool:
+	var counted := pet.pet(day.day_index)
+	pet_changed.emit()
+	pet_reacted.emit(CrabPose.Anim.HAPPY)
+	return counted
+
+
+## Chaque matin, un crabe qui vous aime rapporte un coquillage, posé près de lui.
+func _pet_morning_gift() -> void:
+	if not pet.brings_gift():
+		return
+	var spot := _spot_near_pet()
+	if spot.is_finite():
+		add_pickup("shell", spot)
+
+
+## Une case libre de sable à moins de 3 m du crabe ; ailleurs sur la plage s'il n'y en a pas.
+func _spot_near_pet() -> Vector3:
+	if not pet_position.is_finite() or pet_position == FAR_AWAY:
+		return _random_beach_spot()
+	var blockers := _blockers_except({})
+	for attempt in 30:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(0.8, 3.0)
+		var spot := PlacementGrid.snap(pet_position + Vector3(cos(a) * r, 0.0, sin(a) * r), config.grid_cell_m)
+		if PlacementGrid.is_valid(PlacementGrid.rect_shape(footprint_rect("coquillage", spot)), blockers, config.build_radius_m) \
+				and spot_ok("coquillage", spot, 0.0, blockers):
+			spot.y = terrain.height(spot.x, spot.z) + 0.02
+			return spot
+	return _random_beach_spot()
 
 
 # --- Pompes et tuyaux (T2) -------------------------------------------------------------------
@@ -1917,6 +1989,7 @@ func to_dict() -> Dictionary:
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
 		"owned": owned.duplicate(),
 		"survival": survival.to_dict(),
+		"pet": pet.to_dict(),
 		"pickups": pickups.map(func(p): return {"kind": p.kind, "position": _v2a(p.position)}),
 		"stations": stations.map(func(st): return {"kind": st.kind, "position": _v2a(st.position), "rotation_deg": item_rotation(st), "logic": (st.logic as StationLogic).to_dict()}),
 		"slides": slides.map(func(sl): return {"kind": sl.kind, "position": _v2a(sl.position), "rotation_deg": item_rotation(sl)}),
@@ -1996,6 +2069,7 @@ func load_dict(data: Dictionary) -> void:
 		decor_added.emit(dec)
 		_load_rotation(dec, d)
 	survival.load_dict(data.get("survival", {}))
+	pet.load_dict(data.get("pet", {}))
 	if data.has("pickups"):
 		for p in data.get("pickups", []):
 			add_pickup(String(p.get("kind", "")), _a2v(p.get("position", [])))
@@ -2115,6 +2189,7 @@ func _emit_all() -> void:
 	carried_changed.emit()
 	bucket_changed.emit()
 	shovel_changed.emit()
+	pet_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

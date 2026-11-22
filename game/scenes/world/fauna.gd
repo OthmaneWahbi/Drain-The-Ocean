@@ -2,8 +2,8 @@ class_name Fauna
 extends Node3D
 ## Les animaux de décor (PRD §19.1) : des mouettes qui tournent au-dessus de l'île, des bancs de
 ## poissons sous l'eau (ils descendent avec l'océan et disparaissent quand il n'y a plus assez
-## d'eau) et un crabe qui se promène de côté au bord de la plage. Purement visuels : aucune
-## collision, aucune règle de jeu. Les calculs sont dans AmbientMotion.
+## d'eau) et, depuis 0.1.19, Pinçon le crabe de compagnie (PetCrab, à part). Les mouettes et les
+## poissons sont purement visuels : aucune collision, aucune règle de jeu. Les calculs sont dans AmbientMotion.
 
 const SEABED_Y := -3.0
 const FISH_MARGIN := 0.35
@@ -22,7 +22,8 @@ func _ready() -> void:
 		var speed := _rng.randf_range(0.05, 0.09) * (1.0 if school % 2 == 0 else -1.0)
 		for i in 6:
 			add_child(Fish.new(radius + _rng.randf_range(-2.0, 2.0), start + i * 0.06, speed, _rng.randf_range(-2.2, -0.8)))
-	add_child(Crab.new(_rng))
+	# 0.1.19 : le crabe de décor devient Pinçon, le crabe de compagnie (PetCrab).
+	add_child(PetCrab.new())
 
 
 class Seagull extends Node3D:
@@ -120,45 +121,3 @@ class Fish extends Node3D:
 		var p := AmbientMotion.orbit(Vector3(0, y, 0), radius, angle)
 		position = p
 		look_at(p + AmbientMotion.orbit_heading(angle, speed), Vector3.UP)
-
-
-## Le crabe : il choisit un point au bord de la plage et y va de côté, puis se repose un peu.
-class Crab extends Node3D:
-	const SPEED := 0.8
-	var _rng: RandomNumberGenerator
-	var _target: Vector3
-	var _rest := 0.0
-	var _t := 0.0
-	var _model: Node3D
-
-	func _init(rng: RandomNumberGenerator) -> void:
-		_rng = rng
-
-	func _ready() -> void:
-		# Le crabe animé de Quaternius (CC0) : il marche (« Walk ») et attend (« Idle »).
-		_model = Props.character("crab", 0.25, "MonsterArmature|Idle")
-		add_child(_model)
-		position = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
-		position.y = GameState.terrain.height(position.x, position.z)
-		_target = position
-
-	func _process(delta: float) -> void:
-		_t += delta
-		if _rest > 0.0:
-			_rest -= delta
-			Props.play(_model, "MonsterArmature|Idle")
-			return
-		Props.play(_model, "MonsterArmature|Walk", 1.6)
-		var to := _target - position
-		if to.length() < 0.1:
-			_target = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
-			# Pas trop loin d'un coup : un crabe, ça trottine.
-			_target = position + (_target - position).limit_length(4.0)
-			_rest = _rng.randf_range(1.0, 4.0)
-			return
-		position += to.normalized() * minf(SPEED * delta, to.length())
-		# 0.1.17 : il suit le sable (avant, il restait à 0,5 m de haut, dans l'air ou dans le sol)…
-		position.y = GameState.terrain.height(position.x, position.z)
-		# …et tourne en douceur vers sa cible au lieu de pivoter d'un coup. Il marche de côté :
-		# son flanc (axe X) regarde où il va.
-		rotation.y = lerp_angle(rotation.y, atan2(-to.z, to.x), clampf(delta * 6.0, 0.0, 1.0))

@@ -240,3 +240,20 @@ PROMPT_DIG_BLOCKED,"Il y a quelque chose ici : déplace-le d'abord (G)","Somethi
 PROMPT_DIG_NEAR_OBJECT,Trop près d'un objet : il pencherait,Too close to an object: it would tilt
 PROMPT_PIPE_FEEDS,verse dans la zone,pours into the area
 PROMPT_PIPE_WET,"reliée à la pompe","connected to the pump"
+ITEM_CRAB_TREATS,Croquettes pour crabe,Crab treats
+ITEM_CRAB_TREATS_DESC,Un sachet de 6 croquettes au plancton pour Pinçon.,A bag of 6 plankton treats for Pinchy.
+ITEM_CRAB_TREATS_PITCH,Croustillantes dehors. Croustillantes dedans.,Crunchy outside. Crunchy inside.
+ITEM_CRAB_HAT,Chapeau de paille (crabe),Straw hat (crab)
+ITEM_CRAB_HAT_DESC,Un minuscule chapeau de paille. Pinçon le portera tout le temps.,A tiny straw hat. Pinchy will wear it all the time.
+ITEM_CRAB_HAT_PITCH,Protège du soleil un crabe sur deux.,Protects one crab in two from the sun.
+ITEM_CRAB_GLASSES,Lunettes de soleil (crabe),Sunglasses (crab)
+ITEM_CRAB_GLASSES_DESC,Des lunettes en forme de cœur pour les yeux de Pinçon.,Heart-shaped glasses for Pinchy's eyes.
+ITEM_CRAB_GLASSES_PITCH,Pour les yeux au bout d'une tige.,For eyes on stalks.
+PET_NAME,Pinçon,Pinchy
+PROMPT_PET_FEED,[E] Donner une croquette à %s (%d),[E] Give %s a treat (%d)
+PROMPT_PET_PET,[E] Caresser %s,[E] Pet %s
+PROMPT_PET_NO_TREATS,%s a faim : commande des croquettes au téléphone · [E] Caresser,%s is hungry: order treats by phone · [E] Pet
+PET_MOOD_HAPPY,ravi,delighted
+PET_MOOD_CONTENT,content,content
+PET_MOOD_HUNGRY,a faim,hungry
+PET_MOOD_SLEEPY,dort,asleep

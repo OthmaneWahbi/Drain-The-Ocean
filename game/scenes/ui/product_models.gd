@@ -11,6 +11,7 @@ const METAL := Color(0.62, 0.66, 0.7)
 const BLUE := Color(0.2, 0.5, 0.85)
 const PINK := Color(1.0, 0.47, 0.66)
 const WATER := Color(0.35, 0.78, 0.9)
+const BLACK_FRAME := Color(0.12, 0.1, 0.12)
 const GLASS := Color(0.75, 0.95, 1.0, 0.4)
 
 
@@ -71,6 +72,29 @@ static func build(id: String) -> Node3D:
 		"rations":
 			n.add_child(Props.rations())
 			n.scale = Vector3.ONE * 1.3
+		"croquettes":
+			# 0.1.19 : un sachet de croquettes pour Pinçon, quelques croquettes renversées devant.
+			var bag := Props.sack(0.55, PetCrab.HEART)
+			n.add_child(bag)
+			for k in 5:
+				n.add_child(Props.ball(0.05, PetCrab.TREAT, Vector3(-0.2 + k * 0.1, 0.04, 0.32 + (k % 2) * 0.06), 20 + k))
+		"chapeau_crabe":
+			var hat := PetCrab.make_hat()
+			hat.scale = Vector3.ONE * 3.2
+			hat.rotation = Vector3(0.25, 0.0, -0.15)
+			hat.position.y = 0.1
+			n.add_child(hat)
+		"lunettes_crabe":
+			var glasses := Node3D.new()
+			glasses.position.y = 0.3
+			glasses.rotation.x = 0.2
+			n.add_child(glasses)
+			for side in [-1.0, 1.0]:
+				var lens := PetCrab.heart(0.2, PetCrab.LENS)
+				lens.rotation.x = PI / 2
+				lens.position.x = side * 0.17
+				glasses.add_child(lens)
+			glasses.add_child(_box(Vector3(0.14, 0.025, 0.025), BLACK_FRAME, Vector3(0, 0.05, 0)))
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)

@@ -32,6 +32,8 @@ func _ready() -> void:
 	_waves.play()
 	GameState.milestone_reached.connect(func(_m): play("jingle"))
 	GameState.pickup_removed.connect(func(_p): play("pickup", -6.0))
+	# 0.1.19 : le crabe croque (plop) ou est content (petit son de ramassage).
+	GameState.pet_reacted.connect(func(a: int): play("plop" if a == CrabPose.Anim.EAT else "pickup", -9.0))
 	# L'avion (0.1.17) porte son propre bruit de moteur, en 3D (DeliveryPlane) : il s'entend
 	# quand il passe, et plus au moment de la commande.
 	GameState.ending_phase_changed.connect(_on_ending_phase)
