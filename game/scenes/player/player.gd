@@ -42,6 +42,13 @@ var _body: Node3D
 var _shown_fill := 0.0
 var _drip_t := 0.0
 var _big_bucket := false
+## Le geste de puiser (0.1.18, ScoopAnim) : la pose courante du seau, l'avancement à l'image
+## d'avant (pour le plouf) et le temps depuis la fin du remplissage (-1 : pas de retour en cours).
+const BUCKET_REST := Vector3(0.38, -0.55, -0.65)
+const SCOOP_REST := {"dip": 0.0, "tilt": 0.0, "lift": 0.0, "pull": 0.0, "sink": 0.0}
+var _scoop: Dictionary = SCOOP_REST.duplicate()
+var _scoop_p := 0.0
+var _release_t := -1.0
 ## Vrai quand le personnage nage (pieds assez loin sous la surface).
 var swimming: bool = false
 var _drowning: bool = false
@@ -143,11 +150,11 @@ func _build_bucket() -> void:
 	# Le seau tenu en main (Props.bucket : seau en bois KayKit rafistolé, ou teinté jaune pour le grand seau), visible en
 	# 1re comme en 3e personne ; son eau monte avec le remplissage (PRD §15 : un plan qui monte).
 	_bucket_node = Node3D.new()
-	_bucket_node.position = Vector3(0.38, -0.55, -0.65)
+	_bucket_node.position = BUCKET_REST
 	head.add_child(_bucket_node)
 	# Le second seau de la palanche, à gauche.
 	_second_bucket = Node3D.new()
-	_second_bucket.position = Vector3(-0.38, -0.55, -0.65)
+	_second_bucket.position = Vector3(-BUCKET_REST.x, BUCKET_REST.y, BUCKET_REST.z)
 	head.add_child(_second_bucket)
 	_rebuild_buckets()
 	# Le râteau, tenu quand on le choisit dans la barre d'outils (M-27).
@@ -182,7 +189,8 @@ func _update_bucket_water(delta: float) -> void:
 		_rebuild_buckets()
 	var b := GameState.bucket
 	var ratio := b.water_l / maxf(b.capacity_l, 0.001)
-	ratio += (1.0 - ratio) * b.fill_progress_ratio()  # pendant qu'on puise, l'eau monte déjà
+	# Pendant qu'on puise, l'eau monte déjà, mais seulement une fois le seau dans la mer (0.1.18).
+	ratio += (1.0 - ratio) * ScoopAnim.water_in(b.fill_progress_ratio())
 	_shown_fill = lerpf(_shown_fill, ratio, clampf(delta * 8.0, 0.0, 1.0))
 	for holder: Node3D in [_bucket_node, _second_bucket]:
 		if holder.get_child_count() > 0:
@@ -193,6 +201,69 @@ func _update_bucket_water(delta: float) -> void:
 	if _bucket_node.visible and _shown_fill > 0.3 and walking and _drip_t <= 0.0:
 		_drip_t = randf_range(0.25, 0.6)
 		_drip(_bucket_node.global_position + Vector3(randf_range(-0.1, 0.1), 0.25, randf_range(-0.1, 0.1)))
+	_animate_scoop(delta)
+
+
+## Le geste de puiser (0.1.18) : le seau plonge dans la mer devant soi, racle l'eau vers soi,
+## ressort plein et remonte, lourd, jusqu'à la main. On se baisse un peu pendant ce temps.
+## La courbe vient de ScoopAnim ; ici on ne fait que placer les seaux et lancer les effets.
+func _animate_scoop(delta: float) -> void:
+	var p := GameState.bucket.fill_progress_ratio()
+	var shown := _bucket_node.visible
+	if shown and ScoopAnim.hits_water(_scoop_p, p):
+		var strength := 1.3 if _big_bucket else 1.0
+		for holder: Node3D in [_bucket_node, _second_bucket]:
+			if holder.visible:
+				var at := holder.global_position
+				at.y = GameState.water_level_y()
+				Props.splash(get_parent(), at, strength)
+	# Le seau sort de l'eau : il ruisselle.
+	if shown and _scoop_p < 0.8 and p >= 0.8:
+		for i in 4:
+			_drip(_bucket_node.global_position + Vector3(randf_range(-0.12, 0.12), 0.05, randf_range(-0.12, 0.12)))
+	_scoop_p = p
+	var goal: Dictionary = SCOOP_REST
+	if p > 0.0 and shown:
+		goal = ScoopAnim.pose(p)
+		_release_t = -1.0
+	elif _release_t >= 0.0:
+		goal = ScoopAnim.release(_release_t)
+		_release_t += delta
+		if _release_t > ScoopAnim.RELEASE_S:
+			_release_t = -1.0
+	# Un clic lâché trop tôt : le seau revient en douceur (le suivi amortit tout changement brusque).
+	var w := clampf(delta * 16.0, 0.0, 1.0)
+	for k in SCOOP_REST:
+		_scoop[k] = lerpf(_scoop[k], goal[k], w)
+	_place_bucket(_bucket_node, BUCKET_REST, 1.0)
+	_place_bucket(_second_bucket, Vector3(-BUCKET_REST.x, BUCKET_REST.y, BUCKET_REST.z), -1.0)
+	# On se penche pour voir le seau entrer dans l'eau (la visée, elle, suit la tête : _find_target).
+	fp_camera.rotation.x = -deg_to_rad(ScoopAnim.LOOK_DOWN_DEG) * clampf(_scoop.dip, 0.0, 1.0)
+
+
+## Place un seau selon la pose courante : un mélange entre sa place en main (`rest`, dans la tête)
+## et un point de la mer devant les pieds (`side` : 1 à droite, -1 à gauche pour la palanche).
+func _place_bucket(holder: Node3D, rest: Vector3, side: float) -> void:
+	var dip: float = clampf(_scoop.dip, 0.0, 1.0)
+	var tilt := deg_to_rad(_scoop.tilt)
+	var lift: float = _scoop.lift
+	if dip < 0.001 and absf(tilt) < 0.001 and absf(lift) < 0.0005:
+		holder.position = rest
+		holder.quaternion = Quaternion.IDENTITY
+		return
+	var yaw := Basis(Vector3.UP, global_rotation.y)
+	var fwd := -yaw.z
+	var right := yaw.x
+	var spot := global_position + fwd * lerpf(ScoopAnim.REACH_FAR_M, ScoopAnim.REACH_NEAR_M, _scoop.pull) + right * 0.26 * side
+	if third_person:
+		spot += right * 0.2 * side  # un peu plus loin du corps, pour qu'on le voie derrière le personnage
+	spot.y = GameState.water_level_y() + 0.02 - float(_scoop.sink)
+	holder.position = rest.lerp(head.to_local(spot), dip) + Vector3(0, lift, 0)
+	# Dans la main, le seau bascule par rapport à la tête ; dans la mer, par rapport au monde
+	# (il reste d'aplomb quelle que soit la direction du regard).
+	var in_hand := Quaternion(Vector3.RIGHT, -tilt)
+	var in_world := (head.global_basis.orthonormalized().inverse() * (yaw * Basis(Vector3.RIGHT, -tilt))).get_rotation_quaternion()
+	holder.quaternion = in_hand.slerp(in_world, clampf(dip * 2.0, 0.0, 1.0))
 
 
 func _drip(from: Vector3) -> void:
@@ -212,7 +283,9 @@ func _animate_body() -> void:
 	if not _body.visible:
 		return
 	var flat := Vector2(velocity.x, velocity.z).length()
-	if swimming:
+	if not swimming and flat < 0.4 and _scoop.dip > 0.2:
+		_play_once("pick-up", 0.8)  # on se penche pour puiser (0.1.18), une seule fois par geste
+	elif swimming:
 		Props.play(_body, "walk", 0.6)
 	elif not is_on_floor():
 		Props.play(_body, "jump" if velocity.y > 0.0 else "fall")
@@ -223,6 +296,19 @@ func _animate_body() -> void:
 		Props.play(_body, "walk", clampf(1.3 * flat / GameState.config.walk_speed, 0.5, 1.8))
 	else:
 		Props.play(_body, "idle")
+
+
+## Joue une animation du personnage une seule fois (elle reste sur sa dernière pose).
+func _play_once(anim: String, speed: float) -> void:
+	var players := _body.find_children("*", "AnimationPlayer", true, false)
+	if players.is_empty():
+		return
+	var ap := players[0] as AnimationPlayer
+	if not ap.has_animation(anim) or ap.assigned_animation == anim:
+		return
+	ap.get_animation(anim).loop_mode = Animation.LOOP_NONE
+	ap.play(anim, 0.15)
+	ap.speed_scale = speed
 
 
 func _build_fade() -> void:
@@ -420,6 +506,8 @@ func _update_head_bob(delta: float, speed: float) -> void:
 	else:
 		_walk_time = 0.0
 	var target_y := _head_rest_y + SettingsLogic.bob_offset(_walk_time, ratio, Settings.data.head_bob)
+	if not swimming:
+		target_y -= ScoopAnim.CROUCH_M * clampf(_scoop.dip, 0.0, 1.0)  # on se baisse pour puiser
 	head.position.y = lerpf(head.position.y, target_y, clampf(delta * 12.0, 0.0, 1.0))
 
 
@@ -499,6 +587,7 @@ func _handle_tool(delta: float) -> void:
 		if Input.is_action_pressed(&"use_tool"):
 			if bucket.hold_fill(delta):
 				GameState.fill_bucket()
+				_release_t = 0.0  # le seau plein remonte à la main (ScoopAnim.release)
 		else:
 			bucket.cancel_fill()
 		return
@@ -521,7 +610,10 @@ func _find_target() -> Node:
 		return null
 	var length := reach + (spring_length() if third_person else 0.0)
 	var from := cam.global_position
-	var to := from - cam.global_transform.basis.z * length
+	# À la 1re personne, on vise avec la tête : la caméra se penche pendant qu'on puise (0.1.18)
+	# sans changer ce que l'on vise.
+	var aim := head.global_basis.z if cam == fp_camera else cam.global_transform.basis.z
+	var to := from - aim.normalized() * length
 	var query := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.AIM)
 	query.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
