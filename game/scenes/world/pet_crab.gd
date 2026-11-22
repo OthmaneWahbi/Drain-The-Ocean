@@ -353,7 +353,7 @@ func _choose_anim(delta: float) -> CrabPose.Anim:
 ## Où aller ensuite : près du joueur s'il l'aime bien (2 cœurs et plus) et que le joueur n'est
 ## pas loin ; sinon un point au bord de la plage, à quelques pas.
 func _pick_target(player: Vector3) -> void:
-	if player.is_finite() and GameState.pet.hearts() >= 2 and Vector2(player.x - position.x, player.z - position.z).length() < 12.0:
+	if player.is_finite() and GameState.pet_follows() and Vector2(player.x - position.x, player.z - position.z).length() < 12.0:
 		var a := _rng.randf_range(0.0, TAU)
 		_target = player + Vector3(cos(a), 0.0, sin(a)) * 1.6
 	else:

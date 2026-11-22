@@ -64,6 +64,14 @@ signal shovel_changed
 signal pet_changed
 ## …ou réagit à quelque chose (CrabPose.Anim : mange, refuse, est content) : la vue l'anime.
 signal pet_reacted(anim: int)
+## 0.1.20 : un marais salant disparaît (rebouché, vide).
+signal zone_removed(zone: Dictionary)
+## 0.1.20 : une trouvaille entre dans la collection (étoile de mer…).
+signal collection_changed
+## 0.1.20 : une flaque de marée basse a changé (garnie, vidée, couverte).
+signal tide_pools_changed
+## 0.1.20 (juice) : `n` unités d'un matériau viennent de tomber sur le tas d'une zone.
+signal salt_dropped(zone: Dictionary, resource: String, n: int)
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -118,6 +126,10 @@ var survival: SurvivalLogic
 var pet: CrabPetLogic
 ## Où il se trouve (mis à jour par sa vue) : son cadeau du matin tombe près de lui.
 var pet_position: Vector3 = FAR_AWAY
+## 0.1.20 : les trouvailles (pas des ressources) : id -> combien. Voir la vitrine (0.1.21).
+var collection: Dictionary = {}
+## 0.1.20 : les flaques de marée basse : {position, items: Array[String], low, pet_low}.
+var tide_pools: Array[Dictionary] = []
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -192,6 +204,8 @@ func setup(config_override: GameConfig = null) -> void:
 	terrain.inland_above_y = config.sea_level_y + config.land_mask_above_sea_m
 	dialogues = DialogueLogic.load_file()
 	rng.randomize()
+	if not terrain_changed.is_connected(_on_terrain_changed_marshes):
+		terrain_changed.connect(_on_terrain_changed_marshes)
 	new_game()
 
 
@@ -229,6 +243,8 @@ func _reset_state() -> void:
 	stamina = StaminaLogic.new(config.stamina_run_s, config.stamina_swim_s, config.stamina_regen_s, config.stamina_exhausted_ratio)
 	survival = SurvivalLogic.new(config.food_empty_s, config.water_empty_s, config.starving_penalty_max, config.starving_penalty_time_s)
 	pet = CrabPetLogic.new(config)
+	collection = {}
+	tide_pools = _make_tide_pools()
 	pickups = []
 	stations = []
 	mirrors = []
@@ -279,7 +295,15 @@ func simulate(delta: float) -> void:
 		new_morning.emit()
 	var base := day.evaporation_multiplier(config.night_evaporation_factor)
 	for zone in zones:
-		(zone.logic as DryingLogic).step(delta, base * zone_boost(zone), rng)
+		var logic: DryingLogic = zone.logic
+		var before := logic.deposit.duplicate()
+		logic.step(delta, base * zone_boost(zone), rng)
+		if logic.deposit != before:
+			for k in logic.deposit:
+				var n := int(logic.deposit[k]) - int(before.get(k, 0))
+				if n > 0:
+					salt_dropped.emit(zone, String(k), n)
+	_run_tides(delta)
 	for st in stations:
 		(st.logic as StationLogic).step(delta)
 	_run_auto_pumps(delta)
@@ -331,6 +355,12 @@ func pour_bucket_into(zone: Dictionary) -> float:
 	var logic: DryingLogic = zone.logic
 	var accepted := logic.add_water(bucket.water_l)
 	bucket.water_l -= accepted
+	# 0.1.20 : un marais dans le sable boit une part de l'eau (elle retourne à la mer).
+	var lost := accepted * marsh_loss(zone)
+	if lost > 0.0:
+		logic.water_l -= lost
+		ocean.return_water(lost)
+		ocean_changed.emit()
 	bucket_changed.emit()
 	return accepted
 
@@ -521,6 +551,342 @@ func add_zone(kind: String, position: Vector3) -> Dictionary:
 	zone_added.emit(zone)
 	network_changed.emit()
 	return zone
+
+
+# --- Marais salants, marées, flaques (0.1.20, PRD §19.27) ---------------------------------
+
+func is_marsh(zone: Dictionary) -> bool:
+	return String(zone.get("kind", "")) == "marais"
+
+
+func marshes() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for z in zones:
+		if is_marsh(z):
+			out.append(z)
+	return out
+
+
+## La case de 1 m qui contient ce point (X, Z).
+func cell_at(pos: Vector3) -> Vector2i:
+	return TerrainLogic.cell_of(pos.x, pos.z)
+
+
+## Le marais qui contient cette case, ou {}.
+func marsh_at_cell(cell: Vector2i) -> Dictionary:
+	for z in zones:
+		if is_marsh(z) and (z.cells as Array).has(cell):
+			return z
+	return {}
+
+
+## Le trou sous ce point, s'il fait un nouveau marais (cases), sinon [].
+func hole_region_at(pos: Vector3) -> Array[Vector2i]:
+	var cell := cell_at(pos)
+	var none: Array[Vector2i] = []
+	if not marsh_at_cell(cell).is_empty():
+		return none
+	var taken := {}
+	for m in marshes():
+		for c in m.cells:
+			taken[c] = true
+	var excluded := func(c: Vector2i) -> bool:
+		return taken.has(c) or _marsh_cell_excluded(c)
+	var cells := SaltMarsh.region(terrain, cell, config.marsh_min_depth_m, config.marsh_max_cells, excluded)
+	if not SaltMarsh.is_valid(terrain, cells, config.marsh_min_cells, config.marsh_max_spread_m):
+		return none
+	return cells
+
+
+## Une case qui ne peut pas faire partie d'un marais : dans la mer, ou trop loin.
+func _marsh_cell_excluded(c: Vector2i) -> bool:
+	var mid := Vector2((c.x + 0.5) * config.grid_cell_m, (c.y + 0.5) * config.grid_cell_m)
+	return _spot_reason(mid) != ""
+
+
+## Verser le seau dans un trou (0.1.20) : le trou devient un marais (ou on verse dans le sien).
+## Renvoie la quantité versée (0 : pas de trou ici).
+func pour_bucket_into_hole(pos: Vector3) -> float:
+	if bucket.is_empty():
+		return 0.0
+	var zone := marsh_at_cell(cell_at(pos))
+	if zone.is_empty():
+		var cells := hole_region_at(pos)
+		if cells.is_empty():
+			return 0.0
+		zone = add_marsh(cells)
+	return pour_bucket_into(zone)
+
+
+## Crée un marais sur ces cases (déjà vérifiées).
+func add_marsh(cells: Array) -> Dictionary:
+	if cells.is_empty():
+		return {}
+	var logic := DryingLogic.new(config.marsh_l_per_cell * cells.size(), config.marsh_dry_time_s)
+	logic.liters_per_salt = config.liters_per_salt
+	logic.mineral_chance = config.mineral_chance
+	logic.rare_mineral_chance = config.rare_mineral_chance
+	var typed: Array[Vector2i] = []
+	for c in cells:
+		typed.append(c)
+	var zone := {"id": _new_id("zone"), "kind": "marais", "cells": typed, "logic": logic, "rotation_deg": 0.0}
+	_update_marsh_geometry(zone)
+	zones.append(zone)
+	zone_added.emit(zone)
+	network_changed.emit()
+	return zone
+
+
+## La position du marais (le milieu de sa case centrale, au niveau de son fond) et ses tas.
+func _update_marsh_geometry(zone: Dictionary) -> void:
+	var cells: Array = zone.cells
+	var c := SaltMarsh.center_cell(cells)
+	var g := config.grid_cell_m
+	zone.position = Vector3((c.x + 0.5) * g, SaltMarsh.floor_y(terrain, cells), (c.y + 0.5) * g)
+	zone.piles = _marsh_pile_spots(zone)
+
+
+## Une case libre au bord du trou pour chaque tas (les plus proches du centre d'abord).
+func _marsh_pile_spots(zone: Dictionary) -> Dictionary:
+	var g := config.grid_cell_m
+	var blockers := _blockers_except(zone, true, true, false)
+	for m in marshes():
+		if m != zone:
+			blockers.append_array(_marsh_shapes_of(m, true))
+	var rim := SaltMarsh.rim(zone.cells)
+	var center := Vector2(zone.position.x, zone.position.z)
+	rim.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		var da := Vector2((a.x + 0.5) * g, (a.y + 0.5) * g).distance_squared_to(center)
+		var db := Vector2((b.x + 0.5) * g, (b.y + 0.5) * g).distance_squared_to(center)
+		return da < db if absf(da - db) > 1e-6 else (a.x < b.x or (a.x == b.x and a.y < b.y)))
+	var out := {}
+	var keys: Array = config.pile_slots.keys()
+	keys.sort()
+	for cell in rim:
+		if out.size() >= keys.size():
+			break
+		if SaltMarsh.is_dug(terrain, cell, config.marsh_min_depth_m * 0.5) or _marsh_cell_excluded(cell):
+			continue
+		if _cell_blocked(cell, blockers):
+			continue
+		var p := Vector2((cell.x + 0.5) * g, (cell.y + 0.5) * g)
+		out[keys[out.size()]] = Vector3(p.x, terrain.height(p.x, p.y), p.y)
+	# Pas assez de place autour : les tas restants se posent au bord du marais (jamais perdus).
+	for k in keys:
+		if not out.has(k):
+			out[k] = zone.position + Vector3(0.0, 0.05, 0.0)
+	return out
+
+
+## Les formes d'un marais pour les autres : ses tas, et ses cases s'il n'est pas vide
+## (`with_cells_if_full`) ou toujours (placement : on ne pose rien dans un trou).
+func _marsh_shapes_of(zone: Dictionary, for_digging: bool) -> Array:
+	var out := []
+	var g := config.grid_cell_m
+	for k in zone.get("piles", {}):
+		var p: Vector3 = zone.piles[k]
+		out.append(PlacementGrid.rect_shape(Rect2(p.x - g / 2.0, p.z - g / 2.0, g, g)))
+	if not for_digging or not marsh_is_empty(zone):
+		for c: Vector2i in zone.cells:
+			out.append(PlacementGrid.rect_shape(Rect2(c.x * g, c.y * g, g, g)))
+	return out
+
+
+func _marsh_shapes(except: Dictionary, for_digging: bool) -> Array:
+	var out := []
+	for m in marshes():
+		if m != except:
+			out.append_array(_marsh_shapes_of(m, for_digging))
+	return out
+
+
+func marsh_is_empty(zone: Dictionary) -> bool:
+	var logic: DryingLogic = zone.logic
+	return logic.water_l <= 0.01 and not logic.has_deposit()
+
+
+## Ce qu'un marais perd de l'eau versée : rien si sa bordure est en terre, sinon une part.
+func marsh_loss(zone: Dictionary) -> float:
+	if not is_marsh(zone):
+		return 0.0
+	if SaltMarsh.earth_ratio(terrain, SaltMarsh.rim(zone.cells)) >= config.marsh_earth_rim_ratio:
+		return 0.0
+	return config.marsh_sand_loss
+
+
+## Le sable a bougé : chaque marais vide suit son trou (il grandit, rétrécit, ou disparaît).
+## Un marais qui n'est pas vide ne bouge pas (la pelle n'y touche pas).
+func _on_terrain_changed_marshes(_corners: Array) -> void:
+	for zone in marshes():
+		if not marsh_is_empty(zone):
+			continue
+		var taken := {}
+		for m in marshes():
+			if m != zone:
+				for c in m.cells:
+					taken[c] = true
+		var excluded := func(c: Vector2i) -> bool:
+			return taken.has(c) or _marsh_cell_excluded(c)
+		var start: Vector2i = SaltMarsh.center_cell(zone.cells)
+		var cells: Array[Vector2i] = []
+		for c: Vector2i in zone.cells:
+			cells = SaltMarsh.region(terrain, c, config.marsh_min_depth_m, config.marsh_max_cells, excluded)
+			if not cells.is_empty():
+				start = c
+				break
+		if not SaltMarsh.is_valid(terrain, cells, config.marsh_min_cells, config.marsh_max_spread_m):
+			remove_zone(zone)
+			continue
+		zone.cells = cells
+		(zone.logic as DryingLogic).capacity_l = config.marsh_l_per_cell * cells.size()
+		_update_marsh_geometry(zone)
+		item_moved.emit(zone)
+
+
+## Retire une zone (un marais rebouché).
+func remove_zone(zone: Dictionary) -> void:
+	if not zones.has(zone):
+		return
+	zones.erase(zone)
+	zone_removed.emit(zone)
+	network_changed.emit()
+
+
+func _zone_to_dict(z: Dictionary) -> Dictionary:
+	var d := {"kind": z.kind, "position": _v2a(z.position), "rotation_deg": item_rotation(z), "logic": (z.logic as DryingLogic).to_dict()}
+	if is_marsh(z):
+		d["cells"] = (z.cells as Array).map(func(c: Vector2i): return [c.x, c.y])
+	return d
+
+
+func _cells_from(raw: Variant) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if raw is Array:
+		for c in raw:
+			if c is Array and c.size() == 2:
+				out.append(Vector2i(int(c[0]), int(c[1])))
+	return out
+
+
+## Les marées : un marais près de la mer, au fond plus bas que la surface, se remplit tout seul ;
+## les flaques se garnissent à marée basse et se vident à marée haute.
+func _run_tides(delta: float) -> void:
+	var surface := water_level_y()
+	for zone in marshes():
+		var logic: DryingLogic = zone.logic
+		if logic.free_space_l() <= 0.0 or float(zone.position.y) >= surface:
+			continue
+		if not zone.has("sea") or zone.get("sea_cells_n", -1) != (zone.cells as Array).size():
+			zone.sea = SaltMarsh.touches_sea(zone.cells, config.marsh_sea_reach_cells, func(c: Vector2i) -> bool:
+				return sea_at((c.x + 0.5) * config.grid_cell_m, (c.y + 0.5) * config.grid_cell_m))
+			zone.sea_cells_n = (zone.cells as Array).size()
+		if not zone.sea:
+			continue
+		var want := config.marsh_tide_fill_lps_per_cell * (zone.cells as Array).size() * delta
+		var taken := ocean.remove_water(minf(want, logic.free_space_l()))
+		logic.add_water(taken)
+	_update_tide_pools()
+
+
+func _make_tide_pools() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var want_y := config.sea_level_y - config.tide_pool_depth_m
+	for i in mini(config.tide_pool_count, config.tide_pool_angles_deg.size()):
+		var a := deg_to_rad(config.tide_pool_angles_deg[i])
+		var dir := Vector2(cos(a), sin(a))
+		var coast := terrain.coast_at(a)
+		var best := coast
+		var best_err := INF
+		var r := coast - 8.0
+		while r < coast + 6.0:
+			var p := dir * r
+			var err := absf(terrain.base_height(p.x, p.y) - want_y)
+			if err < best_err:
+				best_err = err
+				best = r
+			r += 0.25
+		var pos := dir * best
+		out.append({"position": Vector3(pos.x, want_y, pos.y), "items": [], "low": -1, "pet_low": -1})
+	return out
+
+
+func tide_is_low() -> bool:
+	return TideLogic.is_low(day.hour(), config.tide_high_hour)
+
+
+## Une flaque est découverte quand la surface est sous son bord.
+func tide_pool_uncovered(pool: Dictionary) -> bool:
+	return water_level_y() < float(pool.position.y) - 0.02
+
+
+func _update_tide_pools() -> void:
+	var low := TideLogic.low_index(day.day_index, day.hour(), config.tide_high_hour)
+	var changed := false
+	var low_now := tide_is_low()
+	for pool in tide_pools:
+		if low_now and int(pool.low) != low:
+			pool.low = low
+			pool.items = []
+			for k in rng.randi_range(1, maxi(config.tide_pool_max_items, 1)):
+				pool.items.append(_pick_pool_item())
+			changed = true
+		elif TideLogic.is_high(day.hour(), config.tide_high_hour) and not (pool.items as Array).is_empty():
+			pool.items = []  # la marée haute les remporte
+			changed = true
+		# Pinçon fouille la flaque où se tient le joueur : un coquillage de plus par marée basse.
+		if low_now and int(pool.pet_low) != low and pet_follows() \
+				and pet_position.distance_to(pool.position) <= config.tide_pool_pet_reach_m \
+				and player_position.distance_to(pool.position) <= config.tide_pool_pet_reach_m:
+			pool.pet_low = low
+			pool.items.append("coquillage")
+			pet_reacted.emit(CrabPose.Anim.HAPPY)
+			changed = true
+	if changed:
+		tide_pools_changed.emit()
+
+
+func _pick_pool_item() -> String:
+	var total := 0
+	for k in config.tide_pool_items:
+		total += int(config.tide_pool_items[k])
+	var roll := rng.randi_range(1, maxi(total, 1))
+	var keys: Array = config.tide_pool_items.keys()
+	keys.sort()
+	for k in keys:
+		roll -= int(config.tide_pool_items[k])
+		if roll <= 0:
+			return String(k)
+	return "coquillage"
+
+
+## Pinçon suit-il le joueur ? (2 cœurs et plus, 0.1.19)
+func pet_follows() -> bool:
+	return pet.hearts() >= config.pet_follow_hearts
+
+
+## Ramasse la première trouvaille d'une flaque. Renvoie son id ("" si rien, ou pas de place).
+func take_from_pool(pool: Dictionary) -> String:
+	var items: Array = pool.items
+	if items.is_empty() or not tide_pool_uncovered(pool):
+		return ""
+	var what := String(items[0])
+	if what == "coquillage":
+		if not can_carry("coquillages"):
+			return ""
+		add_carried({"coquillages": 1})
+		if rng.randf() < config.pearl_chance_per_shell:
+			add_carried({"perles": 1})
+	else:
+		add_to_collection(what)
+	items.remove_at(0)
+	tide_pools_changed.emit()
+	return what
+
+
+## Une trouvaille de plus dans la collection.
+func add_to_collection(id: String, n: int = 1) -> void:
+	collection[id] = int(collection.get(id, 0)) + n
+	collection_changed.emit()
 
 
 # --- Catalogue et livraison ----------------------------------------------------------------
@@ -1178,7 +1544,9 @@ func pile_offset(zone: Dictionary, resource: String = "sel") -> Vector3:
 ## Tous les objets qu'on peut déplacer.
 func movable_items() -> Array[Dictionary]:
 	var all: Array[Dictionary] = []
-	all.append_array(zones)
+	for z in zones:
+		if not is_marsh(z):  # 0.1.20 : un marais est un trou, on ne le déplace pas
+			all.append(z)
 	all.append_array(stations)
 	all.append_array(mirrors)
 	all.append_array(slides)
@@ -1206,6 +1574,8 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 		out.append(PlacementGrid.rect_shape(footprint_rect("caisse", c.position)))
 	for o in config.fixed_obstacles:
 		out.append(PlacementGrid.circle_shape(Vector3(o.x, 0.0, o.y), o.z))
+	if with_zones:
+		out.append_array(_marsh_shapes(item, false))
 	if with_coconut_spots:
 		for spot in config.coconut_spots:
 			out.append(PlacementGrid.circle_shape(spot, config.coconut_radius_m))
@@ -1657,6 +2027,8 @@ func scoop_reason(v: Vector2i, dig: bool) -> String:
 	var reason := _spot_reason(TerrainLogic.vertex_xz(v))
 	if reason != "":
 		return reason
+	if _vertex_in_full_marsh(v):
+		return "PROMPT_MARSH_NOT_EMPTY"
 	var ctx := _sand_context()
 	if not _vertex_movable(v, ctx):
 		return "PROMPT_DIG_BLOCKED"
@@ -1717,9 +2089,20 @@ func smooth_reason(v: Vector2i) -> String:
 	var reason := _spot_reason(TerrainLogic.vertex_xz(v))
 	if reason != "":
 		return reason
+	if _vertex_in_full_marsh(v):
+		return "PROMPT_MARSH_NOT_EMPTY"
 	if not _vertex_movable(v, _sand_context()):
 		return "PROMPT_DIG_BLOCKED"
 	return ""
+
+
+## 0.1.20 : ce sommet touche-t-il une case d'un marais qui n'est pas vide ?
+func _vertex_in_full_marsh(v: Vector2i) -> bool:
+	for c in TerrainLogic.cells_of_vertex(v):
+		var m := marsh_at_cell(c)
+		if not m.is_empty() and not marsh_is_empty(m):
+			return true
+	return false
 
 
 ## Lisse le sable autour du sommet `v`. Vrai si le sol a changé.
@@ -1885,6 +2268,8 @@ func _dig_blockers() -> Array:
 	var out := []
 	for other in movable_items():
 		out.append(PlacementGrid.rect_shape(item_rect(other)))
+	# 0.1.20 : les tas des marais, et les marais qui ne sont pas vides (on ne rebouche pas de l'eau).
+	out.append_array(_marsh_shapes({}, true))
 	for c in crates:
 		out.append(PlacementGrid.rect_shape(footprint_rect("caisse", c.position)))
 	for o in config.fixed_obstacles:
@@ -1905,8 +2290,22 @@ func _cell_blocked(cell: Vector2i, blockers: Array) -> bool:
 # --- Niveau de l'eau -----------------------------------------------------------------------
 
 ## Hauteur réelle (honnête) de la surface de l'océan, en mètres.
+## 0.1.20 : la surface VISIBLE, marée comprise (±30 cm, Q-27). C'est elle qu'on puise, où l'on
+## nage, et que montre l'océan. La jauge et la fin lisent `honest_water_level_y`.
 func water_level_y() -> float:
+	return honest_water_level_y() + tide_offset_m()
+
+
+## Hauteur réelle (honnête) de la surface : le volume retiré, sans la marée.
+func honest_water_level_y() -> float:
 	return config.sea_level_y - ocean.level_drop_m(config.ocean_surface_m2) - ending_drop_m
+
+
+## La marée en ce moment (m). Plus de marée pendant la fin (l'océan s'en va).
+func tide_offset_m() -> float:
+	if ending != null or day == null:
+		return 0.0
+	return TideLogic.offset(day.hour(), config.tide_amplitude_m, config.tide_high_hour)
 
 
 # --- La vraie fin et les réveils -----------------------------------------------------------
@@ -1984,7 +2383,9 @@ func to_dict() -> Dictionary:
 		"milestones": milestones.to_dict(),
 		"stock": stock.duplicate(),
 		"carried": carried.duplicate(),
-		"zones": zones.map(func(z): return {"kind": z.kind, "position": _v2a(z.position), "rotation_deg": item_rotation(z), "logic": (z.logic as DryingLogic).to_dict()}),
+		"zones": zones.map(_zone_to_dict),
+		"collection": collection.duplicate(),
+		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
 		"owned": owned.duplicate(),
@@ -2050,7 +2451,7 @@ func load_dict(data: Dictionary) -> void:
 	Economy.add(stock, Economy.sanitize(data.get("stock", {})))
 	carried = Economy.sanitize(data.get("carried", {}))
 	for z in data.get("zones", []):
-		var zone := add_zone(String(z.get("kind", "")), _a2v(z.get("position", [])))
+		var zone := add_marsh(_cells_from(z.get("cells", []))) if String(z.get("kind", "")) == "marais" else add_zone(String(z.get("kind", "")), _a2v(z.get("position", [])))
 		if not zone.is_empty():
 			(zone.logic as DryingLogic).load_dict(z.get("logic", {}))
 			_load_rotation(zone, z)
@@ -2070,6 +2471,19 @@ func load_dict(data: Dictionary) -> void:
 		_load_rotation(dec, d)
 	survival.load_dict(data.get("survival", {}))
 	pet.load_dict(data.get("pet", {}))
+	collection = {}
+	var col = data.get("collection", {})
+	if col is Dictionary:
+		for k in col:
+			if int(col[k]) > 0:
+				collection[String(k)] = int(col[k])
+	var saved_pools: Array = data.get("tide_pools", [])
+	for i in mini(saved_pools.size(), tide_pools.size()):
+		var sp = saved_pools[i]
+		if sp is Dictionary:
+			tide_pools[i].items = Array(sp.get("items", [])).map(func(x): return String(x)).filter(func(x): return config.tide_pool_items.has(x))
+			tide_pools[i].low = int(sp.get("low", -1))
+			tide_pools[i].pet_low = int(sp.get("pet_low", -1))
 	if data.has("pickups"):
 		for p in data.get("pickups", []):
 			add_pickup(String(p.get("kind", "")), _a2v(p.get("position", [])))
@@ -2190,6 +2604,8 @@ func _emit_all() -> void:
 	bucket_changed.emit()
 	shovel_changed.emit()
 	pet_changed.emit()
+	collection_changed.emit()
+	tide_pools_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

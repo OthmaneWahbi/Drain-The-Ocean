@@ -169,7 +169,7 @@ func test_flip_flops_need_shells() -> void:
 func test_water_level_drops_with_removed_volume() -> void:
 	gs.config.ocean_surface_m2 = 1000.0
 	gs.ocean.remove_water(1000.0)  # 1 m³ sur 1 000 m² = 1 mm
-	assert_almost(gs.water_level_y(), gs.config.sea_level_y - 0.001, 1e-9)
+	assert_almost(gs.honest_water_level_y(), gs.config.sea_level_y - 0.001, 1e-9)
 
 
 func test_big_bucket_is_unique_and_upgrades() -> void:

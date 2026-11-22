@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.51 (toutes les idées de l'île au plan : versions 0.1.20 à 0.1.25) |
+| Version du document | 0.52 (0.1.20 : les salines) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -1008,10 +1008,10 @@ Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du d
   - Un trou compte s'il fait au moins **4 cases de 1 m** reliées, chacune creusée d'au moins **25 cm** sous le sol d'origine, avec moins de **60 cm** d'écart entre la case la plus haute et la plus basse. Au plus **24 cases** (au-delà, seules les plus proches comptent).
   - Sa **surface fixe son débit** : **10 L par case** de contenance, séchée en **60 s** au soleil (un marais de 4 cases = 40 L, comme la cuvette ; un de 12 cases = 120 L). Il donne les mêmes ressources que les autres zones (sel, minéraux, minéraux rares), avec les mêmes tirages.
   - **Bordure en terre** : un trou dans le sable perd **25 %** de ce qu'on y verse (l'eau rentre dans le sable et retourne à la mer) ; si au moins la moitié des cases autour du trou sont de la **terre**, il ne perd rien.
-  - Les tas de sel du marais se posent sur des cases libres **au bord** du trou. On ne peut pas reboucher un marais qui contient de l'eau ou un dépôt (« Le marais n'est pas vide ») ; vide, le reboucher le fait disparaître.
+  - Les tas de sel du marais se posent sur des cases libres **au bord** du trou. On ne peut pas travailler à la pelle (creuser, reboucher, lisser) un marais qui contient de l'eau ou un dépôt (« Le marais n'est pas vide ») ; vide, il suit son trou : il grandit si on l'élargit, et disparaît si on le rebouche.
   - On ne déplace pas un marais (mode G) : c'est un trou.
 - **[PROPOSÉ]** **Marées** : deux marées hautes et deux basses par jour de jeu (une toutes les 10 min réelles), de **±30 cm** autour du niveau honnête (voir 19.26). Marée haute vers 3 h et 15 h, basse vers 9 h et 21 h.
-  - Un marais dont le bord touche la mer (une case à moins de **1,5 m** d'une case sous l'eau) et dont le fond est sous la surface **se remplit tout seul** à marée haute, de **2 L/s par case**, avec de l'eau prise à l'océan (elle compte dans le volume retiré). On creuse donc un chenal vers la mer pour avoir un marais qui se remplit seul.
+  - Un marais dont le bord touche la mer (une case de la mer à **3 cases** ou moins ; la pelle ne creuse pas plus près que 50 cm du rivage) et dont le fond est sous la surface **se remplit tout seul** à marée haute, de **2 L/s par case**, avec de l'eau prise à l'océan (elle compte dans le volume retiré). On creuse donc un chenal vers la mer pour avoir un marais qui se remplit seul.
 - **[PROPOSÉ]** **Flaques de marée basse** : **4 flaques** au pied des rochers de la plage, cachées à marée haute. À chaque marée basse, chacune montre **1 ou 2 trouvailles** posées au fond, à ramasser avec E : **coquillage** (comme les autres), **étoile de mer**, **oursin** ou **bernard-l'ermite** (ces trois-là ne sont pas des ressources : ce sont des **trouvailles** de la collection, voir 0.1.21). Les trouvailles non ramassées repartent à la marée haute suivante.
   - **Pinçon** (s'il suit le joueur, 2 cœurs et plus) fouille une flaque où le joueur se tient et y trouve **un coquillage de plus** par marée basse.
 - **[PROPOSÉ]** **Juice du sel** : chaque sel qui tombe sur un tas fait un **petit tintement** (un peu plus aigu pour les minéraux, plus encore pour les rares) et un **« +1 »** qui monte et s'efface ; le tas fait un petit **« pop »** (il gonfle de 15 % puis revient). Après une commande d'au moins **100 ressources**, l'avion fait un **tonneau** en repartant.

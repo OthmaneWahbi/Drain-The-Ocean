@@ -205,3 +205,29 @@ sand_wet_repose_deg = 45.0
 earth_repose_deg = 50.0
 sand_wet_band_m = 0.3
 sand_slide_fx_min_m = 0.05
+marsh_min_depth_m = 0.25
+marsh_min_cells = 4
+marsh_max_cells = 24
+marsh_max_spread_m = 0.6
+marsh_l_per_cell = 10.0
+marsh_dry_time_s = 60.0
+marsh_sand_loss = 0.25
+marsh_earth_rim_ratio = 0.5
+tide_amplitude_m = 0.3
+tide_high_hour = 3.0
+marsh_sea_reach_cells = 3
+marsh_tide_fill_lps_per_cell = 2.0
+tide_pool_count = 4
+tide_pool_depth_m = 0.12
+tide_pool_radius_m = 0.9
+tide_pool_angles_deg = PackedFloat32Array(25, 150, 205, 330)
+tide_pool_max_items = 2
+tide_pool_items = {
+"bernard_ermite": 2,
+"coquillage": 4,
+"etoile_de_mer": 2,
+"oursin": 2
+}
+tide_pool_pet_reach_m = 3.0
+plane_roll_min_items = 100
+pet_follow_hearts = 2

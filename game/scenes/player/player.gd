@@ -449,6 +449,11 @@ func _handle_toolbar_input(event: InputEvent) -> bool:
 	return false
 
 
+## 0.1.20 : le point visé (sable compris), pour verser dans un trou.
+var aim_point := Vector3.ZERO
+var aim_on_terrain := false
+
+
 func _process(delta: float) -> void:
 	var tool := GameState.current_tool()
 	_bucket_node.visible = tool == "seau"
@@ -503,6 +508,12 @@ func _handle_tool(delta: float) -> void:
 			bucket.cancel_fill()
 		return
 	bucket.cancel_fill()
+	# 0.1.20 : verser dans un trou creusé à la pelle en fait un marais salant.
+	if not bucket.is_empty() and prompt == "" and aim_on_terrain and not GameState.hole_region_at(aim_point).is_empty():
+		prompt = tr("PROMPT_POUR_HOLE")
+		if Input.is_action_just_pressed(&"use_tool"):
+			GameState.pour_bucket_into_hole(aim_point)
+		return
 	if not bucket.is_empty() and prompt == "":
 		prompt = tr("PROMPT_POUR_OUT")
 		if Input.is_action_just_pressed(&"use_tool"):
@@ -525,9 +536,12 @@ func _find_target() -> Node:
 	var query := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.AIM)
 	query.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	aim_on_terrain = false
 	if hit.is_empty():
 		return null
 	var collider: Node = hit.collider
+	aim_point = hit.position
+	aim_on_terrain = collider is TerrainView
 	return collider if collider.has_method(&"get_prompt") else null
 
 
