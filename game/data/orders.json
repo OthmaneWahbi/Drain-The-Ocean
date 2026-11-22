@@ -1,0 +1,11 @@
+{
+	"_doc": "Commandes de l'agence (0.1.22, PRD §19.29) : une à la fois, affichée sur la cabine. price = ce qu'on envoie ; surprise = l'article caché du catalogue qui arrive dans la caisse surprise. Une commande n'est proposée que si toutes ses ressources ont déjà été trouvées.",
+	"orders": [
+		{"id": "o_sel", "price": {"sel": 40, "mineraux": 5}, "surprise": "surprise_rares"},
+		{"id": "o_coquillages", "price": {"coquillages": 8, "sel": 20}, "surprise": "surprise_bouee"},
+		{"id": "o_mineraux", "price": {"mineraux": 12}, "surprise": "surprise_croquettes"},
+		{"id": "o_fleur", "price": {"fleur_de_sel": 6}, "surprise": "surprise_nain"},
+		{"id": "o_rose", "price": {"sel_rose": 30}, "surprise": "surprise_perle"},
+		{"id": "o_chic", "price": {"fleur_de_sel": 4, "sel_rose": 10}, "surprise": "surprise_lot"}
+	]
+}

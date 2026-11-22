@@ -16,6 +16,7 @@ var survival_label: Label
 ## Les 5 cases de la barre d'outils (M-27), en bas au centre.
 var toolbar_slots: Array[PanelContainer] = []
 var food_gauge: NeedGauge
+var weather_icon: WeatherIcon
 var water_gauge: NeedGauge
 var _toolbar_labels: Array[Label] = []
 
@@ -85,13 +86,19 @@ func _build_toolbar() -> void:
 	var row := HBoxContainer.new()
 	row.name = "Toolbar"
 	row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	row.offset_left = -330.0
-	row.offset_right = 330.0
+	row.offset_left = -370.0
+	row.offset_right = 370.0
 	row.offset_top = -94.0
 	row.offset_bottom = -14.0
 	row.add_theme_constant_override("separation", 6)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(row)
+	# 0.1.22 : le temps du jour, en pictogramme, à gauche des jauges.
+	weather_icon = WeatherIcon.new()
+	weather_icon.name = "Weather"
+	row.add_child(weather_icon)
+	GameState.weather_changed.connect(func(): weather_icon.set_weather(GameState.weather))
+	weather_icon.set_weather(GameState.weather)
 	# La faim et la soif, juste à gauche des cases.
 	food_gauge = NeedGauge.new(NeedGauge.Kind.FOOD)
 	food_gauge.name = "Food"

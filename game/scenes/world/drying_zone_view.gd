@@ -9,6 +9,8 @@ var _water: Node3D
 var _piles: Array[SaltPile] = []
 var _water_min_y: float
 var _water_max_y: float
+var _water_scale := Vector2.ONE
+var _flakes: FlowerFlakes
 
 
 func setup(p_zone: Dictionary) -> void:
@@ -23,6 +25,7 @@ func _build(kind: String) -> void:
 	_water = model.get_node("Water")
 	_water_min_y = model.get_meta("water_min")
 	_water_max_y = model.get_meta("water_max")
+	_water_scale = Vector2(model.get_meta("water_scale_min", 1.0), model.get_meta("water_scale_max", 1.0))
 	match kind:
 		"cuvette":
 			add_child(Greybox.cylinder_collision(1.5, 0.3, Vector3(0, 0.15, 0)))
@@ -31,6 +34,10 @@ func _build(kind: String) -> void:
 		"bassin_bois":
 			add_child(Greybox.box_collision(Vector3(4.0, 0.4, 3.0), Vector3(0, 0.2, 0)))
 	_add_pile()
+	# 0.1.22 : la fleur de sel, à la surface de la zone.
+	_flakes = FlowerFlakes.new()
+	_flakes.build({"cuvette": 1.1, "bache": 0.9, "bassin_bois": 1.3}.get(kind, 1.0), hash(zone.get("id", "")) % 100)
+	add_child(_flakes)
 
 
 ## Un tas par matériau, chacun sur sa propre case de la grille, dans l'emprise de la zone
@@ -49,17 +56,40 @@ func _process(_delta: float) -> void:
 	var logic: DryingLogic = zone.logic
 	_water.visible = logic.water_l > 0.0
 	_water.position.y = lerpf(_water_min_y, _water_max_y, logic.fill_ratio())
+	var k := lerpf(_water_scale.x, _water_scale.y, logic.fill_ratio())
+	_water.scale = Vector3(k, 1.0, k)
+	_flakes.show_count(int(logic.deposit.get("fleur_de_sel", 0)), _water.position.y + 0.01)
 
 
 ## Texte affiché quand le joueur vise la zone.
 func get_prompt(_player: Node) -> String:
 	var logic: DryingLogic = zone.logic
 	var state := tr("ZONE_STATE") % [logic.water_l, logic.capacity_l]
+	var flower := flower_prompt(zone)
+	if flower != "":
+		state = "%s · %s" % [flower, state]
 	if GameState.current_tool() == "seau" and not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		return "%s · %s" % [tr("PROMPT_POUR"), state]
 	if logic.free_space_l() <= 0.0:
 		return "%s · %s" % [tr("ZONE_FULL"), state]
 	return state
+
+
+## 0.1.22 : la fleur de sel d'une zone : « E : cueillir » avec la lousse, sinon « Il faut une lousse ».
+static func flower_prompt(z: Dictionary) -> String:
+	var n := int((z.logic as DryingLogic).deposit.get("fleur_de_sel", 0))
+	if n <= 0:
+		return ""
+	if not GameState.has_gear("lousse"):
+		return TranslationServer.translate("PROMPT_NEED_LOUSSE")
+	if not GameState.can_carry("fleur_de_sel"):
+		return TranslationServer.translate("PROMPT_HANDS_FULL")
+	return TranslationServer.translate("PROMPT_FLOWER") % n
+
+
+## E sur la zone : cueillir la fleur de sel (avec la lousse).
+func interact(_player: Node) -> void:
+	GameState.harvest_flower(zone)
 
 
 ## Clic gauche : verser si on a de l'eau et de la place.

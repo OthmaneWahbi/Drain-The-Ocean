@@ -15,6 +15,7 @@ const PILE_MODEL_W := 0.72
 
 var _piles: Dictionary = {}  # ressource -> Node3D (Props.pile)
 var _labels: Dictionary = {}  # ressource -> Label3D
+var _bins: Node3D
 
 
 func _ready() -> void:
@@ -26,17 +27,28 @@ func _ready() -> void:
 		pal.position.x = sx * SIZE.x / 4.0
 		add_child(pal)
 	add_child(Greybox.box_collision(Vector3(SIZE.x, 0.5, SIZE.z), Vector3(0, 0.25, 0)))
-	var n := Economy.RESOURCES.size()
+	_bins = Node3D.new()
+	add_child(_bins)
+	_build_bins()
+	# 0.1.22 (Q-29) : la fleur de sel et le sel rose ont leur bac une fois trouvés.
+	GameState.resources_discovered.connect(_on_discovered)
+	GameState.stock_changed.connect(_refresh)
+	_refresh()
+
+
+func _build_bins() -> void:
+	var shown := GameState.known_resources()
+	var n := shown.size()
 	var slot := SIZE.x / n
 	for i in n:
-		var r: String = Economy.RESOURCES[i]
+		var r: String = shown[i]
 		var x := -SIZE.x / 2.0 + slot * (i + 0.5)
 		var bin := Props.bin(slot * 0.92, BIN_H)
 		bin.position = Vector3(x, SIZE.y, 0)
-		add_child(bin)
+		_bins.add_child(bin)
 		var pile := Props.pile(r, 40 + i)
 		pile.position = Vector3(x, SIZE.y + 0.03, 0)
-		add_child(pile)
+		_bins.add_child(pile)
 		_piles[r] = pile
 		# Le nombre au-dessus du tas (toujours face au joueur).
 		var label := Label3D.new()
@@ -45,11 +57,11 @@ func _ready() -> void:
 		label.pixel_size = 0.004
 		label.outline_size = 8
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		add_child(label)
+		_bins.add_child(label)
 		_labels[r] = label
 		# Le nom, peint sur une planchette crème clouée devant le bac.
 		var sign_z := slot * 0.46 + 0.012
-		add_child(Props.box(Vector3(slot * 0.78, 0.12, 0.02), Props.CREAM, Vector3(x, SIZE.y + BIN_H * 0.5, sign_z)))
+		_bins.add_child(Props.box(Vector3(slot * 0.78, 0.12, 0.02), Props.CREAM, Vector3(x, SIZE.y + BIN_H * 0.5, sign_z)))
 		var name_label := Label3D.new()
 		name_label.text = tr("RES_" + r.to_upper())
 		name_label.position = Vector3(x, SIZE.y + BIN_H * 0.5, sign_z + 0.012)
@@ -59,8 +71,17 @@ func _ready() -> void:
 		name_label.outline_size = 0
 		name_label.width = slot * 0.78 / 0.004
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		add_child(name_label)
-	GameState.stock_changed.connect(_refresh)
+		_bins.add_child(name_label)
+
+
+func _on_discovered() -> void:
+	if _piles.size() == GameState.known_resources().size():
+		return
+	for c in _bins.get_children():
+		c.queue_free()
+	_piles.clear()
+	_labels.clear()
+	_build_bins()
 	_refresh()
 
 
@@ -70,7 +91,7 @@ func _refresh() -> void:
 		var pile: Node3D = _piles[r]
 		pile.visible = count > 0
 		var h := pile_height(count)
-		pile.scale = pile_scale(h, SIZE.x / Economy.RESOURCES.size() * 0.86)  # dans son bac
+		pile.scale = pile_scale(h, SIZE.x / maxf(_piles.size(), 1.0) * 0.86)  # dans son bac
 		var label: Label3D = _labels[r]
 		label.text = str(count)
 		label.position.y = SIZE.y + pile.scale.y * PILE_MODEL_H + 0.25  # juste au-dessus du vrai tas

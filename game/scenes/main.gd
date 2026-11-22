@@ -70,6 +70,11 @@ func _ready() -> void:
 	var reef := ReefView.new()
 	reef.name = "Reef"
 	add_child(reef)
+	# 0.1.22 : ce qu'on voit du temps qu'il fait (vent, ciel gris, chaleur, averse au loin).
+	var weather := WeatherView.new()
+	weather.name = "Weather"
+	weather.setup(sun, world_env.environment, ocean.material, props.palms)
+	add_child(weather)
 	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
 		add_child(extra)
 	GameState.game_reset.connect(_clear_views)

@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.53 (0.1.21 : la nuit et la collection) |
+| Version du document | 0.54 (0.1.22 : le temps qu'il fait ; cuvette de départ corrigée) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -1044,12 +1044,13 @@ Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du d
 | Couvert | 15 % | ×0,7 | Ciel gris, lumière plus douce |
 | Averse au loin | 10 % | ×0,8 | Rideau de pluie à l'horizon, sans effet sur le niveau (Q-09) |
 
-  - Le temps s'annonce **en pictogramme** : un petit symbole à côté de l'heure dans le HUD et un **baromètre** à aiguille sur la cabine téléphonique.
-- **[PROPOSÉ]** **Fleur de sel** : par temps **calme**, de jour, chaque zone de séchage a **20 %** de chance par sel produit de donner aussi **1 fleur de sel** (nouvelle ressource, blanche et brillante), sur son propre tas. On ne la récolte qu'avec la **lousse** (outil des paludiers, catalogue palier 1, **30 sel + 3 minéraux**, unique) ; sans elle, « Il faut une lousse ». Elle sert aux objets « chic » du catalogue et aux commandes.
+  - Le temps s'annonce **en pictogramme** : un petit symbole dans le HUD, à gauche des jauges de faim et de soif (l'heure n'est affichée qu'avec le chronomètre), et un **baromètre** à aiguille sur le poteau de l'affiche, à côté de la cabine téléphonique.
+  - Ce qu'on voit : par vent, les palmiers ploient et les vagues grossissent ; par temps couvert, le ciel devient gris et le soleil plus doux ; par canicule, la lumière est plus chaude ; l'averse est un nuage sombre et un rideau de pluie loin au large. Le changement se fait en douceur.
+- **[PROPOSÉ]** **Fleur de sel** : par temps **calme**, de jour, chaque zone de séchage a **20 %** de chance par sel produit de donner aussi **1 fleur de sel** (nouvelle ressource, blanche et brillante), **à la surface de la zone** (de fines paillettes blanches qui brillent, comme dans les vrais marais ; un tas à part aurait agrandi l'emprise de chaque zone). On ne la récolte qu'avec la **lousse** (outil des paludiers, catalogue palier 1, **30 sel + 3 minéraux**, unique) : un équipement, comme le masque, qui ne prend pas de case de la barre ; E en visant la zone cueille la fleur de sel ; sans lousse, « Fleur de sel : il faut une lousse ». Elle sert aux objets « chic » du catalogue et aux commandes.
 - **[PROPOSÉ]** **Sel rose** : un marais dont **la moitié du fond au moins est de la terre** (creusé dans une zone de terre, ou du sable recouvert de terre à la pelle) donne du **sel rose** (nouvelle ressource) pour **30 %** de ses sels, à la place du sel blanc. Prix spéciaux au catalogue.
   - **[PROPOSÉ]** Les deux nouvelles ressources n'ont une place sur la palette et dans la barre qu'une fois trouvées (voir 19.26).
   - **[PROPOSÉ]** Objets « chic » au catalogue : **Parasol rayé** (8 fleurs de sel + 40 sel, décor), **Flamant en sel rose** (20 sel rose, décor), **Salière géante** (10 fleurs de sel + 10 sel rose, décor).
-- **[PROPOSÉ]** **Commandes de l'agence** : une **affiche** à pictogrammes sur la cabine montre toujours **une commande** : des ressources → une **caisse surprise** (« 30 sel rose → 🎁 »). Au téléphone, la commande a sa carte en haut du catalogue avec un bouton **« Envoyer »** : on paie comme un achat (bras + palette), l'avion prend le paiement et largue la caisse surprise. Une nouvelle commande arrive le **lendemain matin**.
+- **[PROPOSÉ]** **Commandes de l'agence** : une **affiche** à pictogrammes (sur un poteau planté à côté de la cabine, avec le baromètre ; « MERCI ! » une fois la commande envoyée) montre toujours **une commande** : des ressources → une **caisse surprise** (« 30 sel rose → 🎁 »). Au téléphone, la commande a sa carte en haut du catalogue avec un bouton **« Envoyer »** : on paie comme un achat (bras + palette), l'avion prend le paiement et largue la caisse surprise. Une nouvelle commande arrive le **lendemain matin**.
   - La liste des commandes et des surprises vit dans les données. Les commandes suivent ce que le joueur a déjà trouvé (pas de sel rose demandé avant d'avoir fait un marais de terre). Surprises : un lot de ressources plus rares, des croquettes, un décor qu'on ne trouve pas au catalogue (bouée canard, nain de jardin en coquillages), une perle.
 
 ### 19.30 Version 0.1.23 : explorer et vivre sur l'île
