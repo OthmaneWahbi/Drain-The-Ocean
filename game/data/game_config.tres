@@ -103,7 +103,9 @@ footprints = {
 "flamant": [-0.5, -0.5, 0.5, 0.5],
 "coquillage": [-0.25, -0.25, 0.25, 0.25],
 "pompe_bras": [-0.5, -0.5, 0.5, 1.5],
-"moulin_pompe": [-1.5, -1.5, 1.5, 1.5]
+"moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
+"hamac": [-1.5, -0.5, 1.5, 0.5],
+"vitrine": [-1.0, -0.5, 1.0, 0.5]
 }
 pile_offset_cells = {
 "bache": 2,
@@ -231,3 +233,18 @@ tide_pool_items = {
 tide_pool_pet_reach_m = 3.0
 plane_roll_min_items = 100
 pet_follow_hearts = 2
+shell_shapes = {
+"coq_bigorneau": 30,
+"coq_conque": 10,
+"coq_couteau": 17,
+"coq_nautile": 3,
+"coq_petoncle": 40
+}
+wake_hour = 6.0
+mask_swim_cost = 0.6
+dive_speed = 1.8
+reef_min_depth_m = 2.0
+reef_max_depth_m = 5.0
+reef_shells_per_morning = 3
+fish_seen_m = 4.0
+shooting_star_every_s = 40.0

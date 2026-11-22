@@ -19,15 +19,88 @@ func setup(p_decor: Dictionary) -> void:
 			var bird := ProductModels.build("flamant")
 			bird.scale = Vector3.ONE * 0.8
 			add_child(bird)
+		"hamac":
+			add_child(IslandLife.hammock())
+		"vitrine":
+			_build_shelf()
 		"catalogue_papier":
 			# Le catalogue papier du premier appel : un gros livret rouge et blanc.
 			add_child(Greybox.box(Vector3(0.42, 0.06, 0.3), Color(0.95, 0.95, 0.9), Vector3(0, 0.03, 0)))
 			add_child(Greybox.box(Vector3(0.43, 0.012, 0.31), Greybox.PHONE_RED, Vector3(0, 0.066, 0)))
-	add_child(Greybox.box_collision(Vector3(0.6, 0.3, 0.3), Vector3(0, 0.12, 0)))
+	match decor.kind:
+		"hamac":
+			add_child(Greybox.box_collision(Vector3(2.0, 0.6, 0.8), Vector3(0, 0.6, 0)))
+		"vitrine":
+			add_child(Greybox.box_collision(Vector3(1.9, 1.4, 0.5), Vector3(0, 0.7, 0)))
+		_:
+			add_child(Greybox.box_collision(Vector3(0.6, 0.3, 0.3), Vector3(0, 0.12, 0)))
 
 
 func get_prompt(_player: Node) -> String:
+	match decor.kind:
+		"hamac":
+			return tr("PROMPT_SLEEP") if not GameState.day.is_day() else tr("PROMPT_NOT_SLEEPY")
+		"vitrine":
+			return tr("PROMPT_SHELF") % [GameState.collection_found_count(), GameState.collection_slots().size()]
 	return ""  # le joueur ajoute « [G] Déplacer » tout seul
+
+
+## E sur le hamac, la nuit : fondu au noir, la nuit passe, on se réveille au matin (0.1.21).
+func interact(player: Node) -> void:
+	if decor.kind != "hamac" or GameState.day.is_day():
+		return
+	if player and player.has_method(&"sleep_fade"):
+		player.sleep_fade(func(): GameState.sleep(decor.position))
+	else:
+		GameState.sleep(decor.position)
+
+
+# --- La vitrine (0.1.21) -------------------------------------------------------------------
+
+var _slots: Node3D
+var _shown := {}
+
+
+## L'étagère et une case par trouvaille : en couleur si trouvée, sinon sa silhouette sombre.
+func _build_shelf() -> void:
+	var rows := GameState.collection_rows
+	var cols := 1
+	for row in rows:
+		cols = maxi(cols, (row.get("items", []) as Array).size())
+	add_child(IslandLife.shelf(cols, rows.size()))
+	_slots = Node3D.new()
+	add_child(_slots)
+	GameState.collection_changed.connect(_refresh_shelf)
+	_refresh_shelf()
+
+
+func _refresh_shelf() -> void:
+	if _slots == null:
+		return
+	var rows := GameState.collection_rows
+	var cols := 1
+	for row in rows:
+		cols = maxi(cols, (row.get("items", []) as Array).size())
+	for r in rows.size():
+		var items: Array = rows[r].get("items", [])
+		for c in items.size():
+			var id := String(items[c])
+			var found := GameState.has_found(id)
+			if _shown.get(id, null) == found:
+				continue
+			var old := _slots.get_node_or_null(id)
+			if old:
+				old.free()
+			var m := Finds.model(id)
+			m.name = id
+			var size := Models.bounds(Models.vertices(m)).size
+			var k := minf(1.0, 0.3 / maxf(maxf(size.x, size.z), 0.01))
+			m.scale = Vector3.ONE * k
+			m.position = IslandLife.shelf_slot(c, r, cols, rows.size())
+			if not found:
+				IslandLife.silhouette(m)
+			_slots.add_child(m)
+			_shown[id] = found
 
 
 func get_movable() -> Dictionary:

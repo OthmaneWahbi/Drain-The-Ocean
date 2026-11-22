@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.52 (0.1.20 : les salines) |
+| Version du document | 0.53 (0.1.21 : la nuit et la collection) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -1027,9 +1027,10 @@ Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du d
   - **Objets** (cases ajoutées par les versions suivantes) : bouteilles, pièce ancienne, œuf de tortue, etc.
   - La collection est **sauvegardée** même sans vitrine : la poser montre d'un coup tout ce qu'on a déjà trouvé.
 - **[PROPOSÉ]** **Masque et tuba** (catalogue, palier 1, **40 sel + 5 minéraux**, unique, porté dès l'ouverture de la caisse) :
-  - Sous l'eau, **plus de flou** et une eau plus claire ; la nage coûte **40 % moins** d'endurance.
+  - Sous l'eau, **le flou disparaît** et l'eau est plus claire (filtre et brouillard réduits) ; la nage coûte **40 % moins** d'endurance.
   - On **plonge** en maintenant **Ctrl** (sans masque, on remonte tout seul comme avant).
   - Un **petit récif** (coraux, gorgones) entoure l'île entre **2 et 5 m** de fond, avec ses poissons colorés. Chaque matin, **3 coquillages** se posent au fond du récif, à ramasser avec E en plongée.
+  - Un coquillage du récif suit la règle des autres : il va dans les bras (s'il y a de la place) et sa forme dans la collection.
 
 ### 19.29 Version 0.1.22 : le temps qu'il fait
 

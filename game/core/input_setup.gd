@@ -22,6 +22,7 @@ const KEY_BINDINGS := {
 	&"tool_5": KEY_5,
 	&"tool_6": KEY_6,
 	&"toolbar_menu": KEY_TAB,
+	&"dive": KEY_CTRL,
 }
 
 const MOUSE_BINDINGS := {

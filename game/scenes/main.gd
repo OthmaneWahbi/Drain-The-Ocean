@@ -63,6 +63,13 @@ func _ready() -> void:
 	var pools := TidePoolsView.new()
 	pools.name = "TidePools"
 	add_child(pools)
+	# 0.1.21 : la nuit vivante (plancton, lucioles, étoiles filantes) et le récif.
+	var night := NightLife.new()
+	night.name = "NightLife"
+	add_child(night)
+	var reef := ReefView.new()
+	reef.name = "Reef"
+	add_child(reef)
 	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
 		add_child(extra)
 	GameState.game_reset.connect(_clear_views)

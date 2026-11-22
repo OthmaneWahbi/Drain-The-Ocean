@@ -8,6 +8,9 @@ const UnderwaterShader := preload("res://scenes/ui/shaders/underwater.gdshader")
 
 const FOG_COLOR := Color(0.05, 0.3, 0.4)
 const FOG_DENSITY := 0.09
+## 0.1.21 : avec le masque, le filtre ne garde que cette part, et le brouillard cette part.
+const MASK_FILTER := 0.25
+const MASK_FOG := 0.3
 
 ## L'environnement dont on change le brouillard (fourni par main.gd).
 var environment: Environment
@@ -41,6 +44,11 @@ func _process(_delta: float) -> void:
 		return
 	var p := cam.global_position
 	set_under(is_camera_under(p.y, GameState.water_level_y()) and GameState.sea_at(p.x, p.z))
+	# 0.1.21 : avec le masque, plus de flou : un filtre très léger et un brouillard bien plus clair.
+	var mask := GameState.has_gear("masque")
+	_rect.modulate.a = MASK_FILTER if mask else 1.0
+	if under and environment:
+		environment.fog_density = FOG_DENSITY * (MASK_FOG if mask else 1.0)
 
 
 func set_under(value: bool) -> void:

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=25 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -232,6 +232,39 @@ effect = 15
 effect_param = "lunettes"
 unique = true
 
+[sub_resource type="Resource" id="hammock"]
+script = ExtResource("2")
+id = &"hamac"
+name_key = "ITEM_HAMMOCK"
+desc_key = "ITEM_HAMMOCK_DESC"
+tier = 1
+price = {"coquillages": 2, "sel": 40}
+effect = 2
+effect_param = "hamac"
+unique = true
+
+[sub_resource type="Resource" id="shelf"]
+script = ExtResource("2")
+id = &"vitrine"
+name_key = "ITEM_SHELF"
+desc_key = "ITEM_SHELF_DESC"
+tier = 1
+price = {"sel": 30}
+effect = 2
+effect_param = "vitrine"
+unique = true
+
+[sub_resource type="Resource" id="mask"]
+script = ExtResource("2")
+id = &"masque"
+name_key = "ITEM_MASK"
+desc_key = "ITEM_MASK_DESC"
+tier = 1
+price = {"mineraux": 5, "sel": 40}
+effect = 16
+effect_param = "masque"
+unique = true
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("paper_catalogue")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("hammock"), SubResource("shelf"), SubResource("mask"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("paper_catalogue")])

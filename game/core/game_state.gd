@@ -72,6 +72,12 @@ signal collection_changed
 signal tide_pools_changed
 ## 0.1.20 (juice) : `n` unités d'un matériau viennent de tomber sur le tas d'une zone.
 signal salt_dropped(zone: Dictionary, resource: String, n: int)
+## 0.1.21 : un équipement porté a changé (masque…).
+signal gear_changed
+## 0.1.21 : le joueur a dormi dans le hamac en `spot` (jusqu'au matin).
+signal slept(spot: Vector3)
+## 0.1.21 : les coquillages du récif ont changé.
+signal reef_changed
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -130,6 +136,12 @@ var pet_position: Vector3 = FAR_AWAY
 var collection: Dictionary = {}
 ## 0.1.20 : les flaques de marée basse : {position, items: Array[String], low, pet_low}.
 var tide_pools: Array[Dictionary] = []
+## 0.1.21 : l'équipement porté (masque…) : id -> vrai.
+var gear: Dictionary = {}
+## 0.1.21 : les coquillages posés au fond du récif (positions).
+var reef_shells: Array[Vector3] = []
+## 0.1.21 : la liste de la vitrine (data/collection.json).
+var collection_rows: Array = []
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -203,6 +215,7 @@ func setup(config_override: GameConfig = null) -> void:
 	terrain = TerrainLogic.new(config.ground_y, config.build_radius_m, config.seabed_y)
 	terrain.inland_above_y = config.sea_level_y + config.land_mask_above_sea_m
 	dialogues = DialogueLogic.load_file()
+	collection_rows = load_collection_rows()
 	rng.randomize()
 	if not terrain_changed.is_connected(_on_terrain_changed_marshes):
 		terrain_changed.connect(_on_terrain_changed_marshes)
@@ -213,6 +226,7 @@ func new_game() -> void:
 	_reset_state()
 	add_zone("cuvette", find_free_spot("cuvette", config.basin_position))
 	_morning_refill()
+	_refill_reef()
 	_emit_all()
 
 
@@ -245,6 +259,8 @@ func _reset_state() -> void:
 	pet = CrabPetLogic.new(config)
 	collection = {}
 	tide_pools = _make_tide_pools()
+	gear = {}
+	reef_shells = []
 	pickups = []
 	stations = []
 	mirrors = []
@@ -289,6 +305,7 @@ func _process(delta: float) -> void:
 func simulate(delta: float) -> void:
 	if day.step(delta):
 		_morning_refill()
+		_refill_reef()
 		_pet_morning_gift()
 		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
 			phone_changed.emit()
@@ -342,9 +359,7 @@ func fill_bucket() -> void:
 	var taken := ocean.remove_water(bucket.missing_l())
 	bucket.water_l += taken
 	if rng.randf() < config.shell_chance_per_scoop:
-		add_carried({"coquillages": 1})
-		if rng.randf() < config.pearl_chance_per_shell:
-			add_carried({"perles": 1})
+		_gain_shell()
 	ocean_changed.emit()
 	bucket_changed.emit()
 	check_milestones()
@@ -873,9 +888,7 @@ func take_from_pool(pool: Dictionary) -> String:
 	if what == "coquillage":
 		if not can_carry("coquillages"):
 			return ""
-		add_carried({"coquillages": 1})
-		if rng.randf() < config.pearl_chance_per_shell:
-			add_carried({"perles": 1})
+		_gain_shell()
 	else:
 		add_to_collection(what)
 	items.remove_at(0)
@@ -887,6 +900,132 @@ func take_from_pool(pool: Dictionary) -> String:
 func add_to_collection(id: String, n: int = 1) -> void:
 	collection[id] = int(collection.get(id, 0)) + n
 	collection_changed.emit()
+
+
+# --- La nuit et la collection (0.1.21, PRD §19.28) ----------------------------------------
+
+## La liste de la vitrine, lue dans les données : [{id, items: [..]}, …].
+static func load_collection_rows(path := "res://data/collection.json") -> Array:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return []
+	var data = JSON.parse_string(f.get_as_text())
+	if not (data is Dictionary):
+		return []
+	return data.get("rows", [])
+
+
+## Toutes les cases de la vitrine, dans l'ordre.
+func collection_slots() -> Array[String]:
+	var out: Array[String] = []
+	for row in collection_rows:
+		for id in row.get("items", []):
+			out.append(String(id))
+	return out
+
+
+func has_found(id: String) -> bool:
+	return int(collection.get(id, 0)) > 0
+
+
+## Combien de cases de la vitrine sont remplies.
+func collection_found_count() -> int:
+	var n := 0
+	for id in collection_slots():
+		if has_found(id):
+			n += 1
+	return n
+
+
+## Un coquillage de plus dans les bras : sa forme va dans la collection ; parfois une perle.
+func _gain_shell() -> void:
+	add_carried({"coquillages": 1})
+	add_to_collection(_pick_weighted(config.shell_shapes, "coq_petoncle"))
+	if rng.randf() < config.pearl_chance_per_shell:
+		add_carried({"perles": 1})
+		add_to_collection("perle")
+
+
+func _pick_weighted(weights: Dictionary, fallback: String) -> String:
+	var total := 0
+	for k in weights:
+		total += int(weights[k])
+	var roll := rng.randi_range(1, maxi(total, 1))
+	var keys: Array = weights.keys()
+	keys.sort()
+	for k in keys:
+		roll -= int(weights[k])
+		if roll <= 0:
+			return String(k)
+	return fallback
+
+
+func has_gear(id: String) -> bool:
+	return gear.get(id, false)
+
+
+## L'équipement change des réglages : le masque rend la nage moins chère en endurance.
+func _apply_gear() -> void:
+	if stamina:
+		stamina.swim_s = config.stamina_swim_s / (config.mask_swim_cost if has_gear("masque") else 1.0)
+	gear_changed.emit()
+
+
+## Dormir dans le hamac (la nuit seulement) : le temps passe jusqu'au matin, tout ce qui vit
+## avec le temps avance (séchage de nuit, faim, soif, Pinçon). Le chronomètre de la partie ne
+## compte pas la nuit sautée (Q-30). Renvoie faux le jour.
+func sleep(spot: Vector3 = FAR_AWAY) -> bool:
+	if day.is_day():
+		return false
+	var hours := fposmod(config.wake_hour - day.hour(), 24.0)
+	advance_time(hours / 24.0 * day.day_length_s)
+	slept.emit(spot)
+	return true
+
+
+## Le récif : un point au hasard dans l'anneau où le fond est entre `reef_min_depth_m` et
+## `reef_max_depth_m` sous la mer. FAR_AWAY si on n'en trouve pas.
+func random_reef_spot(gen: RandomNumberGenerator = null) -> Vector3:
+	var g := gen if gen else rng
+	for _try in 60:
+		var a := g.randf_range(0.0, TAU)
+		var coast := terrain.coast_at(a)
+		var r := g.randf_range(coast + 2.0, coast + 16.0)
+		var x := cos(a) * r
+		var z := sin(a) * r
+		var y := terrain.height(x, z)
+		var depth := config.sea_level_y - y
+		if depth >= config.reef_min_depth_m and depth <= config.reef_max_depth_m:
+			return Vector3(x, y, z)
+	return FAR_AWAY
+
+
+## Chaque matin, de nouveaux coquillages au fond du récif.
+func _refill_reef() -> void:
+	reef_shells = []
+	for i in config.reef_shells_per_morning:
+		var p := random_reef_spot()
+		if p != FAR_AWAY:
+			reef_shells.append(p)
+	reef_changed.emit()
+
+
+## Ramasse le coquillage du récif n° `index` (en plongée). Vrai si c'est fait.
+func take_reef_shell(index: int) -> bool:
+	if index < 0 or index >= reef_shells.size() or not can_carry("coquillages"):
+		return false
+	reef_shells.remove_at(index)
+	_gain_shell()
+	reef_changed.emit()
+	return true
+
+
+## Un poisson vu de près avec le masque : il entre dans la collection (une seule fois).
+func see_fish(species: String) -> bool:
+	if has_found(species) or not has_gear("masque"):
+		return false
+	add_to_collection(species)
+	return true
 
 
 # --- Catalogue et livraison ----------------------------------------------------------------
@@ -1091,6 +1230,9 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 				pet.give_accessory(item.effect_param)
 			pet_changed.emit()
 			pet_reacted.emit(CrabPose.Anim.HAPPY)
+		CatalogItem.Effect.GEAR:
+			gear[item.effect_param] = true
+			_apply_gear()
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -1168,10 +1310,7 @@ func take_pickup(p: Dictionary) -> bool:
 		"shell":
 			if not can_carry("coquillages"):
 				return false
-			var found := {"coquillages": 1}
-			if rng.randf() < config.pearl_chance_per_shell:
-				found["perles"] = 1
-			add_carried(found)
+			_gain_shell()
 	pickups.erase(p)
 	pickup_removed.emit(p)
 	return true
@@ -2385,6 +2524,8 @@ func to_dict() -> Dictionary:
 		"carried": carried.duplicate(),
 		"zones": zones.map(_zone_to_dict),
 		"collection": collection.duplicate(),
+		"gear": gear.duplicate(),
+		"reef_shells": reef_shells.map(_v2a),
 		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
@@ -2477,6 +2618,16 @@ func load_dict(data: Dictionary) -> void:
 		for k in col:
 			if int(col[k]) > 0:
 				collection[String(k)] = int(col[k])
+	gear = {}
+	for k in data.get("gear", {}):
+		gear[String(k)] = true
+	_apply_gear()
+	reef_shells = []
+	if data.has("reef_shells"):
+		for r in data.get("reef_shells", []):
+			reef_shells.append(_a2v(r))
+	else:
+		_refill_reef()
 	var saved_pools: Array = data.get("tide_pools", [])
 	for i in mini(saved_pools.size(), tide_pools.size()):
 		var sp = saved_pools[i]
@@ -2606,6 +2757,8 @@ func _emit_all() -> void:
 	pet_changed.emit()
 	collection_changed.emit()
 	tide_pools_changed.emit()
+	gear_changed.emit()
+	reef_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

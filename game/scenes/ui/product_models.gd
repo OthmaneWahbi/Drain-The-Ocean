@@ -95,6 +95,21 @@ static func build(id: String) -> Node3D:
 				lens.position.x = side * 0.17
 				glasses.add_child(lens)
 			glasses.add_child(_box(Vector3(0.14, 0.025, 0.025), BLACK_FRAME, Vector3(0, 0.05, 0)))
+		"hamac":
+			var h := IslandLife.hammock()
+			h.scale = Vector3.ONE * 0.42
+			n.add_child(h)
+		"vitrine":
+			var sh := IslandLife.shelf(4, 3)
+			sh.scale = Vector3.ONE * 0.55
+			n.add_child(sh)
+			for k in 3:
+				var f := Finds.model(["coq_conque", "etoile_de_mer", "poisson_clown"][k])
+				f.scale = Vector3.ONE * 0.55
+				f.position = IslandLife.shelf_slot(k, k, 4, 3) * 0.55
+				n.add_child(f)
+		"masque":
+			n.add_child(IslandLife.mask())
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)
