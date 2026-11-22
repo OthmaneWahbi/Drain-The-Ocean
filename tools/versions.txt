@@ -1,0 +1,25 @@
+# Versions du jeu et le commit (sur main) qui les a livrées.
+# Le workflow « Versions » (.github/workflows/versions.yml) crée l'étiquette git vX.Y.Z
+# de chaque ligne qui n'en a pas encore, et une « release » GitHub.
+# Les nouvelles versions sont étiquetées toutes seules : config/version dans game/project.godot.
+# Format : version commit description
+0.1.0 73331444d9f168d3591786911407e70f1ef6c3e3 La démo (branche version/0.1.0)
+0.1.1 2ea3ea0e9b38ab12918210d16cdb7ca65530d18a Terrain low poly cartoon, eau et ciel
+0.1.2 db00adb466ce07aac9ff040d1e0113e2418ab8d4 Palmiers, cabine, dialogues, catalogue illustré
+0.1.3 aef76470359c76eea3514a001408017350abfc1f Île 50 % plus grande, HUD allégé
+0.1.4 fd03c1881109eae1237612226c97e6c8080dd6f4 Tous les modèles, 64 par case, pompes dans l'eau
+0.1.5 5cca5d8064a0c37d415015928952a66b5d64e9f5 La grille de placement colle aux modèles
+0.1.6 70aa398863d84ffdd2d88c58447d2faf5434695a Tuyaux solides, portée de pose
+0.1.7 b0f8cd519894ef173fa09362433255f32864ea02 Plus de clignotement en mode G
+0.1.8 1840a590a0a8cce0be22420e30560919fa88a6c4 Chasse aux bugs
+0.1.9 e4fdbcd59e4e3c6d85abec2b5155591f6fef968e Seau et palette KayKit, tuyaux Kenney
+0.1.10 94e67e47422ff3eae7e1bb3f6dd40b21c5efaab8 La pelle
+0.1.11 200375a5a52fb7e79a13a943e1e7da26dbd71cd6 Le sable et la pelle
+0.1.12 16f595d8c18059f516bc7af2f5a22a059cb207aa Du vrai sable
+0.1.13 966398b4228b6b2149453c6c0d5644d4f0eee4d0 Finitions du sable
+0.1.14 14dffc2af631f11953638b3e0b44b63d29ddd5d2 Le sable, cœur du jeu
+0.1.15 672f9e7e6bf380443d9847c3a1bb8533a0f76439 Trous naturels, aplanir simple
+0.1.16 b25e862d78a3cd5494e6d03a01df6b156e1bd01d Terre et sable
+0.1.17 33369e468fe410d00703ad311e6c05a4271b21ea L'avion et les animations
+0.1.17-polices c63a4178889f545bf1feea9d329e00e0c506c0f1 Nouvelles polices
+0.1.19 2f959373efaf6370b70d9155b8edefa48977db35 Pinçon, le crabe de compagnie
