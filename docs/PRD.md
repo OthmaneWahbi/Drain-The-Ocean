@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.48 (0.1.17 : l'avion et les animations) |
+| Version du document | 0.49 (nouvelles polices, choisies par Othmane) |
 | Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -747,7 +747,7 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphonique et interface ; le catalogue accessible seulement face à la cabine, pas un objet posé au sol ; un catalogue drôle avec des images et des prix ; toute l'interface prend la direction artistique du catalogue (polices, couleurs) ; un système de dialogue avec sous-titres quand on parle à la cabine ; garder le "riiing" au-dessus de la cabine ». Ces points sont **[DÉCIDÉ]**. Les détails ci-dessous sont **[PROPOSÉ]**.
 
 - **[PROPOSÉ]** Modèles : palmiers, rochers, buissons des dunes et bois flotté du *Nature Kit* de Kenney (CC0), recolorés en cartoon au chargement ; couronne des palmiers doublée, noix de coco accrochées dessous. Aucune cabine téléphonique gratuite n'était accessible : la cabine (rouge, vitrée, bandeau « TÉLÉPHONE », téléphone mural, catalogue enchaîné sur une tablette) et les noix de coco sont faites en facettes par code. Crédits : `game/assets/CREDITS.md`.
-- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons).
+- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons). → remplacées le 2026-11-21 (voir 19.23).
 - **[PROPOSÉ]** Le Grand Catalogue de l'Agence : une double page. À gauche, les produits en vitrine (photo 3D qui tourne, nom, slogan drôle, description, prix sur étiquette, tampons « PROMO », « BIENTÔT », « DÉJÀ À VOUS ») ; à droite le bon de commande (ce qu'on a, le panier, le total).
 - **[PROPOSÉ]** Dialogues : Ginette, de l'Agence, au bout du fil. Sous-titres en bas de l'écran, texte qui s'écrit lettre par lettre, réponses au clic ou avec 1 à 4, Échap pour raccrocher. Trois conversations : premier appel, offre du jour (« Montrez-moi ça ! » ouvre le catalogue), appel normal (commander, demander s'il reste de l'eau, raccrocher). Les textes sont dans `data/dialogues.json`.
 - **[PROPOSÉ]** « Driiing ! Driiing ! » au-dessus de la cabine qui tremble ; la sonnerie se tait pendant la conversation.
@@ -950,6 +950,16 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **La chute** : la caisse quitte l'avion, tombe en chute libre **0,4 s** (voile pliée), la voile s'ouvre d'un coup avec un petit rebond, puis la caisse descend à **4,5 m/s** constants en se balançant doucement sous la voile ; elle se redresse juste avant le sol, se tasse un peu en touchant le sable, et la voile bascule sur le côté, s'aplatit et se replie au lieu de disparaître d'un coup.
 - **[PROPOSÉ]** **La caisse** : une vraie caisse de largage fermée (plus le modèle du Pirate Kit, ouvert en haut, avec un couvercle qui flottait) : planches en rangées avec un jour sombre entre elles, cadre plus foncé sur chaque arête, écharpe en diagonale sur deux côtés, coins de fer, deux sangles kaki avec leurs boucles, quatre anneaux sur le dessus où s'accrochent les élingues, fond en planches (vu d'en dessous pendant la chute), tampon « AGENCE » et « Fragile · Ne pas noyer » peints à plat sur les deux autres côtés.
 - **[PROPOSÉ]** **Les autres animations corrigées** : les sacs du toboggan ne s'empilent plus en haut en attendant leur tour, ils glissent sur la goulotte, penchés comme elle, puis sautent du bout et roulent ; les pales du moulin accélèrent et ralentissent en douceur (avant, leur vitesse sautait d'une image à l'autre) ; le levier de la pompe à bras retombe au repos quand on lâche (avant, il restait figé en l'air) ; les tas de sel grossissent en douceur ; les mouettes planent la plupart du temps, battent des ailes par séries et penchent dans leurs virages ; le crabe suit le sable (il flottait à 50 cm ou s'enfonçait) et tourne en douceur ; les nuages rétrécissent avant de passer de l'autre côté au lieu de disparaître d'un coup ; le personnage en 3e personne pédale à la vitesse où il avance (les pieds ne glissent plus avec les tongs) ; le gros avion du teaser de fin de démo volait à l'envers (sa dérive était sur le nez) ; lui et l'avion publicitaire de la fin volent maintenant en palier.
+
+### 19.23 Nouvelles polices
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]** : les polices sont un point qu'il n'aime pas dans le jeu ; **changer toutes les polices**, après avoir cherché des références en ligne.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : les jeux « cozy » et cartoon (Animal Crossing, A Short Hike, Slime Rancher) prennent des lettres rondes, épaisses et très lisibles pour le texte, et gardent la fantaisie pour les titres ; les conseils de développeurs (PC Gamer, « How game developers pick their fonts ») : une police « expressive, mais pas trop », qui ne ralentit pas la lecture. 21 polices libres (SIL OFL ou Apache) comparées sur une planche, 12 combinaisons, puis 3 finalistes en jeu (captures dans `polices/` des fichiers du projet).
+- **[DÉCIDÉ]** (Othmane, 2026-11-21, parmi les 3 finalistes) **Le choix** : **DynaPuff** (titres, lettres gonflées cartoon), **Nunito** (texte, arrondie et très lisible ; extra-grasse pour les boutons et le HUD), **Gochi Hand** (prix et tampons, écrits au feutre, plus lisible que Permanent Marker). Les autres finalistes : Bagel Fat One + Nunito + Gochi Hand ; Shrikhand (rétro « tiki ») + Nunito + Caveat Brush.
+- **[PROPOSÉ]** **Tout le jeu** : la police du texte devient la police par défaut du projet, donc aussi les textes 3D (compteurs de la palette, débit des pompes, textes de fin) qui prenaient la police de Godot. Les symboles (♪, ▮, ★, ✓, →) viennent d'un petit morceau de M PLUS Rounded 1c, arrondi comme le reste.
+- **[PROPOSÉ]** Les textes « au feutre » sont agrandis de 30 % (Gochi Hand dessine plus petit) pour garder la même place.
 
 ## 20. Glossaire
 

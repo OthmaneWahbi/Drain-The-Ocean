@@ -26,8 +26,9 @@ Fabriqués par code (pas d'asset, rien de CC0 ne convenait) : la cabine téléph
 
 | Fichier | Police | Licence |
 |---|---|---|
-| `LilitaOne-Regular.ttf` | Lilita One, Juan Montoreano | SIL Open Font License 1.1 (`OFL-LilitaOne.txt`) |
-| `Fredoka-Medium.ttf`, `Fredoka-Bold.ttf` | Fredoka, The Fredoka Project Authors | SIL Open Font License 1.1 (`OFL-Fredoka.txt`) |
-| `PermanentMarker-Regular.ttf` | Permanent Marker, Font Diner | Apache 2.0 (`Apache-PermanentMarker.txt`) |
+| `DynaPuff-Variable.ttf` | DynaPuff, The DynaPuff Project Authors | SIL Open Font License 1.1 (`OFL-DynaPuff.txt`) |
+| `Nunito-Variable.ttf` | Nunito, The Nunito Project Authors | SIL Open Font License 1.1 (`OFL-Nunito.txt`) |
+| `GochiHand-Regular.ttf` | Gochi Hand, Huerta Tipográfica | SIL Open Font License 1.1 (`OFL-GochiHand.txt`) |
+| `Symboles-MPLUSRounded1c.ttf` | M PLUS Rounded 1c, The Rounded M+ Project Authors (sous-ensemble : symboles ♪ ▮ ★ ✓ → …) | SIL Open Font License 1.1 (`OFL-MPLUSRounded1c.txt`) |
 
-Récupérées via les paquets npm `@fontsource/*` (sous-ensemble latin), converties de WOFF2 en TTF.
+Récupérées depuis le dépôt `google/fonts` (2026-11-21). Le sous-ensemble de M PLUS Rounded 1c est fait avec `pyftsubset` (fontTools). Les fichiers `police_*.tres` choisissent la graisse de chaque police.

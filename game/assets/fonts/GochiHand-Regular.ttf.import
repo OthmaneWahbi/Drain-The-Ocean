@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bnrbpaqpk8fkc"
-path="res://.godot/imported/Fredoka-Medium.ttf-5bd197e90298cdcc71cadd437cde0c31.fontdata"
+uid="uid://cps5stsd4oymm"
+path="res://.godot/imported/GochiHand-Regular.ttf-3e5ea2842ffa61f18b766ee6cdd0e313.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Fredoka-Medium.ttf"
-dest_files=["res://.godot/imported/Fredoka-Medium.ttf-5bd197e90298cdcc71cadd437cde0c31.fontdata"]
+source_file="res://assets/fonts/GochiHand-Regular.ttf"
+dest_files=["res://.godot/imported/GochiHand-Regular.ttf-3e5ea2842ffa61f18b766ee6cdd0e313.fontdata"]
 
 [params]
 
