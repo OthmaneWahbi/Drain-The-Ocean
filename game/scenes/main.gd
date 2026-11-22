@@ -18,7 +18,8 @@ const DemoEnd := preload("res://scenes/ui/demo_end.gd")
 const ToolbarMenu := preload("res://scenes/ui/toolbar_menu.gd")
 
 ## Durée de la chute en parachute (le reste du délai de livraison est le vol de l'avion).
-const CHUTE_TIME_S := 1.5
+## Le dessus de la palette au-dessus de son origine : là où descend le crochet.
+const DEPOT_TOP_Y := 0.3
 
 @onready var sun: DirectionalLight3D = $Sun
 @onready var depot: Node3D = $Depot
@@ -257,7 +258,9 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 			return
 	var plane := DeliveryPlane.new()
 	_views.add_child(plane)
-	var drop_at := maxf(GameState.config.delivery_time_s - CHUTE_TIME_S, 0.5)
+	# 0.1.17 : une ligne droite à altitude et vitesse constantes, au-dessus de la palette puis
+	# du point de largage (FlightPath, réglages dans GameConfig).
+	var path := FlightPath.make(depot.global_position + Vector3(0, DEPOT_TOP_Y, 0), crate.position, GameState.config)
 	# Le crochet arrache le paiement sur la palette (sauf pour la caisse offerte du premier appel).
 	if not crate.get("free", false):
 		var paid: Dictionary = crate.get("paid", {})
@@ -269,8 +272,8 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 		var v: CrateView = view_ref.get_ref()
 		if v:
 			v.visible = true
-			v.drop_from(16.0, CHUTE_TIME_S))
-	plane.fly(depot.global_position, crate.position, drop_at)
+			v.drop_from_y(path.altitude_y - 1.0))
+	plane.fly(path)
 
 
 ## Un sac par ressource payée, ficelé à la couleur de son tas (au moins un).

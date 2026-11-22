@@ -3,7 +3,7 @@ extends RefCounted
 ## La direction artistique de toute l'interface (version 0.1.2) : celle du catalogue de l'Agence.
 ## Un vieux catalogue de vente par correspondance : papier crème, encre violet-nuit, bandeaux
 ## rouges, étiquettes de prix jaunes écrites au feutre.
-## Les polices (2026-11-21, PRD §19.22, voir assets/CREDITS.md), toutes rondes et chaleureuses :
+## Les polices (2026-11-21, PRD §19.23, voir assets/CREDITS.md), toutes rondes et chaleureuses :
 ##  - DynaPuff pour les titres (lettres gonflées, cartoon) ;
 ##  - Nunito pour le texte (arrondie et très lisible), en gras pour les boutons et le HUD ;
 ##  - Gochi Hand pour les prix et les tampons, « écrits à la main ».

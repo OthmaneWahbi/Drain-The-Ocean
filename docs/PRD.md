@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.49 (polices choisies) |
+| Version du document | 0.49 (nouvelles polices, choisies par Othmane) |
 | Date | 2026-11-21 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -312,7 +312,7 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 
 ### 9.2 Payer
 
-- **[PROPOSÉ]** Le joueur dépose ses ressources sur une **zone de dépôt** (une palette, puis une plateforme). Lors de la commande, l'avion passe en rase-mottes et **arrache le dépôt avec un crochet** sans ralentir (gag récurrent). Plus tard, un tapis roulant alimente automatiquement la zone.
+- **[PROPOSÉ]** Le joueur dépose ses ressources sur une **zone de dépôt** (une palette, puis une plateforme). Lors de la commande, l'avion passe et **arrache le dépôt avec un crochet** sans ralentir (gag récurrent). Plus tard, un tapis roulant alimente automatiquement la zone. **[DÉCIDÉ]** (Othmane, 2026-11-21) L'avion passe **en haut, à vitesse constante** ; c'est la corde du crochet qui descend (voir §19.22).
 - **[PROPOSÉ]** Le paiement se valide dès que le dépôt contient assez ; l'excédent reste sur place.
 - **[DÉCIDÉ]** La palette est **grande** et montre **chaque ressource à part** : un tas par ressource, avec sa couleur et son compteur (Othmane, 2026-11-16).
 - **[DÉCIDÉ]** On paie avec **ce qu'on porte plus la palette** (Othmane, 2026-11-16) : avec X sel dans les bras et Y sur la palette, on peut acheter un objet à X + Y. Les bras sont vidés en premier.
@@ -747,7 +747,7 @@ Ce qui a été construit pour finir la démo (Othmane, 2026-11-16 : « continue 
 Demande d'Othmane (2026-11-16) : « palmiers, noix de coco, cabine téléphonique et interface ; le catalogue accessible seulement face à la cabine, pas un objet posé au sol ; un catalogue drôle avec des images et des prix ; toute l'interface prend la direction artistique du catalogue (polices, couleurs) ; un système de dialogue avec sous-titres quand on parle à la cabine ; garder le "riiing" au-dessus de la cabine ». Ces points sont **[DÉCIDÉ]**. Les détails ci-dessous sont **[PROPOSÉ]**.
 
 - **[PROPOSÉ]** Modèles : palmiers, rochers, buissons des dunes et bois flotté du *Nature Kit* de Kenney (CC0), recolorés en cartoon au chargement ; couronne des palmiers doublée, noix de coco accrochées dessous. Aucune cabine téléphonique gratuite n'était accessible : la cabine (rouge, vitrée, bandeau « TÉLÉPHONE », téléphone mural, catalogue enchaîné sur une tablette) et les noix de coco sont faites en facettes par code. Crédits : `game/assets/CREDITS.md`.
-- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons). → remplacées le 2026-11-21 (voir 19.22).
+- **[PROPOSÉ]** Direction artistique de l'interface : un vieux catalogue de vente par correspondance. Papier crème, encre violet-nuit, bandeaux rouges, étiquettes de prix jaunes au feutre, tampons. Polices libres : Lilita One (titres), Fredoka (texte), Permanent Marker (prix, tampons). → remplacées le 2026-11-21 (voir 19.23).
 - **[PROPOSÉ]** Le Grand Catalogue de l'Agence : une double page. À gauche, les produits en vitrine (photo 3D qui tourne, nom, slogan drôle, description, prix sur étiquette, tampons « PROMO », « BIENTÔT », « DÉJÀ À VOUS ») ; à droite le bon de commande (ce qu'on a, le panier, le total).
 - **[PROPOSÉ]** Dialogues : Ginette, de l'Agence, au bout du fil. Sous-titres en bas de l'écran, texte qui s'écrit lettre par lettre, réponses au clic ou avec 1 à 4, Échap pour raccrocher. Trois conversations : premier appel, offre du jour (« Montrez-moi ça ! » ouvre le catalogue), appel normal (commander, demander s'il reste de l'eau, raccrocher). Les textes sont dans `data/dialogues.json`.
 - **[PROPOSÉ]** « Driiing ! Driiing ! » au-dessus de la cabine qui tremble ; la sonnerie se tait pendant la conversation.
@@ -938,7 +938,20 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Le sable aplani plus beau** : du sable tassé, lisse et un peu plus clair (crème), en dalles de 1 m aux joints fins (un creux sombre et un bord éclairé), chaque dalle d'un ton un rien différent, presque sans grains ni taches. La terre aplanie est ratissée (sillons parallèles).
 - **[PROPOSÉ]** **Un petit délai** : en glissant avec Maj + clic droit, un carré au plus toutes les **0,12 s** (avant : à chaque image) ; l'animation dure **0,2 s** (avant 0,16 s) et suit le geste. Lisser (Maj + clic gauche) : une passe toutes les 0,2 s (avant 0,08 s), avec la même animation douce.
 
-### 19.22 Nouvelles polices
+### 19.22 Version 0.1.17 : l'avion et les animations
+
+Demande d'Othmane (2026-11-21) **[DÉCIDÉ]** : « il y a de gros bugs avec l'avion qui vient déposer et son animation, en plus de plusieurs animations qui ne sont pas bien programmées » ; pour cette version, se concentrer dessus, **l'avion en premier**, puis le reste des animations à faire et à corriger. **L'avion doit juste passer à une vitesse constante, en haut** (avant : il arrivait hyper accéléré puis repartait très haut). **La caisse qu'il dépose n'est pas bien faite** (à regarder sous plusieurs angles). Chercher des références en ligne avant de faire quoi que ce soit.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : un vrai largage se fait en palier, cap et vitesse constants ; le ramassage au vol des avions postaux des années 1940 (« All American ») aussi : l'avion passe droit, seul le crochet au bout d'une corde attrape le sac. Une caisse de largage descend à vitesse constante sous une voile reliée à elle par des suspentes qui se rejoignent en un point, puis des élingues jusqu'aux sangles de la caisse ; la voile s'affaisse à l'arrivée. En animation, un objet mécanique qui passe garde sa vitesse (pas d'accélération sans raison) ; seuls les départs et les arrêts s'adoucissent.
+- **[PROPOSÉ]** **L'avion** : une ligne droite, en palier à **12 m** au-dessus de la palette, à **36 m/s** (~130 km/h), qui passe au-dessus de la palette puis du point de largage. Il arrive de **100 m** et repart à **220 m** avant de disparaître ; il tangue et roule à peine (un vieux biplan), sans quitter sa ligne. Le bruit du moteur est posé sur l'avion (il arrive, passe et s'éloigne).
+- **[PROPOSÉ]** **Le crochet** : la corde est enroulée (1,2 m) ; en approchant de la palette, un treuil la déroule en douceur (1,6 s) pour que le crochet, qui traîne un peu derrière (11°), arrive pile sur la palette ; il arrache le paiement et la corde remonte avec les sacs.
+- **[PROPOSÉ]** **Le délai de 5 s (M-51)** est tenu à peu près : environ **5 s** entre la commande et la caisse au sol (5,0 à 5,7 s mesurées selon la distance entre la palette et le point de livraison), le temps que l'avion arrive de loin et que la caisse descende.
+- **[PROPOSÉ]** **La chute** : la caisse quitte l'avion, tombe en chute libre **0,4 s** (voile pliée), la voile s'ouvre d'un coup avec un petit rebond, puis la caisse descend à **4,5 m/s** constants en se balançant doucement sous la voile ; elle se redresse juste avant le sol, se tasse un peu en touchant le sable, et la voile bascule sur le côté, s'aplatit et se replie au lieu de disparaître d'un coup.
+- **[PROPOSÉ]** **La caisse** : une vraie caisse de largage fermée (plus le modèle du Pirate Kit, ouvert en haut, avec un couvercle qui flottait) : planches en rangées avec un jour sombre entre elles, cadre plus foncé sur chaque arête, écharpe en diagonale sur deux côtés, coins de fer, deux sangles kaki avec leurs boucles, quatre anneaux sur le dessus où s'accrochent les élingues, fond en planches (vu d'en dessous pendant la chute), tampon « AGENCE » et « Fragile · Ne pas noyer » peints à plat sur les deux autres côtés.
+- **[PROPOSÉ]** **Les autres animations corrigées** : les sacs du toboggan ne s'empilent plus en haut en attendant leur tour, ils glissent sur la goulotte, penchés comme elle, puis sautent du bout et roulent ; les pales du moulin accélèrent et ralentissent en douceur (avant, leur vitesse sautait d'une image à l'autre) ; le levier de la pompe à bras retombe au repos quand on lâche (avant, il restait figé en l'air) ; les tas de sel grossissent en douceur ; les mouettes planent la plupart du temps, battent des ailes par séries et penchent dans leurs virages ; le crabe suit le sable (il flottait à 50 cm ou s'enfonçait) et tourne en douceur ; les nuages rétrécissent avant de passer de l'autre côté au lieu de disparaître d'un coup ; le personnage en 3e personne pédale à la vitesse où il avance (les pieds ne glissent plus avec les tongs) ; le gros avion du teaser de fin de démo volait à l'envers (sa dérive était sur le nez) ; lui et l'avion publicitaire de la fin volent maintenant en palier.
+
+### 19.23 Nouvelles polices
 
 Demande d'Othmane (2026-11-21) **[DÉCIDÉ]** : les polices sont un point qu'il n'aime pas dans le jeu ; **changer toutes les polices**, après avoir cherché des références en ligne.
 

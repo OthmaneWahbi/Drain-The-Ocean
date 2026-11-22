@@ -49,3 +49,7 @@ func _process(delta: float) -> void:
 		c.position += WIND * delta
 		c.position.x = AmbientMotion.wrap_around(c.position.x, center.x, HALF_AREA)
 		c.position.z = AmbientMotion.wrap_around(c.position.z, center.z, HALF_AREA)
+		# 0.1.17 : un nuage qui approche du bord fond (rétrécit) avant de passer de l'autre côté,
+		# et regrandit en revenant : on ne le voit plus disparaître ni surgir d'un coup.
+		var edge := maxf(absf(c.position.x - center.x), absf(c.position.z - center.z))
+		c.scale = Vector3.ONE * AmbientMotion.edge_fade(edge, HALF_AREA)

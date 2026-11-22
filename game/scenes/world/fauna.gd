@@ -74,7 +74,11 @@ class Seagull extends Node3D:
 		position = p
 		var heading := AmbientMotion.orbit_heading(angle, speed)
 		look_at(p + heading, Vector3.UP)
-		var f := AmbientMotion.flap(_t, 9.0, 0.6)
+		# 0.1.17 : une mouette penche dans son virage (vers le centre du cercle), et plane la
+		# plupart du temps, ailes un peu relevées, avec de courtes séries de battements (avant :
+		# elle battait sans arrêt au même rythme, à plat).
+		rotate_object_local(Vector3.FORWARD, signf(speed) * AmbientMotion.bank_angle(radius, absf(speed) * radius))
+		var f := AmbientMotion.glide_flap(_t + radius, 9.0, 0.6)
 		_left.rotation.z = f
 		_right.rotation.z = -f
 
@@ -135,6 +139,7 @@ class Crab extends Node3D:
 		_model = Props.character("crab", 0.25, "MonsterArmature|Idle")
 		add_child(_model)
 		position = AmbientMotion.ring_point(_rng, 21.5, 23.7, 0.5)
+		position.y = GameState.terrain.height(position.x, position.z)
 		_target = position
 
 	func _process(delta: float) -> void:
@@ -152,5 +157,8 @@ class Crab extends Node3D:
 			_rest = _rng.randf_range(1.0, 4.0)
 			return
 		position += to.normalized() * minf(SPEED * delta, to.length())
-		# Il marche de côté : son flanc (axe X) regarde où il va.
-		rotation.y = atan2(-to.z, to.x)
+		# 0.1.17 : il suit le sable (avant, il restait à 0,5 m de haut, dans l'air ou dans le sol)…
+		position.y = GameState.terrain.height(position.x, position.z)
+		# …et tourne en douceur vers sa cible au lieu de pivoter d'un coup. Il marche de côté :
+		# son flanc (axe X) regarde où il va.
+		rotation.y = lerp_angle(rotation.y, atan2(-to.z, to.x), clampf(delta * 6.0, 0.0, 1.0))

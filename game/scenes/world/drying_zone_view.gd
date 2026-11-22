@@ -91,13 +91,16 @@ class SaltPile extends StaticBody3D:
 	func count() -> int:
 		return int((zone.logic as DryingLogic).deposit.get(resource, 0))
 
-	func _process(_delta: float) -> void:
+	func _process(delta: float) -> void:
 		var amount := count()
 		_mesh.visible = amount > 0
 		_shape.disabled = amount <= 0
 		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
 		var s := clampf(0.35 + amount * 0.035, 0.35, 1.05)  # jamais plus large que le bac
-		_mesh.scale = Vector3(s, s, s)
+		# 0.1.17 : le tas grossit (ou fond) en douceur au lieu de sauter d'un cran par unité.
+		var cur := _mesh.scale.x if _mesh.scale.x > 0.01 else s
+		var k := lerpf(cur, s, clampf(delta * 6.0, 0.0, 1.0))
+		_mesh.scale = Vector3(k, k, k)
 
 	func get_prompt(_player: Node) -> String:
 		var amount := count()

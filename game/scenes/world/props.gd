@@ -466,79 +466,153 @@ static func starfish(size: float, color: Color) -> MeshInstance3D:
 
 # --- Livraison : caisse, parachute, palette, sacs, avion ---------------------------------------
 
-## La caisse de l'Agence (0.1.10, remarque 12) : la caisse en planches du Pirate Kit de Kenney
-## (CC0), mise en cube de `size`, au lieu de la caisse faite par code. Le tampon « AGENCE » et
-## « Fragile » sont peints À PLAT sur le panneau du milieu de chaque face ±Z (avant, ils
-## flottaient devant la caisse et dépassaient de ses bords).
+## La caisse de l'Agence (0.1.17, refaite : Othmane trouvait celle du Pirate Kit « pas bien
+## faite » : couvercle qui flottait, montants qui dépassaient, teinte saumon, tampon caché).
+## Inspirée des caisses de largage : une caisse FERMÉE en planches horizontales (avec un jour
+## sombre entre elles), un cadre plus foncé sur chaque arête, une écharpe en diagonale sur les
+## côtés ±X, des coins de fer, et deux sangles de toile kaki qui font le tour de la caisse ;
+## sur le dessus, quatre anneaux où s'accrochent les élingues du parachute (`crate_rings`).
+## Le tampon « AGENCE » et « Fragile » sont peints à plat sur les planches des faces ±Z.
+const CRATE_STRAP := Color(0.42, 0.45, 0.28)
+
+
 static func crate(size := 0.9) -> Node3D:
 	var root := Node3D.new()
-	var model := Models.load_model("kenney_pirate_crate")
-	var pts := Models.vertices(model)
-	var bb := Models.bounds(pts)
-	var k := Vector3(size / bb.size.x, size / bb.size.y, size / bb.size.z)
-	model.scale = k
-	var c := bb.get_center()
-	model.position = Vector3(-c.x * k.x, -bb.position.y * k.y, -c.z * k.z)
-	root.add_child(model)
-	# La caisse du kit est ouverte en haut : on la ferme avec un couvercle cloué (trois planches
-	# et deux traverses), puisqu'elle arrive pleine.
-	for k2 in 3:
-		root.add_child(box(Vector3(size * 0.97, 0.04, size * 0.31), WOOD if k2 != 1 else WOOD_LIGHT, Vector3(0, size - 0.02, (k2 - 1) * size * 0.32)))
-	for sx in [-1, 1]:
-		root.add_child(box(Vector3(size * 0.1, 0.03, size * 0.97), WOOD_DARK, Vector3(sx * size * 0.33, size + 0.015, 0)))
-	# Le panneau : le plus en avant des sommets du milieu de la face (hors cadre).
-	var panel := 0.0
-	for p in pts:
-		if absf(p.x - c.x) < bb.size.x * 0.2 and absf(p.y - c.y) < bb.size.y * 0.2:
-			panel = maxf(panel, absf(p.z - c.z) * k.z)
-	if panel <= 0.0:
-		panel = size / 2.0
+	root.name = "Crate"
 	var h := size / 2.0
+	var plank_t := 0.025  # épaisseur des planches
+	var frame_w := size * 0.13  # largeur du cadre
+	var frame_t := 0.045  # le cadre dépasse un peu des planches
+	# Le cœur sombre : ce qu'on voit entre deux planches.
+	root.add_child(box(Vector3(size, size, size) * 0.985, WOOD_DARK.darkened(0.35), Vector3(0, h, 0)))
+	# Les planches des quatre côtés : 4 rangées, légèrement différentes de teinte.
+	var rows := 4
+	var gap := 0.014
+	var ph := (size - gap * (rows - 1)) / rows
+	for r in rows:
+		var y := ph / 2.0 + r * (ph + gap)
+		var tint: Color = [WOOD, WOOD_LIGHT.darkened(0.06), WOOD.lightened(0.05), WOOD_LIGHT.darkened(0.12)][r]
+		for side in [-1.0, 1.0]:
+			root.add_child(box(Vector3(size - 0.01, ph, plank_t), tint, Vector3(0, y, side * (h + plank_t / 2.0 - 0.012))))
+			root.add_child(box(Vector3(plank_t, ph, size - 0.01), tint.darkened(0.04), Vector3(side * (h + plank_t / 2.0 - 0.012), y, 0)))
+	# Le dessus : trois larges planches, et le fond.
+	for k in 3:
+		var tint2: Color = [WOOD_LIGHT.darkened(0.05), WOOD, WOOD_LIGHT.darkened(0.12)][k]
+		root.add_child(box(Vector3(size - 0.01, plank_t, (size - 2 * gap) / 3.0), tint2, Vector3(0, size + plank_t / 2.0 - 0.012, (k - 1) * ((size - 2 * gap) / 3.0 + gap))))
+	# Le fond : trois planches aussi (on le voit d'en dessous pendant la chute).
+	for k in 3:
+		root.add_child(box(Vector3(size - 0.01, plank_t, (size - 2 * gap) / 3.0), WOOD.darkened(0.12), Vector3(0, plank_t / 2.0, (k - 1) * ((size - 2 * gap) / 3.0 + gap))))
+	# Le cadre : les 12 arêtes, en bois plus foncé, qui dépassent un peu des planches.
+	var fl := size + frame_t * 2.0 - 0.02
+	var off := h + frame_t / 2.0 - 0.01
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			# Les montants verticaux.
+			root.add_child(box(Vector3(frame_w, size + 0.01, frame_w), WOOD_DARK, Vector3(sx * (h - frame_w / 2.0 + frame_t), h, sz * (h - frame_w / 2.0 + frame_t))))
+	for y in [frame_w / 2.0 - 0.005, size - frame_w / 2.0 + 0.012]:
+		for side in [-1.0, 1.0]:
+			root.add_child(box(Vector3(fl - frame_w, frame_w, frame_t), WOOD_DARK, Vector3(0, y, side * off)))
+			root.add_child(box(Vector3(frame_t, frame_w, fl - frame_w), WOOD_DARK, Vector3(side * off, y, 0)))
+	# L'écharpe : une planche en diagonale sur les côtés ±X (ceux qui ne portent pas le tampon).
+	var inner := size - frame_w * 2.0
+	var diag := sqrt(2.0) * inner
 	for side in [-1.0, 1.0]:
-		var stamp := painted("CRATE_STAMP", RED, 40, Vector3(0, h + size * 0.06, side * (panel + 0.004)), 0.0 if side > 0 else PI)
-		stamp.width = size * 0.8 / stamp.pixel_size
+		var brace := box(Vector3(frame_t * 0.8, frame_w * 0.9, diag - frame_w * 0.6), WOOD_DARK.lightened(0.06), Vector3(side * off, h, 0))
+		brace.rotation.x = PI / 4.0 * side
+		root.add_child(brace)
+	# Les coins de fer : une petite équerre sur chacun des 8 coins.
+	var cs := frame_w * 0.75
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			for y in [cs / 2.0 - 0.01, size - cs / 2.0 + 0.02]:
+				root.add_child(box(Vector3(cs, cs, cs), IRON, Vector3(sx * (h + frame_t - cs / 2.0 + 0.008), y, sz * (h + frame_t - cs / 2.0 + 0.008))))
+	# Deux sangles kaki qui font le tour (dessus, côtés ±X, dessous) et leurs boucles.
+	var strap_z := size * 0.27
+	var st := 0.012
+	for sz in [-1.0, 1.0]:
+		var z: float = sz * strap_z
+		root.add_child(box(Vector3(size + frame_t * 2.0 + st, st, 0.09), CRATE_STRAP, Vector3(0, size + 0.02, z)))
+		for sx in [-1.0, 1.0]:
+			root.add_child(box(Vector3(st, size + 0.02, 0.09), CRATE_STRAP, Vector3(sx * (off + frame_t / 2.0 + st / 2.0), h, z)))
+		root.add_child(box(Vector3(0.025, 0.08, 0.11), METAL, Vector3(off + frame_t / 2.0 + st + 0.01, h * 0.75, z)))
+	# Les anneaux d'accroche des élingues, sur le dessus, aux croisements des sangles.
+	for p in crate_rings(size):
+		var ring := torus(0.022, 0.04, IRON, p + Vector3(0, 0.03, 0), 8)
+		ring.rotation.z = PI / 2
+		root.add_child(ring)
+	# Le tampon, peint à plat sur les planches des faces ±Z, entre le cadre.
+	var face := h + plank_t - 0.012 + 0.003
+	for side in [-1.0, 1.0]:
+		var stamp := painted("CRATE_STAMP", RED, 40, Vector3(0, h + size * 0.1, side * face), 0.0 if side > 0 else PI)
+		stamp.width = inner / stamp.pixel_size
 		stamp.autowrap_mode = TextServer.AUTOWRAP_OFF
 		root.add_child(stamp)
-		var fragile := painted("CRATE_FRAGILE", IRON, 18, Vector3(0, h - size * 0.16, side * (panel + 0.004)), 0.0 if side > 0 else PI)
-		fragile.width = size * 0.8 / fragile.pixel_size
+		var fragile := painted("CRATE_FRAGILE", Color(0.12, 0.14, 0.18), 18, Vector3(0, h - size * 0.15, side * face), 0.0 if side > 0 else PI)
+		fragile.width = inner / fragile.pixel_size
 		fragile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		root.add_child(fragile)
+	for mi in root.get_children():
+		if mi is MeshInstance3D and (mi as MeshInstance3D).mesh is BoxMesh and ((mi as MeshInstance3D).mesh as BoxMesh).size.length() < 0.2:
+			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return root
 
 
-## Le parachute : une coupole à bandes rouges et crème, et ses suspentes jusqu'aux coins de la
-## caisse (en `crate_top`, sous la coupole).
-static func parachute(radius := 1.3, drop := 2.4, crate_half := 0.42) -> Node3D:
+## Les quatre anneaux du dessus de la caisse (où s'accrochent les élingues du parachute).
+static func crate_rings(size := 0.9) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	var top := size + 0.03
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			out.append(Vector3(sx * size * 0.36, top, sz * size * 0.27))
+	return out
+
+
+## Le parachute (0.1.17) : une coupole à 12 panneaux rouges et crème, des suspentes qui partent
+## du bord et se rejoignent en un seul point (la « confluence », comme un vrai parachute de
+## largage), puis quatre élingues jusqu'aux anneaux de la caisse. Origine : le dessus de la
+## caisse. Deux nœuds nommés, pour l'animation :
+## - « Canopy » (coupole + suspentes), origine à la confluence : on le gonfle en l'étirant
+##   depuis ce point, on l'affaisse à l'atterrissage ;
+## - « Slings » (les quatre élingues).
+static func parachute(radius := 1.3, crate_size := 0.9, confluence := 1.0, rim := 1.6) -> Node3D:
 	var root := Node3D.new()
 	root.name = "Parachute"
-	var gores := 10
+	var canopy := Node3D.new()
+	canopy.name = "Canopy"
+	canopy.position = Vector3(0, confluence, 0)
+	root.add_child(canopy)
+	var gores := 12
+	var rings := 4
 	var surfaces := [SurfaceTool.new(), SurfaceTool.new()]
 	for st: SurfaceTool in surfaces:
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rings := 3
+	var dome_h := radius * 0.62
+	var center := Vector3(0, rim, 0)
 	for g in gores:
 		var st: SurfaceTool = surfaces[g % 2]
 		for r in rings:
 			var p := []
 			for corner in [[r, g], [r, g + 1], [r + 1, g], [r + 1, g + 1]]:
-				var phi := PI / 2 * 0.95 * float(corner[0]) / rings
+				var phi := PI / 2 * 0.92 * float(corner[0]) / rings
 				var theta := TAU * float(corner[1]) / gores
-				# Les bords entre deux panneaux rentrent un peu : la coupole se gonfle en « pétales ».
-				var bulge := 1.0
-				p.append(Vector3(sin(phi) * cos(theta) * radius * bulge, cos(phi) * radius * 0.55 + drop, sin(phi) * sin(theta) * radius * bulge))
-			var center := Vector3(0, drop - radius, 0)
+				p.append(Vector3(sin(phi) * cos(theta) * radius, cos(phi) * dome_h + rim, sin(phi) * sin(theta) * radius))
 			tri_from(st, p[0], p[1], p[2], center)
 			tri_from(st, p[1], p[3], p[2], center)
 	for i in 2:
 		var mi := _mesh((surfaces[i] as SurfaceTool).commit(), [RED, CREAM][i], true)
-		root.add_child(mi)
-	# Les suspentes : du bord de la coupole aux quatre coins du dessus de la caisse.
-	var rim_y := cos(PI / 2 * 0.95) * radius * 0.55 + drop
-	for k in 8:
-		var a := TAU * k / 8.0
-		var top := Vector3(cos(a) * radius * 0.98, rim_y, sin(a) * radius * 0.98)
-		var corner := Vector3(signf(cos(a)) * crate_half, 0.0, signf(sin(a)) * crate_half)
-		root.add_child(beam(top, corner, 0.015, Color(0.95, 0.95, 0.92), true))
+		canopy.add_child(mi)
+	# Les suspentes : une par couture du bord jusqu'à la confluence.
+	var rim_y := cos(PI / 2 * 0.92) * dome_h + rim
+	var rim_r := sin(PI / 2 * 0.92) * radius
+	for k in gores:
+		var a := TAU * k / gores
+		canopy.add_child(beam(Vector3(cos(a) * rim_r, rim_y, sin(a) * rim_r), Vector3.ZERO, 0.012, Color(0.95, 0.95, 0.92), true))
+	canopy.add_child(ball(0.05, METAL, Vector3.ZERO, 3))
+	var slings := Node3D.new()
+	slings.name = "Slings"
+	root.add_child(slings)
+	for p in crate_rings(crate_size):
+		slings.add_child(beam(Vector3(p.x, p.y - crate_size + 0.06, p.z), Vector3(0, confluence, 0), 0.016, CRATE_STRAP, true))
 	return root
 
 
