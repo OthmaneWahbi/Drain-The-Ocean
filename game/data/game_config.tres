@@ -354,3 +354,23 @@ campfire_radius_m = 4.0
 grilled_food_mult = 1.5
 planted_palm_days = 2
 planted_palm_max = 10
+marsh_last_dry_factor = 0.6
+windmill_boost_radius_m = 6.0
+windmill_boost = 0.2
+windward_clear_m = 4.0
+windward_boost = 0.1
+vessel_capacity_l = {
+"arrosoir": 15.0,
+"seau_perce": 10.0
+}
+vessel_leak_lps = {
+"seau_perce": 1.0
+}
+watering_radius_m = 4.0
+music_fade_s = 8.0
+music_moments = {
+"matin": 6.0,
+"midi": 11.0,
+"nuit": 20.0,
+"soir": 17.0
+}

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=46 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=48 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -460,6 +460,28 @@ price = {"coquillages": 10, "perles": 1}
 effect = 2
 effect_param = "coquillage_geant"
 
+[sub_resource type="Resource" id="watering_can"]
+script = ExtResource("2")
+id = &"arrosoir"
+name_key = "ITEM_WATERING_CAN"
+desc_key = "ITEM_WATERING_CAN_DESC"
+tier = 1
+price = {"mineraux": 2, "sel": 35}
+effect = 16
+effect_param = "arrosoir"
+unique = true
+
+[sub_resource type="Resource" id="leaky_bucket"]
+script = ExtResource("2")
+id = &"seau_perce"
+name_key = "ITEM_LEAKY_BUCKET"
+desc_key = "ITEM_LEAKY_BUCKET_DESC"
+tier = 1
+price = {"sel": 1}
+effect = 16
+effect_param = "seau_perce"
+unique = true
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("hammock"), SubResource("shelf"), SubResource("mask"), SubResource("lousse"), SubResource("parasol"), SubResource("salt_flamingo"), SubResource("salt_shaker"), SubResource("spyglass"), SubResource("detector"), SubResource("campfire"), SubResource("tiles"), SubResource("fence"), SubResource("lantern"), SubResource("mat"), SubResource("giant_shell"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("surprise_rares"), SubResource("surprise_lot"), SubResource("surprise_perle"), SubResource("surprise_croquettes"), SubResource("surprise_bouee"), SubResource("surprise_nain"), SubResource("paper_catalogue")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("hammock"), SubResource("shelf"), SubResource("mask"), SubResource("lousse"), SubResource("parasol"), SubResource("salt_flamingo"), SubResource("salt_shaker"), SubResource("spyglass"), SubResource("detector"), SubResource("campfire"), SubResource("tiles"), SubResource("fence"), SubResource("lantern"), SubResource("mat"), SubResource("giant_shell"), SubResource("watering_can"), SubResource("leaky_bucket"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("surprise_rares"), SubResource("surprise_lot"), SubResource("surprise_perle"), SubResource("surprise_croquettes"), SubResource("surprise_bouee"), SubResource("surprise_nain"), SubResource("paper_catalogue")])

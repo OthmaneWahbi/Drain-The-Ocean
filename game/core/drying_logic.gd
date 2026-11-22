@@ -45,6 +45,14 @@ func evaporation_rate_lps() -> float:
 	return capacity_l / dry_time_s
 
 
+## 0.1.24 : secondes avant d'être sèche au rythme `multiplier` (INF si elle ne sèche pas).
+func seconds_to_dry(multiplier: float) -> float:
+	if water_l <= 0.0:
+		return 0.0
+	var rate := evaporation_rate_lps() * multiplier
+	return water_l / rate if rate > 0.0 else INF
+
+
 ## Avance le temps. `multiplier` = 1 en plein jour, 0,3 la nuit (M-40), plus tard les miroirs solaires.
 func step(delta: float, multiplier: float, rng: RandomNumberGenerator) -> void:
 	if water_l <= 0.0 or delta <= 0.0:

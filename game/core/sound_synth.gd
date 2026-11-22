@@ -186,3 +186,98 @@ static func _tink(dur: float, f: float, gain: float) -> PackedFloat32Array:
 		var env := exp(-t * 28.0) * minf(t * 2000.0, 1.0)
 		out[i] = (sin(TAU * f * t) + 0.4 * sin(TAU * f * 1.5 * t)) * env * gain / 1.4
 	return out
+
+
+# --- La musique (0.1.24, PRD §19.31) --------------------------------------------------------
+
+## Les quatre moments de la journée qui ont leur musique.
+const MUSIC := ["matin", "midi", "soir", "nuit"]
+## La musique est fabriquée à une fréquence plus basse (moins de calcul, sons doux).
+const MUSIC_RATE := 16000
+## Chaque moment : tempo (temps par minute), grille d'accords (notes MIDI de la basse, un accord
+## par mesure de 4 temps), gamme de la mélodie, motif de la mélodie (degrés de la gamme, -1 = un
+## silence, deux notes par temps), timbre (0 doux, 1 pincé, 2 piano électrique).
+const MUSIC_RECIPES := {
+	"matin": {"tempo": 100.0, "chords": [48, 45, 41, 43], "scale": [60, 62, 64, 67, 69, 72], "motif": [0, -1, 2, 3, 4, -1, 3, 2, 1, -1, 2, -1, 0, -1, -1, -1], "tone": 0},
+	"midi": {"tempo": 116.0, "chords": [41, 43, 48, 45], "scale": [65, 67, 69, 72, 74, 77], "motif": [2, 3, 4, 3, 2, -1, 0, 1, 2, -1, 4, 5, 4, -1, 2, -1], "tone": 1},
+	"soir": {"tempo": 84.0, "chords": [45, 41, 48, 43], "scale": [57, 60, 62, 64, 67, 69], "motif": [5, -1, 4, -1, 3, 2, -1, 1, 2, -1, -1, 0, -1, -1, 1, -1], "tone": 0},
+	# La nuit reprend la musique d'attente du téléphone, en plus lent (piano électrique).
+	"nuit": {"tempo": 66.0, "chords": [48, 45, 50, 43], "scale": [60, 62, 64, 65, 67, 69, 72], "motif": [4, 6, 4, 2, 3, -1, 1, -1, 2, 4, 2, 0, 1, -1, -1, -1], "tone": 2},
+}
+
+
+static func midi_hz(note: float) -> float:
+	return 440.0 * pow(2.0, (note - 69.0) / 12.0)
+
+
+## Une boucle de musique (4 mesures, la grille d'accords une fois) : basse douce, accord en
+## arpège et mélodie. Sans couture : la boucle dure un nombre entier de temps et chaque note
+## s'éteint avant la fin.
+static func music_samples(moment: String) -> PackedFloat32Array:
+	var r: Dictionary = MUSIC_RECIPES.get(moment, MUSIC_RECIPES["matin"])
+	var beat := 60.0 / float(r.tempo)
+	var chords: Array = r.chords
+	var beats := chords.size() * 4
+	var n := int(beats * beat * MUSIC_RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var tone := int(r.tone)
+	for bar in chords.size():
+		var root := float(chords[bar])
+		# La basse : la fondamentale sur les temps 1 et 3.
+		for k in [0, 2]:
+			_note(out, (bar * 4 + k) * beat, beat * 1.8, midi_hz(root), 0.16, 0)
+		# L'accord en arpège (fondamentale, tierce, quinte une octave plus haut) sur chaque temps.
+		var third := 3.0 if [45, 50, 57].has(int(root)) else 4.0
+		var arp := [root + 12.0, root + 12.0 + third, root + 19.0, root + 12.0 + third]
+		for k in 4:
+			_note(out, (bar * 4 + k) * beat, beat * 0.9, midi_hz(float(arp[k])), 0.06, tone)
+	# La mélodie : deux notes par temps.
+	var scale: Array = r.scale
+	var motif: Array = r.motif
+	var steps := beats * 2
+	for i in steps:
+		var deg := int(motif[i % motif.size()])
+		if deg < 0:
+			continue
+		_note(out, i * beat * 0.5, beat * 0.9, midi_hz(float(scale[deg % scale.size()])), 0.11, tone)
+	return out
+
+
+## Ajoute une note : `tone` 0 = sinus doux, 1 = pincé (vite éteint, une harmonique), 2 = piano
+## électrique (sinus + octave qui vibre). Les notes qui dépasseraient la fin sont coupées net
+## (elles commencent toutes assez tôt pour s'être presque éteintes).
+static func _note(out: PackedFloat32Array, start_s: float, dur_s: float, hz: float, gain: float, tone: int) -> void:
+	var a := int(start_s * MUSIC_RATE)
+	var m := mini(int(dur_s * MUSIC_RATE), out.size() - a)
+	var decay := 9.0 if tone == 1 else 3.5
+	for i in m:
+		var t := i / float(MUSIC_RATE)
+		var env := minf(t * 60.0, 1.0) * exp(-decay * t) * minf((dur_s - t) * 20.0, 1.0)
+		var v := sin(TAU * hz * t)
+		if tone == 1:
+			v = v * 0.7 + sin(TAU * hz * 2.0 * t) * 0.3
+		elif tone == 2:
+			v = v * 0.75 + sin(TAU * hz * 2.0 * t + sin(TAU * 5.0 * t) * 0.6) * 0.25
+		out[a + i] += v * env * gain
+
+
+static func music_stream(moment: String) -> AudioStreamWAV:
+	return wrap_loop(music_samples(moment), MUSIC_RATE)
+
+
+## Emballe des échantillons dans un AudioStreamWAV qui boucle.
+static func wrap_loop(data: PackedFloat32Array, rate: int) -> AudioStreamWAV:
+	var bytes := PackedByteArray()
+	bytes.resize(data.size() * 2)
+	for i in data.size():
+		bytes.encode_s16(i * 2, int(clampf(data[i], -1.0, 1.0) * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = rate
+	wav.stereo = false
+	wav.data = bytes
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = data.size()
+	return wav

@@ -158,6 +158,17 @@ static func build(id: String) -> Node3D:
 			n.add_child(m)
 		"coquillage_geant":
 			n.add_child(IslandGoods.giant_shell())
+		"arrosoir":
+			var can := ComfortGoods.watering_can(2.2)
+			can.rotation.y = PI / 2
+			n.add_child(can)
+		"seau_perce":
+			var lb := ComfortGoods.leaky_bucket(0.6)
+			n.add_child(lb)
+			for k in 3:
+				var drop := Props.droplet(0.04)
+				drop.position = Vector3(0.12, 0.12 - k * 0.1, 0.36)
+				n.add_child(drop)
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)

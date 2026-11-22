@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.55 (0.1.23 : explorer et vivre sur l'île) |
+| Version du document | 0.56 (0.1.24 : le rythme et le confort) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -1067,13 +1067,13 @@ Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du d
 
 ### 19.31 Version 0.1.24 : le rythme et le confort
 
-- **[PROPOSÉ]** **Horloges échelonnées** : chaque machine a son rythme, réglé dans les données : moulin et pompes **rapides** (en continu), cuvette et bâche **45 s**, marais **60 s**, fleur de sel **lente** (quelques par jour calme), marais en série **très lent mais rare** (minéraux rares). Le texte d'aide d'une zone montre quand elle sera sèche (« Sec dans 32 s »).
-- **[PROPOSÉ]** **Bonus de voisinage** (comme dans *Islanders*) : en plus des miroirs (+50 % chacun, déjà là), une zone à moins de **6 m du moulin** sèche **20 %** plus vite (le vent des pales), et une zone **face au vent dominant** (rien de posé à moins de 4 m de son côté est) **10 %** plus vite. En mode G, l'aperçu d'une zone affiche son multiplicateur (« ×1,8 ») à l'endroit visé.
+- **[PROPOSÉ]** **Horloges échelonnées** : chaque machine a son rythme, réglé dans les données : moulin et pompes **rapides** (en continu), cuvette et bâche **45 s**, marais **60 s**, fleur de sel **lente** (quelques par jour calme), marais en série **très lent mais rare** (le dernier marais d'une série sèche **×0,6**, mais donne plus de minéraux rares). Le texte d'aide d'une zone montre quand elle sera sèche, au rythme du moment (jour ou nuit, temps, bonus) : « Sec dans 32 s », au-delà de 90 s « Sec dans 3 min ».
+- **[PROPOSÉ]** **Bonus de voisinage** (comme dans *Islanders*) : en plus des miroirs (+50 % chacun, déjà là), une zone à moins de **6 m du moulin** sèche **20 %** plus vite (le vent des pales), et une zone **face au vent dominant** (rien de posé dans la bande de 4 m qui longe son côté est) **10 %** plus vite. Les bonus se multiplient. En mode G, l'aperçu d'une zone affiche son multiplicateur (« ×1,8 ») au-dessus de l'endroit visé.
 - **[PROPOSÉ]** **Achats qui changent un geste** (règle de *Forager*) :
-  - **Arrosoir** (catalogue, palier 1, **35 sel + 2 minéraux**, unique, outil de la barre) : se remplit dans la mer comme le seau (**15 L**) ; un clic **arrose** toutes les zones à moins de **4 m** du point visé, en partageant l'eau entre elles.
-  - **Seau percé** (catalogue, palier 1, **1 sel**, gag) : un seau de 10 L qui fuit (**1 L/s**) ; il marche quand même, si on se dépêche.
-- **[PROPOSÉ]** **Mode photo** : **P** cache le HUD et détache la caméra : on vole avec les touches de déplacement, la souris tourne, Maj va plus vite, la molette règle le champ de vision ; **1 à 4** changent le filtre (normal, sépia, noir et blanc, couleurs vives) ; **clic** prend la photo (fichier PNG dans `user://photos/`) ; **P** ou Échap pour revenir. Le jeu est en pause pendant ce temps.
-- **[PROPOSÉ]** **Musique selon le moment de la journée** : quatre ambiances jouées par le synthétiseur du jeu (matin, midi, soir, nuit), en fondu de **8 s** quand le moment change ; la nuit reprend la **musique d'attente** du téléphone, en plus lent. Volume dans les options (« Musique »).
+  - **Arrosoir** (catalogue, palier 1, **35 sel + 2 minéraux**, unique, outil de la barre) : se remplit d'un clic dans la mer (**15 L**) ; un clic **arrose** toutes les zones à moins de **4 m** du point visé, en partageant l'eau entre elles (ce qu'une zone pleine refuse va aux autres). Équipement qui prend sa case dans la barre, comme le détecteur.
+  - **Seau percé** (catalogue, palier 1, **1 sel**, gag) : un seau de 10 L qui fuit (**1 L/s**, l'eau retourne à la mer, on voit les gouttes) ; il a sa propre case dans la barre, se remplit d'un clic dans la mer et se verse dans la zone visée ; il marche quand même, si on se dépêche.
+- **[PROPOSÉ]** **Mode photo** : **P** cache le HUD et détache la caméra : on vole avec les touches de déplacement (Espace monte, Ctrl descend), la souris tourne, Maj va plus vite, la molette règle le champ de vision ; **1 à 4** changent le filtre (normal, sépia, noir et blanc, couleurs vives) ; **clic** prend la photo (fichier PNG dans `user://photos/`) ; **P** ou Échap pour revenir. Le jeu est en pause pendant ce temps ; l'outil en main n'apparaît pas sur la photo.
+- **[PROPOSÉ]** **Musique selon le moment de la journée** : quatre ambiances jouées par le synthétiseur du jeu (matin à 6 h, midi à 11 h, soir à 17 h, nuit à 20 h ; une boucle de 4 mesures : basse, accords en arpège, mélodie), en fondu de **8 s** quand le moment change ; la nuit reprend la **musique d'attente** du téléphone, en plus lent. Volume dans les options (« Musique »).
 
 ### 19.32 Version 0.1.25 : plus tard (priorité 3)
 

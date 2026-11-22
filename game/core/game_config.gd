@@ -467,3 +467,21 @@ extends Resource
 ## Cocotiers plantés : jours avant de devenir palmiers ; au plus tant.
 @export var planted_palm_days: int = 2
 @export var planted_palm_max: int = 10
+
+# --- 0.1.24 : le rythme et le confort (PRD §19.31) -------------------------------------------
+## Le dernier marais d'une série sèche plus lentement (très lent mais rare) : × ce facteur.
+@export var marsh_last_dry_factor: float = 0.6
+## Voisinage : une zone à moins de … m d'un moulin sèche +… ; une zone sans rien de posé à moins
+## de … m de son côté est (le vent dominant vient de l'est, +X) sèche +….
+@export var windmill_boost_radius_m: float = 6.0
+@export var windmill_boost: float = 0.2
+@export var windward_clear_m: float = 4.0
+@export var windward_boost: float = 0.1
+## Les récipients tenus en main (ni seau ni outil de chantier) : contenance (L), fuite (L/s), et
+## pour l'arrosoir la portée (m) autour du point visé.
+@export var vessel_capacity_l: Dictionary = {"arrosoir": 15.0, "seau_perce": 10.0}
+@export var vessel_leak_lps: Dictionary = {"seau_perce": 1.0}
+@export var watering_radius_m: float = 4.0
+## La musique : fondu (s) quand le moment de la journée change ; heures de début des moments.
+@export var music_fade_s: float = 8.0
+@export var music_moments: Dictionary = {"matin": 6.0, "midi": 11.0, "soir": 17.0, "nuit": 20.0}

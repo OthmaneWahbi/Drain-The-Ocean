@@ -27,6 +27,13 @@ var _shovel_node: Node3D
 ## 0.1.23 : le détecteur et la noix de coco tenus en main.
 var _detector_node: Node3D
 var _nut_node: Node3D
+## 0.1.24 : l'arrosoir et le seau percé tenus en main.
+var _can_node: Node3D
+var _leaky_node: Node3D
+var _leak_t := 0.0
+var _pour_t := 0.0
+## Vrai si le rayon de visée touche quelque chose (sinon `aim_point` est périmé).
+var aim_hit := false
 ## 0.1.23 : la longue-vue. Vrai tant qu'on y regarde (on ne bouge plus, la molette zoome).
 var spying := false
 var _spy_zoom := 4.0
@@ -176,6 +183,14 @@ func _build_bucket() -> void:
 	_nut_node = Models.coconut(0.065, 3)
 	_nut_node.position = Vector3(0.24, -0.22, -0.62)
 	head.add_child(_nut_node)
+	_can_node = ComfortGoods.watering_can(1.1)
+	_can_node.position = Vector3(0.34, -0.5, -0.6)
+	_can_node.rotation_degrees = Vector3(0, 20, 0)
+	head.add_child(_can_node)
+	_leaky_node = Node3D.new()
+	_leaky_node.position = Vector3(0.38, -0.55, -0.65)
+	_leaky_node.add_child(ComfortGoods.leaky_bucket())
+	head.add_child(_leaky_node)
 	# Le corps en 3e personne : un petit personnage CC0 qui marche, court, saute (PRD §13).
 	body_mesh.visible = false
 	_body = Props.character("mini_male_a", 1.75, "idle")
@@ -563,6 +578,9 @@ func _process(delta: float) -> void:
 	_shovel_node.visible = tool == "pelle"
 	_detector_node.visible = tool == "detecteur"
 	_nut_node.visible = tool == "noix_de_coco"
+	_can_node.visible = tool == "arrosoir"
+	_leaky_node.visible = tool == "seau_perce"
+	_animate_vessels(delta)
 	_blink_detector()
 	_animate_shovel(delta)
 	_update_carry(tool)
@@ -593,6 +611,11 @@ func _process(delta: float) -> void:
 ## Logique du seau. Priorité : l'objet visé (zone de séchage), puis la mer, puis vider le seau.
 func _handle_tool(delta: float) -> void:
 	var bucket := GameState.bucket
+	# 0.1.24 : l'arrosoir et le seau percé passent avant tout (on verse même en visant une zone).
+	if GameState.is_vessel(GameState.current_tool()):
+		bucket.cancel_fill()
+		_handle_vessel(GameState.current_tool())
+		return
 	# Clic MAINTENU sur un objet qui le gère (la pompe à bras) : appelé à chaque image.
 	if target and target.has_method(&"hold_use"):
 		bucket.cancel_fill()
@@ -638,6 +661,48 @@ func _handle_tool(delta: float) -> void:
 			GameState.pour_bucket_out()
 
 
+## L'arrosoir et le seau percé : se remplissent d'un clic dans la mer ; versent vers le point visé.
+func _handle_vessel(tool: String) -> void:
+	var action := ""
+	if is_in_water():
+		if GameState.vessel_l(tool) < GameState.vessel_capacity(tool) - 0.05:
+			action = tr("PROMPT_VESSEL_FILL")
+			if Input.is_action_just_pressed(&"use_tool"):
+				GameState.fill_vessel(tool)
+	elif GameState.vessel_l(tool) <= 0.05:
+		action = tr("PROMPT_VESSEL_EMPTY")
+	else:
+		var zs: Array[Dictionary] = []
+		if aim_hit:
+			zs = GameState.vessel_targets(tool, aim_point)
+		if zs.is_empty():
+			action = tr("PROMPT_VESSEL_NO_ZONE")
+		else:
+			action = tr("PROMPT_WATER_ZONES") % zs.size() if tool == "arrosoir" and zs.size() > 1 else tr("PROMPT_WATER_ZONE" if tool == "arrosoir" else "PROMPT_VESSEL_POUR")
+			if Input.is_action_just_pressed(&"use_tool"):
+				GameState.pour_vessel(tool, aim_point)
+				_pour_t = 0.6
+				for z in zs:
+					for k in 3:
+						_drip((z.position as Vector3) + Vector3(randf_range(-0.6, 0.6), 1.2, randf_range(-0.6, 0.6)))
+	prompt = action if prompt == "" else "%s · %s" % [action, prompt]
+
+
+## Le geste de verser (l'arrosoir penche) et les gouttes du seau percé qui fuit.
+func _animate_vessels(delta: float) -> void:
+	_pour_t = maxf(_pour_t - delta, 0.0)
+	var tilt := sin(clampf(_pour_t / 0.6, 0.0, 1.0) * PI) * 35.0
+	_can_node.rotation_degrees.x = -tilt
+	_leaky_node.rotation_degrees.x = -tilt
+	if _leaky_node.visible:
+		var ratio := GameState.vessel_l("seau_perce") / maxf(GameState.vessel_capacity("seau_perce"), 0.001)
+		Props.set_bucket_fill(_leaky_node.get_child(0), ratio)
+		_leak_t -= delta
+		if ratio > 0.0 and _leak_t <= 0.0:
+			_leak_t = 0.12
+			_drip(_leaky_node.global_position + _leaky_node.global_basis.z * 0.14 + Vector3(0, 0.05, 0))
+
+
 ## Les pieds sont sous la surface de l'océan : on peut puiser (en marchant ou en nageant).
 func is_in_water() -> bool:
 	return global_position.y < GameState.water_level_y() - 0.05 and GameState.sea_at(global_position.x, global_position.z)
@@ -655,6 +720,7 @@ func _find_target() -> Node:
 	query.exclude = [get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	aim_on_terrain = false
+	aim_hit = not hit.is_empty()
 	if hit.is_empty():
 		return null
 	var collider: Node = hit.collider

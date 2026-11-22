@@ -44,6 +44,7 @@ var _too_far: bool = false
 ## occupées, voiles des voisins, grille, contours). Il épouse le relief, un peu au-dessus du sol :
 ## avant, des dalles plates à 2-5 cm du sable se battaient avec lui et clignotaient.
 var _overlay: MeshInstance3D
+var _boost_label: Label3D
 var _overlay_mesh: ImmediateMesh
 var _foot_mat: StandardMaterial3D
 var _fill_mat: StandardMaterial3D
@@ -68,6 +69,19 @@ func _ready() -> void:
 	_overlay.mesh = _overlay_mesh
 	_overlay.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_overlay)
+	# 0.1.24 : le bonus de séchage d'une zone à l'endroit visé (« ×1,8 »).
+	_boost_label = Label3D.new()
+	_boost_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_boost_label.no_depth_test = true
+	_boost_label.font = UiTheme.bold_font()  # le « 7 » de la police par défaut ressemblait à « / »
+	_boost_label.font_size = 56
+	_boost_label.outline_size = 12
+	_boost_label.modulate = Color(1.0, 0.9, 0.35)
+	# Dessinée après l'aperçu transparent (sinon des bouts de lettres disparaissaient derrière).
+	_boost_label.render_priority = 20
+	_boost_label.outline_render_priority = 19
+	_boost_label.visible = false
+	add_child(_boost_label)
 	_set_visuals(false)
 	GameState.game_reset.connect(_on_reset)
 	GameState.placement_requested.connect(request)
@@ -120,6 +134,7 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed(&"rotate_object"):
 		_rotation_deg = PlacementGrid.wrap_deg(_rotation_deg + GameState.config.rotation_step_deg)
 	_follow_aim(player)
+	_update_boost_label()
 	if _too_far:
 		player.prompt = tr("PROMPT_PLACE_TOO_FAR")
 	else:
@@ -177,7 +192,21 @@ func _finish() -> void:
 	view = null
 	item = {}
 	GameState.placing = false
+	_boost_label.visible = false
 	_set_visuals(false)
+
+
+func _update_boost_label() -> void:
+	_boost_label.visible = GameState.zones.has(item)
+	if not _boost_label.visible:
+		return
+	_boost_label.text = boost_text(GameState.zone_boost_at(item, _target_pos, _rotation_deg))
+	_boost_label.position = _target_pos + Vector3(0, 1.4, 0)
+
+
+## « ×1,8 » : le multiplicateur de séchage, une décimale, virgule française.
+static func boost_text(k: float) -> String:
+	return "×" + ("%.1f" % k).replace(".", ",")
 
 
 ## Suit le point visé, aligné sur la grille ; la vue elle-même sert d'aperçu.

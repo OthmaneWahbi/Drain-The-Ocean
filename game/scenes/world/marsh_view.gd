@@ -113,6 +113,9 @@ func get_prompt(_player: Node) -> String:
 	var state := tr("MARSH_STATE") % [logic.water_l, logic.capacity_l]
 	if GameState.marsh_loss(zone) > 0.0:
 		state += " · " + tr("MARSH_LEAKS")
+	var dry := DryingZoneView.dry_text(zone)
+	if dry != "":
+		state += " · " + dry
 	var flower := DryingZoneView.flower_prompt(zone)
 	if flower != "":
 		state = "%s · %s" % [flower, state]

@@ -13,6 +13,8 @@ var language: String = "fr"
 ## Chronomètre précis affiché en haut de l'écran (option « speedrun », M-73).
 var show_timer: bool = false
 var volume: float = 0.8
+## 0.1.24 : le volume de la musique (par-dessus le volume général).
+var music_volume: float = 0.5
 
 
 ## Remet chaque valeur dans ses bornes.
@@ -20,12 +22,13 @@ func sanitize() -> void:
 	fov = clampf(fov, 60.0, 110.0)
 	mouse_sensitivity = clampf(mouse_sensitivity, 0.0005, 0.008)
 	volume = clampf(volume, 0.0, 1.0)
+	music_volume = clampf(music_volume, 0.0, 1.0)
 	if not LANGUAGES.has(language):
 		language = "fr"
 
 
 func to_dict() -> Dictionary:
-	return {"fov": fov, "mouse_sensitivity": mouse_sensitivity, "head_bob": head_bob, "fullscreen": fullscreen, "language": language, "show_timer": show_timer, "volume": volume}
+	return {"fov": fov, "mouse_sensitivity": mouse_sensitivity, "head_bob": head_bob, "fullscreen": fullscreen, "language": language, "show_timer": show_timer, "volume": volume, "music_volume": music_volume}
 
 
 func load_dict(d: Dictionary) -> void:
@@ -36,6 +39,7 @@ func load_dict(d: Dictionary) -> void:
 	language = String(d.get("language", language))
 	show_timer = bool(d.get("show_timer", show_timer))
 	volume = float(d.get("volume", volume))
+	music_volume = float(d.get("music_volume", music_volume))
 	sanitize()
 
 

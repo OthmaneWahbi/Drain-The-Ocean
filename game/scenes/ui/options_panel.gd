@@ -20,6 +20,7 @@ func _ready() -> void:
 	_slider(box, "fov", "OPTIONS_FOV", 60.0, 110.0, 1.0)
 	_slider(box, "mouse_sensitivity", "OPTIONS_SENSITIVITY", 0.0005, 0.008, 0.0001)
 	_slider(box, "volume", "OPTIONS_VOLUME", 0.0, 1.0, 0.05)
+	_slider(box, "music_volume", "OPTIONS_MUSIC", 0.0, 1.0, 0.05)
 	_check(box, "head_bob", "OPTIONS_HEAD_BOB")
 	_check(box, "fullscreen", "OPTIONS_FULLSCREEN")
 	_check(box, "show_timer", "OPTIONS_TIMER")

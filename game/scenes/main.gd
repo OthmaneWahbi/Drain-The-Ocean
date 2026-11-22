@@ -152,6 +152,13 @@ func _ready() -> void:
 	add_child(ending)
 	GameState.run_finished.connect(main_menu.open_menu)
 	# Les sons, fabriqués par calcul (SoundSynth), qui écoutent GameState.
+	# 0.1.24 : la musique selon le moment de la journée, et le mode photo (P).
+	var music := MusicBoard.new()
+	music.name = "Music"
+	add_child(music)
+	var photo := PhotoMode.new()
+	photo.name = "PhotoMode"
+	add_child(photo)
 	var sounds := SoundBoard.new()
 	sounds.name = "Sounds"
 	add_child(sounds)
