@@ -322,3 +322,48 @@ ITEM_SURPRISE_LOT_PITCH,Surprise !,Surprise!
 ITEM_SURPRISE_PEARL_PITCH,Surprise !,Surprise!
 ITEM_DUCK_BUOY_PITCH,Coin coin !,Quack quack!
 ITEM_SHELL_GNOME_PITCH,Il veille sur votre île !,He watches over your island!
+ITEM_SPYGLASS,Longue-vue,Spyglass
+ITEM_SPYGLASS_DESC,Pour voir loin. Très loin. Jusqu'à l'horizon (il y a d'autres îles !).,See far. Very far. All the way to the horizon (there are other islands!).
+ITEM_SPYGLASS_PITCH,Le monde à portée d'œil !,The world at a glance!
+ITEM_DETECTOR,Détecteur de métaux,Metal detector
+ITEM_DETECTOR_DESC,"Bip, bip, biiip : quelque chose est enterré. Creusez à la pelle juste là.","Beep, beep, beeeep: something is buried. Dig with the shovel right there."
+ITEM_DETECTOR_PITCH,Des trésors sous vos pieds !,Treasure beneath your feet!
+ITEM_CAMPFIRE,Feu de camp,Campfire
+ITEM_CAMPFIRE_DESC,Il brûle la nuit. Une noix de coco mangée tout près est grillée : elle nourrit plus.,It burns at night. A coconut eaten close by is roasted: more filling.
+ITEM_CAMPFIRE_PITCH,Ambiance garantie !,Cosy guaranteed!
+ITEM_TILES,Dalles de chemin (×5),Path tiles (×5)
+ITEM_TILES_DESC,Cinq dalles pour tracer vos allées. On marche dessus.,Five tiles to lay out your paths. Walk right on them.
+ITEM_TILES_PITCH,Le chic des allées !,Classy paths!
+ITEM_FENCE,Clôture en bois flotté,Driftwood fence
+ITEM_FENCE_DESC,"Un bout de clôture. Pour faire joli, ou pour faire propriétaire.","A bit of fence. For looks, or to look like an owner."
+ITEM_FENCE_PITCH,"Chez soi, enfin !",Home at last!
+ITEM_LANTERN,Lampion,Paper lantern
+ITEM_LANTERN_DESC,Il s'allume tout seul à la nuit tombée.,It lights up by itself at nightfall.
+ITEM_LANTERN_PITCH,Une lueur douce !,A soft glow!
+ITEM_MAT,Tapis de plage,Beach mat
+ITEM_MAT_DESC,Un tapis rayé pour faire la sieste au soleil.,A striped mat for a nap in the sun.
+ITEM_MAT_PITCH,Les pieds au sec !,Dry feet!
+ITEM_GIANT_SHELL,Coquillage géant,Giant shell
+ITEM_GIANT_SHELL_DESC,On y entend la mer. Évidemment.,You can hear the sea in it. Of course.
+ITEM_GIANT_SHELL_PITCH,Le roi des coquillages !,King of shells!
+TOOL_DETECTEUR,Détecteur,Detector
+TOOL_NOIX_DE_COCO,Noix de coco,Coconut
+PROMPT_TURTLE_NEST,Un nid de tortue,A turtle nest
+PROMPT_PLANT,[Clic] Planter la noix de coco,[Click] Plant the coconut
+PROMPT_PLANT_NO_NUT,Pas de noix de coco,No coconut
+PROMPT_PLANT_MAX,Assez de cocotiers plantés,Enough palms planted
+PROMPT_PLANT_EARTH,Une noix de coco pousse dans la terre,Coconuts grow in soil
+PROMPT_PLANT_BLOCKED,Pas de place ici,No room here
+PROMPT_PICK_COCONUT,[Clic] Garder la noix de coco,[Click] Keep the coconut
+PROMPT_BOTTLE,[E] Ouvrir la bouteille,[E] Open the bottle
+PROMPT_WRECK,[E] Ouvrir la caisse échouée,[E] Open the washed-up crate
+PROMPT_WRECK_DRIFT,Une caisse dérive vers la plage…,A crate is drifting ashore…
+PROMPT_SPYGLASS,[E] Regarder dans la longue-vue,[E] Look through the spyglass
+HINT_SPYGLASS,Molette : zoom · Échap ou E : sortir,Wheel: zoom · Esc or E: exit
+PROMPT_CAMPFIRE,Le feu brûle la nuit,The fire burns at night
+PROMPT_SAPLING,Une pousse de cocotier,A palm sapling
+DUG_PIECE,Une pièce ancienne !,An ancient coin!
+DUG_PERLE,Une perle !,A pearl!
+DUG_FERRAILLE,De la ferraille…,Scrap metal…
+DUG_TRESOR,Le trésor !,The treasure!
+BOTTLE_CLOSE,Clic pour fermer,Click to close

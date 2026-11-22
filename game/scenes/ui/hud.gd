@@ -55,6 +55,8 @@ func _process(_delta: float) -> void:
 	hint_label.visible = Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not GameState.ui_open and not get_tree().paused
 	var player := get_tree().get_first_node_in_group(&"player")
 	prompt_label.text = player.prompt if player else ""
+	# 0.1.23 : dans la longue-vue, on ne voit que ce qu'il y a au bout (pas de HUD dans le cercle).
+	visible = not (player != null and bool(player.get("spying")))
 	var progress := GameState.bucket.fill_progress_ratio()
 	fill_bar.visible = progress > 0.0
 	fill_bar.value = progress * 100.0

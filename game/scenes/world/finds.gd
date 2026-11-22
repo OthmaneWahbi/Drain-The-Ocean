@@ -48,6 +48,22 @@ static func model(id: String) -> Node3D:
 			return pr
 		"poisson_clown", "chirurgien_bleu", "poisson_perroquet", "raie":
 			return fish(id)
+		"bouteille_carte", "bouteille_chaine", "bouteille_avion", "bouteille_crabe":
+			# 0.1.23 : la bouteille, debout, son papier à la couleur du dessin.
+			var b := IslandGoods.bottle()
+			b.rotation.z = PI / 2
+			b.position.y = 0.17
+			var tint := {"bouteille_carte": Color(0.95, 0.85, 0.55), "bouteille_chaine": Color(0.6, 0.7, 0.85), "bouteille_avion": Color(0.9, 0.55, 0.5), "bouteille_crabe": Color(0.95, 0.6, 0.4)}
+			var holder := Node3D.new()
+			holder.add_child(b)
+			holder.add_child(Props.box(Vector3(0.06, 0.02, 0.06), tint[id], Vector3(0, 0.02, 0)))
+			return holder
+		"piece_ancienne":
+			return IslandGoods.coin()
+		"coffre":
+			return IslandGoods.chest()
+		"oeuf_tortue":
+			return IslandGoods.egg()
 	# Inconnu : un petit galet (jamais d'erreur).
 	var r := Node3D.new()
 	r.add_child(Props.ball(0.08, Color(0.6, 0.6, 0.6), Vector3(0, 0.05, 0)))
