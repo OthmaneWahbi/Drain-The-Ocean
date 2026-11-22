@@ -87,9 +87,37 @@ class SaltPile extends StaticBody3D:
 		_shape = Greybox.cylinder_collision(0.45, 0.5, Vector3(0, 0.25, 0))
 		add_child(_shape)
 		PhysicsLayers.make_walk_through(self)  # on le vise, on ne s'y coince pas
+		GameState.salt_dropped.connect(_on_dropped)
+
+	## 0.1.20 (juice) : le tas fait « pop » et un « +1 » monte et s'efface.
+	var _pop := 0.0
+	var _size := 0.0
+
+	func _on_dropped(z: Dictionary, res: String, n: int) -> void:
+		if z != zone or res != resource or not is_visible_in_tree():
+			return
+		_pop = 1.0
+		var label := Label3D.new()
+		label.text = "+%d" % n
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.font_size = 48
+		label.outline_size = 10
+		label.modulate = Props.PILE_BASE.get(resource, Color.WHITE).lightened(0.3)
+		label.position = Vector3(0, 0.6, 0)
+		label.no_depth_test = false
+		add_child(label)
+		var tw := label.create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(label, "position:y", 1.4, 0.9)
+		tw.tween_property(label, "modulate:a", 0.0, 0.9)
+		tw.chain().tween_callback(label.queue_free)
 
 	func count() -> int:
 		return int((zone.logic as DryingLogic).deposit.get(resource, 0))
+
+	## Le gonflement du « pop » (0 à 0,15) selon ce qu'il reste de l'élan (1 → 0).
+	static func pop_scale(left: float) -> float:
+		return 0.15 * sin(clampf(left, 0.0, 1.0) * PI)
 
 	func _process(delta: float) -> void:
 		var amount := count()
@@ -98,9 +126,12 @@ class SaltPile extends StaticBody3D:
 		# Plus il y a de sel, plus le tas est gros (jusqu'à ~20 unités).
 		var s := clampf(0.35 + amount * 0.035, 0.35, 1.05)  # jamais plus large que le bac
 		# 0.1.17 : le tas grossit (ou fond) en douceur au lieu de sauter d'un cran par unité.
-		var cur := _mesh.scale.x if _mesh.scale.x > 0.01 else s
+		var cur := _size if _size > 0.01 else s
 		var k := lerpf(cur, s, clampf(delta * 6.0, 0.0, 1.0))
-		_mesh.scale = Vector3(k, k, k)
+		_size = k
+		_pop = maxf(_pop - delta * 5.0, 0.0)
+		var bump := 1.0 + pop_scale(_pop)
+		_mesh.scale = Vector3(k * bump, k / bump, k * bump) if _pop > 0.0 else Vector3(k, k, k)
 
 	func get_prompt(_player: Node) -> String:
 		var amount := count()

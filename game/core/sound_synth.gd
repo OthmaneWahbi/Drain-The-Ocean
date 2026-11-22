@@ -7,7 +7,7 @@ extends RefCounted
 ## `samples(name)` rend les échantillons (-1..1) ; `stream(name)` les emballe dans un AudioStreamWAV.
 
 const RATE := 22050
-const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves"]
+const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves", "tink"]
 ## Les sons qui tournent en boucle.
 const LOOPS := ["waves", "gurgle", "engine"]
 
@@ -36,6 +36,8 @@ static func samples(name: String) -> PackedFloat32Array:
 			return _gurgle(rng, 2.0)
 		"waves":  # l'ambiance de la mer (boucle)
 			return _waves(rng, 4.0)
+		"tink":  # 0.1.20 : un grain de sel tombe sur le tas (petit tintement de verre)
+			return _tink(0.22, 2093.0, 0.35)
 	return PackedFloat32Array()
 
 
@@ -172,3 +174,15 @@ static func _waves(rng: RandomNumberGenerator, dur: float) -> PackedFloat32Array
 		var edge := minf(minf(t, dur - t) * 30.0, 1.0)
 		base[i] *= swell * edge * 0.35
 	return base
+
+
+## Un tintement : deux sinus (la note et sa quinte aiguë) qui s'éteignent très vite.
+static func _tink(dur: float, f: float, gain: float) -> PackedFloat32Array:
+	var n := int(dur * RATE)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := float(i) / RATE
+		var env := exp(-t * 28.0) * minf(t * 2000.0, 1.0)
+		out[i] = (sin(TAU * f * t) + 0.4 * sin(TAU * f * 1.5 * t)) * env * gain / 1.4
+	return out

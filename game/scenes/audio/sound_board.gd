@@ -36,6 +36,8 @@ func _ready() -> void:
 	GameState.pet_reacted.connect(func(a: int): play("plop" if a == CrabPose.Anim.EAT else "pickup", -9.0))
 	# L'avion (0.1.17) porte son propre bruit de moteur, en 3D (DeliveryPlane) : il s'entend
 	# quand il passe, et plus au moment de la commande.
+	# 0.1.20 (juice) : un tintement par grain qui tombe sur un tas, plus aigu pour les plus rares.
+	GameState.salt_dropped.connect(_on_salt_dropped)
 	GameState.ending_phase_changed.connect(_on_ending_phase)
 	GameState.game_reset.connect(func(): _last_bucket_l = 0.0)
 	_last_bucket_l = GameState.bucket.water_l
@@ -72,6 +74,29 @@ func _process(_delta: float) -> void:
 		_ring.stop()
 	# La mer se tait quand l'océan est parti.
 	_waves.volume_db = -10.0 if GameState.ending_drop_m < 2.0 else -40.0
+
+
+## Pas plus d'un tintement toutes les 0,08 s (plusieurs zones qui sèchent en même temps).
+var _last_tink_ms := -1000
+
+
+func _on_salt_dropped(_zone: Dictionary, resource: String, _n: int) -> void:
+	var now := Time.get_ticks_msec()
+	if now - _last_tink_ms < 80:
+		return
+	_last_tink_ms = now
+	play("tink", -14.0)
+	_players[(_next - 1 + _players.size()) % _players.size()].pitch_scale *= tink_pitch(resource)
+
+
+## La hauteur du tintement : 1 pour le sel, plus aigu pour les minéraux et les rares.
+static func tink_pitch(resource: String) -> float:
+	match resource:
+		"mineraux":
+			return 1.26
+		"mineraux_rares":
+			return 1.5
+	return 1.0
 
 
 func _on_ending_phase(phase: int) -> void:

@@ -59,6 +59,10 @@ func _ready() -> void:
 	underwater.name = "Underwater"
 	underwater.environment = world_env.environment
 	add_child(underwater)
+	# 0.1.20 : les flaques de marée basse.
+	var pools := TidePoolsView.new()
+	pools.name = "TidePools"
+	add_child(pools)
 	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
 		add_child(extra)
 	GameState.game_reset.connect(_clear_views)
@@ -72,6 +76,7 @@ func _ready() -> void:
 	GameState.pump_added.connect(_spawn_view.bind(PumpView))
 	GameState.slide_added.connect(_spawn_view.bind(SlideView))
 	GameState.pickup_removed.connect(_remove_view)
+	GameState.zone_removed.connect(_remove_view)  # 0.1.20 : un marais rebouché
 	GameState.station_removed.connect(_remove_view)
 	GameState.item_moved.connect(_on_item_moved)
 	# Les tuyaux entre pompes et zones (T2).
@@ -225,7 +230,7 @@ func _remove_view(item: Dictionary) -> void:
 
 
 func _on_zone_added(zone: Dictionary) -> void:
-	_spawn_view(zone, DryingZoneView)
+	_spawn_view(zone, MarshView if GameState.is_marsh(zone) else DryingZoneView)
 
 
 func _on_decor_added(decor: Dictionary) -> void:
@@ -265,6 +270,8 @@ func _on_crate_added(crate: Dictionary, animate: bool) -> void:
 	if not crate.get("free", false):
 		var paid: Dictionary = crate.get("paid", {})
 		plane.hooked.connect(func(): plane.carry_bundle(_bundle_colors(paid)))
+		# 0.1.20 (juice) : après une grosse commande, l'avion fait un tonneau en repartant.
+		plane.roll_after_drop = Economy.count(paid) >= GameState.config.plane_roll_min_items
 	# 0.1.8 : la caisse a pu être ouverte (et sa vue libérée) avant le largage. On ne garde
 	# qu'une référence faible : un lambda qui capture un objet libéré fait une erreur Godot.
 	var view_ref: WeakRef = weakref(view)

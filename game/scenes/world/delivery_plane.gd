@@ -18,6 +18,9 @@ var _arm: Node3D
 var _propeller: Node3D
 var _engine: AudioStreamPlayer3D
 var _t := 0.0
+## 0.1.20 : un tonneau après le largage (grosse commande).
+var roll_after_drop := false
+var _roll_t := -1.0
 var _flying := false
 var _hooked := false
 var _dropped := false
@@ -104,6 +107,11 @@ func _follow_path() -> void:
 	if not _dropped and _t >= path.drop_time():
 		_dropped = true
 		dropped.emit()
+		if roll_after_drop:
+			_roll_t = 0.0
+	if _roll_t >= 0.0:
+		_roll_t += get_process_delta_time()
+		_model.rotation.z = roll_angle(_roll_t)
 	if _t >= path.duration():
 		queue_free()
 
@@ -149,3 +157,10 @@ func fly_line(from: Vector3, to: Vector3, duration_s: float, free_at_end := true
 	transform = Transform3D(Basis.looking_at(flat if flat.length() > 0.01 else Vector3.FORWARD), from)
 	if is_inside_tree():
 		_engine.play()
+
+
+## L'angle du tonneau (radians) `t` secondes après le largage : un tour complet en 1,4 s, doux au
+## début et à la fin, puis plus rien.
+static func roll_angle(t: float) -> float:
+	var k := clampf((t - 0.3) / 1.4, 0.0, 1.0)
+	return TAU * (k * k * (3.0 - 2.0 * k))

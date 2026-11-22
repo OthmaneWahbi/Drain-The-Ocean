@@ -342,3 +342,41 @@ extends Resource
 @export var sand_wet_band_m: float = 0.3
 ## Sous cette hauteur de glissement (m), un sommet éboulé ne fait pas de poussière.
 @export var sand_slide_fx_min_m: float = 0.05
+
+# --- 0.1.20 : les salines (PRD §19.27) -----------------------------------------------------
+## Un trou compte pour un marais si chaque case est creusée d'au moins … m sous son sol d'origine.
+@export var marsh_min_depth_m: float = 0.25
+## Cases (1 m) au moins, et au plus, dans un marais.
+@export var marsh_min_cells: int = 4
+@export var marsh_max_cells: int = 24
+## Écart maximal (m) entre la case la plus haute et la plus basse du fond.
+@export var marsh_max_spread_m: float = 0.6
+## Contenance par case (L) et temps de séchage d'un marais plein (s) : la surface fixe le débit.
+@export var marsh_l_per_cell: float = 10.0
+@export var marsh_dry_time_s: float = 60.0
+## Un trou dans le sable perd cette part de ce qu'on y verse (l'eau retourne à la mer)…
+@export var marsh_sand_loss: float = 0.25
+## … sauf si au moins cette part des cases autour est de la terre (la bordure tient).
+@export var marsh_earth_rim_ratio: float = 0.5
+## Les marées : amplitude (m) autour du niveau honnête, heure d'une marée haute (l'autre 12 h après).
+@export var tide_amplitude_m: float = 0.3
+@export var tide_high_hour: float = 3.0
+## Un marais à moins de … cases de la mer, au fond plus bas que la surface, se remplit tout seul
+## à marée haute, de … L/s par case.
+@export var marsh_sea_reach_cells: int = 3
+@export var marsh_tide_fill_lps_per_cell: float = 2.0
+## Les flaques de marée basse : combien, à quelle hauteur sous le niveau moyen (m), leur rayon (m).
+@export var tide_pool_count: int = 4
+@export var tide_pool_depth_m: float = 0.12
+@export var tide_pool_radius_m: float = 0.9
+## Les angles (degrés) où chercher les flaques autour de l'île.
+@export var tide_pool_angles_deg: PackedFloat32Array = PackedFloat32Array([25.0, 150.0, 205.0, 330.0])
+## Ce qu'une flaque montre à chaque marée basse : 1 à … trouvailles, tirées avec ces poids.
+@export var tide_pool_max_items: int = 2
+@export var tide_pool_items: Dictionary = {"coquillage": 4, "etoile_de_mer": 2, "oursin": 2, "bernard_ermite": 2}
+## Pinçon fouille une flaque où se tient le joueur (à moins de … m) : un coquillage de plus.
+@export var tide_pool_pet_reach_m: float = 3.0
+## Une commande d'au moins … ressources : l'avion fait un tonneau en repartant (juice).
+@export var plane_roll_min_items: int = 100
+## Pinçon suit le joueur à partir de … cœurs (0.1.19, sorti du code en 0.1.20).
+@export var pet_follow_hearts: int = 2

@@ -257,3 +257,12 @@ PET_MOOD_HAPPY,ravi,delighted
 PET_MOOD_CONTENT,content,content
 PET_MOOD_HUNGRY,a faim,hungry
 PET_MOOD_SLEEPY,dort,asleep
+PROMPT_POUR_HOLE,[Clic] Verser dans le trou : un marais salant,[Click] Pour into the hole: a salt pan
+MARSH_STATE,Marais salant · %.0f / %.0f L,Salt pan · %.0f / %.0f L
+MARSH_LEAKS,le sable boit l'eau,the sand drinks the water
+PROMPT_MARSH_NOT_EMPTY,Le marais n'est pas vide,The salt pan isn't empty
+PROMPT_POOL_TAKE,[E] Ramasser : %s,[E] Pick up: %s
+FIND_COQUILLAGE,coquillage,shell
+FIND_ETOILE_DE_MER,étoile de mer,starfish
+FIND_OURSIN,oursin,sea urchin
+FIND_BERNARD_ERMITE,bernard-l'ermite,hermit crab
