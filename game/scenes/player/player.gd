@@ -317,9 +317,25 @@ func _swim_vertical(delta: float, water_y: float, input: Vector2) -> void:
 	var target_vy := clampf((float_y - global_position.y) * 3.0, -2.0, 2.0)
 	if Input.is_action_pressed(&"jump") and not _drowning:
 		target_vy = maxf(target_vy, 1.5)
+	# 0.1.21 : avec le masque, Ctrl fait plonger (sans masque, on remonte toujours).
+	elif GameState.has_gear("masque") and InputMap.has_action(&"dive") and Input.is_action_pressed(&"dive") and not _drowning:
+		target_vy = -cfg.dive_speed
 	if is_on_wall() and input.y < 0.0:
 		target_vy = cfg.swim_climb_velocity
 	velocity.y = lerpf(velocity.y, target_vy, clampf(6.0 * delta, 0.0, 1.0))
+
+
+## 0.1.21 : s'endormir dans le hamac : fondu au noir, `on_dark` (la nuit passe), fondu retour.
+func sleep_fade(on_dark: Callable) -> void:
+	if _drowning:
+		return
+	_drowning = true  # plus de contrôle pendant le fondu
+	var tween := create_tween()
+	tween.tween_property(_fade, "color:a", 1.0, 1.0)
+	tween.tween_callback(on_dark)
+	tween.tween_interval(0.8)
+	tween.tween_property(_fade, "color:a", 0.0, 1.0)
+	tween.tween_callback(func(): _drowning = false)
 
 
 ## Noyade (N-04) : écran noir, retour sur la plage, rien n'est perdu.

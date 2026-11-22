@@ -70,6 +70,8 @@ func _ready() -> void:
 	_target = position
 	GameState.pet_changed.connect(_refresh_accessories)
 	GameState.pet_reacted.connect(react)
+	# 0.1.21 : s'il suit le joueur, il vient dormir au pied du hamac.
+	GameState.slept.connect(_on_slept)
 	_refresh_accessories()
 	apply_pose(CrabPose.pose(anim, 0.0))
 
@@ -348,6 +350,14 @@ func _choose_anim(delta: float) -> CrabPose.Anim:
 	position.y = _ground(position)
 	_face(to, delta, true)
 	return CrabPose.Anim.WALK
+
+
+func _on_slept(spot: Vector3) -> void:
+	if not spot.is_finite() or spot == GameState.FAR_AWAY or not GameState.pet_follows():
+		return
+	position = spot + Vector3(0.0, 0.0, 1.2)
+	position.y = _ground(position)
+	_target = position
 
 
 ## Où aller ensuite : près du joueur s'il l'aime bien (2 cœurs et plus) et que le joueur n'est

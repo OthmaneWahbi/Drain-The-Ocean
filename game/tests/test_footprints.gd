@@ -63,6 +63,10 @@ func _model(kind: String) -> Node3D:
 			root.add_child(Props.box(Vector3(0.43, 0.07, 0.31), Props.RED, Vector3(0, 0.035, 0)))
 		"coquillage":
 			root.add_child(Props.shell(0, 0.22))
+		"hamac":
+			root.add_child(IslandLife.hammock())
+		"vitrine":
+			root.add_child(IslandLife.shelf(5, 3))
 	return root
 
 

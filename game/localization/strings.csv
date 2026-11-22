@@ -266,3 +266,16 @@ FIND_COQUILLAGE,coquillage,shell
 FIND_ETOILE_DE_MER,étoile de mer,starfish
 FIND_OURSIN,oursin,sea urchin
 FIND_BERNARD_ERMITE,bernard-l'ermite,hermit crab
+ITEM_HAMMOCK,Hamac,Hammock
+ITEM_HAMMOCK_DESC,"Entre deux piquets. La nuit, on y dort jusqu'au matin.","Between two posts. At night, sleep there until morning."
+ITEM_HAMMOCK_PITCH,Les nuits passent plus vite.,Nights go by faster.
+ITEM_SHELF,Vitrine de collection,Collection shelf
+ITEM_SHELF_DESC,"Une case par trouvaille : coquillages, bord de mer, poissons.","One slot per find: shells, seashore, fish."
+ITEM_SHELF_PITCH,Tout ce que la mer vous a donné.,Everything the sea gave you.
+ITEM_MASK,Masque et tuba,Mask and snorkel
+ITEM_MASK_DESC,"Voir clair sous l'eau, nager plus longtemps, plonger (Ctrl).","See clearly underwater, swim longer, dive (Ctrl)."
+ITEM_MASK_PITCH,Le récif vous attend.,The reef is waiting.
+PROMPT_SLEEP,[E] Dormir jusqu'au matin,[E] Sleep until morning
+PROMPT_NOT_SLEEPY,Pas sommeil,Not sleepy
+PROMPT_SHELF,Collection : %d / %d,Collection: %d / %d
+PROMPT_REEF_SHELL,[E] Ramasser le coquillage,[E] Pick up the shell

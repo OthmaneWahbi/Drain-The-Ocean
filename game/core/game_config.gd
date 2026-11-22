@@ -190,6 +190,7 @@ extends Resource
 	"bateau_en_bouteille": [-0.5, -0.5, 0.5, 0.5], "palette": [-2.0, -1.0, 2.0, 1.0], "caisse": [-0.5, -0.5, 0.5, 0.5],
 	"catalogue_papier": [-0.5, -0.5, 0.5, 0.5], "toboggan": [-0.5, -0.5, 0.5, 2.5], "flamant": [-0.5, -0.5, 0.5, 0.5],
 	"coquillage": [-0.25, -0.25, 0.25, 0.25], "pompe_bras": [-0.5, -0.5, 0.5, 1.5], "moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
+	"hamac": [-1.5, -0.5, 1.5, 0.5], "vitrine": [-1.0, -0.5, 1.0, 0.5],
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -380,3 +381,21 @@ extends Resource
 @export var plane_roll_min_items: int = 100
 ## Pinçon suit le joueur à partir de … cœurs (0.1.19, sorti du code en 0.1.20).
 @export var pet_follow_hearts: int = 2
+
+# --- 0.1.21 : la nuit et la collection (PRD §19.28) ----------------------------------------
+## La forme d'un coquillage ramassé (poids) : chaque forme a sa case dans la vitrine.
+@export var shell_shapes: Dictionary = {"coq_petoncle": 40, "coq_bigorneau": 30, "coq_couteau": 17, "coq_conque": 10, "coq_nautile": 3}
+## Le hamac : on dort de 20 h à 6 h ; le réveil est à cette heure.
+@export var wake_hour: float = 6.0
+## Le masque : la nage coûte cette part de l'endurance habituelle ; vitesse de plongée (m/s).
+@export var mask_swim_cost: float = 0.6
+@export var dive_speed: float = 1.8
+## Le récif : un anneau autour de l'île, entre ces profondeurs (m sous le niveau de la mer).
+@export var reef_min_depth_m: float = 2.0
+@export var reef_max_depth_m: float = 5.0
+## Coquillages posés au fond du récif chaque matin.
+@export var reef_shells_per_morning: int = 3
+## Un poisson compte « vu » à moins de … m, sous l'eau, avec le masque.
+@export var fish_seen_m: float = 4.0
+## Une étoile filante toutes les … s environ, la nuit.
+@export var shooting_star_every_s: float = 40.0
