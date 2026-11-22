@@ -2,10 +2,14 @@ class_name UiTheme
 extends RefCounted
 ## La direction artistique de toute l'interface (version 0.1.2) : celle du catalogue de l'Agence.
 ## Un vieux catalogue de vente par correspondance : papier crème, encre violet-nuit, bandeaux
-## rouges, étiquettes de prix jaunes écrites au feutre. Trois polices libres (voir assets/CREDITS.md) :
-##  - Lilita One pour les titres (gros, ronds, cartoon) ;
-##  - Fredoka pour le texte ;
-##  - Permanent Marker pour les prix et les tampons, « écrits à la main ».
+## rouges, étiquettes de prix jaunes écrites au feutre.
+## Les polices (2026-11-21, PRD §19.23, voir assets/CREDITS.md), toutes rondes et chaleureuses :
+##  - DynaPuff pour les titres (lettres gonflées, cartoon) ;
+##  - Nunito pour le texte (arrondie et très lisible), en gras pour les boutons et le HUD ;
+##  - Gochi Hand pour les prix et les tampons, « écrits à la main ».
+## Chaque police est une ressource `assets/fonts/police_*.tres` (graisse choisie dans la police
+## variable, symboles ♪ ▮ ★ pris dans une petite police de secours). La police du texte est aussi
+## la police par défaut du projet : tout texte sans police choisie (Label3D, outils admin) la prend.
 ## Tous les écrans prennent leurs couleurs et leurs polices ici, jamais en dur ailleurs.
 
 const PAPER := Color(1.0, 0.953, 0.84)
@@ -21,6 +25,9 @@ const GREEN := Color(0.25, 0.64, 0.3)
 const WHITE := Color(1.0, 1.0, 1.0)
 
 const FONT_DIR := "res://assets/fonts/"
+## Gochi Hand dessine ses lettres plus petites que les autres polices : les textes « au feutre »
+## sont agrandis d'autant pour garder la même place à l'écran.
+const MARKER_SCALE := 1.3
 
 static var _theme: Theme
 static var _fonts: Dictionary = {}
@@ -28,27 +35,29 @@ static var _fonts: Dictionary = {}
 
 static func _font(file: String) -> Font:
 	if not _fonts.has(file):
-		var f: FontFile = load(FONT_DIR + file)
-		# Les polices n'ont que l'alphabet latin : les symboles (♪, ▮, ★…) viennent de la police de Godot.
-		f.fallbacks = [ThemeDB.fallback_font]
-		_fonts[file] = f
+		_fonts[file] = load(FONT_DIR + file) as Font
 	return _fonts[file]
 
 
 static func title_font() -> Font:
-	return _font("LilitaOne-Regular.ttf")
+	return _font("police_titre.tres")
 
 
 static func body_font() -> Font:
-	return _font("Fredoka-Medium.ttf")
+	return _font("police_texte.tres")
 
 
 static func bold_font() -> Font:
-	return _font("Fredoka-Bold.ttf")
+	return _font("police_gras.tres")
 
 
 static func marker_font() -> Font:
-	return _font("PermanentMarker-Regular.ttf")
+	return _font("police_feutre.tres")
+
+
+## La taille à donner à un texte « au feutre » pour qu'il ait l'air de faire `size`.
+static func marker_size(size: int) -> int:
+	return roundi(size * MARKER_SCALE)
 
 
 ## Un panneau « page de catalogue » : papier crème, bord d'encre épais, ombre décalée.
@@ -95,6 +104,7 @@ static func theme() -> Theme:
 	t.set_color("font_color", "Title", RED)
 	t.set_type_variation("Price", "Label")
 	t.set_font("font", "Price", marker_font())
+	t.set_font_size("font_size", "Price", marker_size(22))
 	t.set_color("font_color", "Price", RED_DARK)
 	t.set_type_variation("Fine", "Label")
 	t.set_color("font_color", "Fine", INK_SOFT)
@@ -183,7 +193,7 @@ static func price_tag(text: String, size := 22, tilt_deg := -4.0, max_width := 0
 	var label := Label.new()
 	label.theme_type_variation = "Price"
 	label.text = text
-	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_font_size_override("font_size", marker_size(size))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	if max_width > 0.0:
@@ -212,7 +222,7 @@ static func stamp(key: String, color: Color, size := 24, tilt_deg := -12.0) -> P
 	label.text = key
 	label.add_theme_font_override("font", marker_font())
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_font_size_override("font_size", marker_size(size))
 	p.add_child(label)
 	p.rotation_degrees = tilt_deg
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE

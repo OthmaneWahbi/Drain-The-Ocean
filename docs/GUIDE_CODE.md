@@ -301,7 +301,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **`scenes/world/phone.gd`** : la cabine. `interact()` choisit la conversation (`tutorial`, `offer`, `call` ou `no_catalogue`) et la lance dans la `DialogueBox` ; pour le premier appel, `GameState.answer_phone()` n'est appelé qu'à la fin (la caisse part après la musique d'attente). L'action `open_catalogue` ouvre le catalogue : c'est le seul chemin vers lui.
 - **`core/dialogue_logic.gd` (`DialogueLogic`)** + **`data/dialogues.json`** : une conversation = des répliques (interlocuteur, texte ou variantes, `next` ou `choices`, `action`). `advance()`, `choose(i)`, `errors()` (vérifie le fichier), `text_keys()` (vérifie les traductions).
 - **`scenes/ui/dialogue_box.gd` (`DialogueBox`)** : affiche la réplique lettre par lettre, puis les réponses ; E/Espace/clic avance, 1-4 répond, Échap raccroche ; signal `finished`.
-- **`scenes/ui/ui_theme.gd` (`UiTheme`)** : couleurs, polices (avec la police de Godot en secours pour ♪ ▮ ★), le `Theme` commun (variantes `Title`, `Price`, `Fine`, `Hud`, `Tag`) et des fabriques : `paper()`, `banner()`, `price_tag()`, `stamp()`. `MenuStyle` passe par lui.
+- **`scenes/ui/ui_theme.gd` (`UiTheme`)** : couleurs, polices (des ressources `assets/fonts/police_*.tres` : une `FontVariation` qui choisit la graisse de la police variable et prend les symboles ♪ ▮ ★ dans `Symboles-MPLUSRounded1c.ttf` ; `marker_size()` agrandit les textes au feutre), le `Theme` commun (variantes `Title`, `Price`, `Fine`, `Hud`, `Tag`) et des fabriques : `paper()`, `banner()`, `price_tag()`, `stamp()`. `MenuStyle` passe par lui.
 - **`scenes/ui/catalogue.gd`** : grille de vignettes (`ProductPhoto` = un `SubViewport` avec son propre monde 3D, le modèle de `ProductModels` sur un plateau tournant, rendu seulement quand il est visible) et bon de commande.
 - **`GameState.catalogue_delivered`** : mis à vrai par l'effet `CATALOGUE` du catalogue papier ; sauvegardé ; une vieille sauvegarde qui avait le catalogue au sol est migrée.
 
@@ -599,6 +599,9 @@ Sable mouillé en dégradé par sommet (`TerrainView.fill`), `SandPhysics.N16` e
 
 ### PR #40 — Version 0.1.17 : l'avion et les animations
 `FlightPath` (ligne droite, altitude et vitesse constantes, treuil, chute libre puis descente constante), `DeliveryPlane.fly(path)` / `fly_line`, moteur 3D (`SoundSynth` « engine »), `Props.crate` refaite par code, `Props.parachute` (confluence, « Canopy », « Slings »), `CrateView.drop_from_y` (pendule, ouverture, atterrissage), toboggan, moulin, levier, tas, mouettes, crabe, nuages, corps du joueur, avion du teaser, `test_flight.gd`, plan de captures `livraison`.
+
+### PR #39 — Nouvelles polices (2026-11-21)
+Quatre ressources `assets/fonts/police_titre.tres` (DynaPuff, graisse 700), `police_texte.tres` (Nunito 700), `police_gras.tres` (Nunito 900), `police_feutre.tres` (Gochi Hand) : chacune est une `FontVariation` (`variation_opentype` = axe `wght`) avec `Symboles-MPLUSRounded1c.ttf` en secours. `UiTheme.title_font()` / `body_font()` / `bold_font()` / `marker_font()` les chargent ; `UiTheme.MARKER_SCALE` et `marker_size()` agrandissent les textes au feutre. `project.godot` : `gui/theme/custom_font` = `police_texte.tres`, si bien que tout texte sans police choisie (Label3D, outils admin) prend Nunito. Changer une police = changer le `.ttf` d'un `.tres`. Plan de captures `polices` (HUD, palette, cabine, catalogue, dialogue, pause, menu).
 
 ### PR #41 — Version 0.1.18 : le geste de puiser
 `ScoopAnim` (pose, retour lourd, eau au contact, plouf), `player._animate_scoop` / `_place_bucket` / `_play_once`, tête qui se baisse et vue penchée, visée par la tête, `Props.splash`, son « splash », `test_scoop_anim.gd`, plan de captures `puiser`.

@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://dv3po5o5nlguh"
-path="res://.godot/imported/Fredoka-Bold.ttf-017e563dac8763748f52aa6bec51fda7.fontdata"
+uid="uid://cpfjasyewxuhs"
+path="res://.godot/imported/Nunito-Variable.ttf-6f6325d3224193810a20dd678ce56bea.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Fredoka-Bold.ttf"
-dest_files=["res://.godot/imported/Fredoka-Bold.ttf-017e563dac8763748f52aa6bec51fda7.fontdata"]
+source_file="res://assets/fonts/Nunito-Variable.ttf"
+dest_files=["res://.godot/imported/Nunito-Variable.ttf-6f6325d3224193810a20dd678ce56bea.fontdata"]
 
 [params]
 

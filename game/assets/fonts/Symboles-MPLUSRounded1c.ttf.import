@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://df4mnrwtkjmyu"
-path="res://.godot/imported/PermanentMarker-Regular.ttf-147798058b4bc9c35b652069b6af9cfc.fontdata"
+uid="uid://fll08jhkwtfx"
+path="res://.godot/imported/Symboles-MPLUSRounded1c.ttf-d690b91360b5989f300c39e5e7f22798.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/PermanentMarker-Regular.ttf"
-dest_files=["res://.godot/imported/PermanentMarker-Regular.ttf-147798058b4bc9c35b652069b6af9cfc.fontdata"]
+source_file="res://assets/fonts/Symboles-MPLUSRounded1c.ttf"
+dest_files=["res://.godot/imported/Symboles-MPLUSRounded1c.ttf-d690b91360b5989f300c39e5e7f22798.fontdata"]
 
 [params]
 
