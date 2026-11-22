@@ -1182,6 +1182,51 @@ static func rations() -> Node3D:
 	return root
 
 
+## Le « plouf » du seau qui entre dans la mer (0.1.18) : un anneau d'écume qui s'élargit en
+## s'effaçant, et des gouttes lancées en gerbe qui retombent. Purement visuel : tout se détruit
+## seul. `at` est un point de la surface de l'eau ; `strength` grossit la gerbe (grand seau).
+static func splash(parent: Node, at: Vector3, strength := 1.0) -> void:
+	if parent == null or not parent.is_inside_tree():
+		return
+	# L'anneau : un tore plat, blanc-bleu, dont la matière est propre à lui (on fait varier l'alpha).
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.16
+	torus.outer_radius = 0.22
+	torus.rings = 20
+	torus.ring_segments = 6
+	ring.mesh = torus
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.88, 0.96, 1.0, 0.85)
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = m
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(ring)
+	ring.global_position = at + Vector3(0, 0.02, 0)
+	ring.scale = Vector3(1, 0.25, 1)
+	var t := ring.create_tween().set_parallel(true)
+	var grow := 2.6 * strength
+	t.tween_property(ring, "scale", Vector3(grow, 0.15, grow), 0.7).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.tween_property(m, "albedo_color:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	t.chain().tween_callback(ring.queue_free)
+	# La gerbe : des gouttes lancées vers le haut en éventail, qui retombent dans la mer.
+	var n := int(round(12 * strength))
+	for i in n:
+		var drop := droplet(randf_range(0.012, 0.022))
+		parent.add_child(drop)
+		drop.global_position = at
+		var ang := TAU * (i + randf_range(-0.3, 0.3)) / n
+		var out := Vector3(cos(ang), 0, sin(ang)) * randf_range(0.18, 0.4) * strength
+		var up := randf_range(0.18, 0.42) * strength
+		var dur := randf_range(0.35, 0.55)
+		var dt := drop.create_tween()
+		# Montée puis chute : une parabole en deux demi-temps.
+		dt.tween_property(drop, "global_position", at + out * 0.5 + Vector3(0, up, 0), dur * 0.45).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		dt.tween_property(drop, "global_position", at + out + Vector3(0, -0.05, 0), dur * 0.55).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		dt.tween_callback(drop.queue_free)
+
+
 ## Une goutte d'eau (le condenseur, les gouttes qui tombent du seau).
 static func droplet(size: float) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()

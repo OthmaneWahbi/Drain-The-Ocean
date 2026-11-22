@@ -5,8 +5,8 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.48 (0.1.17 : l'avion et les animations) |
-| Date | 2026-11-21 |
+| Version du document | 0.49 (0.1.18 : le geste de puiser) |
+| Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
 
@@ -950,6 +950,19 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **La chute** : la caisse quitte l'avion, tombe en chute libre **0,4 s** (voile pliée), la voile s'ouvre d'un coup avec un petit rebond, puis la caisse descend à **4,5 m/s** constants en se balançant doucement sous la voile ; elle se redresse juste avant le sol, se tasse un peu en touchant le sable, et la voile bascule sur le côté, s'aplatit et se replie au lieu de disparaître d'un coup.
 - **[PROPOSÉ]** **La caisse** : une vraie caisse de largage fermée (plus le modèle du Pirate Kit, ouvert en haut, avec un couvercle qui flottait) : planches en rangées avec un jour sombre entre elles, cadre plus foncé sur chaque arête, écharpe en diagonale sur deux côtés, coins de fer, deux sangles kaki avec leurs boucles, quatre anneaux sur le dessus où s'accrochent les élingues, fond en planches (vu d'en dessous pendant la chute), tampon « AGENCE » et « Fragile · Ne pas noyer » peints à plat sur les deux autres côtés.
 - **[PROPOSÉ]** **Les autres animations corrigées** : les sacs du toboggan ne s'empilent plus en haut en attendant leur tour, ils glissent sur la goulotte, penchés comme elle, puis sautent du bout et roulent ; les pales du moulin accélèrent et ralentissent en douceur (avant, leur vitesse sautait d'une image à l'autre) ; le levier de la pompe à bras retombe au repos quand on lâche (avant, il restait figé en l'air) ; les tas de sel grossissent en douceur ; les mouettes planent la plupart du temps, battent des ailes par séries et penchent dans leurs virages ; le crabe suit le sable (il flottait à 50 cm ou s'enfonçait) et tourne en douceur ; les nuages rétrécissent avant de passer de l'autre côté au lieu de disparaître d'un coup ; le personnage en 3e personne pédale à la vitesse où il avance (les pieds ne glissent plus avec les tongs) ; le gros avion du teaser de fin de démo volait à l'envers (sa dérive était sur le nez) ; lui et l'avion publicitaire de la fin volent maintenant en palier.
+
+### 19.23 Version 0.1.18 : le geste de puiser
+
+Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : « je veux une animation pour prendre l'eau avec le ou les seaux ». Avant, maintenir le clic dans la mer faisait seulement monter l'eau dans le seau tenu devant soi, sans aucun geste.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : les principes d'animation des jeux (anticipation, action, suite : un petit mouvement contraire avant le geste, le geste, puis l'objet lourd qui se cale), le « juice » (un geste se lit mieux avec un effet et un son au moment de l'impact), et les jeux de ferme et de survie où l'on remplit un arrosoir ou un récipient (le récipient plonge, un plouf, il ressort plein).
+- **[PROPOSÉ]** **Le geste**, sur la seconde que dure le remplissage (il suit la durée réglée) : le seau se soulève un peu et bascule vers soi ; il plonge dans la mer à 1 m devant les pieds, l'ouverture vers l'avant (80°) ; sous l'eau, il est ramené vers soi en se redressant (on racle l'eau) ; il ressort plein, encore bas ; puis il remonte jusqu'à la main en 0,45 s, lourd : il s'affaisse un peu et oscille avant de se caler.
+- **[PROPOSÉ]** **L'eau n'entre qu'une fois le seau dans la mer** (avant, l'eau montait dès le début du clic, seau en l'air).
+- **[PROPOSÉ]** **On se baisse** : la tête descend de 32 cm et la vue se penche de 18° vers la mer pendant le geste, pour voir le seau entrer dans l'eau. Ce que l'on vise ne change pas (la visée suit la tête, pas la vue penchée). En 3e personne, le personnage se penche (animation « pick-up ») et le seau plonge un peu plus loin sur le côté pour qu'on le voie.
+- **[PROPOSÉ]** **Le plouf** : quand le seau touche l'eau, un anneau d'écume s'élargit en s'effaçant, une gerbe de gouttes jaillit et retombe, et un son « plouf » (nouveau) se joue ; en ressortant, le seau ruisselle (quelques gouttes). Le son de remplissage existant se joue toujours quand le seau est plein. Plus grande gerbe avec le grand seau.
+- **[PROPOSÉ]** **Avec la palanche**, les deux seaux plongent ensemble, chacun de son côté, chacun avec son plouf.
+- **[PROPOSÉ]** Si l'on lâche le clic avant la fin, le seau revient en douceur à la main (rien n'est puisé, comme avant).
 
 ## 20. Glossaire
 

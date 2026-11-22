@@ -7,7 +7,7 @@ extends RefCounted
 ## `samples(name)` rend les échantillons (-1..1) ; `stream(name)` les emballe dans un AudioStreamWAV.
 
 const RATE := 22050
-const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves"]
+const NAMES := ["splash", "fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves"]
 ## Les sons qui tournent en boucle.
 const LOOPS := ["waves", "gurgle", "engine"]
 
@@ -16,6 +16,12 @@ static func samples(name: String) -> PackedFloat32Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(name)
 	match name:
+		"splash":  # le seau touche la mer (0.1.18) : un « plouf » grave sous un éclat de bruit
+			var burst := _noise_burst(rng, 0.3, 3200.0, 12.0, 0.45)
+			var bloop := _sweep(0.3, 320.0, 110.0, 11.0, 0.5)
+			for i in burst.size():
+				burst[i] += bloop[i]
+			return burst
 		"fill":  # on plonge le seau : un « splotch » de bruit qui s'éteint
 			return _noise_burst(rng, 0.35, 1800.0, 6.0, 0.7)
 		"pour":  # l'eau qui coule : bruit doux, plus long

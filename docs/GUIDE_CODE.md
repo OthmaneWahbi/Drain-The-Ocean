@@ -95,6 +95,7 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - `core/bucket_logic.gd` : contenance, eau, et `hold_fill(delta)` qui accumule le temps de clic et renvoie vrai quand le remplissage (1 s) est fini.
 - `GameState.fill_bucket()` : retire les litres de l'océan (`ocean.remove_water`), remplit le seau, et tire au sort coquillage et perle avec `rng`.
 - `GameState.pour_bucket_out()` : l'eau retourne à l'océan (`ocean.return_water`).
+- Le geste de puiser (0.1.18) : voir « Le geste de puiser » plus bas.
 
 ### Le séchage
 
@@ -413,6 +414,14 @@ core/*_logic.gd ◄──── GameState (autoload) ────► signaux ─
 - **La pelle (`ShovelTool`)** : vise le sommet le plus proche (`TerrainLogic.nearest_vertex`) et la case ; la marque est un `Decal` projeté sur le sable (un anneau pour la pelletée et le lissage, un carreau pour niveler), textures faites par `_mark_texture`. Clic maintenu : une pelletée toutes les `dig_repeat_s`, une passe de lissage toutes les `smooth_repeat_s`. `load_text` écrit la charge (« 1,5 »).
 - **Le dessin (`TerrainView`)** : `anim_rect(vertices)` encadre tous les sommets qui bougent, `anim_delays` retarde chaque sommet selon sa distance au point visé (le sable qui s'éboule glisse après la pelletée), `anim_heights(before, after, delays, t, duration)`. Normales lissées partout. La couleur du sable sec suit la pente de chaque sommet (`TerrainLogic.dry_sand_color`, `ground_kind`), l'alpha « travaillé » (traces de pelle) ne vaut 1 que sur une case nivelée (`cell_level` non NAN). `SandFx.slide_spot` trouve où le sable glisse le plus pour y faire un peu de poussière.
 
+### Le geste de puiser (0.1.18)
+
+- **La courbe** (`core/scoop_anim.gd`, `ScoopAnim`, logique pure testée) : `pose(p)` prend l'avancement du remplissage (`BucketLogic.fill_progress_ratio`, 0..1) et rend un dictionnaire `dip` (0 = en main, 1 = dans la mer), `tilt` (bascule en degrés), `lift` (soulèvement en main), `pull` (0 = loin, 1 = ramené vers soi), `sink` (profondeur). `release(t)` donne la même forme pour le retour à la main après le remplissage. `water_in(p)` dit quelle part de l'eau montrer (rien avant le contact). `hits_water(avant, après)` détecte le franchissement de `SPLASH_AT`. Le geste suit donc toujours `bucket_fill_time_s`.
+- **La vue** (`player.gd`) : `_animate_scoop` est appelée par `_update_bucket_water` à chaque image. Elle choisit la pose visée (pendant le clic, pendant le retour `_release_t`, ou le repos), l'amortit (`lerpf`, ce qui rend le retour doux si on lâche trop tôt), puis `_place_bucket` place chaque seau : sa position est un mélange entre `BUCKET_REST` (dans la tête) et un point de la mer devant les pieds converti dans le repère de la tête (`head.to_local`) ; sa rotation passe d'une bascule par rapport à la tête (en main) à une bascule par rapport au monde (dans la mer, `slerp` de quaternions). `_handle_tool` lance `_release_t = 0` quand `hold_fill` finit.
+- **Se baisser** : `_update_head_bob` retire `CROUCH_M × dip` à la hauteur de la tête ; `fp_camera.rotation.x` penche la vue. `_find_target` vise avec `head.global_basis` à la 1re personne, pour que la vue penchée ne change pas la cible. En 3e personne, `_play_once("pick-up")` joue l'animation une fois (sans boucle) et la laisse sur sa dernière pose tant que le seau est dans l'eau.
+- **Les effets** : `Props.splash(parent, point, force)` crée un anneau (`TorusMesh`, matière à lui dont l'alpha baisse) et des gouttes (`Props.droplet`) lancées en parabole par deux `Tween`. Le son « splash » (`SoundSynth`, bruit filtré + note qui descend) est joué par `SoundBoard`, qui regarde l'avancement du remplissage comme il regarde déjà l'eau du seau (GameState ne sait rien des sons).
+- **Captures** : plan `puiser` (`tests/scenarios/shots_puiser.gd`) : il maintient `use_tool` avec `Input.action_press` et enregistre une image à des instants choisis.
+
 ### L'avion et les animations (0.1.17)
 
 - **Le bug de l'avion** : `delivery_plane.gd::fly` enchaînait trois `Tween` de position de durées fixes (60 % puis 40 % du temps avant largage, puis 3 s) sur des distances très différentes (≈ 125 m, ≈ 15 m, ≈ 200 m en montant de 22 m) : l'avion arrivait à 55 m/s, freinait à 10 m/s en remontant au-dessus de la palette, puis repartait à 65 m/s en grimpant. Mesuré par le plan de captures `livraison`.
@@ -590,3 +599,6 @@ Sable mouillé en dégradé par sommet (`TerrainView.fill`), `SandPhysics.N16` e
 
 ### PR #40 — Version 0.1.17 : l'avion et les animations
 `FlightPath` (ligne droite, altitude et vitesse constantes, treuil, chute libre puis descente constante), `DeliveryPlane.fly(path)` / `fly_line`, moteur 3D (`SoundSynth` « engine »), `Props.crate` refaite par code, `Props.parachute` (confluence, « Canopy », « Slings »), `CrateView.drop_from_y` (pendule, ouverture, atterrissage), toboggan, moulin, levier, tas, mouettes, crabe, nuages, corps du joueur, avion du teaser, `test_flight.gd`, plan de captures `livraison`.
+
+### PR #41 — Version 0.1.18 : le geste de puiser
+`ScoopAnim` (pose, retour lourd, eau au contact, plouf), `player._animate_scoop` / `_place_bucket` / `_play_once`, tête qui se baisse et vue penchée, visée par la tête, `Props.splash`, son « splash », `test_scoop_anim.gd`, plan de captures `puiser`.

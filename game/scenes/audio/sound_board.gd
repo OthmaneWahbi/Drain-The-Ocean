@@ -13,6 +13,7 @@ var _waves: AudioStreamPlayer
 var _gurgle: AudioStreamPlayer
 var _ring: AudioStreamPlayer
 var _last_bucket_l := 0.0
+var _last_scoop := 0.0
 
 
 func _ready() -> void:
@@ -59,6 +60,11 @@ func _process(_delta: float) -> void:
 	elif water < _last_bucket_l - 0.01:
 		play("pour", -4.0)
 	_last_bucket_l = water
+	# Le seau touche la mer pendant le geste de puiser (0.1.18, ScoopAnim).
+	var scoop := GameState.bucket.fill_progress_ratio()
+	if ScoopAnim.hits_water(_last_scoop, scoop):
+		play("splash", -3.0)
+	_last_scoop = scoop
 	# Le téléphone sonne tant qu'on ne décroche pas.
 	# Pendant la conversation du premier appel, on a décroché : plus de sonnerie.
 	var booth := get_tree().get_first_node_in_group(&"phone_booth")
