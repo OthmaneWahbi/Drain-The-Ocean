@@ -134,6 +134,31 @@ extends Resource
 @export var beach_radius_min: float = 21.0
 @export var beach_radius_max: float = 23.7
 
+@export_group("Crabe de compagnie")
+## 0.1.19 (PRD §19.25) : secondes pour que le crabe passe de repu à affamé (1,5 journée).
+@export var pet_hunger_empty_s: float = 1800.0
+## Ce qu'une croquette remplit ; au-dessus de `pet_full_ratio` il n'a plus faim.
+@export var pet_treat_food: float = 0.4
+@export var pet_full_ratio: float = 0.85
+## Sous ce niveau il a faim (il boude, son humeur et son invite le disent).
+@export var pet_hungry_ratio: float = 0.35
+## Affection : maximum, gain par croquette, gain par caresse (une par jour), perte par seconde
+## le ventre vide, seuil pour qu'il rapporte un coquillage chaque matin, cœurs affichés.
+@export var pet_affection_max: float = 100.0
+@export var pet_affection_per_feed: float = 8.0
+@export var pet_affection_per_pet: float = 5.0
+@export var pet_affection_decay_per_s: float = 0.005
+@export var pet_gift_affection: float = 40.0
+@export var pet_hearts: int = 5
+## Croquettes offertes au début de la partie (pour faire connaissance avant le premier achat).
+@export var pet_starting_treats: int = 3
+## Où il se promène (anneau autour du centre de l'île), sa vitesse, à quelle distance il vient
+## saluer le joueur.
+@export var pet_wander_min_r: float = 18.5
+@export var pet_wander_max_r: float = 23.5
+@export var pet_speed: float = 0.8
+@export var pet_greet_distance_m: float = 4.0
+
 @export_group("Placement")
 ## Taille d'une case de la grille de placement, en mètres.
 @export var grid_cell_m: float = 1.0

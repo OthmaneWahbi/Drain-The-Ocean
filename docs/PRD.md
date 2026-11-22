@@ -5,8 +5,8 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.49 (nouvelles polices, choisies par Othmane) |
-| Date | 2026-11-21 |
+| Version du document | 0.50 (0.1.19 : Pinçon, le crabe de compagnie) |
+| Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
 
@@ -299,6 +299,8 @@ C'est le plus gros trou logique du concept. Si on évapore l'eau, elle devrait r
 ### 8.7 La vie marine
 
 **[QUESTION Q-10]** Que deviennent les poissons ? Vider un océan, c'est aussi tuer ce qu'il y a dedans, et le ton doit rester léger. Proposition : les poissons **reculent** toujours vers le centre (on les voit de plus en plus serrés, comique), et à la fin ils partent **par le drain** dans le tourbillon, en faisant coucou. Aucun poisson mort à l'écran.
+
+**[PROPOSÉ]** (0.1.19) Le crabe de la plage est un animal de compagnie, Pinçon : voir [19.25](#1925-version-0119--pinçon-le-crabe-de-compagnie).
 
 ---
 
@@ -960,6 +962,21 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[DÉCIDÉ]** (Othmane, 2026-11-21, parmi les 3 finalistes) **Le choix** : **DynaPuff** (titres, lettres gonflées cartoon), **Nunito** (texte, arrondie et très lisible ; extra-grasse pour les boutons et le HUD), **Gochi Hand** (prix et tampons, écrits au feutre, plus lisible que Permanent Marker). Les autres finalistes : Bagel Fat One + Nunito + Gochi Hand ; Shrikhand (rétro « tiki ») + Nunito + Caveat Brush.
 - **[PROPOSÉ]** **Tout le jeu** : la police du texte devient la police par défaut du projet, donc aussi les textes 3D (compteurs de la palette, débit des pompes, textes de fin) qui prenaient la police de Godot. Les symboles (♪, ▮, ★, ✓, →) viennent d'un petit morceau de M PLUS Rounded 1c, arrondi comme le reste.
 - **[PROPOSÉ]** Les textes « au feutre » sont agrandis de 30 % (Gochi Hand dessine plus petit) pour garder la même place.
+
+### 19.25 Version 0.1.19 : Pinçon, le crabe de compagnie
+
+Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : le crabe devient un **animal de compagnie** (« il est mignon ») : lui ajouter une **animation et des articulations**, un **système pour le nourrir**, des **animations mignonnes**, et **quelques objets à acheter pour lui** au catalogue. Chercher des références avant.
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : les animaux de *Stardew Valley* (une caresse par jour fait monter l'amitié, l'animal ne meurt jamais et ne punit pas, et à haute amitié il rapporte des cadeaux) ; *Neko Atsume* (des objets achetés qui rendent l'animal heureux) ; le *Tamagotchi* comme contre-exemple (trop punitif pour un jeu calme) ; les crabes animés « avec des maths » sous Godot (marche en deux groupes de pattes qui alternent, corps qui rebondit) ; les principes d'animation (anticipation, écrasement-étirement, mouvements secondaires des yeux).
+- **[PROPOSÉ]** **Son nom** : **Pinçon** (« Pinchy » en anglais).
+- **[PROPOSÉ]** **Le modèle** : fait en facettes dans le style du jeu, à la place du crabe téléchargé : carapace bombée à taches, ventre clair, **8 pattes à deux segments** (hanche et genou), **2 pinces** (épaule, bras, doigt mobile qui s'ouvre), **2 gros yeux au bout de tiges** (pupille qui regarde, reflet, paupière du haut et du bas), bouche, joues roses.
+- **[PROPOSÉ]** **Ses animations** : repos (il respire, regarde autour, cligne, claque une pince de temps en temps), marche de côté (deux groupes de pattes qui alternent), **salut** (il agite une pince quand on s'approche à moins de 4 m), **content** (il sautille, pinces en l'air qui applaudissent, yeux plissés, cœurs qui montent), **mange** (les pinces portent la croquette à la bouche, il mâche), **refuse** (repu : il secoue le corps, pinces croisées), **boude** (affamé : yeux tombants, pinces basses), **dort** la nuit (yeux rentrés, « z Z z »).
+- **[PROPOSÉ]** **Le nourrir** : E sur Pinçon donne une **croquette** s'il a faim (sous 85 %) et qu'il en reste, sinon c'est une **caresse**. Il passe de repu à affamé en **1,5 journée** (30 min) ; une croquette le remplit de 40 %. On commence avec **3 croquettes offertes**. Repu, il refuse et la croquette reste dans le sachet.
+- **[PROPOSÉ]** **L'affection** : de 0 à 100, affichée en **5 cœurs** dans le texte d'aide (avec son humeur : ravi, content, a faim, dort). +8 par croquette, +5 pour la **première caresse du jour**. Le ventre vide, il perd un peu d'affection (0,005 par seconde, jamais en dessous de 0) ; il ne meurt jamais et ne part jamais.
+- **[PROPOSÉ]** **Ce qu'il donne** : à **2 cœurs** et plus, il suit le joueur quand il est à moins de 12 m ; dès **40 d'affection** (et s'il n'a pas faim), il **rapporte un coquillage chaque matin**, posé près de lui.
+- **[PROPOSÉ]** **Au catalogue (palier 1)** : **Croquettes pour crabe** (sachet de 6, 6 sel, se rachète), **Chapeau de paille** (35 sel + 3 coquillages, unique), **Lunettes de soleil en cœur** (50 sel + 4 minéraux, uniques). Les accessoires arrivent dans la caisse commune et Pinçon les porte tout de suite.
+- **[PROPOSÉ]** **Où il vit** : au bord de la plage (anneau de 18,5 à 23,5 m), jamais dans la mer. La faim, l'affection, les croquettes et les accessoires sont sauvegardés ; une vieille sauvegarde reçoit un Pinçon neuf.
 
 ## 20. Glossaire
 
