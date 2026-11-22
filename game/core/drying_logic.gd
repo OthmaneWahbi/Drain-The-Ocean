@@ -12,6 +12,10 @@ var dry_time_s: float
 var liters_per_salt: float = 10.0
 var mineral_chance: float = 0.10
 var rare_mineral_chance: float = 0.005
+## 0.1.22 : chance, par sel produit, d'une fleur de sel en plus (réglée par GameState selon le
+## temps qu'il fait), et part des sels qui sortent roses (marais au fond de terre).
+var flower_chance: float = 0.0
+var rose_chance: float = 0.0
 var water_l: float = 0.0
 var deposit: Dictionary = {}  # ressource (String) -> quantité (int), en attente de récolte
 var _evaporated_acc: float = 0.0
@@ -50,7 +54,9 @@ func step(delta: float, multiplier: float, rng: RandomNumberGenerator) -> void:
 	_evaporated_acc += evaporated
 	while _evaporated_acc >= liters_per_salt - 0.0001:
 		_evaporated_acc -= liters_per_salt
-		_add(&"sel", 1)
+		_add(&"sel_rose" if rose_chance > 0.0 and rng.randf() < rose_chance else &"sel", 1)
+		if flower_chance > 0.0 and rng.randf() < flower_chance:
+			_add(&"fleur_de_sel", 1)
 		if rng.randf() < mineral_chance:
 			_add(&"mineraux", 1)
 		if rng.randf() < rare_mineral_chance:

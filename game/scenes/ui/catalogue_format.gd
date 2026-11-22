@@ -8,7 +8,8 @@ static func format_items(items: Dictionary, show_zero := false) -> String:
 	var parts := []
 	for r in Economy.RESOURCES:
 		var n := int(items.get(r, 0))
-		if n > 0 or show_zero:
+		# 0.1.22 (Q-29) : la fleur de sel et le sel rose ne s'affichent pas tant qu'on n'en a pas.
+		if n > 0 or (show_zero and not Economy.FOUND_ONLY.has(r)):
 			parts.append("%d %s" % [n, TranslationServer.translate("RES_" + r.to_upper())])
 	return ", ".join(parts) if not parts.is_empty() else "—"
 

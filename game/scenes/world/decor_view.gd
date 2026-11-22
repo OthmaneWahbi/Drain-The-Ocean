@@ -19,6 +19,8 @@ func setup(p_decor: Dictionary) -> void:
 			var bird := ProductModels.build("flamant")
 			bird.scale = Vector3.ONE * 0.8
 			add_child(bird)
+		"parasol", "flamant_sel", "saliere", "bouee_canard", "nain_coquillages":
+			add_child(model(decor.kind))
 		"hamac":
 			add_child(IslandLife.hammock())
 		"vitrine":
@@ -32,8 +34,30 @@ func setup(p_decor: Dictionary) -> void:
 			add_child(Greybox.box_collision(Vector3(2.0, 0.6, 0.8), Vector3(0, 0.6, 0)))
 		"vitrine":
 			add_child(Greybox.box_collision(Vector3(1.9, 1.4, 0.5), Vector3(0, 0.7, 0)))
+		"parasol":
+			add_child(Greybox.cylinder_collision(0.15, 2.1, Vector3(0, 1.05, 0)))
+		"flamant_sel", "saliere", "nain_coquillages":
+			add_child(Greybox.box_collision(Vector3(0.6, 1.0, 0.6), Vector3(0, 0.5, 0)))
+		"bouee_canard":
+			add_child(Greybox.box_collision(Vector3(0.8, 0.3, 0.8), Vector3(0, 0.15, 0)))
 		_:
 			add_child(Greybox.box_collision(Vector3(0.6, 0.3, 0.3), Vector3(0, 0.12, 0)))
+
+
+## 0.1.22 : les décors « chic » et les surprises de l'agence (SaltGoods).
+static func model(kind: String) -> Node3D:
+	match kind:
+		"parasol":
+			return SaltGoods.parasol()
+		"flamant_sel":
+			return SaltGoods.salt_flamingo()
+		"saliere":
+			return SaltGoods.salt_shaker()
+		"bouee_canard":
+			return SaltGoods.duck_buoy()
+		"nain_coquillages":
+			return SaltGoods.shell_gnome()
+	return Node3D.new()
 
 
 func get_prompt(_player: Node) -> String:

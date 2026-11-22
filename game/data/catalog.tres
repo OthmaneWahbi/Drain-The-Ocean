@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="CatalogDatabase" load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://core/catalog_database.gd" id="1"]
 [ext_resource type="Script" path="res://core/catalog_item.gd" id="2"]
@@ -265,6 +265,117 @@ effect = 16
 effect_param = "masque"
 unique = true
 
+[sub_resource type="Resource" id="lousse"]
+script = ExtResource("2")
+id = &"lousse"
+name_key = "ITEM_LOUSSE"
+desc_key = "ITEM_LOUSSE_DESC"
+tier = 1
+price = {"mineraux": 3, "sel": 30}
+effect = 16
+effect_param = "lousse"
+unique = true
+
+[sub_resource type="Resource" id="parasol"]
+script = ExtResource("2")
+id = &"parasol"
+name_key = "ITEM_PARASOL"
+desc_key = "ITEM_PARASOL_DESC"
+tier = 1
+price = {"fleur_de_sel": 8, "sel": 40}
+effect = 2
+effect_param = "parasol"
+unique = true
+
+[sub_resource type="Resource" id="salt_flamingo"]
+script = ExtResource("2")
+id = &"flamant_sel"
+name_key = "ITEM_SALT_FLAMINGO"
+desc_key = "ITEM_SALT_FLAMINGO_DESC"
+tier = 1
+price = {"sel_rose": 20}
+effect = 2
+effect_param = "flamant_sel"
+unique = true
+
+[sub_resource type="Resource" id="salt_shaker"]
+script = ExtResource("2")
+id = &"saliere"
+name_key = "ITEM_SALT_SHAKER"
+desc_key = "ITEM_SALT_SHAKER_DESC"
+tier = 1
+price = {"fleur_de_sel": 10, "sel_rose": 10}
+effect = 2
+effect_param = "saliere"
+unique = true
+
+[sub_resource type="Resource" id="surprise_rares"]
+script = ExtResource("2")
+id = &"surprise_rares"
+name_key = "ITEM_SURPRISE_RARES"
+desc_key = "ITEM_SURPRISE_RARES_DESC"
+tier = 1
+price = {}
+effect = 17
+effect_param = "mineraux_rares=3,perles=1"
+hidden = true
+
+[sub_resource type="Resource" id="surprise_lot"]
+script = ExtResource("2")
+id = &"surprise_lot"
+name_key = "ITEM_SURPRISE_LOT"
+desc_key = "ITEM_SURPRISE_LOT_DESC"
+tier = 1
+price = {}
+effect = 17
+effect_param = "mineraux_rares=4,perles=2"
+hidden = true
+
+[sub_resource type="Resource" id="surprise_perle"]
+script = ExtResource("2")
+id = &"surprise_perle"
+name_key = "ITEM_SURPRISE_PEARL"
+desc_key = "ITEM_SURPRISE_PEARL_DESC"
+tier = 1
+price = {}
+effect = 17
+effect_param = "perles=2"
+hidden = true
+
+[sub_resource type="Resource" id="surprise_croquettes"]
+script = ExtResource("2")
+id = &"surprise_croquettes"
+name_key = "ITEM_CRAB_TREATS"
+desc_key = "ITEM_CRAB_TREATS_DESC"
+tier = 1
+price = {}
+effect = 15
+effect_param = "croquettes"
+effect_value = 10.0
+hidden = true
+
+[sub_resource type="Resource" id="surprise_bouee"]
+script = ExtResource("2")
+id = &"surprise_bouee"
+name_key = "ITEM_DUCK_BUOY"
+desc_key = "ITEM_DUCK_BUOY_DESC"
+tier = 1
+price = {}
+effect = 2
+effect_param = "bouee_canard"
+hidden = true
+
+[sub_resource type="Resource" id="surprise_nain"]
+script = ExtResource("2")
+id = &"surprise_nain"
+name_key = "ITEM_SHELL_GNOME"
+desc_key = "ITEM_SHELL_GNOME_DESC"
+tier = 1
+price = {}
+effect = 2
+effect_param = "nain_coquillages"
+hidden = true
+
 [resource]
 script = ExtResource("1")
-items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("hammock"), SubResource("shelf"), SubResource("mask"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("paper_catalogue")])
+items = Array[ExtResource("2")]([SubResource("tarp"), SubResource("big_bucket"), SubResource("wheelbarrow"), SubResource("tongs"), SubResource("shovel"), SubResource("rake"), SubResource("yoke"), SubResource("condenser"), SubResource("rations"), SubResource("crab_treats"), SubResource("crab_hat"), SubResource("crab_glasses"), SubResource("hammock"), SubResource("shelf"), SubResource("mask"), SubResource("lousse"), SubResource("parasol"), SubResource("salt_flamingo"), SubResource("salt_shaker"), SubResource("boat"), SubResource("manual"), SubResource("wood_basin"), SubResource("mirror"), SubResource("hand_pump"), SubResource("pipe"), SubResource("windmill_pump"), SubResource("bag_slide"), SubResource("flamingo"), SubResource("surprise_rares"), SubResource("surprise_lot"), SubResource("surprise_perle"), SubResource("surprise_croquettes"), SubResource("surprise_bouee"), SubResource("surprise_nain"), SubResource("paper_catalogue")])

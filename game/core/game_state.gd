@@ -78,6 +78,12 @@ signal gear_changed
 signal slept(spot: Vector3)
 ## 0.1.21 : les coquillages du récif ont changé.
 signal reef_changed
+## 0.1.22 : le temps de la journée a changé (chaque matin).
+signal weather_changed
+## 0.1.22 : une ressource « trouvée seulement » (fleur de sel, sel rose) vient d'être trouvée.
+signal resources_discovered
+## 0.1.22 : la commande de l'agence a changé (nouvelle, ou envoyée).
+signal agency_order_changed
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -142,6 +148,14 @@ var gear: Dictionary = {}
 var reef_shells: Array[Vector3] = []
 ## 0.1.21 : la liste de la vitrine (data/collection.json).
 var collection_rows: Array = []
+## 0.1.22 : le temps de la journée (une clé de config.weather_table).
+var weather: String = WeatherLogic.DEFAULT
+## 0.1.22 : les ressources « trouvées seulement » déjà trouvées : id -> vrai.
+var discovered: Dictionary = {}
+## 0.1.22 : les commandes possibles de l'agence (data/orders.json), et celle du moment :
+## {id, sent: bool}. Vide s'il n'y en a pas.
+var agency_orders: Array = []
+var agency_order: Dictionary = {}
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -216,6 +230,7 @@ func setup(config_override: GameConfig = null) -> void:
 	terrain.inland_above_y = config.sea_level_y + config.land_mask_above_sea_m
 	dialogues = DialogueLogic.load_file()
 	collection_rows = load_collection_rows()
+	agency_orders = load_agency_orders()
 	rng.randomize()
 	if not terrain_changed.is_connected(_on_terrain_changed_marshes):
 		terrain_changed.connect(_on_terrain_changed_marshes)
@@ -227,6 +242,7 @@ func new_game() -> void:
 	add_zone("cuvette", find_free_spot("cuvette", config.basin_position))
 	_morning_refill()
 	_refill_reef()
+	_new_agency_order()
 	_emit_all()
 
 
@@ -261,6 +277,9 @@ func _reset_state() -> void:
 	tide_pools = _make_tide_pools()
 	gear = {}
 	reef_shells = []
+	weather = WeatherLogic.DEFAULT
+	discovered = {}
+	agency_order = {}
 	pickups = []
 	stations = []
 	mirrors = []
@@ -306,19 +325,25 @@ func simulate(delta: float) -> void:
 	if day.step(delta):
 		_morning_refill()
 		_refill_reef()
+		_new_weather()
+		if agency_order.is_empty() or agency_order.get("sent", false):
+			_new_agency_order()
 		_pet_morning_gift()
 		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
 			phone_changed.emit()
 		new_morning.emit()
-	var base := day.evaporation_multiplier(config.night_evaporation_factor)
+	var base := day.evaporation_multiplier(config.night_evaporation_factor) * weather_value("dry")
+	var flower := config.flower_chance_per_salt if weather == config.flower_weather and day.is_day() else 0.0
 	for zone in zones:
 		var logic: DryingLogic = zone.logic
+		logic.flower_chance = flower
 		var before := logic.deposit.duplicate()
 		logic.step(delta, base * zone_boost(zone), rng)
 		if logic.deposit != before:
 			for k in logic.deposit:
 				var n := int(logic.deposit[k]) - int(before.get(k, 0))
 				if n > 0:
+					_discover(String(k))
 					salt_dropped.emit(zone, String(k), n)
 	_run_tides(delta)
 	for st in stations:
@@ -420,6 +445,7 @@ func add_carried(items: Dictionary) -> Dictionary:
 		if take > 0:
 			carried[key] = int(carried.get(key, 0)) + take
 			toolbar.put(key)
+			_discover(key)
 		if n - take > 0:
 			leftover[key] = n - take
 	carried_changed.emit()
@@ -451,6 +477,8 @@ func harvest(zone: Dictionary, resource: String = "") -> void:
 	for key: String in keys:
 		if budget <= 0:
 			break
+		if key == "fleur_de_sel" and not has_gear("lousse"):
+			continue  # 0.1.22 : la fleur de sel ne se cueille qu'avec la lousse
 		var n := mini(budget, carry_space(key))
 		if n <= 0:
 			continue
@@ -658,6 +686,9 @@ func _update_marsh_geometry(zone: Dictionary) -> void:
 	var c := SaltMarsh.center_cell(cells)
 	var g := config.grid_cell_m
 	zone.position = Vector3((c.x + 0.5) * g, SaltMarsh.floor_y(terrain, cells), (c.y + 0.5) * g)
+	# 0.1.22 : un fond de terre donne du sel rose.
+	zone["rose"] = SaltMarsh.earth_ratio(terrain, cells) >= config.rose_min_earth_ratio
+	(zone.logic as DryingLogic).rose_chance = config.rose_chance_per_salt if zone.rose else 0.0
 	zone.piles = _marsh_pile_spots(zone)
 
 
@@ -675,8 +706,7 @@ func _marsh_pile_spots(zone: Dictionary) -> Dictionary:
 		var db := Vector2((b.x + 0.5) * g, (b.y + 0.5) * g).distance_squared_to(center)
 		return da < db if absf(da - db) > 1e-6 else (a.x < b.x or (a.x == b.x and a.y < b.y)))
 	var out := {}
-	var keys: Array = config.pile_slots.keys()
-	keys.sort()
+	var keys: Array = marsh_pile_keys(zone)
 	for cell in rim:
 		if out.size() >= keys.size():
 			break
@@ -1028,6 +1058,157 @@ func see_fish(species: String) -> bool:
 	return true
 
 
+# --- Le temps qu'il fait, fleur de sel, sel rose, commandes (0.1.22, PRD §19.29) ----------
+
+## Une valeur de la table du temps pour le temps du jour (séchage, soif, vent…).
+func weather_value(key: String) -> float:
+	return WeatherLogic.value(config.weather_table, weather, key)
+
+
+## Chaque matin : le temps de la journée (le temps de la veille compte moitié moins).
+func _new_weather() -> void:
+	weather = WeatherLogic.pick(config.weather_table, rng, weather)
+	_apply_weather()
+
+
+func set_weather(id: String) -> void:
+	if config.weather_table.has(id):
+		weather = id
+		_apply_weather()
+
+
+func _apply_weather() -> void:
+	if survival:
+		survival.thirst_factor = weather_value("thirst")
+	weather_changed.emit()
+
+
+## Vrai si la ressource a sa place partout (palette, bon de commande) : les ressources de base
+## toujours, la fleur de sel et le sel rose une fois trouvés (Q-29).
+func is_known(resource: String) -> bool:
+	return not Economy.FOUND_ONLY.has(resource) or discovered.has(resource)
+
+
+## Les ressources connues, dans l'ordre d'Economy.RESOURCES.
+func known_resources() -> Array[String]:
+	var out: Array[String] = []
+	for r in Economy.RESOURCES:
+		if is_known(r):
+			out.append(r)
+	return out
+
+
+func _discover(resource: String, emit := true) -> void:
+	if is_known(resource) or not Economy.FOUND_ONLY.has(resource):
+		return
+	discovered[resource] = true
+	if emit:
+		resources_discovered.emit()
+
+
+## Les tas d'un marais : ceux des zones, plus le sel rose si son fond est en terre.
+func marsh_pile_keys(zone: Dictionary) -> Array:
+	var keys: Array = config.pile_slots.keys()
+	keys.sort()
+	if zone.get("rose", false):
+		keys.append("sel_rose")
+	return keys
+
+
+## Cueillir la fleur de sel d'une zone : seulement avec la lousse.
+func harvest_flower(zone: Dictionary) -> bool:
+	if not has_gear("lousse") or int((zone.logic as DryingLogic).deposit.get("fleur_de_sel", 0)) <= 0:
+		return false
+	var before := Economy.count(carried)
+	harvest(zone, "fleur_de_sel")
+	return Economy.count(carried) > before
+
+
+## Les commandes de l'agence, lues dans les données : [{id, price, surprise}, …].
+static func load_agency_orders(path := "res://data/orders.json") -> Array:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return []
+	var data = JSON.parse_string(f.get_as_text())
+	if not (data is Dictionary):
+		return []
+	return data.get("orders", [])
+
+
+func agency_order_def(id: String) -> Dictionary:
+	for o in agency_orders:
+		if String(o.get("id", "")) == id:
+			return o
+	return {}
+
+
+## Le prix de la commande du moment ({} s'il n'y en a pas).
+func agency_order_price() -> Dictionary:
+	var d := agency_order_def(String(agency_order.get("id", "")))
+	var out := {}
+	var price: Dictionary = d.get("price", {})
+	for k in price:
+		out[String(k)] = int(price[k])
+	return out
+
+
+## Une commande ne demande que des ressources déjà trouvées (pas de sel rose avant un marais de terre).
+func agency_order_candidates() -> Array:
+	var out := []
+	for o in agency_orders:
+		var ok := true
+		for k in o.get("price", {}):
+			if not is_known(String(k)):
+				ok = false
+		if ok:
+			out.append(String(o.id))
+	return out
+
+
+## Une nouvelle commande (jamais la même que la précédente quand on a le choix).
+func _new_agency_order() -> void:
+	var list := agency_order_candidates()
+	var last := String(agency_order.get("id", ""))
+	if list.size() > 1:
+		list.erase(last)
+	if list.is_empty():
+		agency_order = {}
+	else:
+		# La toute première commande d'une partie est la première de la liste (la plus simple).
+		var id: String = list[0] if last == "" else list[rng.randi_range(0, list.size() - 1)]
+		agency_order = {"id": id, "sent": false}
+	agency_order_changed.emit()
+
+
+func can_send_agency_order() -> bool:
+	return not agency_order.is_empty() and not agency_order.get("sent", false) and Economy.can_afford(available_resources(), agency_order_price())
+
+
+## Envoie la commande : on paie comme un achat (bras puis palette), l'avion emporte le paiement et
+## largue la caisse surprise. Une nouvelle commande arrive le lendemain matin.
+func send_agency_order() -> Dictionary:
+	if not can_send_agency_order():
+		return {}
+	var price := agency_order_price()
+	if not Economy.pay_from([carried, stock], price):
+		return {}
+	for k in carried.keys():
+		if int(carried[k]) <= 0:
+			carried.erase(k)
+	carried_changed.emit()
+	_sync_toolbar()
+	var d := agency_order_def(String(agency_order.id))
+	var crate := _new_crate([String(d.get("surprise", ""))], 0.0)
+	crate["paid"] = price
+	crate["surprise"] = true
+	agency_order.sent = true
+	stock_changed.emit()
+	agency_order_changed.emit()
+	crate_added.emit(crate, true)
+	autosave()
+	return crate
+
+
 # --- Catalogue et livraison ----------------------------------------------------------------
 
 func cart_price(item_ids: Array) -> Dictionary:
@@ -1136,6 +1317,16 @@ func _new_crate(items: Array, delay_s: float) -> Dictionary:
 	return crate
 
 
+## « mineraux_rares=3,perles=1 » -> {"mineraux_rares": 3, "perles": 1} (ressources connues seulement).
+static func gift_contents(param: String) -> Dictionary:
+	var out := {}
+	for part in param.split(",", false):
+		var kv := part.split("=")
+		if kv.size() == 2 and Economy.RESOURCES.has(kv[0].strip_edges()):
+			out[kv[0].strip_edges()] = int(kv[1])
+	return out
+
+
 ## Vrai pour un article qui se pose sur l'île (il aura sa propre caisse).
 func is_placeable(item: CatalogItem) -> bool:
 	return item != null and item.effect in [CatalogItem.Effect.DRYING_ZONE, CatalogItem.Effect.STATION, CatalogItem.Effect.MIRROR, CatalogItem.Effect.DECOR, CatalogItem.Effect.PUMP, CatalogItem.Effect.SLIDE]
@@ -1233,6 +1424,13 @@ func apply_item(item: CatalogItem, position: Vector3) -> Dictionary:
 		CatalogItem.Effect.GEAR:
 			gear[item.effect_param] = true
 			_apply_gear()
+		CatalogItem.Effect.GIFT:
+			# 0.1.22 : un lot de ressources de la caisse surprise, posé sur la palette.
+			var lot := gift_contents(item.effect_param)
+			Economy.add(stock, lot)
+			for r in lot:
+				_discover(String(r))
+			stock_changed.emit()
 		CatalogItem.Effect.DECOR:
 			var d := {"id": _new_id("decor"), "kind": item.effect_param, "position": position}
 			decor.append(d)
@@ -2526,6 +2724,9 @@ func to_dict() -> Dictionary:
 		"collection": collection.duplicate(),
 		"gear": gear.duplicate(),
 		"reef_shells": reef_shells.map(_v2a),
+		"weather": weather,
+		"discovered": discovered.keys(),
+		"agency_order": agency_order.duplicate(),
 		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
@@ -2622,6 +2823,24 @@ func load_dict(data: Dictionary) -> void:
 	for k in data.get("gear", {}):
 		gear[String(k)] = true
 	_apply_gear()
+	weather = String(data.get("weather", WeatherLogic.DEFAULT))
+	if not config.weather_table.has(weather):
+		weather = WeatherLogic.DEFAULT
+	_apply_weather()
+	discovered = {}
+	for r in data.get("discovered", []):
+		if Economy.FOUND_ONLY.has(String(r)):
+			discovered[String(r)] = true
+	for src in [stock, carried]:
+		for r in src:
+			if int(src[r]) > 0:
+				_discover(String(r), false)
+	var ao = data.get("agency_order", {})
+	agency_order = {}
+	if ao is Dictionary and agency_order_def(String(ao.get("id", ""))) != {}:
+		agency_order = {"id": String(ao.id), "sent": bool(ao.get("sent", false))}
+	elif not data.has("agency_order"):
+		_new_agency_order()
 	reef_shells = []
 	if data.has("reef_shells"):
 		for r in data.get("reef_shells", []):
@@ -2759,6 +2978,9 @@ func _emit_all() -> void:
 	tide_pools_changed.emit()
 	gear_changed.emit()
 	reef_changed.emit()
+	weather_changed.emit()
+	resources_discovered.emit()
+	agency_order_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

@@ -16,6 +16,8 @@ var food: float = 1.0
 var water: float = 1.0
 var hunger_penalty: float = 0.0
 var thirst_penalty: float = 0.0
+## 0.1.22 : la canicule fait baisser la soif plus vite (1,5 : 1,5 fois plus vite).
+var thirst_factor: float = 1.0
 
 
 func _init(food_s: float = 900.0, water_s: float = 600.0, penalty: float = 0.3, penalty_s: float = 120.0) -> void:
@@ -28,9 +30,10 @@ func _init(food_s: float = 900.0, water_s: float = 600.0, penalty: float = 0.3, 
 func step(delta: float) -> void:
 	# Seul le temps passé À ZÉRO fait grandir la pénalité (pas la partie du pas où il restait de quoi).
 	var hungry_s := maxf(delta - food * food_empty_s, 0.0)
-	var thirsty_s := maxf(delta - water * water_empty_s, 0.0)
+	var water_s := water_empty_s / maxf(thirst_factor, 0.01)
+	var thirsty_s := maxf(delta - water * water_s, 0.0)
 	food = maxf(food - delta / food_empty_s, 0.0)
-	water = maxf(water - delta / water_empty_s, 0.0)
+	water = maxf(water - delta / water_s, 0.0)
 	hunger_penalty = minf(hunger_penalty + max_penalty * hungry_s / penalty_time_s, max_penalty)
 	thirst_penalty = minf(thirst_penalty + max_penalty * thirsty_s / penalty_time_s, max_penalty)
 

@@ -35,6 +35,8 @@ const PILE_BASE := {
 	"mineraux_rares": Color(0.42, 0.36, 0.5),
 	"coquillages": Color(0.95, 0.78, 0.7),  # sable rosé, pour que les coquilles ressortent (0.1.8)
 	"perles": Color(0.36, 0.42, 0.72),  # un coussin bleu nuit : les perles blanches s'y voient (0.1.8)
+	"fleur_de_sel": Color(1.0, 1.0, 0.98),  # 0.1.22 : des paillettes très blanches, brillantes
+	"sel_rose": Color(0.98, 0.72, 0.78),  # 0.1.22 : le sel des marais de terre
 }
 const SHELL_COLORS := [Color(1.0, 0.62, 0.5), Color(0.98, 0.78, 0.45), Color(0.94, 0.5, 0.62), Color(0.8, 0.62, 0.92)]
 
@@ -205,9 +207,9 @@ static func pile(resource: String, rng_seed := 7) -> Node3D:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = rng_seed
 	match resource:
-		"sel":
+		"sel", "sel_rose":
 			var snow := fit_model("kenney_snow_pile", Vector3(0.74, 0.3, 0.74))
-			Models.flat_colored(snow, Color(0.96, 0.95, 0.9))
+			Models.flat_colored(snow, Color(0.96, 0.95, 0.9) if resource == "sel" else Color(0.97, 0.76, 0.8))
 			root.add_child(snow)
 			for i in 9:
 				var a := i * 2.39996 + rng.randf_range(-0.2, 0.2)
@@ -309,6 +311,22 @@ static func pile_piece(resource: String, rng: RandomNumberGenerator, i: int) -> 
 			# Des cristaux cubiques, blancs bleutés, de tailles différentes.
 			var s := rng.randf_range(0.05, 0.08)
 			holder.add_child(box(Vector3(s, s, s), SALT if i % 3 else Color(0.88, 0.95, 1.0), Vector3(0, s * 0.3, 0)))
+		"sel_rose":
+			var s := rng.randf_range(0.05, 0.08)
+			holder.add_child(box(Vector3(s, s, s), [Color(0.96, 0.62, 0.7), Color(0.99, 0.8, 0.84), Color(0.9, 0.5, 0.6)][i % 3], Vector3(0, s * 0.3, 0)))
+		"fleur_de_sel":
+			# Des paillettes fines et plates, qui brillent (0.1.22).
+			var w := rng.randf_range(0.06, 0.1)
+			var flake := box(Vector3(w, 0.012, w * 0.7), Color(1.0, 1.0, 1.0) if i % 2 else Color(0.92, 0.97, 1.0), Vector3(0, 0.01, 0))
+			var m := StandardMaterial3D.new()
+			m.albedo_color = Color(1, 1, 1)
+			m.emission_enabled = true
+			m.emission = Color(0.85, 0.92, 1.0)
+			m.emission_energy_multiplier = 0.35
+			m.metallic_specular = 1.0
+			m.roughness = 0.15
+			flake.material_override = m
+			holder.add_child(flake)
 		"mineraux":
 			if i % 3 == 0:
 				var stone := fit_model("kenney_resource_stone_large", Vector3(0.2, 0.09, 0.18))
@@ -730,6 +748,11 @@ static func drying_zone(kind: String) -> Node3D:
 				rock.rotation.y = -a + rng.randf_range(-0.4, 0.4)
 				root.add_child(rock)
 			_add_water(root, Vector3(2.24, 0.02, 2.24), 0.06, 0.22, true)
+			# 0.1.22 : le disque d'eau suit la paroi : étroit au fond, large en haut (avant, il
+			# avait toujours la largeur du haut et traversait la paroi quand la cuvette était peu
+			# remplie : on voyait l'eau de dehors).
+			root.set_meta("water_scale_min", basin_water_radius(0.06) / 1.12)
+			root.set_meta("water_scale_max", basin_water_radius(0.22) / 1.12)
 		"bache":
 			# Une bâche bleue posée sur quatre rondins qui en relèvent les bords, piquets aux coins.
 			root.add_child(box(Vector3(2.3, 0.03, 2.3), TARP_BLUE, Vector3(0, 0.02, 0)))
@@ -770,6 +793,15 @@ const BASIN_PROFILE := [Vector2(0.0, 0.02), Vector2(0.9, 0.03), Vector2(1.14, 0.
 const BASIN_COLORS := [Color(0.48, 0.4, 0.27), Color(0.58, 0.48, 0.32), Color(0.72, 0.62, 0.44), Color(0.68, 0.58, 0.4)]
 
 
+## Le rayon (m) d'une eau à la hauteur `y` dans la cuvette : un peu en dedans de la paroi
+## (BASIN_PROFILE[1] → [2]), pour que les bosses de la paroi (±4 %) ne la laissent jamais dépasser.
+static func basin_water_radius(y: float) -> float:
+	var lo: Vector2 = BASIN_PROFILE[1]
+	var hi: Vector2 = BASIN_PROFILE[2]
+	var t := clampf((y - lo.y) / (hi.y - lo.y), 0.0, 1.0)
+	return lerpf(lo.x, hi.x, t) * 0.94
+
+
 ## Le sable de la cuvette : le profil BASIN_PROFILE tourné autour de l'axe, à facettes.
 static func basin_mesh(segments: int, rng_seed: int) -> Node3D:
 	var rng := RandomNumberGenerator.new()
@@ -799,6 +831,9 @@ static func basin_mesh(segments: int, rng_seed: int) -> Node3D:
 
 
 ## Un triangle à normale plate, face vers le haut.
+## 0.1.22 : Godot dessine la face avant des triangles donnés dans le sens des aiguilles d'une
+## montre ; avant, ils étaient donnés dans l'autre sens et la cuvette, vue d'en haut, était
+## invisible (seuls ses galets et l'eau se voyaient : remarque d'Othmane).
 static func _flat_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	var n := (b - a).cross(c - a).normalized()
 	if n.y < 0.0:
@@ -806,7 +841,7 @@ static func _flat_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> vo
 		b = c
 		c = tmp
 		n = -n
-	for v in [a, b, c]:
+	for v in [a, c, b]:
 		st.set_normal(n)
 		st.add_vertex(v)
 

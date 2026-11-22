@@ -4,6 +4,7 @@ extends TestCase
 ## (Othmane : « les objets prennent bien plus de place que ce qu'on voit, placer est pénible ».)
 
 const GameStateScript := preload("res://core/game_state.gd")
+const DecorView := preload("res://scenes/world/decor_view.gd")
 ## Ce qu'un modèle peut dépasser de son emprise (le bord arrondi d'un bac, la girouette en l'air).
 const OVERHANG := 0.12
 
@@ -67,6 +68,8 @@ func _model(kind: String) -> Node3D:
 			root.add_child(IslandLife.hammock())
 		"vitrine":
 			root.add_child(IslandLife.shelf(5, 3))
+		"parasol", "flamant_sel", "saliere", "bouee_canard", "nain_coquillages":
+			root.add_child(DecorView.model(kind))
 	return root
 
 

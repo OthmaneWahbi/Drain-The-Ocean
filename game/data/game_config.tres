@@ -105,7 +105,12 @@ footprints = {
 "pompe_bras": [-0.5, -0.5, 0.5, 1.5],
 "moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
 "hamac": [-1.5, -0.5, 1.5, 0.5],
-"vitrine": [-1.0, -0.5, 1.0, 0.5]
+"vitrine": [-1.0, -0.5, 1.0, 0.5],
+"parasol": [-1.0, -1.0, 1.0, 1.0],
+"flamant_sel": [-0.5, -0.5, 0.5, 0.5],
+"saliere": [-0.5, -0.5, 0.5, 0.5],
+"bouee_canard": [-0.5, -0.5, 0.5, 0.5],
+"nain_coquillages": [-0.5, -0.5, 0.5, 0.5]
 }
 pile_offset_cells = {
 "bache": 2,
@@ -248,3 +253,55 @@ reef_max_depth_m = 5.0
 reef_shells_per_morning = 3
 fish_seen_m = 4.0
 shooting_star_every_s = 40.0
+weather_table = {
+"averse": {
+"dry": 0.8,
+"heat": 0.0,
+"overcast": 0.6,
+"rain": 1.0,
+"thirst": 1.0,
+"weight": 10.0,
+"wind": 0.5
+},
+"calme": {
+"dry": 1.0,
+"heat": 0.0,
+"overcast": 0.0,
+"rain": 0.0,
+"thirst": 1.0,
+"weight": 35.0,
+"wind": 0.0
+},
+"canicule": {
+"dry": 1.6,
+"heat": 1.0,
+"overcast": 0.0,
+"rain": 0.0,
+"thirst": 1.5,
+"weight": 15.0,
+"wind": 0.0
+},
+"couvert": {
+"dry": 0.7,
+"heat": 0.0,
+"overcast": 1.0,
+"rain": 0.0,
+"thirst": 1.0,
+"weight": 15.0,
+"wind": 0.3
+},
+"venteux": {
+"dry": 1.3,
+"heat": 0.0,
+"overcast": 0.15,
+"rain": 0.0,
+"thirst": 1.0,
+"weight": 25.0,
+"wind": 1.0
+}
+}
+weather_order = PackedStringArray("canicule", "calme", "venteux", "couvert", "averse")
+flower_weather = "calme"
+flower_chance_per_salt = 0.2
+rose_min_earth_ratio = 0.5
+rose_chance_per_salt = 0.3

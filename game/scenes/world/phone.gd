@@ -57,6 +57,15 @@ func _ready() -> void:
 		col.position = Basis(Vector3.UP, _booth.rotation.y) * col.position
 		col.rotation.y = _booth.rotation.y
 		add_child(col)
+	# 0.1.22 : l'affiche des commandes et le baromètre, sur un poteau planté à côté de la cabine
+	# (côté ouverture, face au centre de l'île) : rien ne la cache ni ne la traverse.
+	var board := AgencyBoard.new()
+	board.position = Vector3(BOOTH_HALF + 0.75, 0.0, 0.55)
+	board.rotation.y = -0.35
+	_booth.add_child(board)
+	var post_col := Greybox.box_collision(Vector3(0.14, 2.0, 0.14), Vector3(BOOTH_HALF + 0.75, 1.0, 0.5))
+	post_col.position = Basis(Vector3.UP, _booth.rotation.y) * post_col.position
+	add_child(post_col)
 	_handset = _shake.get_node("Phone/Handset")
 	_handset_rest = _handset.transform
 	_cord = MeshInstance3D.new()

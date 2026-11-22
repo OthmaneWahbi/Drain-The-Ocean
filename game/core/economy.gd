@@ -3,7 +3,9 @@ extends RefCounted
 ## Outils pour manipuler des « paquets » de ressources : {"sel": 15, "coquillages": 2}.
 ## Troc direct (Q-07) : un prix est simplement un paquet de ressources.
 
-const RESOURCES: Array[String] = ["sel", "mineraux", "mineraux_rares", "coquillages", "perles"]
+const RESOURCES: Array[String] = ["sel", "mineraux", "mineraux_rares", "coquillages", "perles", "fleur_de_sel", "sel_rose"]
+## 0.1.22 (Q-29) : ces ressources n'ont de place (palette, bon de commande) qu'une fois trouvées.
+const FOUND_ONLY: Array[String] = ["fleur_de_sel", "sel_rose"]
 
 
 static func empty_stock() -> Dictionary:

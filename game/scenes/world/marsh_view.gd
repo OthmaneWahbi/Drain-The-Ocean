@@ -7,6 +7,7 @@ extends StaticBody3D
 const DryingZoneView := preload("res://scenes/world/drying_zone_view.gd")
 const WATER_COLOR := Color(0.25, 0.6, 0.84, 0.85)
 const CRUST_COLOR := Color(0.95, 0.95, 0.92)
+const ROSE_CRUST := Color(0.96, 0.74, 0.78)
 ## Hauteur d'eau d'un marais plein au-dessus de son fond (m).
 const FULL_DEPTH := 0.22
 
@@ -18,6 +19,7 @@ var _means: Array[float] = []
 var _piles: Array[Node3D] = []
 var _water_mat: StandardMaterial3D
 var _crust_mat: StandardMaterial3D
+var _flakes: FlowerFlakes
 
 
 func setup(p_zone: Dictionary) -> void:
@@ -30,6 +32,8 @@ func setup(p_zone: Dictionary) -> void:
 	_water_mat.metallic_specular = 0.8
 	_crust_mat = StandardMaterial3D.new()
 	_crust_mat.albedo_color = CRUST_COLOR
+	if zone.get("rose", false):
+		_crust_mat.albedo_color = ROSE_CRUST  # 0.1.22 : un fond de terre donne du sel rose
 	_crust_mat.roughness = 0.9
 	GameState.item_moved.connect(_on_moved)
 	_rebuild()
@@ -72,13 +76,16 @@ func _rebuild() -> void:
 		_crusts.append(crust)
 		# De quoi viser le marais pour y verser (une dalle fine, au fond de la case).
 		add_child(Greybox.box_collision(Vector3(g, 0.3, g), mid - position + Vector3(0, mean - position.y + 0.15, 0)))
-	for resource: String in GameState.config.pile_slots:
+	for resource: String in GameState.marsh_pile_keys(zone):
 		var pile := DryingZoneView.SaltPile.new()
 		pile.zone = zone
 		pile.resource = resource
 		pile.position = (zone.piles.get(resource, position) as Vector3) - position
 		add_child(pile)
 		_piles.append(pile)
+	_flakes = FlowerFlakes.new()
+	_flakes.build(sqrt(float(zone.cells.size())) * g * 0.5, hash(zone.get("id", "")) % 100)
+	add_child(_flakes)
 
 
 func _process(_delta: float) -> void:
@@ -91,6 +98,8 @@ func _process(_delta: float) -> void:
 	var crust := logic.has_deposit()
 	for c in _crusts:
 		c.visible = crust
+	if _flakes:
+		_flakes.show_count(int(logic.deposit.get("fleur_de_sel", 0)), surface - position.y + 0.01)
 
 
 ## La hauteur de l'eau (m) : du fond à FULL_DEPTH au-dessus quand le marais est plein.
@@ -104,11 +113,19 @@ func get_prompt(_player: Node) -> String:
 	var state := tr("MARSH_STATE") % [logic.water_l, logic.capacity_l]
 	if GameState.marsh_loss(zone) > 0.0:
 		state += " · " + tr("MARSH_LEAKS")
+	var flower := DryingZoneView.flower_prompt(zone)
+	if flower != "":
+		state = "%s · %s" % [flower, state]
 	if GameState.current_tool() == "seau" and not GameState.bucket.is_empty() and logic.free_space_l() > 0.0:
 		return "%s · %s" % [tr("PROMPT_POUR"), state]
 	if logic.free_space_l() <= 0.0:
 		return "%s · %s" % [tr("ZONE_FULL"), state]
 	return state
+
+
+## E sur le marais : cueillir la fleur de sel (avec la lousse).
+func interact(_player: Node) -> void:
+	GameState.harvest_flower(zone)
 
 
 func use(_player: Node) -> void:

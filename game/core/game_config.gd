@@ -191,6 +191,7 @@ extends Resource
 	"catalogue_papier": [-0.5, -0.5, 0.5, 0.5], "toboggan": [-0.5, -0.5, 0.5, 2.5], "flamant": [-0.5, -0.5, 0.5, 0.5],
 	"coquillage": [-0.25, -0.25, 0.25, 0.25], "pompe_bras": [-0.5, -0.5, 0.5, 1.5], "moulin_pompe": [-1.5, -1.5, 1.5, 1.5],
 	"hamac": [-1.5, -0.5, 1.5, 0.5], "vitrine": [-1.0, -0.5, 1.0, 0.5],
+	"parasol": [-1.0, -1.0, 1.0, 1.0], "flamant_sel": [-0.5, -0.5, 0.5, 0.5], "saliere": [-0.5, -0.5, 0.5, 0.5], "bouee_canard": [-0.5, -0.5, 0.5, 0.5], "nain_coquillages": [-0.5, -0.5, 0.5, 0.5],
 }
 ## Le tas de sel d'une zone occupe sa propre case, à ce nombre de cases du centre (dans l'emprise).
 @export var pile_offset_cells: Dictionary = {"cuvette": 2, "bache": 2, "bassin_bois": 3}
@@ -399,3 +400,22 @@ extends Resource
 @export var fish_seen_m: float = 4.0
 ## Une étoile filante toutes les … s environ, la nuit.
 @export var shooting_star_every_s: float = 40.0
+
+# --- 0.1.22 : le temps qu'il fait (PRD §19.29) ---------------------------------------------
+## Le temps de la journée, tiré chaque matin : poids, séchage (×), soif (× vitesse), et pour la
+## vue seulement : vent (0-1), ciel couvert (0-1), chaleur (0-1), averse au loin (0-1).
+@export var weather_table: Dictionary = {
+	"calme": {"weight": 35.0, "dry": 1.0, "thirst": 1.0, "wind": 0.0, "overcast": 0.0, "heat": 0.0, "rain": 0.0},
+	"venteux": {"weight": 25.0, "dry": 1.3, "thirst": 1.0, "wind": 1.0, "overcast": 0.15, "heat": 0.0, "rain": 0.0},
+	"canicule": {"weight": 15.0, "dry": 1.6, "thirst": 1.5, "wind": 0.0, "overcast": 0.0, "heat": 1.0, "rain": 0.0},
+	"couvert": {"weight": 15.0, "dry": 0.7, "thirst": 1.0, "wind": 0.3, "overcast": 1.0, "heat": 0.0, "rain": 0.0},
+	"averse": {"weight": 10.0, "dry": 0.8, "thirst": 1.0, "wind": 0.5, "overcast": 0.6, "heat": 0.0, "rain": 1.0},
+}
+## L'ordre des temps sur le baromètre et l'icône du HUD (du beau au mauvais).
+@export var weather_order: PackedStringArray = PackedStringArray(["canicule", "calme", "venteux", "couvert", "averse"])
+## Le temps qui produit la fleur de sel (de jour), et sa chance par sel produit.
+@export var flower_weather: String = "calme"
+@export var flower_chance_per_salt: float = 0.2
+## Un marais dont au moins cette part du fond est en terre donne du sel rose, pour cette part des sels.
+@export var rose_min_earth_ratio: float = 0.5
+@export var rose_chance_per_salt: float = 0.3

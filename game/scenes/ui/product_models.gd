@@ -110,6 +110,23 @@ static func build(id: String) -> Node3D:
 				n.add_child(f)
 		"masque":
 			n.add_child(IslandLife.mask())
+		"lousse":
+			var l := SaltGoods.lousse()
+			l.rotation = Vector3(0.0, PI / 2, 0.35)
+			l.position.y = 0.3
+			n.add_child(l)
+			var flakes := Props.pile("fleur_de_sel", 5)
+			flakes.scale = Vector3.ONE * 0.6
+			flakes.position = Vector3(-0.9, 0, 0.1)
+			n.add_child(flakes)
+		"parasol":
+			var ps := SaltGoods.parasol()
+			ps.scale = Vector3.ONE * 0.45
+			n.add_child(ps)
+		"flamant_sel":
+			n.add_child(SaltGoods.salt_flamingo())
+		"saliere":
+			n.add_child(SaltGoods.salt_shaker())
 		"manuel":
 			var book := Node3D.new()
 			book.rotation = Vector3(-0.5, 0.3, 0)

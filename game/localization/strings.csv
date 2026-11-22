@@ -279,3 +279,46 @@ PROMPT_SLEEP,[E] Dormir jusqu'au matin,[E] Sleep until morning
 PROMPT_NOT_SLEEPY,Pas sommeil,Not sleepy
 PROMPT_SHELF,Collection : %d / %d,Collection: %d / %d
 PROMPT_REEF_SHELL,[E] Ramasser le coquillage,[E] Pick up the shell
+RES_FLEUR_DE_SEL,fleur de sel,fleur de sel
+RES_SEL_ROSE,sel rose,pink salt
+ITEM_LOUSSE,Lousse de paludier,Salt-maker's lousse
+ITEM_LOUSSE_DESC,Le vrai outil des marais : on pousse la fleur de sel qui flotte à la surface. E sur une zone pour la cueillir.,The real salt-marsh tool: skim the fleur de sel floating on the surface. E on a pond to gather it.
+ITEM_LOUSSE_PITCH,Cueillez la crème de la crème !,Skim the cream of the crop!
+ITEM_PARASOL,Parasol rayé,Striped parasol
+ITEM_PARASOL_DESC,"De l'ombre chic, payée en fleur de sel. Ne sert à rien, et c'est tout l'intérêt.","Chic shade, paid in fleur de sel. Useless, which is the point."
+ITEM_PARASOL_PITCH,L'élégance de la Riviera !,Riviera elegance!
+ITEM_SALT_FLAMINGO,Flamant en sel rose,Pink salt flamingo
+ITEM_SALT_FLAMINGO_DESC,Taillé d'un seul bloc de sel rose. Ne pas lécher.,Carved from a single block of pink salt. Do not lick.
+ITEM_SALT_FLAMINGO_PITCH,Il ne s'envole jamais !,It never flies away!
+ITEM_SALT_SHAKER,Salière géante,Giant salt shaker
+ITEM_SALT_SHAKER_DESC,"Fleur de sel et sel rose, en couches. Pour assaisonner l'océan.","Fleur de sel and pink salt, in layers. To season the ocean."
+ITEM_SALT_SHAKER_PITCH,Le comble du raffinement !,The height of refinement!
+ITEM_SURPRISE_RARES,Lot de minéraux rares,Rare minerals lot
+ITEM_SURPRISE_RARES_DESC,Une surprise de l'agence.,A surprise from the agency.
+ITEM_SURPRISE_LOT,Gros lot de l'agence,Agency jackpot
+ITEM_SURPRISE_LOT_DESC,Une surprise de l'agence.,A surprise from the agency.
+ITEM_SURPRISE_PEARL,Écrin de perles,Pearl case
+ITEM_SURPRISE_PEARL_DESC,Une surprise de l'agence.,A surprise from the agency.
+ITEM_DUCK_BUOY,Bouée canard,Duck float
+ITEM_DUCK_BUOY_DESC,Une surprise de l'agence.,A surprise from the agency.
+ITEM_SHELL_GNOME,Nain en coquillages,Seashell gnome
+ITEM_SHELL_GNOME_DESC,Une surprise de l'agence.,A surprise from the agency.
+PROMPT_NEED_LOUSSE,Fleur de sel : il faut une lousse,Fleur de sel: you need a lousse
+PROMPT_FLOWER,[E] Cueillir la fleur de sel (%d),[E] Gather the fleur de sel (%d)
+CAT_AGENCY_ORDER,Commande de l'agence,Agency order
+CAT_AGENCY_SEND,Envoyer,Send
+CAT_AGENCY_SENT,Envoyée ! Nouvelle commande demain matin.,Sent! New order tomorrow morning.
+CAT_AGENCY_GIFT,une caisse surprise,a surprise crate
+WEATHER_CALME,Calme et ensoleillé,Calm and sunny
+WEATHER_VENTEUX,Venteux,Windy
+WEATHER_CANICULE,Canicule,Heatwave
+WEATHER_COUVERT,Couvert,Overcast
+WEATHER_AVERSE,Averse au loin,Distant shower
+PROMPT_PHONE_ORDER,Commande de l'agence : %s → caisse surprise,Agency order: %s → surprise crate
+POSTER_TITLE,COMMANDE,ORDER
+POSTER_THANKS,MERCI !,THANKS!
+ITEM_SURPRISE_RARES_PITCH,Surprise !,Surprise!
+ITEM_SURPRISE_LOT_PITCH,Surprise !,Surprise!
+ITEM_SURPRISE_PEARL_PITCH,Surprise !,Surprise!
+ITEM_DUCK_BUOY_PITCH,Coin coin !,Quack quack!
+ITEM_SHELL_GNOME_PITCH,Il veille sur votre île !,He watches over your island!

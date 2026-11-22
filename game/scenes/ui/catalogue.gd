@@ -15,6 +15,9 @@ var _cart_label: Label
 var _total_tag: PanelContainer
 var _message: Label
 var _order_button: Button
+## 0.1.22 : la commande de l'agence, en haut de la vitrine.
+var _agency_label: Label
+var _agency_button: Button
 ## id -> {card, add, price, was, desc, stamp_soon, stamp_promo, stamp_owned}
 var _cards: Dictionary = {}
 
@@ -70,6 +73,7 @@ func _build() -> void:
 	page.add_theme_constant_override("separation", 12)
 	_panel.add_child(page)
 	_build_header(page)
+	page.add_child(_build_agency_order())
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 22)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -117,6 +121,50 @@ func _build_header(page: VBoxContainer) -> void:
 	var season := UiTheme.stamp("CAT_SEASON", UiTheme.RED, 22, 6.0)
 	season.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(season)
+
+
+## 0.1.22 : la carte de la commande de l'agence : ce qu'elle demande → une caisse surprise, et
+## le bouton « Envoyer » (on paie comme un achat ; l'avion largue la caisse surprise).
+func _build_agency_order() -> PanelContainer:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", UiTheme.paper(UiTheme.PAPER_DARK, UiTheme.RED, 10, 10))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	card.add_child(row)
+	var stamp := UiTheme.stamp("CAT_AGENCY_ORDER", UiTheme.RED, 22, -4.0)
+	stamp.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(stamp)
+	_agency_label = Label.new()
+	_agency_label.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	_agency_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_agency_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_agency_label.add_theme_font_override("font", UiTheme.bold_font())
+	_agency_label.add_theme_font_size_override("font_size", 20)
+	_agency_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_agency_label)
+	_agency_button = Button.new()
+	_agency_button.text = "CAT_AGENCY_SEND"
+	_agency_button.add_theme_font_override("font", UiTheme.title_font())
+	_agency_button.add_theme_font_size_override("font_size", 24)
+	_agency_button.pressed.connect(_send_agency_order)
+	row.add_child(_agency_button)
+	return card
+
+
+func _send_agency_order() -> void:
+	if GameState.send_agency_order().is_empty():
+		_message.text = tr("CAT_NOT_ENOUGH")
+		return
+	close_catalogue()
+
+
+static func agency_text() -> String:
+	var o: Dictionary = GameState.agency_order
+	if o.is_empty():
+		return "—"
+	if o.get("sent", false):
+		return TranslationServer.translate("CAT_AGENCY_SENT")
+	return "%s  →  %s" % [format_items(GameState.agency_order_price()), TranslationServer.translate("CAT_AGENCY_GIFT")]
 
 
 ## Une vignette produit : photo, tampons, nom, slogan, description, prix, bouton.
@@ -267,6 +315,8 @@ func _order() -> void:
 
 
 func _refresh() -> void:
+	_agency_label.text = agency_text()
+	_agency_button.disabled = not GameState.can_send_agency_order()
 	_stock_label.text = "%s :\n%s : %s\n%s : %s" % [tr("CAT_WALLET"), tr("CAT_ON_PALLET"), format_items(GameState.stock, true), tr("HUD_CARRIED"), format_items(GameState.carried)]
 	for id in _cards:
 		var c: Dictionary = _cards[id]
