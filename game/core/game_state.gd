@@ -181,6 +181,8 @@ var _turtle_day: int = -1
 ## 0.1.23 : les cocotiers plantés : {id, position, planted_day} ; les noix de coco en main.
 var planted: Array[Dictionary] = []
 var coconuts_held: int = 0
+## 0.1.24 : l'eau des récipients tenus en main (arrosoir, seau percé), en litres.
+var vessels: Dictionary = {}
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -314,6 +316,7 @@ func _reset_state() -> void:
 	_turtle_day = -1
 	planted = []
 	coconuts_held = 0
+	vessels = {}
 	pickups = []
 	stations = []
 	mirrors = []
@@ -369,6 +372,7 @@ func simulate(delta: float) -> void:
 		new_morning.emit()
 	var base := day.evaporation_multiplier(config.night_evaporation_factor) * weather_value("dry")
 	var flower := config.flower_chance_per_salt if weather == config.flower_weather and day.is_day() else 0.0
+	_wind_rects = _all_rects()  # une seule fois par pas, pour toutes les zones (voir is_windward)
 	for zone in zones:
 		var logic: DryingLogic = zone.logic
 		logic.flower_chance = flower
@@ -380,7 +384,9 @@ func simulate(delta: float) -> void:
 				if n > 0:
 					_discover(String(k))
 					salt_dropped.emit(zone, String(k), n)
+	_wind_rects.clear()
 	_run_tides(delta)
+	_leak_vessels(delta)
 	_run_marsh_series(delta)
 	_run_wrecks(delta)
 	_run_turtles()
@@ -406,13 +412,82 @@ func advance_time(seconds: float, step_s: float = 5.0) -> void:
 	ocean_changed.emit()
 
 
-## Bonus d'évaporation des miroirs solaires proches (+50 % chacun, PRD §7).
+## Bonus d'évaporation d'une zone : miroirs solaires proches (+50 % chacun, PRD §7), et depuis
+## 0.1.24 le voisinage (moulin proche, côté du vent dégagé) et le dernier marais d'une série
+## (plus lent). Voir `zone_boost_at`.
 func zone_boost(zone: Dictionary) -> float:
+	var k := zone_boost_at(zone, zone.position, item_rotation(zone))
+	if is_marsh(zone) and _last_of_series.has(zone.get("id", "")):
+		k *= config.marsh_last_dry_factor
+	return k
+
+
+## Le bonus qu'aurait `zone` posée en `pos` (aussi pour l'aperçu du mode G, 0.1.24).
+func zone_boost_at(zone: Dictionary, pos: Vector3, rotation_deg: float = 0.0) -> float:
 	var n := 0
 	for m in mirrors:
-		if (m.position as Vector3).distance_to(zone.position) <= config.mirror_radius_m:
+		if (m.position as Vector3).distance_to(pos) <= config.mirror_radius_m:
 			n += 1
-	return 1.0 + config.mirror_bonus * n
+	var k := 1.0 + config.mirror_bonus * n
+	if near_windmill(pos):
+		k *= 1.0 + config.windmill_boost
+	if is_windward(zone, pos, rotation_deg):
+		k *= 1.0 + config.windward_boost
+	return k
+
+
+## Un moulin-pompe à moins de `windmill_boost_radius_m` : le vent de ses pales.
+func near_windmill(pos: Vector3) -> bool:
+	for p in pumps:
+		if String(p.kind) == "moulin_pompe" and Vector2(p.position.x - pos.x, p.position.z - pos.z).length() <= config.windmill_boost_radius_m:
+			return true
+	return false
+
+
+## Face au vent dominant (l'est, +X) : rien de posé dans la bande de `windward_clear_m` qui
+## longe le côté est de l'emprise de la zone.
+func is_windward(zone: Dictionary, pos: Vector3, rotation_deg: float = 0.0) -> bool:
+	var r: Rect2 = footprint_rect(item_kind(zone), pos, rotation_deg) if not is_marsh(zone) else _marsh_rect(zone)
+	var band := Rect2(r.end.x, r.position.y, config.windward_clear_m, r.size.y)
+	var rects: Array = _wind_rects if not _wind_rects.is_empty() else _all_rects()
+	for pair in rects:
+		if pair[0] != zone and band.intersects(pair[1]):
+			return false
+	return true
+
+
+## [objet, emprise un peu rétrécie] de tout ce qui est posé (objets déplaçables et marais).
+var _wind_rects: Array = []
+
+
+func _all_rects() -> Array:
+	var out := []
+	for other in movable_items():
+		out.append([other, item_rect(other).grow(-0.01)])
+	for z in zones:
+		if is_marsh(z):
+			out.append([z, _marsh_rect(z).grow(-0.01)])
+	return out
+
+
+func _marsh_rect(zone: Dictionary) -> Rect2:
+	var r := Rect2()
+	var first := true
+	for c: Vector2i in zone.get("cells", []):
+		var cr := Rect2(c.x * config.grid_cell_m, c.y * config.grid_cell_m, config.grid_cell_m, config.grid_cell_m)
+		r = cr if first else r.merge(cr)
+		first = false
+	return r
+
+
+## Le multiplicateur de séchage d'une zone en ce moment (jour/nuit, temps, bonus).
+func zone_dry_multiplier(zone: Dictionary) -> float:
+	return day.evaporation_multiplier(config.night_evaporation_factor) * weather_value("dry") * zone_boost(zone)
+
+
+## Secondes avant que la zone soit sèche à ce rythme (INF si elle ne sèche pas).
+func zone_seconds_to_dry(zone: Dictionary) -> float:
+	return (zone.logic as DryingLogic).seconds_to_dry(zone_dry_multiplier(zone))
 
 
 # --- Le seau --------------------------------------------------------------------------------
@@ -448,6 +523,101 @@ func pour_bucket_out() -> void:
 	ocean.return_water(bucket.empty_out())
 	ocean_changed.emit()
 	bucket_changed.emit()
+
+
+# --- Arrosoir et seau percé (0.1.24, PRD §19.31) ---------------------------------------------
+
+func is_vessel(tool: String) -> bool:
+	return config.vessel_capacity_l.has(tool)
+
+
+func vessel_capacity(tool: String) -> float:
+	return float(config.vessel_capacity_l.get(tool, 0.0))
+
+
+func vessel_l(tool: String) -> float:
+	return float(vessels.get(tool, 0.0))
+
+
+## Remplit le récipient dans la mer (d'un coup). Renvoie les litres puisés.
+func fill_vessel(tool: String) -> float:
+	if not is_vessel(tool) or not owns_tool(tool):
+		return 0.0
+	var taken := ocean.remove_water(vessel_capacity(tool) - vessel_l(tool))
+	vessels[tool] = vessel_l(tool) + taken
+	ocean_changed.emit()
+	bucket_changed.emit()
+	check_milestones()
+	return taken
+
+
+## Les zones que l'eau versée en `point` atteint : l'arrosoir arrose tout à moins de
+## `watering_radius_m` ; le seau percé verse dans la seule zone visée (la plus proche, à 1,5 m).
+func vessel_targets(tool: String, point: Vector3) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var reach := config.watering_radius_m if tool == "arrosoir" else 1.5
+	var best := INF
+	for z in zones:
+		var d := _distance_to_zone(z, point)
+		if d > reach or (z.logic as DryingLogic).free_space_l() <= 0.0:
+			continue
+		if tool == "arrosoir":
+			out.append(z)
+		elif d < best:
+			best = d
+			out.clear()
+			out.append(z)
+	return out
+
+
+## Distance au sol de `point` à l'emprise d'une zone (0 dedans).
+func _distance_to_zone(z: Dictionary, point: Vector3) -> float:
+	var r: Rect2 = _marsh_rect(z) if is_marsh(z) else item_rect(z)
+	var p := Vector2(point.x, point.z)
+	var c := Vector2(clampf(p.x, r.position.x, r.end.x), clampf(p.y, r.position.y, r.end.y))
+	return p.distance_to(c)
+
+
+## Verse le récipient vers `point` : l'eau est partagée entre les zones atteintes (en plusieurs
+## tours : ce qu'une zone pleine refuse va aux autres). Renvoie les litres versés.
+func pour_vessel(tool: String, point: Vector3) -> float:
+	var targets := vessel_targets(tool, point)
+	var left := vessel_l(tool)
+	var poured := 0.0
+	for _pass in 4:
+		if targets.is_empty() or left <= 0.001:
+			break
+		var share := left / targets.size()
+		var still: Array[Dictionary] = []
+		for z in targets:
+			var logic: DryingLogic = z.logic
+			var acc := logic.add_water(share)
+			var lost := acc * marsh_loss(z)
+			if lost > 0.0:
+				logic.water_l -= lost
+				ocean.return_water(lost)
+			left -= acc
+			poured += acc
+			if logic.free_space_l() > 0.0:
+				still.append(z)
+		targets = still
+	vessels[tool] = maxf(left, 0.0)
+	ocean_changed.emit()
+	bucket_changed.emit()
+	return poured
+
+
+## Le seau percé fuit (l'eau retourne à la mer), même posé dans la barre.
+func _leak_vessels(delta: float) -> void:
+	for tool in config.vessel_leak_lps:
+		var have := vessel_l(String(tool))
+		if have <= 0.0:
+			continue
+		var lost := minf(have, float(config.vessel_leak_lps[tool]) * delta)
+		vessels[tool] = have - lost
+		ocean.return_water(lost)
+		if int(have) != int(have - lost):
+			bucket_changed.emit()  # la case de la barre affiche les litres
 
 
 # --- Récolte, transport, palette -----------------------------------------------------------
@@ -529,7 +699,7 @@ func harvest(zone: Dictionary, resource: String = "") -> void:
 # --- Barre d'outils (M-27) --------------------------------------------------------------------
 
 ## Les outils, dans l'ordre où ils prennent une case quand on les obtient.
-const TOOLS: Array[String] = ["seau", "pelle", "rateau", "tuyaux", "detecteur", "noix_de_coco"]
+const TOOLS: Array[String] = ["seau", "pelle", "rateau", "tuyaux", "detecteur", "noix_de_coco", "arrosoir", "seau_perce"]
 
 
 ## Ce que contient la case tenue : un outil ("seau", "rateau", "tuyaux"), un matériau porté
@@ -555,6 +725,8 @@ func owns_tool(tool: String) -> bool:
 			return has_gear("detecteur")
 		"noix_de_coco":
 			return coconuts_held > 0
+		"arrosoir", "seau_perce":
+			return has_gear(tool)
 	return false
 
 
@@ -1311,17 +1483,25 @@ func is_last_of_series(zone: Dictionary, targets: Dictionary) -> bool:
 	return false
 
 
+## Les marais qui finissent une série (recalculé à chaque pas de `simulate`).
+var _last_of_series: Dictionary = {}
+
+
 func _run_marsh_series(delta: float) -> void:
 	var list := marshes()
 	if list.size() < 2:
+		_last_of_series.clear()
 		for m in list:
 			(m.logic as DryingLogic).mineral_chance = config.mineral_chance
 			(m.logic as DryingLogic).rare_mineral_chance = config.rare_mineral_chance
 		return
 	var targets := marsh_flow_targets()
+	_last_of_series.clear()
 	for m in list:
 		var logic: DryingLogic = m.logic
 		var last := is_last_of_series(m, targets)
+		if last:
+			_last_of_series[m.id] = true
 		logic.mineral_chance = config.mineral_chance * (config.marsh_last_mineral_mult if last else 1.0)
 		logic.rare_mineral_chance = config.rare_mineral_chance * (config.marsh_last_rare_mult if last else 1.0)
 		var t: Dictionary = targets.get(m.id, {})
@@ -3105,6 +3285,7 @@ func to_dict() -> Dictionary:
 		"turtle_day": _turtle_day,
 		"planted": planted.map(func(pl): return {"position": _v2a(pl.position), "planted_day": pl.planted_day}),
 		"coconuts_held": coconuts_held,
+		"vessels": vessels.duplicate(),
 		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
@@ -3240,6 +3421,10 @@ func load_dict(data: Dictionary) -> void:
 	for pl in data.get("planted", []):
 		planted.append({"id": _new_id("palm"), "position": _a2v(pl.get("position", [])), "planted_day": int(pl.get("planted_day", 0))})
 	coconuts_held = int(data.get("coconuts_held", 0))
+	vessels = {}
+	var vs: Dictionary = data.get("vessels", {})
+	for k in vs:
+		vessels[String(k)] = float(vs[k])
 	reef_shells = []
 	if data.has("reef_shells"):
 		for r in data.get("reef_shells", []):

@@ -302,6 +302,7 @@ func test_tier_two_is_locked_until_the_manual() -> void:
 
 
 func test_solar_mirror_boosts_nearby_zones_only() -> void:
+	gs.config.windward_boost = 0.0  # 0.1.24 : ici, seulement les miroirs (voir test_rythme)
 	var basin: Dictionary = gs.zones[0]
 	assert_almost(gs.zone_boost(basin), 1.0)
 	gs.add_mirror(basin.position + Vector3(2, 0, 0))

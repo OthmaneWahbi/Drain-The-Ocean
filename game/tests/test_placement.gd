@@ -115,6 +115,7 @@ func test_move_item_refuses_bad_spots() -> void:
 
 
 func test_mirror_boost_follows_a_moved_mirror() -> void:
+	gs.config.windward_boost = 0.0  # 0.1.24 : ici, seulement les miroirs (voir test_rythme)
 	var basin: Dictionary = gs.zones[0]
 	var mirror: Dictionary = gs.add_mirror(Vector3(-0.5, 0.5, -10.5))
 	assert_almost(gs.zone_boost(basin), 1.0)

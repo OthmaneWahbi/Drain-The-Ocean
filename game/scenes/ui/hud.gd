@@ -146,6 +146,9 @@ func refresh_toolbar() -> void:
 		_toolbar_labels[i].text = "%d\n%s" % [i + 1, slot_text(tool)]
 		if tool == "seau":
 			_toolbar_labels[i].text += "\n%d / %d L" % [int(GameState.bucket.water_l), int(GameState.bucket.capacity_l)]
+		elif GameState.is_vessel(tool):
+			# 0.1.24 : l'arrosoir et le seau percé montrent leur eau comme le seau.
+			_toolbar_labels[i].text += "\n%d / %d L" % [int(GameState.vessel_l(tool)), int(GameState.vessel_capacity(tool))]
 		elif tool == "tuyaux":
 			_toolbar_labels[i].text += "\n" + tr("HUD_PIPES_IN_HAND") % GameState.pipe_stock
 		elif tool == "pelle":

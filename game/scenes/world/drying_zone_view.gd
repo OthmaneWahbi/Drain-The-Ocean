@@ -65,6 +65,9 @@ func _process(_delta: float) -> void:
 func get_prompt(_player: Node) -> String:
 	var logic: DryingLogic = zone.logic
 	var state := tr("ZONE_STATE") % [logic.water_l, logic.capacity_l]
+	var dry := dry_text(zone)
+	if dry != "":
+		state = "%s · %s" % [state, dry]
 	var flower := flower_prompt(zone)
 	if flower != "":
 		state = "%s · %s" % [flower, state]
@@ -73,6 +76,21 @@ func get_prompt(_player: Node) -> String:
 	if logic.free_space_l() <= 0.0:
 		return "%s · %s" % [tr("ZONE_FULL"), state]
 	return state
+
+
+## 0.1.24 : « Sec dans 32 s » (ou « Sec dans 3 min »), au rythme de la zone en ce moment.
+static func dry_text(z: Dictionary) -> String:
+	if (z.logic as DryingLogic).water_l <= 0.0:
+		return ""
+	return format_dry(GameState.zone_seconds_to_dry(z))
+
+
+static func format_dry(seconds: float) -> String:
+	if not is_finite(seconds):
+		return ""
+	if seconds < 90.0:
+		return TranslationServer.translate("ZONE_DRY_IN") % maxi(int(ceil(seconds)), 1)
+	return TranslationServer.translate("ZONE_DRY_IN_MIN") % int(round(seconds / 60.0))
 
 
 ## 0.1.22 : la fleur de sel d'une zone : « E : cueillir » avec la lousse, sinon « Il faut une lousse ».

@@ -367,3 +367,26 @@ DUG_PERLE,Une perle !,A pearl!
 DUG_FERRAILLE,De la ferraille…,Scrap metal…
 DUG_TRESOR,Le trésor !,The treasure!
 BOTTLE_CLOSE,Clic pour fermer,Click to close
+ITEM_WATERING_CAN,Arrosoir,Watering can
+ITEM_WATERING_CAN_DESC,"15 litres pris dans la mer, et un clic arrose toutes les zones autour du point visé (4 m) : l'eau est partagée.","15 litres from the sea, and one click waters every zone around where you aim (4 m): the water is shared."
+ITEM_WATERING_CAN_PITCH,"Un clic, toutes les zones !","One click, every zone!"
+ITEM_LEAKY_BUCKET,Seau percé,Leaky bucket
+ITEM_LEAKY_BUCKET_DESC,"Un seau de 10 litres, un peu percé (il perd 1 litre par seconde). Il marche quand même, si on court.","A 10-litre bucket, slightly leaky (it loses 1 litre per second). It still works, if you run."
+ITEM_LEAKY_BUCKET_PITCH,Prix cassé !,Rock-bottom price!
+TOOL_ARROSOIR,Arrosoir,Watering can
+TOOL_SEAU_PERCE,Seau percé,Leaky bucket
+PROMPT_VESSEL_FILL,[Clic] Remplir,[Click] Fill
+PROMPT_WATER_ZONES,[Clic] Arroser (%d zones),[Click] Water (%d zones)
+PROMPT_WATER_ZONE,[Clic] Arroser,[Click] Water
+PROMPT_VESSEL_POUR,[Clic] Verser,[Click] Pour
+PROMPT_VESSEL_EMPTY,Vide : on le remplit dans la mer,Empty: fill it in the sea
+PROMPT_VESSEL_NO_ZONE,Visez une zone qui a de la place,Aim at a zone with room
+ZONE_DRY_IN,Sec dans %d s,Dry in %d s
+ZONE_DRY_IN_MIN,Sec dans %d min,Dry in %d min
+PHOTO_HINT,Clic : photo · 1 à 4 : filtre · Molette : champ · Maj : vite · P ou Échap : sortir,Click: photo · 1 to 4: filter · Wheel: field of view · Shift: fast · P or Esc: exit
+PHOTO_SAVED,Photo enregistrée,Photo saved
+PHOTO_FILTER_0,Normal,Normal
+PHOTO_FILTER_1,Sépia,Sepia
+PHOTO_FILTER_2,Noir et blanc,Black and white
+PHOTO_FILTER_3,Couleurs vives,Vivid
+OPTIONS_MUSIC,Musique,Music
