@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.50 (0.1.19 : Pinçon, le crabe de compagnie) |
+| Version du document | 0.51 (toutes les idées de l'île au plan : versions 0.1.20 à 0.1.25) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -163,6 +163,7 @@ Quand il reste **5 % d'eau ou moins**, un **drain** (une sorte de bonde géante,
 | **Coquillages** | Variable | Un peu au puisage ; surtout ramassés sur le fond marin découvert | Monnaie « de l'exploration », récompense les sorties hors de l'île |
 
 - **[PROPOSÉ]** Les ressources sont **physiques** : on voit des tas de sel, des sacs, des caisses sur l'île. Le stock devient un élément du décor (et un problème de place, voir [17](#17-problèmes-identifiés-et-propositions)).
+- **[PROPOSÉ]** (0.1.22, voir [19.29](#1929-version-0122--le-temps-quil-fait)) Deux qualités de sel s'ajoutent, **fleur de sel** et **sel rose**, cachées tant qu'on ne les a pas trouvées.
 - **[DÉCIDÉ]** Une 5ᵉ ressource ultra-rare, la **perle**, existe et est présente dès le MVP (M-45). **[DÉCIDÉ]** Elle se trouve rarement dans les coquillages ramassés (~2 %) et sert à acheter un objet spécial ou cosmétique du catalogue (N-07).
 
 ### 6.2 Le troc (pas de monnaie)
@@ -205,7 +206,7 @@ L'alternative écartée était de *vendre* d'abord ses ressources à l'agence co
 
 | Palier | Nom | Exemples d'objets | Ce qui change dans le jeu | Débit indicatif *(provisoire)* |
 |---|---|---|---|---|
-| **T0** | Le seau | Seau, trou creusé dans le sable | Tout à la main | ~1 L/s |
+| **T0** | Le seau | Seau, trou creusé dans le sable (0.1.20 : le marais salant, [19.27](#1927-version-0120--les-salines)) | Tout à la main | ~1 L/s |
 | **T1** | Bricolage | Grand seau, palanche (2 seaux), bâche de séchage, râteau à sel, brouette | Le joueur optimise ses trajets | ~10 L/s |
 | **T2** | Hydraulique manuelle | Pompe à bras, tuyaux, bassins en série, miroirs solaires | Premières installations fixes, agencement de l'île | ~200 L/s |
 | **T3** | Moteurs | Pompe motorisée, éolienne, panneaux solaires, collecteur de sel automatique, tapis roulant | Automatisation, notion d'énergie *[QUESTION Q-08]* | ~5 000 L/s |
@@ -607,6 +608,10 @@ Questions qui demandent **la décision d'Othmane**. Une réponse = une entrée d
 | **Q-18** | Distribution PC ? | Steam / itch.io / les deux | **itch.io pour les tests, Steam pour la sortie** |
 | **Q-20** | Mobile : même projet Godot ou projet séparé ? | Même projet / Séparé | **Même projet**, à revoir au portage |
 | **Q-22** | Le personnage : apparence, genre, personnalisable ? | Fixe / Personnalisable | Fixe et neutre pour le MVP (M-23), à concevoir plus tard |
+| **Q-27** | Les marées changent-elles la hauteur de l'eau ? (19.26) | À l'œil seulement / Vraiment (volume) / Juste l'aspect de la plage | **À l'œil** : ±30 cm visibles, volume inchangé |
+| **Q-28** | Le marais creusé remplace-t-il la cuvette de départ ? (19.26) | S'ajoute / Remplace | **S'ajoute** |
+| **Q-29** | Fleur de sel et sel rose : trop de ressources ? (19.26) | Deux ressources cachées jusqu'à la première trouvaille / Variantes du sel / Rien | **Deux ressources cachées jusqu'à la première trouvaille** |
+| **Q-30** | Le hamac et le chronomètre (19.26) | Temps réel seulement / Compter la nuit sautée | **Temps réel seulement** (la nuit sautée ne compte pas) |
 
 ---
 
@@ -977,6 +982,105 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Ce qu'il donne** : à **2 cœurs** et plus, il suit le joueur quand il est à moins de 12 m ; dès **40 d'affection** (et s'il n'a pas faim), il **rapporte un coquillage chaque matin**, posé près de lui.
 - **[PROPOSÉ]** **Au catalogue (palier 1)** : **Croquettes pour crabe** (sachet de 6, 6 sel, se rachète), **Chapeau de paille** (35 sel + 3 coquillages, unique), **Lunettes de soleil en cœur** (50 sel + 4 minéraux, uniques). Les accessoires arrivent dans la caisse commune et Pinçon les porte tout de suite.
 - **[PROPOSÉ]** **Où il vit** : au bord de la plage (anneau de 18,5 à 23,5 m), jamais dans la mer. La faim, l'affection, les croquettes et les accessoires sont sauvegardés ; une vieille sauvegarde reçoit un Pinçon neuf.
+
+### 19.26 Les idées de l'île : le plan (versions 0.1.20 à 0.1.25)
+
+Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : faire **toutes les idées** du document de recherche « Drain the Ocean — idées pour améliorer le jeu » (31 idées, en 6 thèmes : le sel et la pelle, la mer et le temps, explorer et collectionner, la vie sur l'île, objectifs et rythme, finition et confort). Elles entrent **d'abord dans ce PRD**, puis chaque étape est construite **dans sa propre PR**, une version par étape, dans l'ordre proposé par le document. Les idées deviennent donc des fonctionnalités prévues ; leurs **détails** (chiffres, touches, prix) restent **[PROPOSÉ]** tant qu'Othmane ne les a pas essayés.
+
+| Version | Thème | Idées |
+|---|---|---|
+| **0.1.20** | Les salines | Marais salant creusé, marées, flaques de marée basse, juice du sel |
+| **0.1.21** | La nuit et la collection | Nuit vivante, hamac, vitrine de collection, masque et tuba |
+| **0.1.22** | Le temps qu'il fait | Météo, fleur de sel, sel rose, commandes de l'agence |
+| **0.1.23** | Explorer et vivre sur l'île | Marais en série, bouteilles à la mer, épaves qui dérivent, longue-vue, détecteur de métaux, tortues, feu de camp, planter des cocotiers, déco de l'île |
+| **0.1.24** | Le rythme et le confort | Horloges échelonnées, bonus de voisinage, achats qui changent un geste (arrosoir, seau percé), mode photo, musique selon le moment de la journée |
+| **0.1.25** | Plus tard (priorité 3) | Châteaux de sable, orage au large, baleine et dauphins, succès à l'œil, carte de l'île, manette |
+
+**Les 4 questions du document, avec notre réponse par défaut** **[PROPOSÉ]** (Othmane peut changer chacune ; voir Q-27 à Q-30 en [§18](#18-questions-ouvertes)) :
+- **Les marées changent-elles la hauteur de l'eau ?** Oui, **à l'œil** : la surface monte et descend de **±30 cm** autour du niveau honnête, deux fois par jour de jeu. Le **volume** de l'océan ne change pas (la jauge, le pourcentage et la fin n'en tiennent pas compte). Puiser et nager suivent la surface visible.
+- **Le marais creusé remplace-t-il la cuvette ?** Non, il **s'ajoute** : la cuvette reste le départ (premier achat vers 1 min 30, inchangé) ; le marais vient dès qu'on a la pelle.
+- **Trop de qualités de sel pour le pilier « peu de ressources » ?** On en ajoute **deux** (fleur de sel, sel rose), qui n'apparaissent sur la palette et dans la barre **qu'une fois trouvées**. Elles ne servent qu'à des objets « chic » et aux commandes de l'agence : le jeu de base reste à 4 ressources (+ la perle).
+- **Le hamac et le chronomètre** : le chronomètre de la partie compte le **temps réel joué**. Dormir dure ~3 s réelles, donc la nuit sautée ne compte pas ; en échange, tout ce qui vit avec le temps (séchage au taux de nuit, faim, soif, Pinçon) avance pendant le sommeil, et le hamac ne marche que la nuit.
+
+### 19.27 Version 0.1.20 : les salines
+
+- **[PROPOSÉ]** **Marais salant creusé** : avec la pelle, on creuse un trou ; verser un seau dans un trou de sable **au-dessus de la mer** en fait un **marais salant**, une zone de séchage qui suit le trou.
+  - Un trou compte s'il fait au moins **4 cases de 1 m** reliées, chacune creusée d'au moins **25 cm** sous le sol d'origine, avec moins de **60 cm** d'écart entre la case la plus haute et la plus basse. Au plus **24 cases** (au-delà, seules les plus proches comptent).
+  - Sa **surface fixe son débit** : **10 L par case** de contenance, séchée en **60 s** au soleil (un marais de 4 cases = 40 L, comme la cuvette ; un de 12 cases = 120 L). Il donne les mêmes ressources que les autres zones (sel, minéraux, minéraux rares), avec les mêmes tirages.
+  - **Bordure en terre** : un trou dans le sable perd **25 %** de ce qu'on y verse (l'eau rentre dans le sable et retourne à la mer) ; si au moins la moitié des cases autour du trou sont de la **terre**, il ne perd rien.
+  - Les tas de sel du marais se posent sur des cases libres **au bord** du trou. On ne peut pas reboucher un marais qui contient de l'eau ou un dépôt (« Le marais n'est pas vide ») ; vide, le reboucher le fait disparaître.
+  - On ne déplace pas un marais (mode G) : c'est un trou.
+- **[PROPOSÉ]** **Marées** : deux marées hautes et deux basses par jour de jeu (une toutes les 10 min réelles), de **±30 cm** autour du niveau honnête (voir 19.26). Marée haute vers 3 h et 15 h, basse vers 9 h et 21 h.
+  - Un marais dont le bord touche la mer (une case à moins de **1,5 m** d'une case sous l'eau) et dont le fond est sous la surface **se remplit tout seul** à marée haute, de **2 L/s par case**, avec de l'eau prise à l'océan (elle compte dans le volume retiré). On creuse donc un chenal vers la mer pour avoir un marais qui se remplit seul.
+- **[PROPOSÉ]** **Flaques de marée basse** : **4 flaques** au pied des rochers de la plage, cachées à marée haute. À chaque marée basse, chacune montre **1 ou 2 trouvailles** posées au fond, à ramasser avec E : **coquillage** (comme les autres), **étoile de mer**, **oursin** ou **bernard-l'ermite** (ces trois-là ne sont pas des ressources : ce sont des **trouvailles** de la collection, voir 0.1.21). Les trouvailles non ramassées repartent à la marée haute suivante.
+  - **Pinçon** (s'il suit le joueur, 2 cœurs et plus) fouille une flaque où le joueur se tient et y trouve **un coquillage de plus** par marée basse.
+- **[PROPOSÉ]** **Juice du sel** : chaque sel qui tombe sur un tas fait un **petit tintement** (un peu plus aigu pour les minéraux, plus encore pour les rares) et un **« +1 »** qui monte et s'efface ; le tas fait un petit **« pop »** (il gonfle de 15 % puis revient). Après une commande d'au moins **100 ressources**, l'avion fait un **tonneau** en repartant.
+
+### 19.28 Version 0.1.21 : la nuit et la collection
+
+- **[PROPOSÉ]** **Nuit vivante** (purement visuelle) : de nuit, le **plancton brille** en bleu-vert autour du joueur quand il marche ou nage dans l'eau (des points qui s'allument et s'éteignent en 1,5 s) ; des **lucioles** tournent autour des palmiers et des buissons ; une **étoile filante** traverse le ciel environ toutes les **40 s**.
+- **[PROPOSÉ]** **Hamac** (catalogue, palier 1, **40 sel + 2 coquillages**, unique, à poser, 3 × 1 cases) : E sur le hamac **la nuit** (de 20 h à 6 h) : fondu au noir, la nuit passe jusqu'à **6 h**, puis on se réveille. Le jour : « Pas sommeil ». Voir 19.26 pour le chronomètre. Pinçon, s'il suit le joueur, vient dormir au pied du hamac.
+- **[PROPOSÉ]** **Vitrine de collection** (catalogue, palier 1, **30 sel**, unique, à poser, 2 × 1 cases) : une étagère avec **une case par trouvaille**. Une case vide montre la **silhouette sombre** de ce qui manque ; une trouvaille ramassée y apparaît en couleur. Aucun texte. La liste vit dans les données (`data/collection.json`) :
+  - **Coquillages** (5) : le coquillage ramassé tire maintenant une **forme** : pétoncle, bigorneau, couteau, conque (rare, 10 %), nautile (très rare, 3 %). Chaque forme compte une fois.
+  - **Bord de mer** (4) : étoile de mer, oursin, bernard-l'ermite (flaques), perle (la première trouvée).
+  - **Poissons** (4) : poisson-clown, chirurgien bleu, poisson-perroquet, raie : vus de près (moins de **4 m**) sous l'eau avec le masque.
+  - **Objets** (cases ajoutées par les versions suivantes) : bouteilles, pièce ancienne, œuf de tortue, etc.
+  - La collection est **sauvegardée** même sans vitrine : la poser montre d'un coup tout ce qu'on a déjà trouvé.
+- **[PROPOSÉ]** **Masque et tuba** (catalogue, palier 1, **40 sel + 5 minéraux**, unique, porté dès l'ouverture de la caisse) :
+  - Sous l'eau, **plus de flou** et une eau plus claire ; la nage coûte **40 % moins** d'endurance.
+  - On **plonge** en maintenant **Ctrl** (sans masque, on remonte tout seul comme avant).
+  - Un **petit récif** (coraux, gorgones) entoure l'île entre **2 et 5 m** de fond, avec ses poissons colorés. Chaque matin, **3 coquillages** se posent au fond du récif, à ramasser avec E en plongée.
+
+### 19.29 Version 0.1.22 : le temps qu'il fait
+
+- **[PROPOSÉ]** **Météo** : chaque matin (6 h), le temps de la journée est tiré au sort (poids dans les données) :
+
+| Temps | Poids | Séchage | Autre effet |
+|---|---|---|---|
+| Calme et ensoleillé | 35 % | ×1 | Fleur de sel possible |
+| Venteux | 25 % | ×1,3 | Palmiers qui ploient, vagues plus fortes |
+| Canicule | 15 % | ×1,6 | Soif qui baisse 1,5 fois plus vite |
+| Couvert | 15 % | ×0,7 | Ciel gris, lumière plus douce |
+| Averse au loin | 10 % | ×0,8 | Rideau de pluie à l'horizon, sans effet sur le niveau (Q-09) |
+
+  - Le temps s'annonce **en pictogramme** : un petit symbole à côté de l'heure dans le HUD et un **baromètre** à aiguille sur la cabine téléphonique.
+- **[PROPOSÉ]** **Fleur de sel** : par temps **calme**, de jour, chaque zone de séchage a **20 %** de chance par sel produit de donner aussi **1 fleur de sel** (nouvelle ressource, blanche et brillante), sur son propre tas. On ne la récolte qu'avec la **lousse** (outil des paludiers, catalogue palier 1, **30 sel + 3 minéraux**, unique) ; sans elle, « Il faut une lousse ». Elle sert aux objets « chic » du catalogue et aux commandes.
+- **[PROPOSÉ]** **Sel rose** : un marais dont **la moitié du fond au moins est de la terre** (creusé dans une zone de terre, ou du sable recouvert de terre à la pelle) donne du **sel rose** (nouvelle ressource) pour **30 %** de ses sels, à la place du sel blanc. Prix spéciaux au catalogue.
+  - **[PROPOSÉ]** Les deux nouvelles ressources n'ont une place sur la palette et dans la barre qu'une fois trouvées (voir 19.26).
+  - **[PROPOSÉ]** Objets « chic » au catalogue : **Parasol rayé** (8 fleurs de sel + 40 sel, décor), **Flamant en sel rose** (20 sel rose, décor), **Salière géante** (10 fleurs de sel + 10 sel rose, décor).
+- **[PROPOSÉ]** **Commandes de l'agence** : une **affiche** à pictogrammes sur la cabine montre toujours **une commande** : des ressources → une **caisse surprise** (« 30 sel rose → 🎁 »). Au téléphone, la commande a sa carte en haut du catalogue avec un bouton **« Envoyer »** : on paie comme un achat (bras + palette), l'avion prend le paiement et largue la caisse surprise. Une nouvelle commande arrive le **lendemain matin**.
+  - La liste des commandes et des surprises vit dans les données. Les commandes suivent ce que le joueur a déjà trouvé (pas de sel rose demandé avant d'avoir fait un marais de terre). Surprises : un lot de ressources plus rares, des croquettes, un décor qu'on ne trouve pas au catalogue (bouée canard, nain de jardin en coquillages), une perle.
+
+### 19.30 Version 0.1.23 : explorer et vivre sur l'île
+
+- **[PROPOSÉ]** **Marais en série** (comme à Guérande) : deux marais à **1 case** ou moins l'un de l'autre sont reliés. L'eau passe du plus haut au plus bas : au-dessus de **50 %** de remplissage, un marais en envoie **2 L/s** au suivant. Le **dernier** marais d'une série d'au moins 2 donne **2×** plus de chances de minéraux et **3×** plus de minéraux rares.
+- **[PROPOSÉ]** **Bouteilles à la mer** : environ **tous les 2 jours**, une bouteille s'échoue sur la plage. E l'ouvre : un **dessin sans texte** sur papier crème, plein écran (clic pour fermer), puis la bouteille entre dans la collection. **4 dessins** : une **carte** de l'île avec une croix (le trésor du détecteur, voir plus bas), quelqu'un qui **tire une chaîne** au fond de la mer, l'**avion** de l'agence qui emmène quelqu'un (le gag final, en douce), un **crabe** avec un chapeau.
+- **[PROPOSÉ]** **Épaves qui dérivent** : chaque jour vers une heure tirée au sort, une **caisse d'un autre naufragé** (sans logo de l'agence) apparaît au large et **dérive** vers la plage à 0,6 m/s. Une fois échouée, E l'ouvre : **5 à 15 sel**, **0 à 3 minéraux**, **0 à 2 coquillages**, et **5 %** de chance d'une perle.
+- **[PROPOSÉ]** **Longue-vue** (catalogue, palier 1, **25 sel + 2 minéraux**, unique, à poser, 1 × 1 case) : E pour regarder dedans ; la souris vise, la molette zoome (×4 à ×12), Échap pour sortir. À l'horizon : **3 autres îles** lointaines (silhouettes, l'une avec une cabine d'une autre couleur), les avions de l'agence, le **petit tourbillon** du drain (§11), et plus tard baleines et dauphins.
+- **[PROPOSÉ]** **Détecteur de métaux** (catalogue, palier 1, **40 sel + 5 minéraux**, unique, outil de la barre) : en main, il **bipe** de plus en plus vite près d'un objet enterré (à moins de **6 m**). Creuser à la pelle à moins de **1 m** de l'objet le fait sortir. Il y a toujours **3 objets enterrés** sur l'île (un nouveau chaque matin à la place d'un trouvé) : **pièce ancienne** (collection, la première fois, sinon 5 minéraux), **perle**, **ferraille** (3 minéraux). Le trésor de la carte en bouteille (**3 perles** + un **coffre** pour la collection) est enterré une seule fois, là où la croix l'indique.
+- **[PROPOSÉ]** **Tortues qui pondent** : certaines nuits (**25 %**), une tortue sort de la mer vers 22 h, creuse et pond sur la plage, puis repart. Le **nid** (petit monticule et deux brindilles) bloque sa case : on ne peut ni y creuser ni y poser (« Un nid de tortue »). **3 nuits** plus tard, **5 petites tortues** courent vers la mer. La première éclosion vue ajoute l'**œuf de tortue** à la collection.
+- **[PROPOSÉ]** **Feu de camp** (catalogue, palier 1, **15 sel**, unique, à poser, 1 × 1 case) : il brûle la nuit (lumière orange qui vacille, braises) et s'éteint le jour. Une **noix de coco mangée à moins de 4 m d'un feu allumé** est **grillée** : elle nourrit **50 %** de plus.
+- **[PROPOSÉ]** **Planter des cocotiers** : avec une case vide en main (les mains), un **clic** sur une noix de coco la ramasse dans la barre (« Noix de coco ×1 », au lieu de la manger avec E). Avec la noix en main, un clic sur une case de **terre** libre la **plante** : une pousse apparaît, qui devient un **palmier** après **2 jours** de jeu, avec sa propre noix de coco chaque matin. Au plus **10** palmiers plantés.
+- **[PROPOSÉ]** **Déco de l'île** (catalogue, palier 1, payée en coquillages et perles) : **Dalles de chemin** (lot de 5 : 3 coquillages ; 1 × 1 case, on marche dessus), **Clôture en bois flotté** (2 coquillages, 1 × 1 case), **Lampion** (4 coquillages, s'allume la nuit), **Tapis de plage** (5 coquillages, 2 × 1 cases), **Coquillage géant** (1 perle + 10 coquillages).
+
+### 19.31 Version 0.1.24 : le rythme et le confort
+
+- **[PROPOSÉ]** **Horloges échelonnées** : chaque machine a son rythme, réglé dans les données : moulin et pompes **rapides** (en continu), cuvette et bâche **45 s**, marais **60 s**, fleur de sel **lente** (quelques par jour calme), marais en série **très lent mais rare** (minéraux rares). Le texte d'aide d'une zone montre quand elle sera sèche (« Sec dans 32 s »).
+- **[PROPOSÉ]** **Bonus de voisinage** (comme dans *Islanders*) : en plus des miroirs (+50 % chacun, déjà là), une zone à moins de **6 m du moulin** sèche **20 %** plus vite (le vent des pales), et une zone **face au vent dominant** (rien de posé à moins de 4 m de son côté est) **10 %** plus vite. En mode G, l'aperçu d'une zone affiche son multiplicateur (« ×1,8 ») à l'endroit visé.
+- **[PROPOSÉ]** **Achats qui changent un geste** (règle de *Forager*) :
+  - **Arrosoir** (catalogue, palier 1, **35 sel + 2 minéraux**, unique, outil de la barre) : se remplit dans la mer comme le seau (**15 L**) ; un clic **arrose** toutes les zones à moins de **4 m** du point visé, en partageant l'eau entre elles.
+  - **Seau percé** (catalogue, palier 1, **1 sel**, gag) : un seau de 10 L qui fuit (**1 L/s**) ; il marche quand même, si on se dépêche.
+- **[PROPOSÉ]** **Mode photo** : **P** cache le HUD et détache la caméra : on vole avec les touches de déplacement, la souris tourne, Maj va plus vite, la molette règle le champ de vision ; **1 à 4** changent le filtre (normal, sépia, noir et blanc, couleurs vives) ; **clic** prend la photo (fichier PNG dans `user://photos/`) ; **P** ou Échap pour revenir. Le jeu est en pause pendant ce temps.
+- **[PROPOSÉ]** **Musique selon le moment de la journée** : quatre ambiances jouées par le synthétiseur du jeu (matin, midi, soir, nuit), en fondu de **8 s** quand le moment change ; la nuit reprend la **musique d'attente** du téléphone, en plus lent. Volume dans les options (« Musique »).
+
+### 19.32 Version 0.1.25 : plus tard (priorité 3)
+
+- **[PROPOSÉ]** **Châteaux de sable** : avec le **seau vide** en main, **Maj + clic** sur du sable plat pose une **tour de sable** (un seau retourné) ; Maj + clic sur une tour en ajoute un étage (3 au plus). Pur jeu, aucun rendement, **40 tours** au plus. La marée haute efface les tours posées plus bas que sa surface.
+- **[PROPOSÉ]** **Orage au large** : un 6ᵉ temps rare (**5 %**) : éclairs et tonnerre à l'horizon (le son arrive après l'éclair), vagues deux fois plus hautes, séchage ×0,8 ; le lendemain matin, **2 épaves** de plus dérivent vers la plage. Il ne touche jamais l'île.
+- **[PROPOSÉ]** **Baleine et dauphins** : de temps en temps (environ toutes les **6 min**), une **baleine** souffle au loin (le son d'abord, puis le jet d'eau, à 600-1 200 m) ou un groupe de **dauphins** saute à 150-300 m. Les voir de près ou à la longue-vue les ajoute à la collection.
+- **[PROPOSÉ]** **Succès à l'œil** : pas de fenêtres ; un **socle des trophées** près de la cabine reçoit une **petite statue** par succès : premier achat, 100 sel récoltés, premier marais, dormir dans le hamac, Pinçon à 5 cœurs, collection de coquillages complète, toute la collection, T2 débloqué, 1 000 L retirés, 3 trésors déterrés. Un petit carillon quand une statue apparaît. (Les succès « de fin de projet » de Q-26 viendront s'y ajouter.)
+- **[PROPOSÉ]** **Carte de l'île** : **M** ouvre une carte dessinée à la main (papier crème, traits au feutre) vue de dessus : sable, terre, mer, rochers, palmiers, tout ce qui est posé (pictos), le joueur (une flèche) et Pinçon. Elle se redessine quand on la rouvre.
+- **[PROPOSÉ]** **Manette** (M-16, utile pour le Steam Deck) : toutes les actions ont un bouton (stick gauche pour marcher, stick droit pour regarder, A sauter, X interagir, gâchette droite outil, gâchette gauche geste secondaire, gâchettes hautes pour la barre, Start pause, Select carte), en plus du clavier et de la souris.
 
 ## 20. Glossaire
 

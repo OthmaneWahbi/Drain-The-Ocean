@@ -1,0 +1,50 @@
+name: Versions
+
+# Étiquette chaque version du jeu (vX.Y.Z) pour pouvoir y revenir.
+# - les versions passées listées dans tools/versions.txt ;
+# - la version en cours (config/version de game/project.godot) à chaque fusion dans main.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+
+      - name: Étiqueter les versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          tag_one() {
+            local ver="$1" sha="$2" desc="$3"
+            local tag="v$ver"
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "$tag existe déjà"; return
+            fi
+            if ! git cat-file -e "$sha^{commit}" 2>/dev/null; then
+              echo "::warning::$tag : commit $sha introuvable"; return
+            fi
+            git tag -a "$tag" "$sha" -m "Version $ver : $desc"
+            git push origin "$tag"
+            gh release create "$tag" --verify-tag --title "Version $ver" \
+              --notes "Version $ver : $desc. Pour y revenir, télécharger le code source (zip) ci-dessous et ouvrir game/project.godot dans Godot 4.7.2." || true
+          }
+          grep -v '^#' tools/versions.txt | while read -r ver sha desc; do
+            [ -n "$ver" ] && tag_one "$ver" "$sha" "$desc"
+          done
+          cur=$(sed -n 's/^config\/version="\(.*\)"/\1/p' game/project.godot)
+          if [ -n "$cur" ]; then
+            tag_one "$cur" "$GITHUB_SHA" "$(git log -1 --format=%s "$GITHUB_SHA")"
+          fi
