@@ -138,14 +138,12 @@ func _fly_ad_plane() -> void:
 	banner.add_child(Greybox.box(Vector3(0.03, 0.03, 4.0), Color(0.3, 0.3, 0.3), Vector3(0, 0, 22.0)))
 	banner.add_child(Greybox.box(Vector3(0.05, 1.8, 40.0), Color(0.97, 0.95, 0.88)))
 	for side in [-1.0, 1.0]:
-		var text := Label3D.new()
-		text.text = tr("ENDING_BANNER")
+		# Peint au pinceau dans la toile (une face chacun, à l'endroit).
+		var text := PaintedText.new("ENDING_BANNER", Color(0.75, 0.1, 0.1), PaintedText.Style.BRUSH)
 		text.font_size = 96
 		text.pixel_size = 0.0085
-		text.modulate = Color(0.75, 0.1, 0.1)
-		text.outline_size = 0
-		text.double_sided = false  # chaque face a son texte, à l'endroit
-		text.position = Vector3(0.05 * side, 0, 0)
+		text.max_width = 38.0
+		text.position = Vector3(0.031 * side, 0, 0)
 		text.rotation_degrees.y = 90.0 * side
 		banner.add_child(text)
 	_plane.add_child(banner)
