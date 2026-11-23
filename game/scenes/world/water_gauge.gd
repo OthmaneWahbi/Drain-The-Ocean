@@ -12,7 +12,7 @@ const LOG_MAX := 0.0
 const SWEEP_DEG := 270.0
 
 var _needle_pivot: Node3D
-var _label: Label3D
+var _label: PaintedText
 
 
 func _ready() -> void:
@@ -47,13 +47,14 @@ func _ready() -> void:
 	_needle_pivot.get_child(-1).rotation.x = PI / 2
 	add_child(_needle_pivot)
 	add_child(Props.box(Vector3(1.0, 0.3, 0.04), Props.YELLOW, Vector3(0, 1.12, 0.07)))
-	_label = Label3D.new()
-	_label.position = Vector3(0, 1.12, 0.1)
+	# Écrit sur le panneau jaune (peint dans la matière, redessiné quand la valeur change).
+	_label = PaintedText.new("", UiTheme.INK, PaintedText.Style.PRINT)
+	_label.position = Vector3(0, 1.12, 0.093)
 	_label.font_size = 28
 	_label.pixel_size = 0.004
-	_label.modulate = UiTheme.INK
 	_label.font = UiTheme.bold_font()
-	_label.outline_size = 0
+	_label.max_width = 0.94
+	_label.dynamic = true
 	add_child(_label)
 	add_child(Greybox.box_collision(Vector3(1.0, 2.3, 0.3), Vector3(0, 1.15, 0)))
 	GameState.ocean_changed.connect(_refresh)

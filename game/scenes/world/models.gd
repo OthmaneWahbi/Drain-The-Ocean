@@ -504,15 +504,13 @@ static func phone_booth() -> Node3D:
 		side.rotation.y = i * PI / 2
 		shake.add_child(side)
 		side.add_child(Greybox.box(Vector3(w - 0.1, 0.22, 0.04), BOOTH_CREAM, Vector3(0, h - 0.05, w / 2 + 0.02)))
-		var sign := Label3D.new()
-		sign.text = "BOOTH_SIGN"
+		# Peint dans le bandeau, sans déborder (avant, « TÉLÉPHONE » dépassait du bandeau).
+		var sign := PaintedText.new("BOOTH_SIGN", BOOTH_RED, PaintedText.Style.BRUSH)
 		sign.font = UiTheme.title_font()
 		sign.font_size = 46
 		sign.pixel_size = 0.004
-		sign.modulate = BOOTH_RED
-		sign.outline_size = 0
-		sign.double_sided = false
-		sign.position = Vector3(0, h - 0.05, w / 2 + 0.045)
+		sign.max_width = w - 0.22
+		sign.position = Vector3(0, h - 0.05, w / 2 + 0.046)
 		side.add_child(sign)
 	# Les vitres (derrière, gauche, droite), avec des petits carreaux rouges.
 	var glass := flat_material(BOOTH_GLASS)

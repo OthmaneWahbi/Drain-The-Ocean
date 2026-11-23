@@ -119,16 +119,16 @@ static func ball(radius: float, color: Color, pos := Vector3.ZERO, rng_seed := 1
 	return mi
 
 
-## Un texte peint (tampon de l'Agence sur une caisse, un sac…). `key` est traduit.
-static func painted(key: String, color: Color, size: int, pos: Vector3, rot_y := 0.0) -> Label3D:
-	var l := Label3D.new()
-	l.text = key
+## Un texte peint dans la matière (tampon de l'Agence sur une caisse, enseigne…). `key` est
+## traduit. Voir PaintedText : éclairé comme l'objet, usé, sans contour ni billboard.
+static func painted(key: String, color: Color, size: int, pos: Vector3, rot_y := 0.0,
+		style := PaintedText.Style.BRUSH, max_width := 0.0, wrap := false) -> PaintedText:
+	var l := PaintedText.new(key, color, style)
 	l.font = UiTheme.marker_font()
 	l.font_size = UiTheme.marker_size(size)
 	l.pixel_size = 0.004
-	l.modulate = color
-	l.outline_size = 0
-	l.double_sided = false
+	l.max_width = max_width
+	l.wrap = wrap
 	l.position = pos
 	l.rotation.y = rot_y
 	return l
@@ -543,14 +543,9 @@ static func crate(size := 0.9) -> Node3D:
 	# Le tampon, peint à plat sur les planches des faces ±Z, entre le cadre.
 	var face := h + plank_t - 0.012 + 0.003
 	for side in [-1.0, 1.0]:
-		var stamp := painted("CRATE_STAMP", RED, 40, Vector3(0, h + size * 0.1, side * face), 0.0 if side > 0 else PI)
-		stamp.width = inner / stamp.pixel_size
-		stamp.autowrap_mode = TextServer.AUTOWRAP_OFF
-		root.add_child(stamp)
-		var fragile := painted("CRATE_FRAGILE", Color(0.12, 0.14, 0.18), 18, Vector3(0, h - size * 0.15, side * face), 0.0 if side > 0 else PI)
-		fragile.width = inner / fragile.pixel_size
-		fragile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		root.add_child(fragile)
+		var rot := 0.0 if side > 0 else PI
+		root.add_child(painted("CRATE_STAMP", RED, 40, Vector3(0, h + size * 0.1, side * face), rot, PaintedText.Style.STENCIL, inner))
+		root.add_child(painted("CRATE_FRAGILE", Color(0.12, 0.14, 0.18), 18, Vector3(0, h - size * 0.15, side * face), rot, PaintedText.Style.STENCIL, inner, true))
 	for mi in root.get_children():
 		if mi is MeshInstance3D and (mi as MeshInstance3D).mesh is BoxMesh and ((mi as MeshInstance3D).mesh as BoxMesh).size.length() < 0.2:
 			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -690,7 +685,7 @@ static func plane() -> Node3D:
 	var fin := box(Vector3(0.06, 0.8, 0.6), RED, Vector3(0, 0.45, 1.95))
 	root.add_child(fin)
 	for side in [-1.0, 1.0]:
-		var a := painted("PLANE_LETTER", CREAM, 90, Vector3(side * 0.035, 0.45, 1.95), side * PI / 2)
+		var a := painted("PLANE_LETTER", CREAM, 90, Vector3(side * 0.036, 0.45, 1.95), side * PI / 2, PaintedText.Style.STENCIL, 0.5)
 		a.font = UiTheme.title_font()
 		root.add_child(a)
 	# Le train : deux roues sous le nez.
@@ -919,7 +914,12 @@ static func slide() -> Node3D:
 	var hopper := cyl(0.55, 0.3, 0.4, WOOD, Vector3(0, 2.25, 0), 4)
 	hopper.rotation.y = PI / 4
 	root.add_child(hopper)
-	root.add_child(painted("SLIDE_SIGN", RED, 56, Vector3(0, 2.25, 0.33)))
+	# Peint sur la face avant de la trémie, qui penche : 4 côtés, rayon 0,55 en haut et 0,3 en
+	# bas sur 0,4 m, tournés de 45° (la face est à r·cos 45° du centre).
+	var lean := atan((0.55 - 0.3) * cos(PI / 4) / 0.4)
+	var slide_sign := painted("SLIDE_SIGN", RED, 56, Vector3(0, 2.25, (0.55 + 0.3) / 2.0 * cos(PI / 4) + 0.006), 0.0, PaintedText.Style.BRUSH, 0.5)
+	slide_sign.rotation.x = lean  # le haut de la face est plus loin : la normale penche vers le bas
+	root.add_child(slide_sign)
 	# La goulotte, en pente, et ses deux pieds.
 	var chute := Node3D.new()
 	chute.position = Vector3(0, 1.15, 1.4)
@@ -1178,7 +1178,7 @@ static func rations() -> Node3D:
 		var c := cyl(0.07, 0.07, 0.14, METAL, Vector3(-0.21 + i * 0.14, 0.46, 0.05), 8)
 		root.add_child(c)
 		root.add_child(cyl(0.072, 0.072, 0.07, [RED, TEAL, YELLOW, RED][i], Vector3(-0.21 + i * 0.14, 0.46, 0.05), 8))
-	root.add_child(painted("RATIONS_STAMP", CREAM, 40, Vector3(0, 0.22, 0.255)))
+	root.add_child(painted("RATIONS_STAMP", CREAM, 40, Vector3(0, 0.22, 0.256), 0.0, PaintedText.Style.STENCIL, 0.62))
 	return root
 
 

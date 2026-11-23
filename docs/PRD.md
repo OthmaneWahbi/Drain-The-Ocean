@@ -5,7 +5,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Version du document | 0.50 (0.1.19 : Pinçon, le crabe de compagnie) |
+| Version du document | 0.50.1 (textes peints dans la matière ; avant : 0.50, 0.1.19 : Pinçon, le crabe de compagnie) |
 | Date | 2026-11-22 |
 | Statut | En revue : les sections marquées **[PROPOSÉ]** attendent la validation d'Othmane |
 | Langue | Français |
@@ -977,6 +977,17 @@ Détails **[PROPOSÉ]** (nos choix, à valider) :
 - **[PROPOSÉ]** **Ce qu'il donne** : à **2 cœurs** et plus, il suit le joueur quand il est à moins de 12 m ; dès **40 d'affection** (et s'il n'a pas faim), il **rapporte un coquillage chaque matin**, posé près de lui.
 - **[PROPOSÉ]** **Au catalogue (palier 1)** : **Croquettes pour crabe** (sachet de 6, 6 sel, se rachète), **Chapeau de paille** (35 sel + 3 coquillages, unique), **Lunettes de soleil en cœur** (50 sel + 4 minéraux, uniques). Les accessoires arrivent dans la caisse commune et Pinçon les porte tout de suite.
 - **[PROPOSÉ]** **Où il vit** : au bord de la plage (anneau de 18,5 à 23,5 m), jamais dans la mer. La faim, l'affection, les croquettes et les accessoires sont sauvegardés ; une vieille sauvegarde reçoit un Pinçon neuf.
+
+### 19.33 Textes peints dans la matière
+
+Demande d'Othmane (2026-11-22) **[DÉCIDÉ]** : toute l'écriture posée sur les objets du jeu a l'air collée par-dessus au lieu de faire partie de la texture de l'objet ; la corriger, après avoir cherché des références. Garder les polices choisies (§19.23).
+
+Détails **[PROPOSÉ]** (nos choix, à valider) :
+- **[PROPOSÉ]** **Références** : la doc Godot sur le texte 3D (un `Label3D` n'est pas éclairé par défaut et se comporte comme un sprite ; un matériau à soi ne reçoit pas la texture de la police) ; les enseignes et tampons des jeux stylisés peints à la main et les textures « peinture usée » (80.lv, Polycount, packs de décalques au pochoir) : une écriture fait partie de l'objet quand elle prend **la même lumière et les mêmes ombres**, qu'elle est **mate comme lui**, qu'elle a des **bords imparfaits** (bavures, pinceau), un peu d'**usure** (écailles, peinture plus fine qui laisse voir le bois), qu'elle **suit la surface** (même pente, aucune épaisseur) et qu'elle **tient dans sa place** (pas de lettres qui débordent). Les décalques (`Decal`) ne marchent pas avec le rendu « Compatibilité » (mobile), donc pas eux.
+- **[PROPOSÉ]** **Comment** : la police dessine le texte une fois dans une image, puis un quad posé à plat sur la surface l'affiche avec un shader « peinture » éclairé : coups de pinceau, bords qui bavent, écailles à l'échelle des lettres (jamais une lettre entière effacée), couche à 86-95 % qui laisse deviner la matière, sans contour ni billboard, sans ombre projetée. Trois styles : **pinceau** (enseigne de la cabine, toboggan, banderole de fin), **pochoir** usé (caisse de l'Agence, rations, « A » de l'avion), **marqueur** propre (planchettes de la palette, jauge).
+- **[PROPOSÉ]** **La palette** : le compteur de chaque matériau ne flotte plus au-dessus du tas ; il est écrit sous le nom, sur la planchette (agrandie) devant le bac, grisé à zéro.
+- **[PROPOSÉ]** **Corrigé au passage** : « TÉLÉPHONE » dépassait du bandeau de la cabine ; le texte « ENVOI » du toboggan suit la pente de la trémie.
+- **[PROPOSÉ]** **Pas changés** (ce sont des effets de bande dessinée qui flottent dans l'air, pas des écritures sur un objet) : « Driiing ! » au-dessus de la cabine, les « z Z z » de Pinçon, le débit au-dessus des pompes. À Othmane de dire s'ils doivent aussi devenir des objets (par ex. une sonnette qui tremble, une ardoise sur la pompe).
 
 ## 20. Glossaire
 
