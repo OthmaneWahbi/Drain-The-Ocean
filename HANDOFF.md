@@ -249,6 +249,23 @@ Le téléphone est une cabine. Parler à la cabine ouvre une conversation (des r
 
 ## Journal
 
+### 2026-11-23 — MODIF — Robot photographe et détecteur de chevauchements
+- **Quoi :** plan de captures `robot` (`game/tests/scenarios/shots_robot.gd`) : il part d'une île neuve, pose tout ce qui existe (chaque objet du catalogue sur une spirale, zones pleines d'eau et de sel, cuvette, cabine, palette, socle et ses 10 statues, palmiers, rochers, épave, nid, cocotiers, ramassables, 3 tours de sable, Pinçon), puis photographie chaque sujet sous 9 angles (6 à hauteur d'yeux, 2 au ras du sol, 1 de dessus) avec une caméra libre sans HUD, fait un tour en 3ᵉ personne (24 images) et 6 images de nuit. Avant les photos, il **mesure** : la boîte de chaque pièce de chaque modèle (les troncs penchés des palmiers pièce par pièce) ; deux objets dont les pièces se traversent de plus de 4 cm au-dessus du sol sont listés dans `chevauchements.txt` et photographiés de deux côtés. `ROBOT_ONLY=<mot>` ne photographie que les sujets qui contiennent ce mot. `tools/planches.py` assemble les images en planches 3 × 3 par sujet.
+- **Pourquoi :** demande d'Othmane (« fais un robot qui joue et prend beaucoup de captures pour vérifier »), pour trouver les objets qui se traversent ou s'affichent mal.
+- **Résultat :** 42 sujets, plus de 400 images (`captures/robot/`). Une seule paire signalée sur l'île pleine : le parasol et un tronc de palmier penché (4 cm, dans les boîtes, invisible à l'image). Aucun vrai chevauchement.
+- **Impact :** `game/tests/scenarios/shots_robot.gd`, `tools/planches.py`, `docs/GUIDE_CODE.md`.
+- **Par :** Claude
+
+### 2026-11-23 — TEST ÉCHOUÉ — Le robot trouvait tout en double
+- **Quoi :** le premier passage du détecteur signalait 3 chevauchements (deux toboggans, deux moulins, deux bassins qui se touchent).
+- **Cause :** `DTO_SKIP_MENU=1` reprend l'emplacement 1, que le passage précédent avait sauvegardé : le robot reposait tout par-dessus. Pas un défaut du jeu (les objets d'une même partie passent bien par `find_free_spot`).
+- **Correction :** le robot commence par `GameState.new_game()`. Au passage suivant : 1 seule paire, sans gravité.
+- **Par :** Claude
+
+### 2026-11-23 — NOTE — Palmiers penchés et objets hauts
+- **Quoi :** l'emprise d'un palmier ne couvre que le pied du tronc (0,6 m) ; un objet haut (parasol, moulin) posé tout près peut frôler le tronc penché. Mesuré : 4 cm au pire sur l'île pleine, rien à l'image. Si ça devient visible, ajouter une forme qui suit le tronc dans `_blockers_except`.
+- **Par :** Claude
+
 ### 2026-11-23 — MODIF — Version 0.1.25 : plus tard
 - **Châteaux de sable :** seau vide en main, Maj + clic sur du sable plat et sec : une tour (un seau retourné, créneaux, drapeau), Maj + clic dessus : un étage (3 au plus), 40 tours au plus. Pur jeu ; la marée et la pelle les effacent ; sauvegardées.
 - **Orage au large :** 6ᵉ temps (5 %, le calme passe de 35 à 30), éclairs sous le nuage du large qui éclairent un peu l'île, tonnerre après l'éclair, vagues ×2, séchage ×0,8 ; 2 épaves de plus le lendemain matin. Pictogramme : nuage noir et éclair.
