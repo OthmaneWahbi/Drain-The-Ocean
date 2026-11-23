@@ -64,10 +64,26 @@ static func model(id: String) -> Node3D:
 			return IslandGoods.chest()
 		"oeuf_tortue":
 			return IslandGoods.egg()
+		"baleine":  # 0.1.25 : une petite baleine sculptée, la queue levée
+			var wh := LaterGoods.whale(0.34, Color(0.5, 0.62, 0.8))
+			wh.position.y = 0.07
+			wh.rotation.y = PI / 2
+			return _holder(wh)
+		"dauphin":
+			var dp := LaterGoods.dolphin(0.32, Color(0.7, 0.8, 0.92))
+			dp.position.y = 0.1
+			dp.rotation = Vector3(0.3, PI / 2, 0)
+			return _holder(dp)
 	# Inconnu : un petit galet (jamais d'erreur).
 	var r := Node3D.new()
 	r.add_child(Props.ball(0.08, Color(0.6, 0.6, 0.6), Vector3(0, 0.05, 0)))
 	return r
+
+
+static func _holder(n: Node3D) -> Node3D:
+	var root := Node3D.new()
+	root.add_child(n)
+	return root
 
 
 ## Un oursin : une boule violette hérissée de piquants.

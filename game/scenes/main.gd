@@ -82,6 +82,19 @@ func _ready() -> void:
 	var note := BottleNote.new()
 	note.name = "BottleNote"
 	add_child(note)
+	# 0.1.25 : les tours de sable, la baleine et les dauphins, le socle des trophées, la carte (M).
+	var castles := CastlesView.new()
+	castles.name = "Castles"
+	add_child(castles)
+	var sea_life := SeaLifeView.new()
+	sea_life.name = "SeaLife"
+	add_child(sea_life)
+	var trophies := TrophyStandView.new()
+	trophies.name = "TrophyStand"
+	add_child(trophies)
+	var island_map := IslandMap.new()
+	island_map.name = "IslandMap"
+	add_child(island_map)
 	for extra: Node3D in [SeabedDecor.new(), Clouds.new(), Fauna.new()]:
 		add_child(extra)
 	GameState.game_reset.connect(_clear_views)

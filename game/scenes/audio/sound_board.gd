@@ -38,6 +38,8 @@ func _ready() -> void:
 	# quand il passe, et plus au moment de la commande.
 	# 0.1.20 (juice) : un tintement par grain qui tombe sur un tas, plus aigu pour les plus rares.
 	GameState.salt_dropped.connect(_on_salt_dropped)
+	# 0.1.25 : une statue apparaît sur le socle des trophées.
+	GameState.trophy_won.connect(func(_id): play("chime", -4.0))
 	GameState.ending_phase_changed.connect(_on_ending_phase)
 	GameState.game_reset.connect(func(): _last_bucket_l = 0.0)
 	_last_bucket_l = GameState.bucket.water_l

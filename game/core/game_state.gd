@@ -96,6 +96,12 @@ signal turtle_laid(nest: Dictionary)
 signal turtles_hatched(nest: Dictionary)
 ## 0.1.23 : les cocotiers plantés ont changé (planté, poussé), ou la noix en main.
 signal planted_changed
+## 0.1.25 : les châteaux de sable ont changé (posé, un étage, effacé par la marée).
+signal castles_changed
+## 0.1.25 : une baleine ou des dauphins apparaissent au large (ou s'en vont : sea_life vide).
+signal sea_life_changed
+## 0.1.25 : un succès vient d'être gagné (une statue apparaît sur le socle).
+signal trophy_won(id: String)
 
 const CONFIG_PATH := "res://data/game_config.tres"
 const FAR_AWAY := Vector3(1.0e9, 0.0, 1.0e9)
@@ -183,6 +189,16 @@ var planted: Array[Dictionary] = []
 var coconuts_held: int = 0
 ## 0.1.24 : l'eau des récipients tenus en main (arrosoir, seau percé), en litres.
 var vessels: Dictionary = {}
+## 0.1.25 : les tours de sable {id, position, floors}.
+var castles: Array[Dictionary] = []
+## 0.1.25 : les compteurs des succès (achats, sel récolté, nuits au hamac, objets déterrés).
+var stats: Dictionary = {}
+## 0.1.25 : les succès gagnés (id -> true), dans l'ordre de config.trophies sur le socle.
+var trophies: Dictionary = {}
+## 0.1.25 : l'apparition en cours au large ({} : aucune) et le temps avant la prochaine.
+var sea_life: Dictionary = {}
+var sea_life_t: float = 0.0
+var _trophy_t: float = 0.0
 ## Petits objets à ramasser avec E : {id, kind: "coconut" | "shell", position}.
 var pickups: Array[Dictionary] = []
 ## Objets posés qui contiennent des portions : {id, kind: "condenseur" | "rations", position, logic: StationLogic}.
@@ -317,6 +333,11 @@ func _reset_state() -> void:
 	planted = []
 	coconuts_held = 0
 	vessels = {}
+	castles = []
+	stats = {}
+	trophies = {}
+	sea_life = {}
+	sea_life_t = config.sea_life_interval_s * 0.5
 	pickups = []
 	stations = []
 	mirrors = []
@@ -360,12 +381,16 @@ func _process(delta: float) -> void:
 ## Tout ce qui « vit avec le temps » passe par ici, pour que l'avance rapide (admin) le touche aussi.
 func simulate(delta: float) -> void:
 	if day.step(delta):
+		var stormy := weather == config.storm_weather  # l'orage de la veille rejette des épaves
 		_morning_refill()
 		_refill_reef()
 		_new_weather()
 		if agency_order.is_empty() or agency_order.get("sent", false):
 			_new_agency_order()
 		_island_morning()
+		if stormy:
+			for i in config.storm_wrecks:
+				spawn_wreck()
 		_pet_morning_gift()
 		if phone.on_new_morning(rng, config.offer_chance_per_day, offer_candidates()):
 			phone_changed.emit()
@@ -387,6 +412,8 @@ func simulate(delta: float) -> void:
 	_wind_rects.clear()
 	_run_tides(delta)
 	_leak_vessels(delta)
+	_wash_castles()
+	_run_sea_life(delta)
 	_run_marsh_series(delta)
 	_run_wrecks(delta)
 	_run_turtles()
@@ -395,6 +422,10 @@ func simulate(delta: float) -> void:
 	_run_auto_pumps(delta)
 	_run_slides(delta)
 	check_milestones()
+	_trophy_t -= delta
+	if _trophy_t <= 0.0:
+		_trophy_t = 0.5
+		check_trophies()
 	survival.step(delta)
 	pet.step(delta)
 	stamina.set_max(survival.stamina_cap())
@@ -692,6 +723,7 @@ func harvest(zone: Dictionary, resource: String = "") -> void:
 			continue
 		var got := logic.take_some(n, key)
 		var leftover := add_carried(got)
+		stats.sel_harvested = int(stats.get("sel_harvested", 0)) + int(got.get("sel", 0)) - int(leftover.get("sel", 0))
 		Economy.add(logic.deposit, leftover)
 		budget -= Economy.count(got) - Economy.count(leftover)
 
@@ -1223,6 +1255,7 @@ func sleep(spot: Vector3 = FAR_AWAY) -> bool:
 		return false
 	var hours := fposmod(config.wake_hour - day.hour(), 24.0)
 	advance_time(hours / 24.0 * day.day_length_s)
+	stats.slept = int(stats.get("slept", 0)) + 1
 	slept.emit(spot)
 	return true
 
@@ -1623,6 +1656,7 @@ func _check_buried(pos: Vector3) -> void:
 	for b in buried.duplicate():
 		if Vector2(pos.x - b.position.x, pos.z - b.position.z).length() <= config.detector_dig_m:
 			buried.erase(b)
+			stats.dug = int(stats.get("dug", 0)) + 1
 			_reward_buried(String(b.kind))
 			dug_up.emit(String(b.kind), b.position)
 
@@ -1814,6 +1848,7 @@ func order(item_ids: Array) -> Array[Dictionary]:
 			carried.erase(k)
 	carried_changed.emit()
 	_sync_toolbar()
+	stats.purchases = int(stats.get("purchases", 0)) + 1
 	for id in item_ids:
 		var item := catalog.find(StringName(id))
 		if item.unique:
@@ -2464,6 +2499,11 @@ func _blockers_except(item: Dictionary, with_coconut_spots: bool = true, with_pi
 	for w in wrecks:
 		if w.landed:
 			out.append(PlacementGrid.rect_shape(footprint_rect("epave", w.position)))
+	# 0.1.25 : les tours de sable et le socle des trophées.
+	for c in castles:
+		if c != item:
+			out.append(PlacementGrid.circle_shape(c.position, config.castle_radius_m))
+	out.append(PlacementGrid.rect_shape(trophy_stand_rect()))
 	out.append(PlacementGrid.circle_shape(player_position, config.player_radius_m))
 	# Les tuyaux au sol gênent tout, zones de séchage comprises : depuis 0.1.6, un tuyau verse d'un
 	# bloc au-dessus du bac, jamais posé dedans.
@@ -3286,6 +3326,10 @@ func to_dict() -> Dictionary:
 		"planted": planted.map(func(pl): return {"position": _v2a(pl.position), "planted_day": pl.planted_day}),
 		"coconuts_held": coconuts_held,
 		"vessels": vessels.duplicate(),
+		"castles": castles.map(func(c): return {"position": _v2a(c.position), "floors": c.floors}),
+		"stats": stats.duplicate(),
+		"trophies": trophies.keys(),
+		"sea_life_t": sea_life_t,
 		"tide_pools": tide_pools.map(func(tp): return {"items": tp.items.duplicate(), "low": tp.low, "pet_low": tp.pet_low}),
 		"crates": crates.map(func(c): return {"position": _v2a(c.position), "items": c.items.duplicate()}),
 		"decor": decor.map(func(d): return {"kind": d.kind, "position": _v2a(d.position), "rotation_deg": item_rotation(d)}),
@@ -3421,6 +3465,19 @@ func load_dict(data: Dictionary) -> void:
 	for pl in data.get("planted", []):
 		planted.append({"id": _new_id("palm"), "position": _a2v(pl.get("position", [])), "planted_day": int(pl.get("planted_day", 0))})
 	coconuts_held = int(data.get("coconuts_held", 0))
+	castles = []
+	for c in data.get("castles", []):
+		castles.append({"id": _new_id("castle"), "position": _a2v(c.get("position", [])), "floors": clampi(int(c.get("floors", 1)), 1, config.castle_max_floors)})
+	stats = {}
+	var saved_stats: Dictionary = data.get("stats", {})
+	for k in saved_stats:
+		stats[String(k)] = int(saved_stats[k])
+	trophies = {}
+	for id in data.get("trophies", []):
+		if config.trophies.has(String(id)):
+			trophies[String(id)] = true
+	sea_life = {}
+	sea_life_t = float(data.get("sea_life_t", config.sea_life_interval_s * 0.5))
 	vessels = {}
 	var vs: Dictionary = data.get("vessels", {})
 	for k in vs:
@@ -3543,6 +3600,162 @@ func _notification(what: int) -> void:
 		save_game()
 
 
+# --- Plus tard (0.1.25, PRD §19.32) --------------------------------------------------------
+
+# Châteaux de sable ---------------------------------------------------------------------------
+
+## La tour de sable à moins de `castle_pick_m` de `pos` ({} : aucune).
+func castle_at(pos: Vector3) -> Dictionary:
+	for c in castles:
+		if Vector2(pos.x - c.position.x, pos.z - c.position.z).length() <= config.castle_pick_m:
+			return c
+	return {}
+
+
+## Pourquoi on ne peut pas poser (ou monter) une tour en `pos` : "" si on peut, sinon la clé du texte.
+func castle_reason(pos: Vector3) -> String:
+	var c := castle_at(pos)
+	if not c.is_empty():
+		return "PROMPT_CASTLE_TOP" if int(c.floors) >= config.castle_max_floors else ""
+	if castles.size() >= config.castle_max:
+		return "PROMPT_CASTLE_LIMIT"
+	if terrain.soil(TerrainLogic.nearest_vertex(pos.x, pos.z)) != TerrainLogic.Soil.SAND or terrain.is_grass(pos.x, pos.z):
+		return "PROMPT_CASTLE_SAND"
+	if terrain.height(pos.x, pos.z) <= water_level_y() + 0.02:
+		return "PROMPT_CASTLE_WET"
+	if terrain.slope(pos.x, pos.z) > config.castle_max_slope:
+		return "PROMPT_CASTLE_FLAT"
+	if not PlacementGrid.is_valid(PlacementGrid.circle_shape(pos, config.castle_radius_m), _blockers_except({}), INF):
+		return "PROMPT_CASTLE_BLOCKED"
+	return ""
+
+
+## Pose une tour de sable en `pos`, ou ajoute un étage à celle qui est là. Renvoie la tour ({} : non).
+func build_castle(pos: Vector3) -> Dictionary:
+	if castle_reason(pos) != "":
+		return {}
+	var c := castle_at(pos)
+	if c.is_empty():
+		c = {"id": _new_id("castle"), "position": Vector3(pos.x, terrain.height(pos.x, pos.z), pos.z), "floors": 1}
+		castles.append(c)
+	else:
+		c.floors = int(c.floors) + 1
+	castles_changed.emit()
+	return c
+
+
+## La marée haute efface les tours plus basses que sa surface ; la pelle, celles dont le sable a bougé.
+func _wash_castles() -> void:
+	if castles.is_empty():
+		return
+	var surface := water_level_y()
+	var gone := false
+	for c in castles.duplicate():
+		var ground: float = terrain.height(c.position.x, c.position.z)
+		if float(c.position.y) < surface or absf(ground - float(c.position.y)) > 0.12:
+			castles.erase(c)
+			gone = true
+	if gone:
+		castles_changed.emit()
+
+
+# Baleine et dauphins -------------------------------------------------------------------------
+
+## Le jour, de temps en temps : une baleine souffle au loin ou des dauphins sautent.
+func _run_sea_life(delta: float) -> void:
+	if not sea_life.is_empty():
+		sea_life.age = float(sea_life.age) + delta
+		if sea_life.age >= float(sea_life.duration):
+			sea_life = {}
+			sea_life_changed.emit()
+		return
+	if ending != null or not day.is_day():
+		return
+	sea_life_t -= delta
+	if sea_life_t <= 0.0:
+		start_sea_life("baleine" if rng.randf() < config.whale_chance else "dauphins")
+
+
+## Fait apparaître `kind` ("baleine" ou "dauphins") au large, à sa distance (config).
+func start_sea_life(kind: String) -> Dictionary:
+	sea_life_t = config.sea_life_interval_s * rng.randf_range(0.7, 1.3)
+	var r: Array = config.sea_life_distance_m.get(kind, [200.0, 300.0])
+	var a := rng.randf() * TAU
+	var d := rng.randf_range(float(r[0]), float(r[1]))
+	sea_life = {"kind": kind, "position": Vector3(cos(a) * d, 0.0, sin(a) * d), "heading": rng.randf() * TAU,
+		"age": 0.0, "duration": float(config.sea_life_duration_s.get(kind, 10.0)), "seen": false}
+	sea_life_changed.emit()
+	return sea_life
+
+
+## La vue dit que le joueur regarde l'apparition, à `distance` m (`spying` : à la longue-vue).
+## De près ou à la longue-vue, elle entre dans la collection (une fois). Renvoie vrai si nouveau.
+func spot_sea_life(distance: float, spying: bool) -> bool:
+	if sea_life.is_empty() or bool(sea_life.get("seen", false)):
+		return false
+	if not spying and distance > config.sea_life_near_m:
+		return false
+	sea_life.seen = true
+	var id := String(config.sea_life_collection.get(String(sea_life.kind), ""))
+	if id == "" or has_found(id):
+		return false
+	add_to_collection(id)
+	return true
+
+
+# Succès (socle des trophées) -----------------------------------------------------------------
+
+## L'emprise du socle des trophées (près de la cabine).
+func trophy_stand_rect() -> Rect2:
+	var p := config.trophy_stand_position
+	return Rect2(p.x - 1.0, p.z - 0.5, 2.0, 1.0)
+
+
+## Une rangée de la vitrine est-elle complète ?
+func collection_row_complete(row_id: String) -> bool:
+	for row in collection_rows:
+		if String(row.get("id", "")) == row_id:
+			for id in row.get("items", []):
+				if not has_found(String(id)):
+					return false
+			return true
+	return false
+
+
+## La condition d'un succès est-elle remplie en ce moment ?
+func trophy_met(id: String) -> bool:
+	match id:
+		"premier_achat":
+			return int(stats.get("purchases", 0)) >= 1
+		"sel_100":
+			return int(stats.get("sel_harvested", 0)) >= config.trophy_salt
+		"premier_marais":
+			return not marshes().is_empty()
+		"hamac":
+			return int(stats.get("slept", 0)) >= 1
+		"pincon_5":
+			return pet.hearts() >= config.trophy_hearts
+		"coquillages":
+			return collection_row_complete("coquillages")
+		"collection":
+			return collection_found_count() >= collection_slots().size()
+		"palier_2":
+			return unlocked_tier >= 2
+		"litres_1000":
+			return ocean.removed_l >= config.trophy_litres
+		"tresors_3":
+			return int(stats.get("dug", 0)) >= config.trophy_treasures
+	return false
+
+
+## Gagne les succès dont la condition vient d'être remplie (une statue chacun, une seule fois).
+func check_trophies() -> void:
+	for id in config.trophies:
+		if not trophies.has(id) and trophy_met(id):
+			trophies[id] = true
+			trophy_won.emit(id)
+
+
 # --- Outils internes -----------------------------------------------------------------------
 
 func _emit_all() -> void:
@@ -3566,6 +3779,8 @@ func _emit_all() -> void:
 	resources_discovered.emit()
 	agency_order_changed.emit()
 	planted_changed.emit()
+	castles_changed.emit()
+	sea_life_changed.emit()
 
 
 func _new_id(prefix: String) -> String:

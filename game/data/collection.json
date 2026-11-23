@@ -45,6 +45,13 @@
 				"coffre",
 				"oeuf_tortue"
 			]
+		},
+		{
+			"id": "large",
+			"items": [
+				"baleine",
+				"dauphin"
+			]
 		}
 	]
 }
