@@ -59,6 +59,11 @@ func _draw() -> void:
 				var x := c.x - r * 0.36 + i * r * 0.24
 				var y := c.y + r * 0.15 + fmod(_t * 30.0 + i * 7.0, r * 0.35)
 				draw_line(Vector2(x, y), Vector2(x - 3, y + 8), RAIN, 3.0, true)
+		"orage":  # 0.1.25 : un nuage noir et un éclair qui clignote
+			_cloud(c - Vector2(0, r * 0.2), r * 0.45, CLOUD.darkened(0.45))
+			if fmod(_t, 1.6) < 1.1:
+				var bolt := PackedVector2Array([c + Vector2(r * 0.05, -r * 0.05), c + Vector2(-r * 0.15, r * 0.3), c + Vector2(r * 0.02, r * 0.28), c + Vector2(-r * 0.12, r * 0.62)])
+				draw_polyline(bolt, SUN, 4.0, true)
 
 
 func _sun(c: Vector2, radius: float, color: Color, spin: float, pulse := 1.0) -> void:

@@ -32,6 +32,15 @@ var _waves: Dictionary = {}
 var _palm_base: Array[Vector3] = []
 var _storm: Node3D
 var _rain_mat: ShaderMaterial
+## 0.1.25 : l'orage au large (éclairs, tonnerre en retard, vagues plus hautes).
+var _thunder_storm := 0.0
+var _waves_k := 0.0
+var _bolt: Node3D
+var _flash_t := 0.0
+var _next_flash := 3.0
+var _thunder_in := -1.0
+var _thunder: AudioStreamPlayer
+var _rng := RandomNumberGenerator.new()
 
 
 func setup(p_sun: DirectionalLight3D, p_env: Environment, p_ocean: ShaderMaterial, p_palms: Array[Node3D]) -> void:
@@ -57,11 +66,44 @@ func _ready() -> void:
 		var m: Node3D = p.get_meta("model") if p.has_meta("model") else p
 		_palm_base.append(m.rotation)
 	_build_storm()
+	_build_lightning()
 	# Au chargement, le temps est déjà là (pas de transition depuis « calme »).
 	_wind = GameState.weather_value("wind")
 	_overcast = GameState.weather_value("overcast")
 	_heat = GameState.weather_value("heat")
 	_rain = GameState.weather_value("rain")
+	_thunder_storm = GameState.weather_value("storm")
+	_waves_k = GameState.weather_value("waves")
+
+
+## 0.1.25 : l'éclair (une ligne brisée très claire sous le nuage) et le tonnerre.
+func _build_lightning() -> void:
+	_rng.seed = 25
+	_bolt = Node3D.new()
+	_bolt.name = "Bolt"
+	_bolt.visible = false
+	_storm.add_child(_bolt)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.98, 0.85)
+	var p := Vector3(0, 40.0, 0)
+	for i in 7:
+		var q := p + Vector3(_rng.randf_range(-4.0, 4.0), -40.0 / 7.0, _rng.randf_range(-2.0, 2.0))
+		var seg := Props.beam(p, q, 1.2, Color.WHITE)
+		seg.material_override = mat
+		seg.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_bolt.add_child(seg)
+		p = q
+	_thunder = AudioStreamPlayer.new()
+	_thunder.stream = SoundSynth.stream("thunder")
+	_thunder.volume_db = -6.0
+	add_child(_thunder)
+
+
+## Le temps (s) entre l'éclair et le tonnerre : la lumière arrive tout de suite, le son ensuite
+## (340 m/s), ici raccourci pour qu'on fasse le lien.
+static func thunder_delay(distance_m: float) -> float:
+	return clampf(distance_m / 340.0 * 0.4, 0.6, 3.0)
 
 
 ## Le nuage sombre et le rideau de pluie, loin au large.
@@ -123,7 +165,33 @@ func _process(delta: float) -> void:
 	_overcast = lerpf(_overcast, GameState.weather_value("overcast"), k)
 	_heat = lerpf(_heat, GameState.weather_value("heat"), k)
 	_rain = lerpf(_rain, GameState.weather_value("rain"), k)
+	_thunder_storm = lerpf(_thunder_storm, GameState.weather_value("storm"), k)
+	_waves_k = lerpf(_waves_k, GameState.weather_value("waves"), k)
+	_run_lightning(delta)
 	_apply()
+
+
+func _run_lightning(delta: float) -> void:
+	_flash_t = maxf(_flash_t - delta, 0.0)
+	_bolt.visible = _flash_t > 0.0 and fmod(_flash_t, 0.2) > 0.06  # l'éclair clignote
+	if _thunder_in >= 0.0:
+		_thunder_in -= delta
+		if _thunder_in < 0.0:
+			_thunder.play()
+	if _thunder_storm < 0.5:
+		return
+	_next_flash -= delta
+	if _next_flash <= 0.0:
+		_next_flash = _rng.randf_range(4.0, 9.0)
+		flash()
+
+
+## Un éclair maintenant (le tonnerre suivra).
+func flash() -> void:
+	_flash_t = 0.5
+	_bolt.position.x = _rng.randf_range(-35.0, 35.0)
+	_bolt.rotation.y = _rng.randf() * TAU
+	_thunder_in = thunder_delay(RAIN_DISTANCE)
 
 
 ## Les palmiers ploient avec le vent (en plus de leur penchant naturel).
@@ -144,7 +212,7 @@ func _apply() -> void:
 		var m: Node3D = p.get_meta("model") if p.has_meta("model") else p
 		m.rotation = _palm_base[i] + Vector3(0, 0, palm_bend(_wind, _t, i))
 	if ocean_material:
-		var f := wave_factor(_wind)
+		var f := maxf(wave_factor(_wind), _waves_k)  # 0.1.25 : l'orage double les vagues
 		for w in _waves:
 			var v: Vector4 = _waves[w]
 			ocean_material.set_shader_parameter(w, Vector4(v.x, v.y, v.z * f, v.w))
@@ -156,6 +224,6 @@ func _apply() -> void:
 		sun.light_energy *= 1.0 - 0.45 * _overcast
 		sun.light_color = sun.light_color.lerp(HOT_SUN, 0.35 * _heat)
 	if env:
-		env.ambient_light_energy *= 1.0 + 0.25 * _overcast
+		env.ambient_light_energy *= 1.0 + 0.25 * _overcast + (1.2 if _bolt.visible else 0.0)
 	_storm.visible = _rain > 0.02
 	_rain_mat.set_shader_parameter("amount", _rain)

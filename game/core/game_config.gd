@@ -406,14 +406,15 @@ extends Resource
 ## Le temps de la journée, tiré chaque matin : poids, séchage (×), soif (× vitesse), et pour la
 ## vue seulement : vent (0-1), ciel couvert (0-1), chaleur (0-1), averse au loin (0-1).
 @export var weather_table: Dictionary = {
-	"calme": {"weight": 35.0, "dry": 1.0, "thirst": 1.0, "wind": 0.0, "overcast": 0.0, "heat": 0.0, "rain": 0.0},
+	"calme": {"weight": 30.0, "dry": 1.0, "thirst": 1.0, "wind": 0.0, "overcast": 0.0, "heat": 0.0, "rain": 0.0},
 	"venteux": {"weight": 25.0, "dry": 1.3, "thirst": 1.0, "wind": 1.0, "overcast": 0.15, "heat": 0.0, "rain": 0.0},
 	"canicule": {"weight": 15.0, "dry": 1.6, "thirst": 1.5, "wind": 0.0, "overcast": 0.0, "heat": 1.0, "rain": 0.0},
 	"couvert": {"weight": 15.0, "dry": 0.7, "thirst": 1.0, "wind": 0.3, "overcast": 1.0, "heat": 0.0, "rain": 0.0},
 	"averse": {"weight": 10.0, "dry": 0.8, "thirst": 1.0, "wind": 0.5, "overcast": 0.6, "heat": 0.0, "rain": 1.0},
+	"orage": {"weight": 5.0, "dry": 0.8, "thirst": 1.0, "wind": 1.0, "overcast": 0.8, "heat": 0.0, "rain": 1.0, "waves": 2.0, "storm": 1.0},
 }
 ## L'ordre des temps sur le baromètre et l'icône du HUD (du beau au mauvais).
-@export var weather_order: PackedStringArray = PackedStringArray(["canicule", "calme", "venteux", "couvert", "averse"])
+@export var weather_order: PackedStringArray = PackedStringArray(["canicule", "calme", "venteux", "couvert", "averse", "orage"])
 ## Le temps qui produit la fleur de sel (de jour), et sa chance par sel produit.
 @export var flower_weather: String = "calme"
 @export var flower_chance_per_salt: float = 0.2
@@ -485,3 +486,35 @@ extends Resource
 ## La musique : fondu (s) quand le moment de la journée change ; heures de début des moments.
 @export var music_fade_s: float = 8.0
 @export var music_moments: Dictionary = {"matin": 6.0, "midi": 11.0, "soir": 17.0, "nuit": 20.0}
+
+# --- 0.1.25 : plus tard (PRD §19.32) ------------------------------------------------------------
+## Châteaux de sable : au plus … tours de … étages ; rayon d'une tour (m) ; pente maximale ; à
+## moins de … m d'une tour, Maj + clic lui ajoute un étage.
+@export var castle_max: int = 40
+@export var castle_max_floors: int = 3
+@export var castle_radius_m: float = 0.25
+@export var castle_max_slope: float = 0.06
+@export var castle_pick_m: float = 0.45
+## L'orage au large : le temps qui le déclenche, et les épaves en plus le lendemain matin.
+@export var storm_weather: String = "orage"
+@export var storm_wrecks: int = 2
+## Baleine et dauphins : une apparition toutes les … s (± 30 %), la part des baleines, la distance
+## (m, du centre de l'île) et la durée (s) de chacune ; vus à moins de … m (ou à la longue-vue),
+## ils entrent dans la collection sous cet id.
+@export var sea_life_interval_s: float = 360.0
+@export var whale_chance: float = 0.5
+@export var sea_life_distance_m: Dictionary = {"baleine": [600.0, 1200.0], "dauphins": [150.0, 300.0]}
+@export var sea_life_duration_s: Dictionary = {"baleine": 14.0, "dauphins": 10.0}
+@export var sea_life_near_m: float = 250.0
+@export var sea_life_collection: Dictionary = {"baleine": "baleine", "dauphins": "dauphin"}
+## Le socle des trophées (près de la cabine) et les succès, dans l'ordre des statues ; seuils.
+@export var trophy_stand_position: Vector3 = Vector3(2.5, 0.5, -0.5)
+@export var trophies: PackedStringArray = PackedStringArray(["premier_achat", "sel_100", "premier_marais", "hamac", "pincon_5", "coquillages", "collection", "palier_2", "litres_1000", "tresors_3"])
+@export var trophy_salt: int = 100
+@export var trophy_hearts: int = 5
+@export var trophy_litres: float = 1000.0
+@export var trophy_treasures: int = 3
+## La carte (M) : le rayon (m) autour du centre de l'île qu'elle montre.
+@export var map_radius_m: float = 48.0
+## La manette : vitesse du regard au stick droit (radians par seconde à fond).
+@export var stick_look_speed: float = 2.6

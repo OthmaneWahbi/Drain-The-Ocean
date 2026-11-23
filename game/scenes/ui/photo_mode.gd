@@ -115,6 +115,8 @@ func _input(event: InputEvent) -> void:
 				_camera.fov = clamp_fov(_camera.fov + 4.0)
 			MOUSE_BUTTON_LEFT:
 				take_photo()
+	elif (event is InputEventJoypadButton or event is InputEventJoypadMotion) and event.is_action_pressed(&"use_tool"):
+		take_photo()  # 0.1.25 : à la manette, la gâchette droite
 	elif event is InputEventKey and event.pressed and not event.echo:
 		for i in FILTERS.size():
 			if event.is_action_pressed(StringName("tool_%d" % (i + 1))):
@@ -199,6 +201,9 @@ func take_photo() -> String:
 func _process(delta: float) -> void:
 	if not active or _camera == null:
 		return
+	var look := Input.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
+	_yaw -= look.x * GameState.config.stick_look_speed * delta
+	_pitch = clampf(_pitch - look.y * GameState.config.stick_look_speed * delta, deg_to_rad(-89.0), deg_to_rad(89.0))
 	_camera.rotation = Vector3(_pitch, _yaw, 0.0)
 	var input := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
 	var up := 0.0

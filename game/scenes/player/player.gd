@@ -566,12 +566,25 @@ func _handle_toolbar_input(event: InputEvent) -> bool:
 	return false
 
 
+## 0.1.25 : la manette, stick droit : regarder (plus lent à la longue-vue, selon le zoom).
+func _stick_look(delta: float) -> void:
+	if GameState.ui_open:
+		return
+	var look := Input.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
+	if look == Vector2.ZERO:
+		return
+	var speed := GameState.config.stick_look_speed * delta / (_spy_zoom if spying else 1.0)
+	rotate_y(-look.x * speed)
+	head.rotation.x = clampf(head.rotation.x - look.y * speed, deg_to_rad(-85.0), deg_to_rad(85.0))
+
+
 ## 0.1.20 : le point visé (sable compris), pour verser dans un trou.
 var aim_point := Vector3.ZERO
 var aim_on_terrain := false
 
 
 func _process(delta: float) -> void:
+	_stick_look(delta)
 	var tool := GameState.current_tool()
 	_bucket_node.visible = tool == "seau"
 	_rake_node.visible = tool == "rateau"
@@ -649,6 +662,17 @@ func _handle_tool(delta: float) -> void:
 			bucket.cancel_fill()
 		return
 	bucket.cancel_fill()
+	# 0.1.25 : le seau vide, Maj + clic sur le sable plat : une tour de sable (ou un étage de plus).
+	if bucket.is_empty() and prompt == "" and aim_on_terrain:
+		var why := GameState.castle_reason(aim_point)
+		var building := Input.is_action_pressed(&"sprint")
+		if why == "":
+			prompt = tr("PROMPT_CASTLE_UP" if not GameState.castle_at(aim_point).is_empty() else "PROMPT_CASTLE")
+			if building and Input.is_action_just_pressed(&"use_tool"):
+				GameState.build_castle(aim_point)
+		elif building and why != "PROMPT_CASTLE_SAND":
+			prompt = tr(why)
+		return
 	# 0.1.20 : verser dans un trou creusé à la pelle en fait un marais salant.
 	if not bucket.is_empty() and prompt == "" and aim_on_terrain and not GameState.hole_region_at(aim_point).is_empty():
 		prompt = tr("PROMPT_POUR_HOLE")

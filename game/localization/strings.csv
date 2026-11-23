@@ -390,3 +390,14 @@ PHOTO_FILTER_1,Sépia,Sepia
 PHOTO_FILTER_2,Noir et blanc,Black and white
 PHOTO_FILTER_3,Couleurs vives,Vivid
 OPTIONS_MUSIC,Musique,Music
+PROMPT_CASTLE,[Maj + clic] Une tour de sable,[Shift + click] A sand tower
+PROMPT_CASTLE_UP,[Maj + clic] Un étage de plus,[Shift + click] One more floor
+PROMPT_CASTLE_TOP,La tour est assez haute,The tower is tall enough
+PROMPT_CASTLE_LIMIT,Assez de tours de sable pour l'instant,Enough sand towers for now
+PROMPT_CASTLE_SAND,Il faut du sable,Needs sand
+PROMPT_CASTLE_WET,Trop mouillé : la mer l'emporterait,Too wet: the sea would take it
+PROMPT_CASTLE_FLAT,Il faut un sol plat,Needs flat ground
+PROMPT_CASTLE_BLOCKED,Pas de place ici,No room here
+WEATHER_ORAGE,Orage au large,Storm out at sea
+TROPHY_STAND,Trophées : %d / %d,Trophies: %d / %d
+MAP_CLOSE,"M, Échap ou clic pour fermer","M, Esc or click to close"

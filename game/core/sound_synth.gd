@@ -7,7 +7,7 @@ extends RefCounted
 ## `samples(name)` rend les échantillons (-1..1) ; `stream(name)` les emballe dans un AudioStreamWAV.
 
 const RATE := 22050
-const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves", "tink"]
+const NAMES := ["fill", "pour", "plop", "ring", "pickup", "jingle", "plane", "engine", "gurgle", "waves", "tink", "thunder", "chime", "blow", "splash"]
 ## Les sons qui tournent en boucle.
 const LOOPS := ["waves", "gurgle", "engine"]
 
@@ -38,6 +38,14 @@ static func samples(name: String) -> PackedFloat32Array:
 			return _waves(rng, 4.0)
 		"tink":  # 0.1.20 : un grain de sel tombe sur le tas (petit tintement de verre)
 			return _tink(0.22, 2093.0, 0.35)
+		"thunder":  # 0.1.25 : le tonnerre au loin (un craquement étouffé, puis un long grondement)
+			return _thunder(rng, 3.2)
+		"chime":  # 0.1.25 : une statue apparaît sur le socle des trophées (petit carillon)
+			return _arpeggio([1046.5, 1318.5, 1568.0, 2093.0, 1568.0], 0.09, 0.32)
+		"blow":  # 0.1.25 : le souffle de la baleine, au loin
+			return _noise_burst(rng, 1.6, 900.0, 1.8, 0.45)
+		"splash":  # 0.1.25 : un dauphin retombe dans l'eau
+			return _noise_burst(rng, 0.45, 2400.0, 7.0, 0.5)
 	return PackedFloat32Array()
 
 
@@ -186,6 +194,17 @@ static func _tink(dur: float, f: float, gain: float) -> PackedFloat32Array:
 		var env := exp(-t * 28.0) * minf(t * 2000.0, 1.0)
 		out[i] = (sin(TAU * f * t) + 0.4 * sin(TAU * f * 1.5 * t)) * env * gain / 1.4
 	return out
+
+
+## Le tonnerre : du bruit très filtré (grave), une attaque douce et des roulements qui s'éteignent.
+static func _thunder(rng: RandomNumberGenerator, dur: float) -> PackedFloat32Array:
+	var base := _noise_burst(rng, dur, 160.0, 0.0, 1.0)
+	for i in base.size():
+		var t := i / float(RATE)
+		var roll := 0.6 + 0.4 * sin(TAU * 1.7 * t + sin(TAU * 0.6 * t) * 2.0)
+		var env := minf(t * 8.0, 1.0) * exp(-1.1 * t)
+		base[i] = clampf(base[i] * roll * env * 2.2, -1.0, 1.0)
+	return base
 
 
 # --- La musique (0.1.24, PRD §19.31) --------------------------------------------------------
